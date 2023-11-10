@@ -58,11 +58,11 @@ entity l2_acc_wrapper is
     dma_ready                 : out std_ulogic;
     -- cache->acc (data only)
     dma_rcv_ready             : in  std_ulogic;
-    dma_rcv_data              : out noc_flit_type;
+    dma_rcv_data              : out dma_noc_flit_type;
     dma_rcv_valid             : out std_ulogic;
     -- acc->cache (data only)
     dma_snd_valid             : in  std_ulogic;
-    dma_snd_data              : in  noc_flit_type;
+    dma_snd_data              : in  dma_noc_flit_type;
     dma_snd_ready             : out std_ulogic;
     -- Accelerator done causes a flush
     flush                     : in  std_ulogic;
@@ -74,23 +74,23 @@ entity l2_acc_wrapper is
     -- backend (cache - NoC)
     -- tile->NoC1
     coherence_req_wrreq        : out std_ulogic;
-    coherence_req_data_in      : out noc_flit_type;
+    coherence_req_data_in      : out coh_noc_flit_type;
     coherence_req_full         : in  std_ulogic;
     -- NoC2->tile
     coherence_fwd_rdreq        : out std_ulogic;
-    coherence_fwd_data_out     : in  noc_flit_type;
+    coherence_fwd_data_out     : in  coh_noc_flit_type;
     coherence_fwd_empty        : in  std_ulogic;
     -- Noc3->tile
     coherence_rsp_rcv_rdreq    : out std_ulogic;
-    coherence_rsp_rcv_data_out : in  noc_flit_type;
+    coherence_rsp_rcv_data_out : in  coh_noc_flit_type;
     coherence_rsp_rcv_empty    : in  std_ulogic;
     -- tile->Noc3
     coherence_rsp_snd_wrreq    : out std_ulogic;
-    coherence_rsp_snd_data_in  : out noc_flit_type;
+    coherence_rsp_snd_data_in  : out coh_noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
     -- tile->Noc2
     coherence_fwd_snd_wrreq    : out std_ulogic;
-    coherence_fwd_snd_data_in  : out noc_flit_type;
+    coherence_fwd_snd_data_in  : out coh_noc_flit_type;
     coherence_fwd_snd_full     : in  std_ulogic;
 
     mon_cache                  : out monitor_cache_type
@@ -939,11 +939,11 @@ begin  -- architecture rtl of l2_acc_wrapper
         if dma_rcv_ready = '1' then
 
           dma_rcv_data <= PREAMBLE_BODY &
-                          read_noc_word(reg.line, reg.cnt);
+                          read_dma_noc_word(reg.line, reg.cnt);
 
           if reg.cnt = reg.msw and to_integer(unsigned(reg.length)) = 0 then
 
-            dma_rcv_data(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+            dma_rcv_data(DMA_NOC_FLIT_SIZE - 1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
 
             reg.state := idle;
 
@@ -990,7 +990,7 @@ begin  -- architecture rtl of l2_acc_wrapper
 
             reg.addr := reg.addr + BYTES_PER_WORD;
 
-            if get_preamble(NOC_FLIT_SIZE, dma_snd_data) = PREAMBLE_TAIL then
+            if get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_snd_data) = PREAMBLE_TAIL then
 
               reg.state := idle;
 
@@ -1079,14 +1079,14 @@ begin  -- architecture rtl of l2_acc_wrapper
 
             when REQ_PUTM | REQ_WB | REQ_WTdata | REQ_WT | REQ_WTfwd | REQ_AMO_ADD | REQ_AMO_AND | REQ_AMO_OR | REQ_AMO_XOR | REQ_AMO_MAX | REQ_AMO_MAXU | REQ_AMO_MIN | REQ_AMO_MINU =>
 
-            coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+            coherence_req_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
             coherence_req_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
             reg.state             := send_data;
             reg.word_cnt          := 0;
 
             when others =>
 
-            coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+            coherence_req_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
             coherence_req_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
             reg.state             := send_header;
 
@@ -1201,14 +1201,14 @@ begin  -- architecture rtl of l2_acc_wrapper
 
             when RSP_DATA | RSP_S | RSP_Odata | RSP_RVK_O | RSP_WTdata | RSP_V =>
 
-            coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+            coherence_rsp_snd_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
             coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
             reg.state                 := send_data;
             reg.word_cnt              := 0;
 
             when others =>
 
-            coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+            coherence_rsp_snd_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
             coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
             reg.state                 := send_header;
 
@@ -1314,14 +1314,14 @@ begin  -- process fsm_cache2noc
 
           when FWD_WTfwd =>
 
-            coherence_fwd_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+            coherence_fwd_snd_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
             coherence_fwd_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
             reg.state                 := send_data;
             reg.word_cnt              := 0;
 
           when others =>
 
-            coherence_fwd_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+            coherence_fwd_snd_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
             coherence_fwd_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
             reg.state                 := send_header;
 
@@ -1330,14 +1330,14 @@ begin  -- process fsm_cache2noc
 
         -- always send data
 
-        -- coherence_fwd_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+        -- coherence_fwd_snd_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
         -- coherence_fwd_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
         -- reg.state                 := send_data;
         -- reg.word_cnt              := 0;
 
 
         -- always not send data
-        -- coherence_fwd_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+        -- coherence_fwd_snd_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
         -- coherence_fwd_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
         -- reg.state                 := send_header;
         
@@ -1407,7 +1407,7 @@ end process fsm_fwd_out;
     coherence_fwd_rdreq <= '0';
 
     -- get preambles
-    rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_fwd_data_out);
+    rsp_preamble := get_preamble(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_fwd_data_out);
 
     -- fsm states
     case reg.state is
@@ -1419,9 +1419,9 @@ end process fsm_fwd_out;
 
           coherence_fwd_rdreq <= '1';
 
-          msg_type    := get_msg_type(NOC_FLIT_SIZE, coherence_fwd_data_out);
+          msg_type    := get_msg_type(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_fwd_data_out);
           reg.coh_msg := msg_type(reg.coh_msg'length - 1 downto 0);
-          reserved    := get_reserved_field(NOC_FLIT_SIZE, coherence_fwd_data_out);
+          reserved    := get_reserved_field(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_fwd_data_out);
           reg.req_id  := reserved(reg.req_id'length - 1 downto 0);
           if USE_SPANDEX = 0 then
             reg.word_mask := (others => '0');
@@ -1531,7 +1531,7 @@ end process fsm_fwd_out;
     coherence_rsp_rcv_rdreq <= '0';
 
     -- get preambles
-    rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+    rsp_preamble := get_preamble(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_rsp_rcv_data_out);
 
     -- fsm states
     case reg.state is
@@ -1543,9 +1543,9 @@ end process fsm_fwd_out;
 
           coherence_rsp_rcv_rdreq <= '1';
 
-          msg_type       := get_msg_type(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+          msg_type       := get_msg_type(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_rsp_rcv_data_out);
           reg.coh_msg    := msg_type(reg.coh_msg'length - 1 downto 0);
-          reserved       := get_reserved_field(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+          reserved       := get_reserved_field(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_rsp_rcv_data_out);
           reg.invack_cnt := reserved(reg.invack_cnt'length - 1 downto 0);
           if USE_SPANDEX = 0 then
             reg.word_mask := (others => '0');

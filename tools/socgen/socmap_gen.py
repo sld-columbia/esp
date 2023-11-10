@@ -447,12 +447,13 @@ def print_global_constants(fp, soc):
 
   fp.write("  ------ General\n")
   fp.write("  constant ARCH_BITS : integer := " + str(soc.ARCH_BITS) + ";\n")
-  fp.write("  constant NOC_WIDTH : integer := " + str(soc.noc.noc_width.get()) + ";\n")
-
+  fp.write("  constant COH_NOC_WIDTH : integer := " + str(soc.noc.coh_noc_width.get()) + ";\n")
+  fp.write("  constant DMA_NOC_WIDTH : integer := " + str(soc.noc.dma_noc_width.get()) + ";\n")
+  fp.write("  constant MAX_NOC_WIDTH : integer := " + str(soc.noc.coh_noc_width.get() if soc.noc.coh_noc_width.get() > soc.noc.dma_noc_width.get() else soc.noc.dma_noc_width.get()) + ";\n")
   fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(soc.cache_line_size.get()/soc.ARCH_BITS))) + ";\n")
   fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log2(soc.ARCH_BITS/8))) +";\n")
   fp.write("  constant GLOB_OFFSET_BITS : integer := GLOB_WORD_OFFSET_BITS + GLOB_BYTE_OFFSET_BITS;\n")
-  dma_words_per_line = soc.cache_line_size.get() / soc.noc.noc_width.get()
+  dma_words_per_line = soc.cache_line_size.get() / soc.noc.dma_noc_width.get()
   if dma_words_per_line > 1:
     dma_offset_bits = int(math.log2(dma_words_per_line))
   else:
@@ -2312,7 +2313,7 @@ def print_cache_config(fp, soc, esp_config):
   fp.write("`define L2_SETS      " + str(soc.l2_sets.get()) + "\n")
   fp.write("`define LLC_WAYS     " + str(soc.llc_ways.get()) + "\n")
   fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get())) + "\n")
-  fp.write("`define NOC_WIDTH    " + str(int(soc.noc.noc_width.get())) + "\n")
+  fp.write("`define DMA_NOC_WIDTH    " + str(int(soc.noc.dma_noc_width.get())) + "\n")
   fp.write("\n")
   fp.write("`endif // __CACHES_CFG_SVH__\n")
 

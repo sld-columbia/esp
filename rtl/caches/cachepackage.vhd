@@ -92,7 +92,8 @@ package cachepackage is
   subtype hsize_t is std_logic_vector(HSIZE_WIDTH - 1 downto 0);
   subtype hprot_t is std_logic_vector(HPROT_WIDTH - 1 downto 0);
   subtype word_t is std_logic_vector(BITS_PER_WORD - 1 downto 0);
-  subtype noc_word_t is std_logic_vector(NOC_WIDTH - 1 downto 0);
+  subtype coh_noc_word_t is std_logic_vector(COH_NOC_WIDTH - 1 downto 0);
+  subtype dma_noc_word_t is std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
   subtype dcs_t is std_logic_vector(DCS_BITS - 1 downto 0);
   subtype line_t is std_logic_vector(BITS_PER_LINE - 1 downto 0);
   subtype word_mask_t is std_logic_vector(WORDS_PER_LINE - 1 downto 0);
@@ -143,8 +144,11 @@ package cachepackage is
   function read_word (line : line_t; w_off : integer)
     return word_t;
 
-  function read_noc_word (line : line_t; w_off : integer)
-    return noc_word_t;
+  function read_coh_noc_word (line : line_t; w_off : integer)
+    return coh_noc_word_t;
+
+  function read_dma_noc_word (line : line_t; w_off : integer)
+    return dma_noc_word_t;
 
   function read_word32 (line : line_t; w_off : integer; w32_off : integer)
     return word_t;
@@ -156,7 +160,7 @@ package cachepackage is
                         cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
                         cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
                         word_mask    : word_mask_t)
-    return noc_flit_type;
+    return coh_noc_flit_type;
 
   function make_dcs_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
     mem_num     : integer; hprot : hprot_t; addr : line_addr_t;
@@ -165,7 +169,7 @@ package cachepackage is
     cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     word_mask    : word_mask_t)
-    return noc_flit_type;
+    return coh_noc_flit_type;
 
   function get_owner_bits (ncpu_bits : integer)
     return integer;
@@ -220,23 +224,23 @@ package cachepackage is
       -- backend (cache - NoC)
       -- tile->NoC1
       coherence_req_wrreq        : out std_ulogic;
-      coherence_req_data_in      : out noc_flit_type;
+      coherence_req_data_in      : out coh_noc_flit_type;
       coherence_req_full         : in  std_ulogic;
       -- NoC2->tile
       coherence_fwd_rdreq        : out std_ulogic;
-      coherence_fwd_data_out     : in  noc_flit_type;
+      coherence_fwd_data_out     : in  coh_noc_flit_type;
       coherence_fwd_empty        : in  std_ulogic;
       -- Noc3->tile
       coherence_rsp_rcv_rdreq    : out std_ulogic;
-      coherence_rsp_rcv_data_out : in  noc_flit_type;
+      coherence_rsp_rcv_data_out : in  coh_noc_flit_type;
       coherence_rsp_rcv_empty    : in  std_ulogic;
       -- tile->Noc3
       coherence_rsp_snd_wrreq    : out std_ulogic;
-      coherence_rsp_snd_data_in  : out noc_flit_type;
+      coherence_rsp_snd_data_in  : out coh_noc_flit_type;
       coherence_rsp_snd_full     : in  std_ulogic;
       -- tile->Noc3
       coherence_fwd_snd_wrreq    : out std_ulogic;
-      coherence_fwd_snd_data_in  : out noc_flit_type;
+      coherence_fwd_snd_data_in  : out coh_noc_flit_type;
       coherence_fwd_snd_full     : in  std_ulogic;
 
       mon_cache                  : out monitor_cache_type
@@ -271,11 +275,11 @@ package cachepackage is
       dma_ready                 : out std_ulogic;
       -- cahce->acc (data only)
       dma_rcv_ready             : in  std_ulogic;
-      dma_rcv_data              : out noc_flit_type;
+      dma_rcv_data              : out dma_noc_flit_type;
       dma_rcv_valid             : out std_ulogic;
       -- acc->cache (data only)
       dma_snd_valid             : in  std_ulogic;
-      dma_snd_data              : in  noc_flit_type;
+      dma_snd_data              : in  dma_noc_flit_type;
       dma_snd_ready             : out std_ulogic;
       -- Accelerator done causes a flush
       flush                     : in  std_ulogic;
@@ -286,23 +290,23 @@ package cachepackage is
       -- backend (cache - NoC)
       -- tile->NoC1
       coherence_req_wrreq        : out std_ulogic;
-      coherence_req_data_in      : out noc_flit_type;
+      coherence_req_data_in      : out coh_noc_flit_type;
       coherence_req_full         : in  std_ulogic;
       -- NoC2->tile
       coherence_fwd_rdreq        : out std_ulogic;
-      coherence_fwd_data_out     : in  noc_flit_type;
+      coherence_fwd_data_out     : in  coh_noc_flit_type;
       coherence_fwd_empty        : in  std_ulogic;
       -- Noc3->tile
       coherence_rsp_rcv_rdreq    : out std_ulogic;
-      coherence_rsp_rcv_data_out : in  noc_flit_type;
+      coherence_rsp_rcv_data_out : in  coh_noc_flit_type;
       coherence_rsp_rcv_empty    : in  std_ulogic;
       -- tile->Noc3
       coherence_rsp_snd_wrreq    : out std_ulogic;
-      coherence_rsp_snd_data_in  : out noc_flit_type;
+      coherence_rsp_snd_data_in  : out coh_noc_flit_type;
       coherence_rsp_snd_full     : in  std_ulogic;
       -- tile->Noc3
       coherence_fwd_snd_wrreq    : out std_ulogic;
-      coherence_fwd_snd_data_in  : out noc_flit_type;
+      coherence_fwd_snd_data_in  : out coh_noc_flit_type;
       coherence_fwd_snd_full     : in  std_ulogic;
 
       mon_cache                  : out monitor_cache_type
@@ -353,27 +357,27 @@ package cachepackage is
 
       -- NoC1->tile
       coherence_req_rdreq        : out std_ulogic;
-      coherence_req_data_out     : in  noc_flit_type;
+      coherence_req_data_out     : in  coh_noc_flit_type;
       coherence_req_empty        : in  std_ulogic;
       -- tile->NoC2
       coherence_fwd_wrreq        : out std_ulogic;
-      coherence_fwd_data_in      : out noc_flit_type;
+      coherence_fwd_data_in      : out coh_noc_flit_type;
       coherence_fwd_full         : in  std_ulogic;
       -- tile->NoC3
       coherence_rsp_snd_wrreq    : out std_ulogic;
-      coherence_rsp_snd_data_in  : out noc_flit_type;
+      coherence_rsp_snd_data_in  : out coh_noc_flit_type;
       coherence_rsp_snd_full     : in  std_ulogic;
       -- NoC3->tile
       coherence_rsp_rcv_rdreq    : out std_ulogic;
-      coherence_rsp_rcv_data_out : in  noc_flit_type;
+      coherence_rsp_rcv_data_out : in  coh_noc_flit_type;
       coherence_rsp_rcv_empty    : in  std_ulogic;
       -- -- NoC4->tile
       dma_rcv_rdreq              : out std_ulogic;
-      dma_rcv_data_out       : in  noc_flit_type;
+      dma_rcv_data_out       : in  dma_noc_flit_type;
       dma_rcv_empty          : in  std_ulogic;
       -- -- tile->NoC4
       dma_snd_wrreq          : out std_ulogic;
-      dma_snd_data_in        : out noc_flit_type;
+      dma_snd_data_in        : out dma_noc_flit_type;
       dma_snd_full           : in  std_ulogic;
       -- LLC->ext
       ext_req_ready              : in  std_ulogic;
@@ -438,17 +442,29 @@ package body cachepackage is
 
   end function read_word;
 
-  function read_noc_word (line : line_t; w_off : integer) return noc_word_t is
+  function read_coh_noc_word (line : line_t; w_off : integer) return coh_noc_word_t is
 
-    variable word  : noc_word_t;
+    variable word  : coh_noc_word_t;
 
   begin
 
-    word := line((w_off * NOC_WIDTH) + NOC_WIDTH - 1 downto w_off * NOC_WIDTH);
+    word := line((w_off * COH_NOC_WIDTH) + COH_NOC_WIDTH - 1 downto w_off * COH_NOC_WIDTH);
 
     return word;
 
-  end function read_noc_word;
+  end function read_coh_noc_word;
+
+  function read_dma_noc_word (line : line_t; w_off : integer) return dma_noc_word_t is
+
+    variable word  : dma_noc_word_t;
+
+  begin
+
+    word := line((w_off * DMA_NOC_WIDTH) + DMA_NOC_WIDTH - 1 downto w_off * DMA_NOC_WIDTH);
+
+    return word;
+
+  end function read_dma_noc_word;
 
   function read_word32 (line : line_t; w_off : integer; w32_off : integer) return word_t is
 
@@ -470,9 +486,9 @@ package body cachepackage is
                         cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
                         cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
                         word_mask    : word_mask_t)
-    return noc_flit_type is
+    return coh_noc_flit_type is
 
-    variable header         : noc_flit_type;
+    variable header         : coh_noc_flit_type;
     variable dest_x, dest_y : local_yx;
     variable dest_init      : integer;
     variable reserved       : std_logic_vector(RESERVED_WIDTH-1 downto 0);
@@ -515,7 +531,7 @@ package body cachepackage is
       noc_msg := '0' & coh_msg;
       reserved := word_mask & std_logic_vector(resize(unsigned(hprot), RESERVED_WIDTH - WORDS_PER_LINE));
     end if;
-    header := create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x, noc_msg, reserved);
+    header := create_header(COH_NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x, noc_msg, reserved);
 
     return header;
 
@@ -528,9 +544,9 @@ package body cachepackage is
                         cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
                         cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
                         word_mask    : word_mask_t)
-    return noc_flit_type is
+    return coh_noc_flit_type is
 
-    variable header         : noc_flit_type;
+    variable header         : coh_noc_flit_type;
     variable dest_x, dest_y : local_yx;
     variable dest_init      : integer;
     variable reserved       : std_logic_vector(RESERVED_WIDTH-1 downto 0);
@@ -570,7 +586,7 @@ package body cachepackage is
     else
       reserved := word_mask & std_logic_vector(resize(unsigned(src_id), RESERVED_WIDTH - WORDS_PER_LINE));
     end if;
-    header := create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x, '0' & coh_msg, reserved);
+    header := create_header(COH_NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x, '0' & coh_msg, reserved);
 
     return header;
 

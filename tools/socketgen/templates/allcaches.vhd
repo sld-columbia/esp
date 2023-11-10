@@ -37,7 +37,7 @@ package allcaches is
   constant BITS_PER_WORD  : integer := (BYTES_PER_WORD * 8);
   constant BITS_PER_HWORD : integer := BITS_PER_WORD/2;
   constant BITS_PER_LINE  : integer := (BITS_PER_WORD * WORDS_PER_LINE);
-  constant DMA_WORDS_PER_LINE : integer := (BITS_PER_LINE / NOC_WIDTH);
+  constant DMA_WORDS_PER_LINE : integer := (BITS_PER_LINE / DMA_NOC_WIDTH);
 
   -- Cache data types width
   constant CPU_MSG_TYPE_WIDTH : integer := 2;

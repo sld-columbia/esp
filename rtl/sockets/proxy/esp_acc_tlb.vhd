@@ -152,7 +152,7 @@ architecture tlb of esp_acc_tlb is
   signal one_sig : std_logic_vector(31 downto 0);
   signal fff_sig : std_logic_vector(31 downto 0);
 
-  constant DMA_OFFSET_BITS : integer := log2(NOC_WIDTH / 8);
+  constant DMA_OFFSET_BITS : integer := log2(DMA_NOC_WIDTH / 8);
   constant address_pad_lsb : std_logic_vector(DMA_OFFSET_BITS - 1 downto 0) := (others => '0');
 
 begin  -- tlb

@@ -88,7 +88,7 @@ entity esp_acc_dma is
     rd_size       : in  std_logic_vector(2 downto 0);
     rd_grant      : out std_ulogic;
     bufdin_ready  : in  std_ulogic;
-    bufdin_data   : out std_logic_vector(NOC_WIDTH - 1 downto 0);
+    bufdin_data   : out std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
     bufdin_valid  : out std_ulogic;
     wr_request    : in  std_ulogic;
     wr_index      : in  std_logic_vector(31 downto 0);
@@ -96,7 +96,7 @@ entity esp_acc_dma is
     wr_size       : in  std_logic_vector(2 downto 0);
     wr_grant      : out std_ulogic;
     bufdout_ready : out std_ulogic;
-    bufdout_data  : in  std_logic_vector(NOC_WIDTH - 1 downto 0);
+    bufdout_data  : in  std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
     bufdout_valid : in  std_ulogic;
     acc_done      : in  std_ulogic;
     flush         : out std_ulogic;
@@ -113,19 +113,19 @@ entity esp_acc_dma is
     coherent_dma_ready   : in  std_ulogic;
     -- NoC6->tile
     llc_coherent_dma_rcv_rdreq          : out std_ulogic;
-    llc_coherent_dma_rcv_data_out       : in  noc_flit_type;
+    llc_coherent_dma_rcv_data_out       : in  dma_noc_flit_type;
     llc_coherent_dma_rcv_empty          : in  std_ulogic;
     -- tile->NoC4
     llc_coherent_dma_snd_wrreq          : out std_ulogic;
-    llc_coherent_dma_snd_data_in        : out noc_flit_type;
+    llc_coherent_dma_snd_data_in        : out dma_noc_flit_type;
     llc_coherent_dma_snd_full           : in  std_ulogic;
     -- NoC4->tile
     dma_rcv_rdreq                       : out std_ulogic;
-    dma_rcv_data_out                    : in  noc_flit_type;
+    dma_rcv_data_out                    : in  dma_noc_flit_type;
     dma_rcv_empty                       : in  std_ulogic;
     -- tile->NoC6
     dma_snd_wrreq                       : out std_ulogic;
-    dma_snd_data_in                     : out noc_flit_type;
+    dma_snd_data_in                     : out dma_noc_flit_type;
     dma_snd_full                        : in  std_ulogic;
     -- tile->NoC5
     interrupt_wrreq                     : out std_ulogic;
@@ -140,18 +140,18 @@ architecture rtl of esp_acc_dma is
   signal pconfig : apb_config_type;
   constant hprot : std_logic_vector(7 downto 0) := "00000011";
 
-  constant DMA_OFFSET_BITS: integer := log2(NOC_WIDTH / 8);
+  constant DMA_OFFSET_BITS: integer := log2(DMA_NOC_WIDTH / 8);
   constant len_pad : std_logic_vector(DMA_OFFSET_BITS - 1 downto 0) := (others => '0');
-  constant WORDS_PER_FLIT : integer := NOC_WIDTH / ARCH_BITS;
+  constant WORDS_PER_FLIT : integer := DMA_NOC_WIDTH / ARCH_BITS;
   constant WPF_BITS : integer := ncpu_log(WORDS_PER_FLIT);
   constant noc_word_pad : std_logic_vector(WPF_BITS - 1 downto 0) := (others => '0');
 
   -- Fix endianness
   function fix_endian (
-    din : std_logic_vector(NOC_WIDTH - 1 downto 0);
+    din : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
     sz  : std_logic_vector(2 downto 0))
   return std_logic_vector is
-    variable dout : std_logic_vector(NOC_WIDTH - 1 downto 0);
+    variable dout : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
   begin
     -- If architecture is little endian, then return data as is
     if GLOB_CPU_AXI = 1 then
@@ -165,18 +165,18 @@ architecture rtl of esp_acc_dma is
           end loop;
 
         when HSIZE_WORD =>
-          for i in 0 to (NOC_WIDTH / 32) - 1 loop
-            dout(32 * (i + 1) - 1 downto 32 * i) := din(NOC_WIDTH - 32 * i - 1 downto NOC_WIDTH - 32 * (i + 1));
+          for i in 0 to (DMA_NOC_WIDTH / 32) - 1 loop
+            dout(32 * (i + 1) - 1 downto 32 * i) := din(DMA_NOC_WIDTH - 32 * i - 1 downto DMA_NOC_WIDTH - 32 * (i + 1));
           end loop;
 
         when HSIZE_HWORD =>
-          for i in 0 to (NOC_WIDTH / 16) - 1 loop
-            dout(16 * (i + 1) - 1 downto 16 * i) := din(NOC_WIDTH - 16 * i - 1 downto NOC_WIDTH - 16 * (i + 1));
+          for i in 0 to (DMA_NOC_WIDTH / 16) - 1 loop
+            dout(16 * (i + 1) - 1 downto 16 * i) := din(DMA_NOC_WIDTH - 16 * i - 1 downto DMA_NOC_WIDTH - 16 * (i + 1));
           end loop;
 
         when HSIZE_BYTE =>
-          for i in 0 to (NOC_WIDTH / 8) - 1 loop
-            dout(8 * (i + 1) - 1 downto 8 * i) := din(NOC_WIDTH - 8 * i - 1 downto NOC_WIDTH - 8 * (i + 1));
+          for i in 0 to (DMA_NOC_WIDTH / 8) - 1 loop
+            dout(8 * (i + 1) - 1 downto 8 * i) := din(DMA_NOC_WIDTH - 8 * i - 1 downto DMA_NOC_WIDTH - 8 * (i + 1));
           end loop;
 
         when others =>
@@ -203,10 +203,10 @@ architecture rtl of esp_acc_dma is
   signal p2p_dst_y            : local_yx;
   signal p2p_dst_x            : local_yx;
   signal p2p_req_rcv_rdreq    : std_ulogic;
-  signal p2p_req_rcv_data_out : noc_flit_type;
+  signal p2p_req_rcv_data_out : dma_noc_flit_type;
   signal p2p_req_rcv_empty    : std_ulogic;
   signal p2p_rsp_snd_wrreq    : std_ulogic;
-  signal p2p_rsp_snd_data_in  : noc_flit_type;
+  signal p2p_rsp_snd_data_in  : dma_noc_flit_type;
   signal p2p_rsp_snd_full     : std_ulogic;
 
   -- IRQ
@@ -216,9 +216,9 @@ architecture rtl of esp_acc_dma is
   signal irq_state, irq_next : irq_fsm;
 
   -- NoC flit
-  signal header, header_r                    : noc_flit_type;
-  signal payload_address, payload_address_r  : noc_flit_type;
-  signal payload_length, payload_length_r    : noc_flit_type;
+  signal header, header_r                    : dma_noc_flit_type;
+  signal payload_address, payload_address_r  : dma_noc_flit_type;
+  signal payload_length, payload_length_r    : dma_noc_flit_type;
   signal sample_flits                        : std_ulogic;
   signal sample_rd_size, sample_wr_size      : std_ulogic;
   signal size_r                              : std_logic_vector(2 downto 0);
@@ -237,11 +237,11 @@ architecture rtl of esp_acc_dma is
 
   -- Internal signals muxed to output queues depending on coherence configuration
   signal dma_rcv_rdreq_int    :  std_ulogic;
-  signal dma_rcv_data_out_int :  noc_flit_type;
+  signal dma_rcv_data_out_int :  dma_noc_flit_type;
   signal tlb_wr_data :  std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
   signal dma_rcv_empty_int    :  std_ulogic;
   signal dma_snd_wrreq_int    :  std_ulogic;
-  signal dma_snd_data_in_int  :  noc_flit_type;
+  signal dma_snd_data_in_int  :  dma_noc_flit_type;
   signal dma_snd_full_int     :  std_ulogic;
 
   -- DMA word count
@@ -462,13 +462,13 @@ begin  -- rtl
     end if;
   end process coherence_model_select;
 
-  p2p_dst_y <= get_origin_y(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
-  p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
+  p2p_dst_y <= get_origin_y(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
+  p2p_dst_x <= get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
                         p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x)
     variable msg_type : noc_msg_type;
-    variable header_v : noc_flit_type;
+    variable header_v : dma_noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
     variable address : addr_t;
     variable offset : std_logic_vector(WPF_BITS - 1 downto 0);
@@ -477,7 +477,7 @@ begin  -- rtl
     variable mem_x, mem_y : local_yx;
     variable is_p2p : std_ulogic;
     variable p2p_src_x, p2p_src_y : local_yx;
-    variable p2p_header_v : noc_flit_type;
+    variable p2p_header_v : dma_noc_flit_type;
   begin  -- process make_packet
 
     is_p2p := '0';
@@ -555,14 +555,14 @@ begin  -- rtl
     p2p_src_x := bankreg(P2P_REG)(6 + 6 * p2p_src_index_r downto 4 + 6 * p2p_src_index_r);
 
     if msg_type = REQ_P2P then
-      p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
-      p2p_header_v(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
+      p2p_header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
+      p2p_header_v(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
     else
-      p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, msg_type, hprot);
+      p2p_header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, msg_type, hprot);
     end if;
 
     header_v := (others => '0');
-    header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, hprot);
+    header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, hprot);
     if is_p2p = '0' then
       header <= header_v;
     else
@@ -570,11 +570,11 @@ begin  -- rtl
     end if;
 
     payload_address <= (others => '0');
-    payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+    payload_address(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
     payload_address(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= address;
 
     payload_length <= (others => '0');
-    payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+    payload_length(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
     payload_length(31 downto 0) <= length;
 
   end process make_packet;
@@ -674,7 +674,7 @@ begin  -- rtl
                           pending_dma_read, coherent_dma_ready, dvfs_transient,
                           size_r, coherence,
                           p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full, acc_flush_done)
-    variable payload_data : noc_flit_type;
+    variable payload_data : dma_noc_flit_type;
     variable preamble : noc_preamble_type;
     variable msg : noc_msg_type;
     variable len : std_logic_vector(31 downto 0);
@@ -718,16 +718,16 @@ begin  -- rtl
 
     p2p_src_index_inc <= '0';
 
-    preamble := get_preamble(NOC_FLIT_SIZE, dma_rcv_data_out_int);
-    msg := get_msg_type(NOC_FLIT_SIZE, header_r);
+    preamble := get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out_int);
+    msg := get_msg_type(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & header_r);
     len := payload_length_r(31 downto 0);
     if count /= len then
-      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
+      payload_data(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
     else
-      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+      payload_data(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     end if;
-    -- Note that NOC_FLIT_SIZE os NOC_WIDTH + PREAMBLE_WIDTH
-    payload_data(NOC_WIDTH - 1 downto 0) := fix_endian(bufdout_data, size_r);
+    -- Note that DMA_NOC_FLIT_SIZE os DMA_NOC_WIDTH + PREAMBLE_WIDTH
+    payload_data(DMA_NOC_WIDTH - 1 downto 0) := fix_endian(bufdout_data, size_r);
 
     -- Default private cache inputs
     coherent_dma_read  <= '0';
@@ -737,7 +737,7 @@ begin  -- rtl
     acc_rst_next <= rst;
     conf_done <= '0';
     rd_grant <= '0';
-    bufdin_data <= fix_endian(dma_rcv_data_out_int(NOC_WIDTH - 1 downto 0), size_r);
+    bufdin_data <= fix_endian(dma_rcv_data_out_int(DMA_NOC_WIDTH - 1 downto 0), size_r);
     bufdin_valid <= '0';
     wr_grant <= '0';
     bufdout_ready <= '0';
@@ -971,7 +971,7 @@ begin  -- rtl
           dma_snd_wrreq_int <= '1';
           if msg = DMA_FROM_DEV then
             -- In case of a write, length is not the tail!
-            dma_snd_data_in_int(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+            dma_snd_data_in_int(DMA_NOC_FLIT_SIZE - 1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
             dma_next <= request_data;
           else
             dma_next <= reply_header;

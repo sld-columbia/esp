@@ -299,12 +299,11 @@ architecture rtl of fpga_proxy_top is
   attribute mark_debug of diagnostic_toggle : signal is "true";
 
   -- AHB proxy extended
-  type noc_flit_vector is array (natural range <>) of noc_flit_type;
   signal extended_ahbm_rcv_rdreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal extended_ahbm_rcv_data_out : noc_flit_vector(0 to CFG_NMEM_TILE - 1);
+  signal extended_ahbm_rcv_data_out : coh_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
   signal extended_ahbm_rcv_empty    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
   signal extended_ahbm_snd_wrreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal extended_ahbm_snd_data_in  : noc_flit_vector(0 to CFG_NMEM_TILE - 1);
+  signal extended_ahbm_snd_data_in  : coh_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
   signal extended_ahbm_snd_full     : std_logic_vector(0 to CFG_NMEM_TILE - 1);
 
   attribute mark_debug of extended_ahbm_rcv_rdreq    : signal is "true";
@@ -315,7 +314,6 @@ architecture rtl of fpga_proxy_top is
   attribute mark_debug of extended_ahbm_snd_full     : signal is "true";
 
   -- AHB proxy queues
-  type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
   signal ahbm_rcv_rdreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
   signal ahbm_rcv_data_out : misc_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
   signal ahbm_rcv_empty    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
@@ -757,14 +755,15 @@ begin  -- architecture rtl
     -- Handle EDCL requests to memory (load program/data)
     noc2ahbmst_i  : noc2ahbmst
       generic map (
-        tech        => FPGA_PROXY_TECH,
-        hindex      => 1,
-        axitran     => 0,
-        little_end  => 0,
-        eth_dma     => 0,
-        narrow_noc  => 0,
-        cacheline   => 1,
-        l2_cache_en => 0)
+        tech                => FPGA_PROXY_TECH,
+        hindex              => 1,
+        axitran             => 0,
+        little_end          => 0,
+        eth_dma             => 0,
+        narrow_noc          => 0,
+        cacheline           => 1,
+        l2_cache_en         => 0,
+        this_noc_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
         rst                       => rstn,
         clk                       => sys_clk(i),
@@ -926,8 +925,8 @@ begin  -- architecture rtl
   end process rcv_mux_gen;
 
   -- Mux selectors
-  target_x <= get_destination_x(MISC_NOC_FLIT_SIZE, noc_flit_pad & mux_ahbs_snd_data_out);
-  target_y <= get_destination_y(MISC_NOC_FLIT_SIZE, noc_flit_pad & mux_ahbs_snd_data_out);
+  target_x <= get_destination_x(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & mux_ahbs_snd_data_out);
+  target_y <= get_destination_y(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & mux_ahbs_snd_data_out);
 
   mux_state_gen: process (main_clk, rstn) is
   begin  -- process mux_state_gen
@@ -975,16 +974,17 @@ begin  -- architecture rtl
   -- Handle EDCL requests to memory
   ahbslv2noc_1 : ahbslv2noc
     generic map (
-      tech             => FPGA_PROXY_TECH,
-      hindex           => this_remote_ahb_slv_en,
-      hconfig          => fixed_ahbso_hconfig,
-      mem_hindex       => ddr_hindex(0),
-      mem_num          => CFG_NMEM_TILE,
-      mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1),
-      slv_y            => tile_y(io_tile_id),
-      slv_x            => tile_x(io_tile_id),
-      retarget_for_dma => 1,
-      dma_length       => CFG_DLINE)
+      tech                  => FPGA_PROXY_TECH,
+      hindex                => this_remote_ahb_slv_en,
+      hconfig               => fixed_ahbso_hconfig,
+      mem_hindex            => ddr_hindex(0),
+      mem_num               => CFG_NMEM_TILE,
+      mem_info              => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1),
+      this_noc_flit_size    => COH_NOC_FLIT_SIZE,
+      slv_y                 => tile_y(io_tile_id),
+      slv_x                 => tile_x(io_tile_id),
+      retarget_for_dma      => 1,
+      dma_length            => CFG_DLINE)
     port map (
       rst                        => rstn,
       clk                        => main_clk,

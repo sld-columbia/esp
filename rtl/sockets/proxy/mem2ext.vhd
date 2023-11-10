@@ -71,11 +71,11 @@ entity mem2ext is
     llc_ext_rsp_data  : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     -- DMA->ext
     dma_rcv_rdreq              : out std_ulogic;
-    dma_rcv_data_out           : in  noc_flit_type;
+    dma_rcv_data_out           : in  dma_noc_flit_type;
     dma_rcv_empty              : in  std_ulogic;
     -- ext->DMA
     dma_snd_wrreq              : out std_ulogic;
-    dma_snd_data_in            : out noc_flit_type;
+    dma_snd_data_in            : out dma_noc_flit_type;
     dma_snd_full               : in  std_ulogic
     );
 end mem2ext;
@@ -112,7 +112,7 @@ architecture rtl of mem2ext is
   type ext_state_type is (idle, send_addr, send_len, send_data, recv_header, recv_data);
   signal ext_current, ext_next : ext_state_type;
 
-  signal dma_header, dma_header_reg                   : noc_flit_type;
+  signal dma_header, dma_header_reg                   : dma_noc_flit_type;
   signal dma_writing, dma_writing_reg                 : std_ulogic;
   signal llc_writing, llc_writing_reg                 : std_ulogic;
 
@@ -130,7 +130,7 @@ architecture rtl of mem2ext is
     async     : std_ulogic;
     sync_fpga : std_ulogic;
     word_cnt  : integer;
-    line      : std_logic_vector(NOC_WIDTH - 1 downto 0);
+    line      : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
   end record rcv_sync_type;
 
   type snd_sync_type is record
@@ -277,11 +277,11 @@ begin  -- architecture rtl
   make_dma_packet : process (dma_rcv_data_out, local_y, local_x) is
     variable msg_type_req       : noc_msg_type;
     variable msg_type_rsp       : noc_msg_type;
-    variable header_v           : noc_flit_type;
+    variable header_v           : dma_noc_flit_type;
     variable reserved           : reserved_field_type;
     variable origin_y, origin_x : local_yx;
   begin  -- process make_packet
-    msg_type_req := get_msg_type(NOC_FLIT_SIZE, dma_rcv_data_out);
+    msg_type_req := get_msg_type(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
     if msg_type_req = DMA_FROM_DEV or msg_type_req = REQ_DMA_WRITE then
       dma_writing <= '1';
       msg_type_rsp := DMA_TO_DEV;
@@ -295,9 +295,9 @@ begin  -- architecture rtl
 
     reserved   := (others => '0');
     header_v   := (others => '0');
-    origin_y   := get_origin_y(NOC_FLIT_SIZE, dma_rcv_data_out);
-    origin_x   := get_origin_x(NOC_FLIT_SIZE, dma_rcv_data_out);
-    header_v   := create_header(NOC_FLIT_SIZE, local_y, local_x, origin_y, origin_x, msg_type_rsp, reserved);
+    origin_y   := get_origin_y(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
+    origin_x   := get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
+    header_v   := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, origin_y, origin_x, msg_type_rsp, reserved);
     dma_header <= header_v;
   end process make_dma_packet;
 
@@ -479,7 +479,7 @@ begin  -- architecture rtl
               -- Set data
               ext_snd_data_in <= dma_rcv_data_out((sending.word_cnt + 1) * CFG_MEM_LINK_BITS - 1 downto sending.word_cnt * CFG_MEM_LINK_BITS);
               if dma_rcv_empty = '0' then
-                if sending.word_cnt = NOC_FLIT_SIZE / CFG_MEM_LINK_BITS - 1 then
+                if sending.word_cnt = DMA_NOC_FLIT_SIZE / CFG_MEM_LINK_BITS - 1 then
                   -- Decrement counter
                   tran_count_en <= '1';
                   -- reset word count
@@ -529,11 +529,11 @@ begin  -- architecture rtl
 
             when dma_req =>
               if tran_count_reg = X"00000001" then
-                dma_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH)  <= PREAMBLE_TAIL;
+                dma_snd_data_in(DMA_NOC_FLIT_SIZE - 1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH)  <= PREAMBLE_TAIL;
               end if;
               if dma_snd_full = '0' then
                 receiving.line((receiving.word_cnt + 1) * CFG_MEM_LINK_BITS - 1 downto receiving.word_cnt * CFG_MEM_LINK_BITS) <= ext_rcv_data_out;
-                if sending.word_cnt = NOC_FLIT_SIZE / CFG_MEM_LINK_BITS - 1 then
+                if sending.word_cnt = DMA_NOC_FLIT_SIZE / CFG_MEM_LINK_BITS - 1 then
                   -- Decrement counter
                   tran_count_en <= '1';
                   -- Push to DMA snd queue

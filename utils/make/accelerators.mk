@@ -418,7 +418,7 @@ SOCKETGEN_DEPS += $(ESP_CFG_BUILD)/socmap.vhd $(ESP_CFG_BUILD)/esp_global.vhd
 ### ESP Wrappers ###
 socketgen: $(SOCKETGEN_DEPS)
 	$(QUIET_MKDIR) $(RM) $@; mkdir -p $@
-	$(QUIET_RUN)$(ESP_ROOT)/tools/socketgen/socketgen.py $(ARCH_BITS) $(CPU_ARCH) $(CONFIG_CACHE_LINE_SIZE) $(CONFIG_NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/accelerators/third-party $(ESP_ROOT)/tools/socketgen/templates ./socketgen
+	$(QUIET_RUN)$(ESP_ROOT)/tools/socketgen/socketgen.py $(ARCH_BITS) $(CPU_ARCH) $(CONFIG_CACHE_LINE_SIZE) $(CONFIG_DMA_NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/accelerators/third-party $(ESP_ROOT)/tools/socketgen/templates ./socketgen
 	@touch $@
 
 socketgen-clean:

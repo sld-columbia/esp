@@ -332,7 +332,7 @@ class EspCreator(Frame):
       self.soc.ARCH_BITS = 64
     else:
       self.soc.ARCH_BITS = 32
-    self.soc.IPs = Components(self.soc.TECH, self.noc.noc_width.get(), soc.CPU_ARCH.get())
+    self.soc.IPs = Components(self.soc.TECH, self.noc.dma_noc_width.get(), soc.CPU_ARCH.get())
     self.soc.update_list_of_ips()
     self.soc.changed()
     self.bottom_frame_noccfg.changed()

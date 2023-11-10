@@ -161,7 +161,10 @@ class SoC_Config():
     cols = int(item[2])
     line = fp.readline()
     item = line.split()
-    self.noc.noc_width.set(int(item[2]))
+    self.noc.coh_noc_width.set(int(item[2]))
+    line = fp.readline()
+    item = line.split()
+    self.noc.dma_noc_width.set(int(item[2]))
     self.noc.create_topology(self.noc.top, rows, cols)
     # CONFIG_CPU_CACHES = L2_SETS L2_WAYS LLC_SETS LLC_WAYS
     line = fp.readline()
@@ -322,7 +325,8 @@ class SoC_Config():
       fp.write("#CONFIG_HAS_SG is not set\n")
     fp.write("CONFIG_NOC_ROWS = " + str(self.noc.rows) + "\n")
     fp.write("CONFIG_NOC_COLS = " + str(self.noc.cols) + "\n")
-    fp.write("CONFIG_NOC_WIDTH = " + str(self.noc.noc_width.get()) + "\n")
+    fp.write("CONFIG_COH_NOC_WIDTH = " + str(self.noc.coh_noc_width.get()) + "\n")
+    fp.write("CONFIG_DMA_NOC_WIDTH = " + str(self.noc.dma_noc_width.get()) + "\n")
     if self.cache_en.get() == 1:
       fp.write("CONFIG_CACHE_EN = y\n")
     else:
@@ -535,5 +539,5 @@ class SoC_Config():
     self.set_IP()
 
     # Discover components
-    self.IPs = Components(self.TECH, self.noc.noc_width.get(), self.CPU_ARCH.get())
+    self.IPs = Components(self.TECH, self.noc.dma_noc_width.get(), self.CPU_ARCH.get())
     self.update_list_of_ips()
