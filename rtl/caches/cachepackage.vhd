@@ -151,7 +151,7 @@ package cachepackage is
     return dma_noc_word_t;
 
   function read_word32 (line : line_t; w_off : integer; w32_off : integer)
-    return word_t;
+    return dma_noc_word_t;
 
   function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
                         mem_num     : integer; hprot : hprot_t; addr : line_addr_t;
@@ -466,14 +466,14 @@ package body cachepackage is
 
   end function read_dma_noc_word;
 
-  function read_word32 (line : line_t; w_off : integer; w32_off : integer) return word_t is
+  function read_word32 (line : line_t; w_off : integer; w32_off : integer) return dma_noc_word_t is
 
-    variable word  : word_t;
+    variable word  : dma_noc_word_t;
 
   begin
 
     word := (others => '0');
-    word(31 downto 0) := line((w_off * BITS_PER_WORD) + (w32_off * 32) + 32 - 1 downto (w_off * BITS_PER_WORD) + (w32_off * 32));
+    word(31 downto 0) := line((w_off * DMA_NOC_WIDTH) + (w32_off * 32) + 32 - 1 downto (w_off * DMA_NOC_WIDTH) + (w32_off * 32));
 
     return word;
 

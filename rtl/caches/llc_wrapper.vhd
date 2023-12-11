@@ -2048,9 +2048,11 @@ begin  -- architecture rtl
           preamble := PREAMBLE_BODY;
         end if;
 
-        --if reg.dma32 = '1' then
-        dma_snd_data_in <= preamble & read_dma_noc_word(reg.line, reg.word_cnt);
-        --end if;
+        if reg.dma32 = '1' then
+          dma_snd_data_in <= preamble & read_word32(reg.line, reg.word_cnt, reg.dma32_cnt);
+        else
+          dma_snd_data_in <= preamble & read_dma_noc_word(reg.line, reg.word_cnt);
+        end if;
 
         if dma_snd_full = '0' then
 
