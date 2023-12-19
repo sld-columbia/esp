@@ -34,6 +34,12 @@ package nocpackage is
   -- |reserved|
   --
 
+  -- Header with 2 destinations
+  -- |W+1        W|W-1     W-3|W-4     W-6|W-7     W-9|W-10   W-12|W-13   W-15|W-16   W-18|W-19  W-20|W-21     W-25|W-26       5|4   0|
+  -- |  PREAMBLE  |   Src Y   |   Src X   |   Dst1 Y  |   Dst1 X  |   Dst1 Y  |   Dst1 X  |   Valid  |  Msg. type  |   Reserved |LEWSN|
+
+
+
   constant HEADER_ROUTE_L : natural := 4;
   constant HEADER_ROUTE_E : natural := 3;
   constant HEADER_ROUTE_W : natural := 2;
@@ -58,6 +64,9 @@ package nocpackage is
 
   type noc_flit_vector is array (natural range <>) of noc_flit_type;
   type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
+
+  -- ajay_v
+  type dest_arr is array (natural range <>) of local_yx;
 
   constant noc_flit_pad : std_logic_vector(NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE - 1 downto 0) := (others => '0');
 
@@ -428,6 +437,18 @@ package nocpackage is
     reserved          : reserved_field_type)
     return std_logic_vector;
 
+  function create_header_2dest (
+    constant flit_sz  : integer;
+    local_y           : local_yx;
+    local_x           : local_yx;
+    remote_y1         : local_yx;
+    remote_x1         : local_yx;
+    remote_y2         : local_yx;
+    remote_x2         : local_yx;
+--    val               : std_logic_vector(1 downto 0);
+    msg_type          : noc_msg_type)
+    return std_logic_vector;
+
   function narrow_to_large_flit (
     narrow_flit : misc_noc_flit_type)
     return noc_flit_type;
@@ -672,6 +693,186 @@ package body nocpackage is
 
     return header;
   end create_header;
+
+  function create_header_2dest (
+    constant flit_sz  : integer;
+    local_y           : local_yx;
+    local_x           : local_yx;
+    remote_y1         : local_yx;
+    remote_x1         : local_yx;
+    remote_y2         : local_yx;
+    remote_x2         : local_yx;
+--    remote_dst        : dest_arr(3 downto 0);
+--    val               : std_logic_vector(1 downto 0);
+    msg_type          : noc_msg_type)
+    return std_logic_vector is
+    variable header : std_logic_vector(flit_sz - 1 downto 0);
+    variable west1, east1, north1, south1 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
+	  variable west2, east2, north2, south2 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
+	  variable routing1, routing2 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
+    --variable remote_y1, remote_x1, remote_y2, remote_x2 : local_yx;
+    -- variable go_left, go_right, go_up, go_down : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
+
+  begin  -- create_header
+
+    -- remote_y1 := "000";--remote_dst(3);
+    -- remote_x1 := "000";--remote_dst(2);
+    -- remote_y2 := "000";--remote_dst(1);
+    -- remote_x2 := "000";--remote_dst(0);
+    header := (others => '0');
+
+
+    header(flit_sz - 1 downto
+           flit_sz - PREAMBLE_WIDTH) := PREAMBLE_HEADER;
+    header(flit_sz - PREAMBLE_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - YX_WIDTH) := local_y;
+    header(flit_sz - PREAMBLE_WIDTH - YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH) := local_x;
+    header(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH) := remote_y1;
+    header(flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := remote_x1;
+    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
+    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 5*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y2;
+    header(flit_sz - PREAMBLE_WIDTH - 5*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x2;
+    header(flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - MSG_TYPE_WIDTH - 2) := "11";
+    header(flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - 3 - MSG_TYPE_WIDTH - 1 downto 5) := (others=>'0');
+
+	-- west1 = local_x > remote_x1 ?
+	--    //00100 : 11011
+	--    noc::goWest : ~noc::goWest; 
+  --   east1 = local_x < remote_x1 ?
+  --          // 01000 : 10111
+  --          noc::goEast : ~noc::goEast;
+  --   north1 = local_y > remote_y1 ?
+  --           // 01101 : 11110
+  --           noc::goNorth | noc::goWest | noc::goEast : ~noc::goNorth;
+  --   south1 = local_y < remote_y1 ?
+  --           // 01110 : 11101
+  --           noc::goSouth | noc::goWest | noc::goEast : ~noc::goSouth; 
+
+  --   // Result is go_local when none of the above is true
+ 	-- routing1 = west1 & east1 & north1 & south1;
+
+
+  if local_x > remote_x1 then
+    west1 := "00100";
+  else
+    west1 := "11011";
+  end if;
+
+  if local_x < remote_x1 then
+    east1 := "01000";
+  else
+    east1 := "10111";
+  end if;
+  
+  if local_y < remote_y1 then
+      routing1 := "01110" and west1 and east1;
+    else
+      routing1 := "01101" and west1 and east1;
+    end if;
+
+    if local_y = remote_y1 and local_x = remote_x1 then
+      routing1 := "10000";
+    end if;
+
+  --   north1 := "00001" and west1 and east1;
+  -- else
+  --   north1 := "11110";
+  -- end if;
+
+  -- if local_y < remote_y1 then
+  --   south1 := "00010" and west1 and east1;
+  -- else
+  --   south1 := "11101";
+  -- end if;
+
+  -- Result is go_local when none of the above is true
+ 	--routing1 := west1 and east1 and north1 and south1;
+
+	-- west2 = local_x > remote_x2 ?
+	--    //00100 : 11011
+	--    noc::goWest : ~noc::goWest; 
+  --   east2 = local_x < remote_x2 ?
+  --          // 01000 : 10111
+  --          noc::goEast : ~noc::goEast;
+  --   north2 = local_y > remote_y2 ?
+  --           // 01101 : 11110
+  --           noc::goNorth | noc::goWest | noc::goEast : ~noc::goNorth;
+  --   south2 = local_y < remote_y2 ?
+  --           // 01110 : 11101
+  --           noc::goSouth | noc::goWest | noc::goEast : ~noc::goSouth; 
+
+  --   // Result is go_local when none of the above is true
+ 	-- routing2 = west2 & east2 & north2 & south2;
+
+
+    if local_x > remote_x2 then
+    west2:= "00100";
+  else
+    west2:= "11011";
+  end if;
+
+  if local_x < remote_x2 then
+    east2:= "01000";
+  else
+    east2:= "10111";
+  end if;
+  
+
+  if local_y < remote_y2 then
+    routing2 := "01110" and west2 and east2;
+  else
+    routing2 := "01101" and west2 and east2;
+  end if;
+
+  if local_y = remote_y2 and local_x = remote_x2 then
+    routing2 := "10000";
+  end if;
+
+
+  -- if local_y > remote_y2 then
+  --   north2:= "00001" and west2 and east2;
+  -- else
+  --   north2:= "11110";
+  -- end if;
+
+  -- if local_y < remote_y2 then
+  --   south2:= "00010" and west2 and east2;
+  -- else
+  --   south2:= "11101";
+  -- end if;
+
+  -- Result is go_local when none of the above is true
+ 	-- routing2 := west2 and east2 and north2 and south2;
+
+    -- if (local_x < remote_x1 || local_x < remote_x2)
+    --   go_right := 'b01000;
+    -- else
+    --   go_right := 'b10111;
+
+    -- if (local_x > remote_x1 || local_x > remote_x2)
+    --   go_left := 'b00100;
+    -- else
+    -- go_left := 'b11011;
+
+    -- if ((local_y < remote_y) or (local_y < remote_y))
+    --   header[NEXT_ROUTING_WIDTH - 1 : 0] := 'b01110 and go_left and go_right;
+    -- else if ((local_y > remote_y) or (local_y > remote_y))
+    --   header[NEXT_ROUTING_WIDTH - 1 : 0] := 'b01101 and go_left and go_right;
+
+    -- if (((local_y == remote_y) && (local_x == remote_x)) or ((local_y == remote_y) && (local_x == remote_x)))
+    -- header[NEXT_ROUTING_WIDTH - 1 : 0] := 'b10000 or header[NEXT_ROUTING_WIDTH-1:0];
+
+    header(NEXT_ROUTING_WIDTH-1 downto 0) := routing1 or routing2;
+
+    return header;
+  end create_header_2dest;
 
   function narrow_to_large_flit (
     narrow_flit : misc_noc_flit_type)

@@ -38,7 +38,8 @@ entity router is
     flow_control : integer                      := 0;  --0 = AN; 1 = CB
     width        : integer                      := 34;
     depth        : integer                      := 4;
-    ports        : std_logic_vector(4 downto 0) := "11111"
+    ports        : std_logic_vector(4 downto 0) := "11111";
+    DEST_SIZE    : integer
     );
   port(
     clk : in std_logic;
@@ -74,7 +75,8 @@ architecture behavior of router is
     generic(
       FlowControl : std_logic;
       Width       : integer;
-      Ports       : std_logic_vector(4 downto 0)
+      Ports       : std_logic_vector(4 downto 0);
+      DEST_SIZE   : integer
       );
     port(
       clk : in std_logic;
@@ -108,7 +110,8 @@ begin
     generic map (
       FlowControl => to_std_logic(flow_control),
       Width       => width,
-      Ports       => Ports)
+      Ports       => Ports,
+      DEST_SIZE   => DEST_SIZE)
     port map (
       clk           => clk,
       rst           => rst,
