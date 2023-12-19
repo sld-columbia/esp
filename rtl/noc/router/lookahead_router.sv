@@ -56,7 +56,7 @@ module lookahead_router
     parameter int unsigned DataWidth = 64,
     parameter int unsigned PortWidth = DataWidth + $bits(noc::preamble_t),
     parameter bit [4:0] Ports = noc::AllPorts,
-    parameter integer DEST_SIZE
+    parameter integer DEST_SIZE = 2
     )
   (
    input  logic clk,
@@ -81,20 +81,34 @@ module lookahead_router
    input  logic [4:0] stop_in
    );
 
+  localparam integer DEST_ARR_SIZE = DEST_SIZE==1 || DEST_SIZE == 2 ? 1 : DEST_SIZE-1 ;
+
+  // ajay_v
+  // Modified the structure to add more destinataions and vaslid indications to each destination
+  typedef struct packed {
+    noc::xy_t source;
+    noc::xy_t destination;
+    //xy_t destination_1;
+    noc::message_t message;
+    noc::xy_t [0:DEST_ARR_SIZE-1] destination_arr;
+    bit [DEST_SIZE-1:0] val; // 1 indicates Destination still awaits, 0 indicates destination already reached/taken care
+    //logic val; // 1 indicates Destination 1 still awaits, 0 indicates destination already reached/crossed
+  } packet_info_t;
+
   localparam bit FifoBypassEnable = FlowControl == noc::kFlowControlAckNack;
 
   localparam int unsigned ReservedWidth =
-    DataWidth - $bits(noc::packet_info_t) - $bits(noc::direction_t);
+    DataWidth - $bits(packet_info_t) - $bits(noc::direction_t);
 
   typedef struct packed {
     noc::preamble_t preamble;
-    noc::packet_info_t info; // source, destination[],val[],message(5 bit)
+    packet_info_t info; // source, destination[],val[],message(5 bit)
     logic [ReservedWidth-1:0] reserved;
     noc::direction_t routing; // 5 bit logic indicates LEWSN
   } header_t;
 
   typedef logic [PortWidth-1:0] payload_t;
-
+  
   // Including header and the flit
   typedef union packed {
     header_t header;
@@ -110,6 +124,8 @@ module lookahead_router
   state_t [4:0] new_state;
 
   flit_t [4:0] data_in;
+  //ajay_v added for unicasting
+  flit_t temp_data_in;
   flit_t [4:0] fifo_head;
   flit_t [4:0] data_out_crossbar;
   flit_t [4:0] last_flit;
@@ -151,6 +167,8 @@ module lookahead_router
 
   noc::direction_t [4:0] current_routing;
 
+  noc::xy_t [0:DEST_SIZE-1] destination_arr_temp [4:0];
+
   logic [4:0] forwarding_tail;
   logic [4:0] forwarding_head;
   logic [4:0] forwarding_in_progress;
@@ -165,9 +183,37 @@ module lookahead_router
   assign data_in[noc::kSouthPort] = data_s_in;
   assign data_in[noc::kWestPort] = data_w_in;
   assign data_in[noc::kEastPort] = data_e_in;
-  assign data_in[noc::kLocalPort] = data_p_in;
 
-  // This router has a single cycle delay.
+  // Assign the whole Local In data to the data_in[Local] port 
+  // If the valid is not set, then this will ensure that atleast the first destination is valid
+  // This is to ensure the new router is backwards compatible  
+  assign data_in[noc::kLocalPort][PortWidth-1:ReservedWidth+5+1] = data_p_in[PortWidth-1:ReservedWidth+5+1];
+  assign data_in[noc::kLocalPort][ReservedWidth+5-1:0] = data_p_in[ReservedWidth+5-1:0];
+  assign data_in[noc::kLocalPort][ReservedWidth+5] = data_p_in[PortWidth-1] ? 1 : data_p_in[ReservedWidth+5];
+
+//  assign temp_data_in = data_p_in;
+//    assign data_in[noc::kLocalPort].header.preamble = temp_data_in.header.preamble;
+//    assign data_in[noc::kLocalPort].header.reserved = temp_data_in.header.reserved;
+//    assign data_in[noc::kLocalPort].header.routing = temp_data_in.header.routing;
+//    assign data_in[noc::kLocalPort].header.info.source = temp_data_in.header.info.source;
+//    assign data_in[noc::kLocalPort].header.info.destination = temp_data_in.header.info.destination;
+//    assign data_in[noc::kLocalPort].header.info.message = temp_data_in.header.info.message;
+//  
+//  // Use this for higher logic resources
+//  // assign data_in[noc::kLocalPort].header.info.val = temp_data_in.header.info.val + (!(|temp_data_in.header.info.val) && (temp_data_in.header.preamble.head));
+//
+//    // Use this for lower logic resources
+//   // generate
+//   // if (DEST_SIZE != 1)
+//   //   assign data_in[noc::kLocalPort].header.info.val = {temp_data_in.header.info.val[DEST_SIZE - 1: 1],
+//   //    (temp_data_in.header.info.val[0] | (!(|temp_data_in.header.info.val) && (temp_data_in.header.preamble.head)))};
+//   // else 
+//      assign data_in[noc::kLocalPort].header.info.val = temp_data_in.header.preamble.head ? 1 : temp_data_in.header.info.val;
+      //assign data_in[noc::kLocalPort].header.info.val = temp_data_in.header.info.val | (!(|temp_data_in.header.info.val) && (temp_data_in.header.preamble.head));
+    //endgenerate;
+//    assign data_in[noc::kLocalPort].flit = temp_data_in.flit;
+
+      //This router has a single cycle delay.
   // When using ready-valid protocol, the register is placed at the output; for credit-based,
   // the register is the input FIFO (not bypassable) and the output of the crossbar is not
   // registered.
@@ -285,6 +331,62 @@ module lookahead_router
 
   end  // for gen_input_fifo
 
+      // ajay_v
+      always_comb begin
+
+          destination_arr_temp[0] = 'b0;
+          destination_arr_temp[1] = 'b0;
+          destination_arr_temp[2] = 'b0;
+          destination_arr_temp[3] = 'b0;
+          destination_arr_temp[4] = 'b0;
+        if(fifo_head[0].header.preamble.head && rd_fifo_or[0]) begin
+        // if((fifo_head[0].header.preamble.head&& !fifo_head[0].header.preamble.tail) || (fifo_head[0].header.preamble.head && fifo_head[0].header.preamble.tail && !fifo_head[1].header.preamble.head && !fifo_head[2].header.preamble.head && !fifo_head[3].header.preamble.head && !fifo_head[4].header.preamble.head )) begin
+          destination_arr_temp[0] = (DEST_SIZE == 1) ? fifo_head[0].header.info.destination : {fifo_head[0].header.info.destination,fifo_head[0].header.info.destination_arr};
+          destination_arr_temp[1] = (DEST_SIZE == 1) ? fifo_head[0].header.info.destination : {fifo_head[0].header.info.destination,fifo_head[0].header.info.destination_arr};
+          destination_arr_temp[2] = (DEST_SIZE == 1) ? fifo_head[0].header.info.destination : {fifo_head[0].header.info.destination,fifo_head[0].header.info.destination_arr};
+          destination_arr_temp[3] = (DEST_SIZE == 1) ? fifo_head[0].header.info.destination : {fifo_head[0].header.info.destination,fifo_head[0].header.info.destination_arr};
+          destination_arr_temp[4] = (DEST_SIZE == 1) ? fifo_head[0].header.info.destination : {fifo_head[0].header.info.destination,fifo_head[0].header.info.destination_arr};
+        end
+        // else if((fifo_head[1].header.preamble.head&& !fifo_head[1].header.preamble.tail) || (fifo_head[1].header.preamble.head && fifo_head[1].header.preamble.tail && !fifo_head[0].header.preamble.head && !fifo_head[2].header.preamble.head && !fifo_head[3].header.preamble.head && !fifo_head[4].header.preamble.head )) begin
+        else if(fifo_head[1].header.preamble.head && rd_fifo_or[1]) begin
+          destination_arr_temp[0] = (DEST_SIZE == 1) ? fifo_head[1].header.info.destination : {fifo_head[1].header.info.destination,fifo_head[1].header.info.destination_arr};
+          destination_arr_temp[1] = (DEST_SIZE == 1) ? fifo_head[1].header.info.destination : {fifo_head[1].header.info.destination,fifo_head[1].header.info.destination_arr};
+          destination_arr_temp[2] = (DEST_SIZE == 1) ? fifo_head[1].header.info.destination : {fifo_head[1].header.info.destination,fifo_head[1].header.info.destination_arr};
+          destination_arr_temp[3] = (DEST_SIZE == 1) ? fifo_head[1].header.info.destination : {fifo_head[1].header.info.destination,fifo_head[1].header.info.destination_arr};
+          destination_arr_temp[4] = (DEST_SIZE == 1) ? fifo_head[1].header.info.destination : {fifo_head[1].header.info.destination,fifo_head[1].header.info.destination_arr};
+        end
+        // else if((fifo_head[2].header.preamble.head&& !fifo_head[2].header.preamble.tail) || (fifo_head[2].header.preamble.head && fifo_head[2].header.preamble.tail && !fifo_head[0].header.preamble.head && !fifo_head[1].header.preamble.head && !fifo_head[3].header.preamble.head && !fifo_head[4].header.preamble.head )) begin
+        else if(fifo_head[2].header.preamble.head && rd_fifo_or[2]) begin
+          destination_arr_temp[0] = (DEST_SIZE == 1) ? fifo_head[2].header.info.destination : {fifo_head[2].header.info.destination,fifo_head[2].header.info.destination_arr};
+          destination_arr_temp[1] = (DEST_SIZE == 1) ? fifo_head[2].header.info.destination : {fifo_head[2].header.info.destination,fifo_head[2].header.info.destination_arr};
+          destination_arr_temp[2] = (DEST_SIZE == 1) ? fifo_head[2].header.info.destination : {fifo_head[2].header.info.destination,fifo_head[2].header.info.destination_arr};
+          destination_arr_temp[3] = (DEST_SIZE == 1) ? fifo_head[2].header.info.destination : {fifo_head[2].header.info.destination,fifo_head[2].header.info.destination_arr};
+          destination_arr_temp[4] = (DEST_SIZE == 1) ? fifo_head[2].header.info.destination : {fifo_head[2].header.info.destination,fifo_head[2].header.info.destination_arr};
+        end
+        // Added special condition here for 1 flit packet. 
+        //else if((fifo_head[3].header.preamble.head && !fifo_head[3].header.preamble.tail) || (fifo_head[3].header.preamble.head && fifo_head[3].header.preamble.tail && !fifo_head[4].header.preamble.head)) begin
+          // Extend it for all directions.
+        //  else if((fifo_head[3].header.preamble.head && !fifo_head[3].header.preamble.tail) || (fifo_head[3].header.preamble.head && fifo_head[3].header.preamble.tail && !fifo_head[4].header.preamble.head && !fifo_head[0].header.preamble.head && !fifo_head[1].header.preamble.head && !fifo_head[2].header.preamble.head )) begin
+        else if(fifo_head[3].header.preamble.head && rd_fifo_or[3]) begin
+          destination_arr_temp[0] = (DEST_SIZE == 1) ? fifo_head[3].header.info.destination : {fifo_head[3].header.info.destination,fifo_head[3].header.info.destination_arr};
+          destination_arr_temp[1] = (DEST_SIZE == 1) ? fifo_head[3].header.info.destination : {fifo_head[3].header.info.destination,fifo_head[3].header.info.destination_arr};
+          destination_arr_temp[2] = (DEST_SIZE == 1) ? fifo_head[3].header.info.destination : {fifo_head[3].header.info.destination,fifo_head[3].header.info.destination_arr};
+          destination_arr_temp[3] = (DEST_SIZE == 1) ? fifo_head[3].header.info.destination : {fifo_head[3].header.info.destination,fifo_head[3].header.info.destination_arr};
+          destination_arr_temp[4] = (DEST_SIZE == 1) ? fifo_head[3].header.info.destination : {fifo_head[3].header.info.destination,fifo_head[3].header.info.destination_arr};                          
+        end
+        // else if((fifo_head[4].header.preamble.head&& !fifo_head[4].header.preamble.tail) || (fifo_head[4].header.preamble.head && fifo_head[4].header.preamble.tail && !fifo_head[0].header.preamble.head && !fifo_head[1].header.preamble.head && !fifo_head[2].header.preamble.head && !fifo_head[3].header.preamble.head )) begin
+        else if(fifo_head[4].header.preamble.head && rd_fifo_or[4]) begin
+          destination_arr_temp[0] = (DEST_SIZE == 1) ? fifo_head[4].header.info.destination : {fifo_head[4].header.info.destination,fifo_head[4].header.info.destination_arr};
+          destination_arr_temp[1] = (DEST_SIZE == 1) ? fifo_head[4].header.info.destination : {fifo_head[4].header.info.destination,fifo_head[4].header.info.destination_arr};
+          destination_arr_temp[2] = (DEST_SIZE == 1) ? fifo_head[4].header.info.destination : {fifo_head[4].header.info.destination,fifo_head[4].header.info.destination_arr};
+          destination_arr_temp[3] = (DEST_SIZE == 1) ? fifo_head[4].header.info.destination : {fifo_head[4].header.info.destination,fifo_head[4].header.info.destination_arr};
+          destination_arr_temp[4] = (DEST_SIZE == 1) ? fifo_head[4].header.info.destination : {fifo_head[4].header.info.destination,fifo_head[4].header.info.destination_arr};                          
+        end
+
+        else begin
+
+        end
+      end
 
   //////////////////////////////////////////////////////////////////////////////
   // Output crossbar and arbitration
@@ -323,6 +425,8 @@ module lookahead_router
         if (forwarding_in_progress[g_i]) begin
           saved_routing_configuration[g_i] <= routing_configuration[g_i];
         end
+        else
+          saved_routing_configuration[g_i] <= 'h0;
       end
 
       // Set to overwrite routing info only on the head flit
@@ -348,13 +452,24 @@ module lookahead_router
         rd_fifo[g_i] = '0;
         out_unvalid_flit[g_i] = 1'b1;
 
+        //for (g_i=0; g_i<5; g_i++) begin : for_all_dests
+        // destination_arr_temp[g_i] = DEST_SIZE == 1 ? fifo_head[g_i].header.info.destination : {fifo_head[g_i].header.info.destination,fifo_head[g_i].header.info.destination_arr};
+        //end        
+
 
         //ajay_v added
-        fifo_head_temp[g_i][0] = fifo_head[0];
-        fifo_head_temp[g_i][1] = fifo_head[1];
-        fifo_head_temp[g_i][2] = fifo_head[2];
-        fifo_head_temp[g_i][3] = fifo_head[3];
-        fifo_head_temp[g_i][4] = fifo_head[4];
+        //fifo_head_temp[g_i][0] = fifo_head[0];
+        //fifo_head_temp[g_i][1] = fifo_head[1];
+        //fifo_head_temp[g_i][2] = fifo_head[2];
+        //fifo_head_temp[g_i][3] = fifo_head[3];
+        //fifo_head_temp[g_i][4] = fifo_head[4];
+
+        for (int j=0; j<5; j++)
+        begin
+          fifo_head_temp[g_i][j] = fifo_head[j].header.preamble.head ? fifo_head[j].header : fifo_head[j].flit;
+          //destination_arr_temp[j] = DEST_SIZE == 1 ? fifo_head[j].header.info.destination : {fifo_head[j].header.info.destination,fifo_head[j].header.info.destination_arr};
+        end        
+
         //val_checkme= 3'h0;
         
         // To check which destination to invalidate
@@ -401,13 +516,15 @@ module lookahead_router
             if(g_i == 0) begin // Going North
               for(int index = 0; index < DEST_SIZE; index++) begin  //check_north_and_inval_dest
                 if(fifo_head[noc::kNorthPort].header.info.val[index]) begin 
-                  if(position.x != fifo_head[noc::kNorthPort].header.info.destination[index].x) begin  // dest_in_wrong_direction_for_next_router_0
+                  // if(position.x != fifo_head[noc::kNorthPort].header.info.destination[index].x) begin  // dest_in_wrong_direction_for_next_router_0
+                  if(position.x != destination_arr_temp[noc::kNorthPort][index].x) begin  // dest_in_wrong_direction_for_next_router_0
                       fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
                       inval_routing[g_i][0] = 0;
                       dest_checkme[g_i] = 3'h7;
                   end
                   else begin 
-                    if(position.y-1 < fifo_head[noc::kNorthPort].header.info.destination[index].y) begin // opposite_direction_dest
+                    // if(position.y-1 < fifo_head[noc::kNorthPort].header.info.destination[index].y) begin // opposite_direction_dest
+                    if(position.y-1 < destination_arr_temp[noc::kNorthPort][index].y) begin // opposite_direction_dest
                       fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
                       inval_routing[g_i][0] = 0;
                       dest_checkme[g_i] = 3'h7;
@@ -426,13 +543,13 @@ module lookahead_router
               inval_routing[g_i][0] = 0;
 
                   if(fifo_head[noc::kNorthPort].header.info.val[index]) begin //---------- ajay_v - do we need to check for this condition ? ----------
-                    if(position.x != fifo_head[noc::kNorthPort].header.info.destination[index].x) begin  // 
+                    if(position.x != destination_arr_temp[noc::kNorthPort][index].x) begin  // 
                       fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
                       inval_routing[g_i][0] = 0;
                       dest_checkme[g_i] = 3'h5;
                     end
                     else begin  // wrong_direction_in_next_router_1
-                      if(!(fifo_head_temp[g_i][noc::kNorthPort].header.info.destination[index].y)) begin // destination is on the north // Check if pos.y+1 > dest
+                      if(!(destination_arr_temp[noc::kNorthPort][index].y)) begin // destination is on the north // Check if pos.y+1 > dest
                         fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
                         inval_routing[g_i][0] = 0;
                         dest_checkme[g_i] = 3'h5;
@@ -444,7 +561,7 @@ module lookahead_router
             if(g_i == 2) begin // Going West
               for(int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
                   if(fifo_head[noc::kNorthPort].header.info.val[index]) begin // ---------- ajay_v - do we need to check for this condition ? ----------
-                    if(position.x-1 < fifo_head[noc::kNorthPort].header.info.destination[index].x) begin // The destination is in the east direction 
+                    if(position.x-1 < destination_arr_temp[noc::kNorthPort][index].x) begin // The destination is in the east direction 
                       fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
                       inval_routing[g_i][0] = 0;
                       dest_checkme[g_i] = 3'h3;
@@ -455,7 +572,7 @@ module lookahead_router
             if(g_i == 3) begin // Going East
               for(int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
                   if(fifo_head[noc::kNorthPort].header.info.val[index]) begin // ---------- ajay_v - do we need to check for this condition ? ----------
-                    if(position.x+1 > fifo_head[noc::kNorthPort].header.info.destination[index].x) begin// The destination is in the east direction 
+                    if(position.x+1 > destination_arr_temp[noc::kNorthPort][index].x) begin// The destination is in the east direction 
                       fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
                       inval_routing[g_i][0] = 0;
                       dest_checkme[g_i] = 3'h1;
@@ -466,7 +583,7 @@ module lookahead_router
             if(g_i == 4) begin // Going Local
               for(int index = 0; index < DEST_SIZE; index++) begin  // check_east_and_inval_dest
                 if(fifo_head[noc::kNorthPort].header.info.val[index]) begin // 
-                  if((position.x != fifo_head[noc::kNorthPort].header.info.destination[index].x) || (position.y != fifo_head[noc::kNorthPort].header.info.destination[index].y)) begin // local_out
+                  if((position.x != destination_arr_temp[noc::kNorthPort][index].x) || (position.y != destination_arr_temp[noc::kNorthPort][index].y)) begin // local_out
                     fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
                     inval_routing[g_i][0]=0; 
                     dest_checkme[g_i] = 3'h6;
@@ -474,7 +591,7 @@ module lookahead_router
                 end
               end  
             end
-          fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kNorthPort];
+          fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kNorthPort].header.preamble.head ? fifo_head_temp[g_i][noc::kNorthPort].header : fifo_head[noc::kNorthPort].flit;
 
           //  data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i][noc::kNorthPort] :
           //  {fifo_head_temp[g_i][noc::kNorthPort].flit[PortWidth-1:5], (next_hop_routing[noc::kNorthPort])};
@@ -530,13 +647,13 @@ module lookahead_router
               inval_routing[g_i][2] = 0;
               inval_routing[g_i][1] = 0;
 
-              if(position.x != fifo_head[noc::kSouthPort].header.info.destination[index].x) begin  // dest_in_wrong_direction_for_next_router_0
+              if(position.x != destination_arr_temp[noc::kSouthPort][index].x) begin  // dest_in_wrong_direction_for_next_router_0
                   fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
                   inval_routing[g_i][1] = 0;
                   dest_checkme[g_i] = 3'h7;
               end
               else begin 
-                if(position.y-1 < fifo_head[noc::kSouthPort].header.info.destination[index].y) begin // opposite_direction_dest
+                if(position.y-1 < destination_arr_temp[noc::kSouthPort][index].y) begin // opposite_direction_dest
                   fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
                   inval_routing[g_i][1] = 0;
                   dest_checkme[g_i] = 3'h7;
@@ -549,13 +666,13 @@ module lookahead_router
         if(g_i == 1) begin // Going South
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_south_and_inval_dest
               if(fifo_head[noc::kSouthPort].header.info.val[index]) begin //---------- ajay_v - do we need to check for this condition ? ----------
-                if(position.x != fifo_head[noc::kSouthPort].header.info.destination[index].x) begin  // 
+                if(position.x != destination_arr_temp[noc::kSouthPort][index].x) begin  // 
                   fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
                   inval_routing[g_i][1] = 0;
                   dest_checkme[g_i] = 3'h5;
                 end
                 else begin  // wrong_direction_in_next_router_1
-                  if(!(fifo_head_temp[g_i][noc::kSouthPort].header.info.destination[index].y)) begin // destination is on the north // Check if pos.y+1 > dest
+                  if(!(destination_arr_temp[noc::kSouthPort][index].y)) begin // destination is on the north // Check if pos.y+1 > dest
                     fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
                     inval_routing[g_i][1] = 0;
                     dest_checkme[g_i] = 3'h5;
@@ -567,7 +684,7 @@ module lookahead_router
         if(g_i == 2) begin // Going West
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
               if(fifo_head[noc::kSouthPort].header.info.val[index]) begin // ---------- ajay_v - do we need to check for this condition ? ----------
-                if(position.x-1 < fifo_head[noc::kSouthPort].header.info.destination[index].x) begin // The destination is in the east direction 
+                if(position.x-1 < destination_arr_temp[noc::kSouthPort][index].x) begin // The destination is in the east direction 
                   fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
                   inval_routing[g_i][1] = 0;
                   dest_checkme[g_i] = 3'h3;
@@ -578,7 +695,7 @@ module lookahead_router
         if(g_i == 3) begin // Going East
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
               if(fifo_head[noc::kSouthPort].header.info.val[index]) begin // ---------- ajay_v - do we need to check for this condition ? ----------
-                if(position.x+1 > fifo_head[noc::kSouthPort].header.info.destination[index].x) begin// The destination is in the east direction 
+                if(position.x+1 > destination_arr_temp[noc::kSouthPort][index].x) begin// The destination is in the east direction 
                   fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
                   inval_routing[g_i][1] = 0;
                   dest_checkme[g_i] = 3'h1;
@@ -589,7 +706,7 @@ module lookahead_router
         if(g_i == 4) begin // Going Local
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_east_and_inval_dest
             if(fifo_head[noc::kSouthPort].header.info.val[index]) begin // 
-              if((position.x != fifo_head[noc::kSouthPort].header.info.destination[index].x) || (position.y != fifo_head[noc::kSouthPort].header.info.destination[index].y)) begin // local_out
+              if((position.x != destination_arr_temp[noc::kSouthPort][index].x) || (position.y != destination_arr_temp[noc::kSouthPort][index].y)) begin // local_out
                 fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
                 inval_routing[g_i][1] = 0;
                 dest_checkme[g_i] = 3'h6;
@@ -598,7 +715,7 @@ module lookahead_router
           end  
         end
 
-          fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kSouthPort];
+          fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kSouthPort].header.preamble.head ? fifo_head_temp[g_i][noc::kSouthPort].header : fifo_head[noc::kSouthPort].flit;
 
             // data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i][noc::kSouthPort] :
             // {fifo_head_temp[g_i][noc::kSouthPort].flit[PortWidth-1:5], (next_hop_routing[noc::kSouthPort])};
@@ -643,13 +760,13 @@ module lookahead_router
                 inval_routing[g_i][2] = 0;
                 inval_routing[g_i][1] = 0;
 
-              if(position.x != fifo_head[noc::kWestPort].header.info.destination[index].x) begin  // dest_in_wrong_direction_for_next_router_0
+              if(position.x != destination_arr_temp[noc::kWestPort][index].x) begin  // dest_in_wrong_direction_for_next_router_0
                   fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
                   inval_routing[g_i][2] = 0;
                   dest_checkme[g_i] = 3'h7;
               end
               else begin 
-                if(position.y-1 < fifo_head[noc::kWestPort].header.info.destination[index].y) begin // opposite_direction_dest
+                if(position.y-1 < destination_arr_temp[noc::kWestPort][index].y) begin // opposite_direction_dest
                   fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
                   inval_routing[g_i][2] = 0;
                   dest_checkme[g_i] = 3'h7;
@@ -667,12 +784,12 @@ module lookahead_router
                 inval_routing[g_i][3] = 0;
                 inval_routing[g_i][2] = 0;
                 inval_routing[g_i][0] = 0;
-                if(position.x != fifo_head[noc::kWestPort].header.info.destination[index].x) begin  // 
+                if(position.x != destination_arr_temp[noc::kWestPort][index].x) begin  // 
                   fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
                   dest_checkme[g_i] = 3'h5;
                 end
                 else begin  // wrong_direction_in_next_router_1
-                  if(!(fifo_head_temp[g_i][noc::kWestPort].header.info.destination[index].y)) begin // destination is on the north // Check if pos.y+1 > dest
+                  if(!(destination_arr_temp[noc::kWestPort][index].y)) begin // destination is on the north // Check if pos.y+1 > dest
                     fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
                     dest_checkme[g_i] = 3'h5;
 		              end
@@ -683,18 +800,18 @@ module lookahead_router
         if(g_i == 2) begin // Going West
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
               if(fifo_head[noc::kWestPort].header.info.val[index]) begin // ---------- ajay_v - do we need to check for this condition ? ----------
-                if(position.x-1 < fifo_head[noc::kWestPort].header.info.destination[index].x) begin // The destination is in the east direction 
+                if(position.x-1 < destination_arr_temp[noc::kWestPort][index].x) begin // The destination is in the east direction 
                   fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
                   inval_routing[g_i][2] = 0;
                   dest_checkme[g_i] = 3'h3;
                 end
                 // ajay_v   ******** To invalidate the routing bits ******* //
-                if(position.x-1 == fifo_head[noc::kWestPort].header.info.destination[index].x) begin
+                if(position.x-1 == destination_arr_temp[noc::kWestPort][index].x) begin
                   inval_routing[g_i][1] = 1;
                   inval_routing[g_i][0] = 1;
                   inval_routing[g_i][4] = 1;
                 end
-                else if(position.x-1 != fifo_head[noc::kWestPort].header.info.destination[index].x) begin // Its its not a local there or not needed to go north or south, make the local bit of routing 0
+                else if(position.x-1 != destination_arr_temp[noc::kWestPort][index].x) begin // Its its not a local there or not needed to go north or south, make the local bit of routing 0
                   inval_routing[g_i][4] = 0;
                   inval_routing[g_i][1] = 0;
                   inval_routing[g_i][0] = 0;
@@ -706,18 +823,18 @@ module lookahead_router
         if(g_i == 3) begin // Going East
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
               if(fifo_head[noc::kWestPort].header.info.val[index]) begin // ---------- ajay_v - do we need to check for this condition ? ----------
-                if(position.x+1 > fifo_head[noc::kWestPort].header.info.destination[index].x) begin// The destination is in the east direction 
+                if(position.x+1 > destination_arr_temp[noc::kWestPort][index].x) begin// The destination is in the east direction 
                   fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
                   inval_routing[g_i][2] = 0;
                   dest_checkme[g_i] = 3'h1;
                 end
                 // ajay_v   ******** To invalidate the routing bits ******* //
-                if(position.x+1 == fifo_head[noc::kWestPort].header.info.destination[index].x) begin
+                if(position.x+1 == destination_arr_temp[noc::kWestPort][index].x) begin
                   inval_routing[g_i][1] = ~inval_routing[g_i][1];
                   inval_routing[g_i][0] = ~inval_routing[g_i][0];
                 end
                 // else if(position.x+1 != fifo_head[noc::kWestPort].header.info.destination[index].x) begin // 
-                else if(position.x+1 != fifo_head[noc::kWestPort].header.info.destination[index].x) begin // 
+                else if(position.x+1 != destination_arr_temp[noc::kWestPort][index].x) begin // 
                   inval_routing[g_i][1] = ~inval_routing[g_i][1];
                   inval_routing[g_i][0] = ~inval_routing[g_i][0];
                 end
@@ -727,7 +844,7 @@ module lookahead_router
         if(g_i == 4) begin // Going Local
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_east_and_inval_dest
             if(fifo_head[noc::kWestPort].header.info.val[index]) begin // 
-              if((position.x != fifo_head[noc::kWestPort].header.info.destination[index].x) || (position.y != fifo_head[noc::kWestPort].header.info.destination[index].y)) begin // local_out
+              if((position.x != destination_arr_temp[noc::kWestPort][index].x) || (position.y != destination_arr_temp[noc::kWestPort][index].y)) begin // local_out
                 fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
                 inval_routing[g_i][2] = 0;
                 dest_checkme[g_i] = 3'h6;
@@ -736,7 +853,8 @@ module lookahead_router
           end  
         end
 
-          fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kWestPort];
+
+          fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kWestPort].header.preamble.head ? fifo_head_temp[g_i][noc::kWestPort].header : fifo_head[noc::kWestPort].flit;
           // data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i][noc::kWestPort] :
           // {fifo_head_temp[g_i][noc::kWestPort].flit[PortWidth-1:5], (next_hop_routing[noc::kWestPort])};          
             // {fifo_head_temp[g_i][noc::kWestPort].flit[PortWidth-1:5], (next_hop_routing[noc::kWestPort] & inval_routing[g_i])};
@@ -789,13 +907,13 @@ module lookahead_router
             inval_routing[g_i][1] = 0;
 
             if(fifo_head[noc::kEastPort].header.info.val[index]) begin 
-              if(position.x != fifo_head[noc::kEastPort].header.info.destination[index].x) begin  // dest_in_wrong_direction_for_next_router_0
+              if(position.x != destination_arr_temp[noc::kEastPort][index].x) begin  // dest_in_wrong_direction_for_next_router_0
                   fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
                   inval_routing[g_i][3] = 0;
                   dest_checkme[g_i] = 3'h7;
               end
               else begin 
-                if(position.y-1 < fifo_head[noc::kEastPort].header.info.destination[index].y) begin // opposite_direction_dest
+                if(position.y-1 < destination_arr_temp[noc::kEastPort][index].y) begin // opposite_direction_dest
                   fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
                   inval_routing[g_i][3] = 0;
                   dest_checkme[g_i] = 3'h7;
@@ -814,13 +932,13 @@ module lookahead_router
                 inval_routing[g_i][2] = 0;
                 inval_routing[g_i][0] = 0;
 
-                if(position.x != fifo_head[noc::kEastPort].header.info.destination[index].x) begin  // 
+                if(position.x != destination_arr_temp[noc::kEastPort][index].x) begin  // 
                   fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
                   inval_routing[g_i][3] = 0;
                   dest_checkme[g_i] = 3'h5;
                 end
                 else begin  // wrong_direction_in_next_router_1
-                  if(!(fifo_head_temp[g_i][noc::kEastPort].header.info.destination[index].y)) begin // destination is on the north // Check if pos.y+1 > dest
+                  if(!(destination_arr_temp[noc::kEastPort][index].y)) begin // destination is on the north // Check if pos.y+1 > dest
                     fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
                     inval_routing[g_i][3] = 0;
                     dest_checkme[g_i] = 3'h5;
@@ -832,13 +950,13 @@ module lookahead_router
         if(g_i == 2) begin // Going West
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
               if(fifo_head[noc::kEastPort].header.info.val[index]) begin // ---------- ajay_v - do we need to check for this condition ? ----------
-                if(position.x-1 < fifo_head[noc::kEastPort].header.info.destination[index].x) begin // The destination is in the east direction 
+                if(position.x-1 < destination_arr_temp[noc::kEastPort][index].x) begin // The destination is in the east direction 
                   fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
                   inval_routing[g_i][3] = 0;
                   dest_checkme[g_i] = 3'h3;
                 end
                 // ajay_v   ******** To invalidate the routing bits ******* //
-                if(position.x-1 != fifo_head[noc::kWestPort].header.info.destination[index].x) begin // Its its not a local there or not needed to go north or south, make the local bit of routing 0
+                if(position.x-1 != destination_arr_temp[noc::kEastPort][index].x) begin // Its its not a local there or not needed to go north or south, make the local bit of routing 0
                   inval_routing[g_i][4] = 0;
                   inval_routing[g_i][1] = 0;
                   inval_routing[g_i][0] = 0;
@@ -849,7 +967,7 @@ module lookahead_router
         if(g_i == 3) begin // Going East
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
               if(fifo_head[noc::kEastPort].header.info.val[index]) begin // ---------- ajay_v - do we need to check for this condition ? ----------
-                if(position.x+1 > fifo_head[noc::kEastPort].header.info.destination[index].x) begin// The destination is in the east direction 
+                if(position.x+1 > destination_arr_temp[noc::kEastPort][index].x) begin// The destination is in the east direction 
                   fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
                   inval_routing[g_i][3] = 0;
                   dest_checkme[g_i] = 3'h1;
@@ -860,7 +978,7 @@ module lookahead_router
         if(g_i == 4) begin // Going Local
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_east_and_inval_dest
             if(fifo_head[noc::kEastPort].header.info.val[index]) begin // 
-              if((position.x != fifo_head[noc::kEastPort].header.info.destination[index].x) || (position.y != fifo_head[noc::kEastPort].header.info.destination[index].y)) begin // local_out
+              if((position.x != destination_arr_temp[noc::kEastPort][index].x) || (position.y != destination_arr_temp[noc::kEastPort][index].y)) begin // local_out
                 fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
                 inval_routing[g_i][3] = 0;
                 dest_checkme[g_i] = 3'h6;
@@ -869,7 +987,7 @@ module lookahead_router
           end  
         end
 
-          fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kEastPort];
+          fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kEastPort].header.preamble.head ? fifo_head_temp[g_i][noc::kEastPort].header : fifo_head[noc::kEastPort].flit;
 
           // data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i][noc::kEastPort] :
             // {fifo_head_temp[g_i][noc::kEastPort].flit[PortWidth-1:5], (next_hop_routing[noc::kEastPort])};
@@ -904,32 +1022,32 @@ module lookahead_router
         if(g_i == 0) begin // Going North
           for(int index = 0; index < DEST_SIZE; index++) begin  //check_north_and_inval_dest
             if(fifo_head[noc::kLocalPort].header.info.val[index]) begin 
-              if(position.x != fifo_head[noc::kLocalPort].header.info.destination[index].x) begin  // dest_in_wrong_direction_for_next_router_0
+              if(position.x != destination_arr_temp[noc::kLocalPort][index].x) begin  // dest_in_wrong_direction_for_next_router_0
                   fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
                   inval_routing[g_i][4] = 0;
                   dest_checkme[g_i] = 3'h7;
               end
               else begin 
-                if(position.y-1 < fifo_head[noc::kLocalPort].header.info.destination[index].y) begin // opposite_direction_dest
+                if(position.y-1 < destination_arr_temp[noc::kLocalPort][index].y) begin // opposite_direction_dest
                   fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
                   inval_routing[g_i][4] = 0;
                   dest_checkme[g_i] = 3'h7;
                 end
               end
             end   
-          end
         end
+          end
 
         if(g_i == 1) begin // Going South
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_south_and_inval_dest
               if(fifo_head[noc::kLocalPort].header.info.val[index]) begin //---------- ajay_v - do we need to check for this condition ? ----------
-                if(position.x != fifo_head[noc::kLocalPort].header.info.destination[index].x) begin  // 
+                if(position.x != destination_arr_temp[noc::kLocalPort][index].x) begin  // 
                   fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
                   inval_routing[g_i][4] = 0;
                   dest_checkme[g_i] = 3'h5;
                 end
                 else begin  // wrong_direction_in_next_router_1
-                  if(!(fifo_head_temp[g_i][noc::kLocalPort].header.info.destination[index].y)) begin // destination is on the north // Check if pos.y+1 > dest
+                  if(!(destination_arr_temp[noc::kLocalPort][index].y)) begin // destination is on the north // Check if pos.y+1 > dest
                     fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
                     inval_routing[g_i][4] = 0;
                     dest_checkme[g_i] = 3'h5;
@@ -941,7 +1059,7 @@ module lookahead_router
         if(g_i == 2) begin // Going West
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
               if(fifo_head[noc::kLocalPort].header.info.val[index]) begin // ---------- ajay_v - do we need to check for this condition ? ----------
-                if(position.x-1 < fifo_head[noc::kLocalPort].header.info.destination[index].x) begin // The destination is in the east direction 
+                if(position.x-1 < destination_arr_temp[noc::kLocalPort][index].x) begin // The destination is in the east direction 
                   fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
                   inval_routing[g_i][4] = 0;
                   dest_checkme[g_i] = 3'h3;
@@ -952,7 +1070,7 @@ module lookahead_router
         if(g_i == 3) begin // Going East
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
               if(fifo_head[noc::kLocalPort].header.info.val[index]) begin // ---------- ajay_v - do we need to check for this condition ? ----------
-                if(position.x+1 > fifo_head[noc::kLocalPort].header.info.destination[index].x) begin// The destination is in the east direction 
+                if(position.x+1 > destination_arr_temp[noc::kLocalPort][index].x) begin// The destination is in the east direction 
                   fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
                   inval_routing[g_i][4] = 0;
                   dest_checkme[g_i] = 3'h1;
@@ -963,7 +1081,7 @@ module lookahead_router
         if(g_i == 4) begin // Going Local
           for(int index = 0; index < DEST_SIZE; index++) begin  // check_east_and_inval_dest
             if(fifo_head[noc::kLocalPort].header.info.val[index]) begin // 
-              if((position.x != fifo_head[noc::kLocalPort].header.info.destination[index].x) || (position.y != fifo_head[noc::kLocalPort].header.info.destination[index].y)) begin // local_out
+              if((position.x != destination_arr_temp[noc::kLocalPort][index].x) || (position.y != destination_arr_temp[noc::kLocalPort][index].y)) begin // local_out
                 fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
                 inval_routing[g_i][4] = 0;
                 dest_checkme[g_i] = 3'h6;
@@ -972,7 +1090,7 @@ module lookahead_router
           end  
         end
 
-          fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kLocalPort];
+          fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kLocalPort].header.preamble.head ? fifo_head_temp[g_i][noc::kLocalPort].header : fifo_head[noc::kLocalPort].flit;
 
           // data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i][noc::kLocalPort] :
           //   {fifo_head_temp[g_i][noc::kLocalPort].flit[PortWidth-1:5], (next_hop_routing[noc::kLocalPort])};
@@ -981,23 +1099,32 @@ module lookahead_router
           rd_fifo[g_i][noc::kLocalPort] = no_backpressure[g_i];
           out_unvalid_flit[g_i] = in_unvalid_flit[noc::kLocalPort];
         end
+        //  fifo_head[0] = 'b0;
+        //  fifo_head[1] = 'b0;
+        //  fifo_head[2] = 'b0;
+        //  fifo_head[3] = 'b0;
+        //  fifo_head[4] = 'b0;
       end
       
       assign current_routing[g_i] = 5'h1 << g_i ;
 
-        lookahead_routing lookahead_routing_i
+        lookahead_routing 
+        #(
+           .DEST_SIZE(DEST_SIZE)
+        )
+        lookahead_routing_i
         (
         .clk,
         .position,
-        .destination(fifo_head_routing[g_i].header.info.destination),
+        .destination(destination_arr_temp[g_i]),
         .val(fifo_head_routing[g_i].header.info.val),
         .current_routing(current_routing[g_i]),
         .next_routing(next_hop_routing[g_i])
         );
 
-      assign data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_routing[g_i] :
-        {fifo_head_routing[g_i].flit[PortWidth-1:5], (next_hop_routing[g_i])};
-
+  // Modified on 11/29 to make sure we are updating valid bits only when we have header
+  //      assign data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_routing[g_i] : (fifo_head[g_i].header.preamble.head ? {fifo_head_routing[g_i].header[PortWidth-1:5], (next_hop_routing[g_i])} : {fifo_head[g_i].flit[PortWidth-1:5],next_hop_routing[g_i]});
+  assign data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_routing[g_i] :  {fifo_head_routing[g_i].flit[PortWidth-1:5], (next_hop_routing[g_i])};
 
       // Sample output
       always_ff @(posedge clk) begin
@@ -1117,6 +1244,10 @@ module lookahead_router
       assign fifo_head_temp[g_i][2] = '0;
       assign fifo_head_temp[g_i][3] = '0;
       assign fifo_head_temp[g_i][4] = '0;
+      assign current_routing[g_i] = '0 ;
+      assign enhanc_routing_configuration[g_i] = '0; 
+      //assign transp_final_routing_request[g_i][g_j] = '0;
+
     end // block: gen_output_port_enabled
 
   end // for gen_output_control
@@ -1129,7 +1260,7 @@ module lookahead_router
 // pragma coverage off
 //VCS coverage off
 
-  if (DataWidth < $bits(noc::packet_info_t) + $bits(noc::direction_t)) begin : gen_a_data_width
+  if (DataWidth < $bits(packet_info_t) + $bits(noc::direction_t)) begin : gen_a_data_width
     $fatal(2'd2, "Fail: DataWidth insufficient to hold packet and routing information.");
   end
 

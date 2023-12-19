@@ -1,4 +1,4 @@
-// Compute next YX positional routing for a 2D mesh NoC
+// Compute next YX positional routing for a 3D mesh NoC
 //
 // This module determines the next routing direction (lookahead) for the current flit.
 // First the coordinates of the next hop are determined based on the routing direction
@@ -24,13 +24,12 @@
 // - next_routing: one-hot encoded routing direction for the next hop.
 //
 
-module lookahead_routing  #(
-    parameter integer DEST_SIZE = 6
-    )
+module lookahead_routing #(
+  parameter integer DEST_SIZE = 1)
   (
    input logic clk,
    input noc::xy_t position,
-   input noc::xy_t [DEST_SIZE-1:0] destination,
+   input noc::xy_t [0:DEST_SIZE-1] destination,
    input logic [DEST_SIZE-1:0] val,
    input noc::direction_t current_routing,
    output noc::direction_t next_routing
@@ -50,95 +49,6 @@ module lookahead_routing  #(
     input noc::xy_t destination);
     // Compute next routing: go East/West first, then North/South
     noc::direction_t west, east, north, south, local1;
-
-//	west.go_local = 0;
-//	west.go_east = 0;
-//	west.go_west = 0;
-//	west.go_south = 0;
-//	west.go_north = 0;
-//	east.go_local = 0;
-//	east.go_east = 0;
-//	east.go_west = 0;
-//	east.go_south = 0;
-//	east.go_north = 0;
-//	north.go_local = 0;
-//	north.go_east = 0;
-//	north.go_west = 0;
-//	north.go_south = 0;
-//	north.go_north = 0;
-//	south.go_local = 0;
-//	south.go_east = 0;
-//	south.go_west = 0;
-//	south.go_south = 0;
-//	south.go_north = 0;
-//	local1.go_local = 0;
-//	local1.go_east = 0;
-//	local1.go_west = 0;
-//	local1.go_south = 0;
-//	local1.go_north = 0;
-
-
-
-  /*  if(next_position.x > destination.x) 
-	begin
-		west.go_west = 1;
-		local1.go_west = 1;
-	end
-	else begin
-		west.go_local = 1;
-		west.go_east = 1;
-		west.go_west = 0;
-		west.go_south = 1;
-		west.go_north = 1;
-	end
-    if(next_position.x < destination.x) 
-	begin
-		east.go_east = 1; 
-		local1.go_east = 1;
-	end
-	else begin
-		
-		east.go_local = 1;
-		east.go_east = 0;
-		east.go_west = 1;
-		east.go_south = 1;
-		east.go_north = 1;
-
-	end
-    
-           // 00100 : 11011
-           //noc::goWest : ~noc::goWest;
-
-
-     if(next_position.y > destination.y) 
-	begin
-		north.go_north = 1;
-		local1.go_north = 1;
-	end
-	else begin
-		north.go_local = 1;
-		north.go_east = 1; 
-        	north.go_west = 1;
-        	north.go_south = 1;
-        	north.go_north = 0;
-	end
-
-     if(next_position.y < destination.y) 
-	begin
-		south.go_south = 1;
-		local1.go_south = 1;
-	end
-	else
-	begin
-
-		south.go_local = 1;
-		south.go_east = 1; 
-        	south.go_west = 1;
-        	south.go_south = 0;
-        	south.go_north = 1;
-	
-	end*/
-  
 
     west = next_position.x > destination.x ?
 	  //  00100 : 11011;
@@ -195,47 +105,10 @@ module lookahead_routing  #(
     // This can be done for all the destinations and then the final next_routing can be a OR of all the next_routing times.
     
     // When current_routing is goLocal, we don't care about next_routing assignment
-    next_routing = current_routing;
-    routing_paths[0] = 5'b00000;//current_routing;
-    routing_paths[1] = 5'b00000;//current_routing;
-    routing_paths[2] = 5'b00000;//current_routing;
-    routing_paths[3] = 5'b00000;//current_routing;
-    routing_paths[4] = 5'b00000;//current_routing;
-    routing_paths[5] = 5'b00000;//current_routing;
-
-    //if (current_routing == noc::goNorth) 
-    //begin
-    //  for(int dest_num = 0; dest_num < 2; dest_num++) begin 
-    //    if(val[dest_num])
-    //      routing_paths[dest_num] = routing(next_position_q[noc::kNorthPort],destination[dest_num]);
-    //  end
-    //end
-
-    //if(current_routing == noc::goSouth)
-    //begin
-    //  for(int dest_num = 0; dest_num < 2; dest_num++) begin
-    //    if(val[dest_num])
-    //      routing_paths[dest_num] = routing(next_position_q[noc::kSouthPort], destination[dest_num]);
-    //  end
-    //end
-    //
-    //if(current_routing == noc::goWest)
-    //begin
-    //  for(int dest_num = 0; dest_num < 2; dest_num++) begin
-    //    if(val[dest_num])
-    //      routing_paths[dest_num] = routing(next_position_q[noc::kWestPort], destination[dest_num]);
-    //  end
-    //end
-    //
-    //if(current_routing == noc::goEast)
-    //begin
-    //  for(int dest_num = 0; dest_num < 2; dest_num++) begin
-    //    if(val[dest_num])
-    //      routing_paths[dest_num] = routing(next_position_q[noc::kEastPort], destination[dest_num]);
-    //  end
-    //end
-    //  // When current_routing is goLocal, we don't care about next_routing assignment
-
+    next_routing = 5'b0;
+    for(int rout_num = 0; rout_num <DEST_SIZE; rout_num++) begin
+        routing_paths[rout_num] =5'b00000; 
+    end
     for(int dest_num = 0; dest_num < DEST_SIZE; dest_num++) begin
       if(val[dest_num])begin
         if((position.x == destination[dest_num].x && position.y == destination[dest_num].y)) begin
@@ -278,8 +151,10 @@ module lookahead_routing  #(
         end
       end
     end
-    next_routing = routing_paths[0] | routing_paths[1] | routing_paths[2] | routing_paths[3] | routing_paths[4] | routing_paths[5];
+    //next_routing = routing_paths[0] | routing_paths[1] | routing_paths[2];
+       
+    for(int rout_num = 0; rout_num <DEST_SIZE; rout_num++) begin
+        next_routing = next_routing | routing_paths[rout_num];
+    end
   end
-
 endmodule
-

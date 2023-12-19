@@ -3,8 +3,8 @@ module lookahead_router_wrapper
     parameter bit FlowControl,
     parameter int unsigned Width = 66,
     parameter bit [4:0] Ports = noc::AllPorts,
-    parameter integer DEST_SIZE = 4
-    )
+    parameter integer DEST_SIZE = 2
+  )
   (
    input  logic clk,
    input  logic rst,
