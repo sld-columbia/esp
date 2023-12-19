@@ -62,7 +62,8 @@ entity esp_acc_dma is
     scatter_gather     : integer range 0 to 1                 := 1;
     tlb_entries        : integer                              := 256;
     has_dvfs           : integer                              := 1;
-    has_pll            : integer);
+    has_pll            : integer;
+    DEST_SIZE          : integer                              := 2);
   port (
     rst           : in  std_ulogic;
     clk           : in  std_ulogic;
@@ -210,6 +211,13 @@ architecture rtl of esp_acc_dma is
   signal p2p_rsp_snd_wrreq    : std_ulogic;
   signal p2p_rsp_snd_data_in  : noc_flit_type;
   signal p2p_rsp_snd_full     : std_ulogic;
+  -- ajay_v
+  type dest_arr is array (natural range <>) of local_yx;
+  signal p2p_dst              : dest_arr(3 downto 0);
+  signal count_n_dest         : integer range 0 to 5;
+  signal count_n_dest2_y      : integer range 0 to 10;
+  signal count_n_dest2_x      : integer range 0 to 10;
+  -- signal temp_counter         : integer range 0 to 1;
 
   -- IRQ
   signal irq      : std_ulogic;
@@ -437,8 +445,11 @@ begin  -- rtl
     end if;
   end process coherence_model_select;
 
-  p2p_dst_y <= get_origin_y(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
-  p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
+  -- dest_assignment: process (p2p_req_rcv_data_out)
+  -- begin
+    p2p_dst_y <= get_origin_y(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
+    p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
+  -- end
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
                         p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x)
@@ -519,7 +530,12 @@ begin  -- rtl
       p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
       p2p_header_v(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
     else
-      p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, msg_type, hprot);
+      if DEST_SIZE = 1 then
+        p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, msg_type, hprot);
+      else
+      -- ajay_v hprot can be added
+        p2p_header_v := create_header_2dest(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(1), p2p_dst(0), msg_type);
+      end if;
     end if;
 
     header_v := (others => '0');
@@ -693,6 +709,10 @@ begin  -- rtl
     p2p_rsp_snd_data_in <= (others => '0');
     p2p_rsp_snd_wrreq <= '0';
     p2p_req_rcv_rdreq <= '0';
+
+    count_n_dest2_y <= 0;
+    count_n_dest2_x <= 0;
+    -- temp_counter <= 0;
 
     p2p_src_index_inc <= '0';
 
@@ -900,12 +920,20 @@ begin  -- rtl
           end if;
         end if;
 
+      -- ajay_v
       when wait_req_p2p =>
         burst <= '1';
         if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
           p2p_req_rcv_rdreq <= '1';
-          sample_flits <= '1';
-          dma_next <= send_header;
+          --if count_n_dest =  or count_n_dest = 2 then
+            count_n_dest2_y <= (count_n_dest*2)+1;
+            count_n_dest2_x <= (count_n_dest*2);
+          -- end if;
+          -- temp_counter <= '1';
+          if count_n_dest = 1 or DEST_SIZE = 1 then
+              sample_flits <= '1';
+              dma_next <= send_header;
+          end if;
         end if;
 
       when send_header =>
@@ -1058,6 +1086,33 @@ begin  -- rtl
     elsif clk'event and clk = '1' then  -- rising clock edge
       dma_state <= dma_next;
       irq_state <= irq_next;
+    end if;
+  end process;
+
+  -- ajay_v
+  process (clk, rst)
+  begin  -- process
+    if rst = '0' then                   -- asynchronous reset (active low)
+      count_n_dest <= 0;
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      if dma_state = wait_req_p2p then
+        if count_n_dest = 1 and p2p_req_rcv_empty = '0' then
+          count_n_dest <= 0;
+        end if;
+        if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
+          count_n_dest <= count_n_dest + 1;
+        end if;
+        
+      end if;
+    end if;
+  end process;
+
+  -- ajay_v
+  dest_arr_mod : process (dma_state, p2p_req_rcv_rdreq, p2p_dst_x, p2p_dst_y)
+  begin
+    if dma_state = wait_req_p2p and p2p_req_rcv_rdreq = '1' then
+      p2p_dst(count_n_dest2_y) <= p2p_dst_y;
+      p2p_dst(count_n_dest2_x) <= p2p_dst_x;
     end if;
   end process;
 
