@@ -25,7 +25,7 @@
 //
 
 module lookahead_routing #(
-  parameter integer DEST_SIZE = 1)
+  parameter integer DEST_SIZE = 6)
   (
    input logic clk,
    input noc::xy_t position,

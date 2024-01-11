@@ -56,7 +56,7 @@ module lookahead_router
     parameter int unsigned DataWidth = 64,
     parameter int unsigned PortWidth = DataWidth + $bits(noc::preamble_t),
     parameter bit [4:0] Ports = noc::AllPorts,
-    parameter integer DEST_SIZE = 2
+    parameter integer DEST_SIZE = 6
     )
   (
    input  logic clk,
