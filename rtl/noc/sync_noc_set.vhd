@@ -128,7 +128,7 @@ architecture mesh of sync_noc_set is
 --      local_x   : std_logic_vector(2 downto 0);
 --      local_y   : std_logic_vector(2 downto 0);
       has_sync  : integer range 0 to 1;
-      DEST_SIZE : integer:= 2); --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      DEST_SIZE : integer:= 6); --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
     port (
       clk           : in  std_logic;
       clk_tile      : in  std_logic;
@@ -162,7 +162,7 @@ architecture mesh of sync_noc_set is
 --      local_x   : std_logic_vector(2 downto 0);
 --      local_y   : std_logic_vector(2 downto 0);
       has_sync  : integer range 0 to 1;
-      DEST_SIZE : integer := 2); --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      DEST_SIZE : integer := 6); --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
     port (
       clk           : in  std_logic;
       clk_tile      : in  std_logic;
@@ -199,7 +199,7 @@ begin
 --      local_x  =>  local_x,
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
-      DEST_SIZE => 2) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      DEST_SIZE => 6) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -231,7 +231,7 @@ begin
 --      local_x  =>  local_x,
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
-      DEST_SIZE => 2) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      DEST_SIZE => 6) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -263,7 +263,7 @@ begin
 --      local_x  =>  local_x,
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
-      DEST_SIZE => 2) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      DEST_SIZE => 6) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -294,7 +294,7 @@ begin
 --      local_x  =>  local_x,
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
-      DEST_SIZE => 2) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      DEST_SIZE => 6) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -358,7 +358,7 @@ begin
 --      local_x  =>  local_x,
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
-      DEST_SIZE => 2) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      DEST_SIZE => 6) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
     port map (
       clk           => clk,
       clk_tile      => clk_tile,

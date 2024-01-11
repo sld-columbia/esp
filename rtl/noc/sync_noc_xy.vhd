@@ -15,7 +15,7 @@ entity sync_noc_xy is
 --    local_x   : std_logic_vector(2 downto 0);
 --    local_y   : std_logic_vector(2 downto 0);
     HAS_SYNC  : integer range 0 to 1 := 0;
-    DEST_SIZE : integer := 2);
+    DEST_SIZE : integer := 6);
   port (
     clk           : in  std_logic;
     clk_tile      : in  std_logic;
