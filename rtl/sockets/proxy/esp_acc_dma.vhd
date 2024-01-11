@@ -63,7 +63,7 @@ entity esp_acc_dma is
     tlb_entries        : integer                              := 256;
     has_dvfs           : integer                              := 1;
     has_pll            : integer;
-    DEST_SIZE          : integer                              := 2);
+    DEST_SIZE          : integer                              := 6);
   port (
     rst           : in  std_ulogic;
     clk           : in  std_ulogic;
@@ -213,10 +213,10 @@ architecture rtl of esp_acc_dma is
   signal p2p_rsp_snd_full     : std_ulogic;
   -- ajay_v
   type dest_arr is array (natural range <>) of local_yx;
-  signal p2p_dst              : dest_arr(3 downto 0);
-  signal count_n_dest         : integer range 0 to 5;
-  signal count_n_dest2_y      : integer range 0 to 10;
-  signal count_n_dest2_x      : integer range 0 to 10;
+  signal p2p_dst              : dest_arr(11 downto 0);
+  signal count_n_dest         : integer range 0 to 9;
+  signal count_n_dest2_y      : integer range 0 to 18;
+  signal count_n_dest2_x      : integer range 0 to 18;
   -- signal temp_counter         : integer range 0 to 1;
 
   -- IRQ
@@ -532,9 +532,13 @@ begin  -- rtl
     else
       if DEST_SIZE = 1 then
         p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, msg_type, hprot);
-      else
+      -- else if DEST_SIZE = 2 then
       -- ajay_v hprot can be added
-        p2p_header_v := create_header_2dest(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(1), p2p_dst(0), msg_type);
+      --   p2p_header_v := create_header_2dest(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(5), p2p_dst(4), p2p_dst(3), p2p_dst(2), p2p_dst(1), p2p_dst(0), msg_type);
+      elsif DEST_SIZE = 4 then
+        p2p_header_v := create_header_4dest(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(5), p2p_dst(4), p2p_dst(3), p2p_dst(2), p2p_dst(1), p2p_dst(0), msg_type);
+      elsif DEST_SIZE = 6 then
+        p2p_header_v := create_header_6dest(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(9), p2p_dst(8), p2p_dst(7), p2p_dst(6), p2p_dst(5), p2p_dst(4), p2p_dst(3), p2p_dst(2), p2p_dst(1), p2p_dst(0), msg_type);
       end if;
     end if;
 
@@ -930,7 +934,7 @@ begin  -- rtl
             count_n_dest2_x <= (count_n_dest*2);
           -- end if;
           -- temp_counter <= '1';
-          if count_n_dest = 1 or DEST_SIZE = 1 then
+          if count_n_dest = DEST_SIZE-1 or DEST_SIZE = 1 then
               sample_flits <= '1';
               dma_next <= send_header;
           end if;
@@ -1096,7 +1100,7 @@ begin  -- rtl
       count_n_dest <= 0;
     elsif clk'event and clk = '1' then  -- rising clock edge
       if dma_state = wait_req_p2p then
-        if count_n_dest = 1 and p2p_req_rcv_empty = '0' then
+        if count_n_dest = DEST_SIZE-1 and p2p_req_rcv_empty = '0' then
           count_n_dest <= 0;
         end if;
         if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
@@ -1108,11 +1112,15 @@ begin  -- rtl
   end process;
 
   -- ajay_v
-  dest_arr_mod : process (dma_state, p2p_req_rcv_rdreq, p2p_dst_x, p2p_dst_y)
+  dest_arr_mod : process (clk, rst, dma_state, p2p_req_rcv_rdreq, p2p_dst_x, p2p_dst_y)
   begin
-    if dma_state = wait_req_p2p and p2p_req_rcv_rdreq = '1' then
-      p2p_dst(count_n_dest2_y) <= p2p_dst_y;
-      p2p_dst(count_n_dest2_x) <= p2p_dst_x;
+  if rst = '0' then                   -- asynchronous reset (active low)
+      p2p_dst <= (others => (others => '0'));
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      if dma_state = wait_req_p2p and p2p_req_rcv_rdreq = '1' then
+        p2p_dst(count_n_dest2_y) <= p2p_dst_y;
+        p2p_dst(count_n_dest2_x) <= p2p_dst_x;
+      end if;
     end if;
   end process;
 
