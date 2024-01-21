@@ -129,7 +129,6 @@ byte_offset_bits = 2
 offset_bits = 4
 little_endian = 1
 invack_cnt_bits = 4
-dma_word_offset_bits = 2
 
 #
 ### VHDL writer ###
@@ -715,8 +714,8 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_req_in_data_coh_msg      : in std_logic_vector(2 downto 0);\n")
     f.write("      llc_dma_req_in_data_hprot        : in std_logic_vector(1 downto 0);\n")
     f.write("      llc_dma_req_in_data_addr         : in std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
-    f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
-    f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_req_in_data_line         : in std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      llc_dma_req_in_data_req_id       : in std_logic_vector(5 downto 0);\n")
     f.write("      llc_rsp_in_valid             : in std_ulogic;\n")
@@ -754,7 +753,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_req_id      : out std_logic_vector(5 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
-    f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_fwd_out_valid            : out std_ulogic;\n")
     f.write("      llc_fwd_out_data_coh_msg     : out std_logic_vector(2 downto 0);\n")
     f.write("      llc_fwd_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
@@ -786,8 +785,8 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_req_in_data_coh_msg      : in std_logic_vector(4 downto 0);\n")
     f.write("      llc_dma_req_in_data_hprot        : in std_logic_vector(1 downto 0);\n")
     f.write("      llc_dma_req_in_data_addr         : in std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
-    f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
-    f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_req_in_data_line         : in std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      llc_dma_req_in_data_req_id       : in std_logic_vector(5 downto 0);\n")
     f.write("      llc_dma_req_in_data_word_mask    : in std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
@@ -828,7 +827,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_req_id      : out std_logic_vector(5 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
-    f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_word_mask   : out std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
     f.write("      llc_fwd_out_valid            : out std_ulogic;\n")
     f.write("      llc_fwd_out_data_coh_msg     : out std_logic_vector(4 downto 0);\n")
@@ -2098,19 +2097,14 @@ for acc in accelerators:
 # based on DMA_WIDTH and a fixed 128-bits cache line
 bits_per_line = cache_line_size
 words_per_line = int(bits_per_line/arch_bits)
-dma_words_per_line = int(bits_per_line/noc_width)
 word_offset_bits = int(math.log2(words_per_line))
-if dma_words_per_line > 1:
-  dma_word_offset_bits = int(math.log2(dma_words_per_line))
-else:
-  dma_word_offset_bits = 1
 byte_offset_bits = int(math.log2(arch_bits/8))
 offset_bits = word_offset_bits + byte_offset_bits
 nl2_max_log2 = 4
-if dma_word_offset_bits + 1 < nl2_max_log2:
+if word_offset_bits + 1 < nl2_max_log2:
   invack_cnt_bits = nl2_max_log2
 else:
-  invack_cnt_bits = dma_word_offset_bits + 1
+  invack_cnt_bits = word_offset_bits + 1
 
 for cac in caches:
   cacd = Component()

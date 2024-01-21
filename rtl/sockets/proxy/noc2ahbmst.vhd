@@ -529,7 +529,7 @@ begin  -- rtl
       when dma_rd_request =>
         v.hsize := target_dma_word_hsize;
         if dma_snd_atleast_4slots = '1' then
-          if ((r.count = 1 and DMA_NOC_WIDTH = ARCH_BITS) and (v.grant = '1')
+          if ((r.count = 1) and (v.grant = '1')
               and (v.ready = '1')) then
             -- Owning already address
             -- Single word transfer: no request
@@ -547,7 +547,7 @@ begin  -- rtl
             v.state   := dma_send_header;
           else
             -- Need to get ownership of the bus
-            if r.count = 1 and DMA_NOC_WIDTH = ARCH_BITS then
+            if r.count = 1 then
               v.hburst := HBURST_SINGLE;
             else
               v.hburst := HBURST_INCR;
@@ -621,7 +621,7 @@ begin  -- rtl
           -- however, non-coherent Ethernet DMA makes 32-bits bursts
           v.addr          := r.addr + target_dma_incr;
           v.count         := r.count - 1;
-          word_rem := r.count * DMA_NOC_WIDTH / ARCH_BITS + (DMA_NOC_WIDTH / ARCH_BITS - r.word_cnt);
+          word_rem := r.count;
           if word_rem = 1 then
             v.hbusreq := '0';
             v.htrans  := HTRANS_IDLE;
@@ -692,15 +692,15 @@ begin  -- rtl
           v.dma_noc_data(DMA_NOC_FLIT_SIZE -1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
           v.dma_noc_data(ARCH_BITS * (r.word_cnt + 1) - 1 downto ARCH_BITS * r.word_cnt) := fix_endian(ahbmi.hrdata);
           dma_snd_data_in <= v.dma_noc_data;
-          word_rem := r.count * DMA_NOC_WIDTH / ARCH_BITS + (DMA_NOC_WIDTH / ARCH_BITS - r.word_cnt - 1);
+          word_rem := r.count;
           v.word_cnt := r.word_cnt + 1;
+          v.count     := r.count - 1;
           -- Accelerators work with data widht equal to the selected processor,
           -- however, non-coherent Ethernet DMA makes 32-bits bursts
           v.addr          := r.addr + target_dma_incr;
           if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS then
             v.word_cnt := 0;
             dma_snd_wrreq   <= '1';
-            v.count     := r.count - 1;
           end if;
           if word_rem = 2 then
             v.hbusreq := '0';

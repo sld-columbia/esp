@@ -453,12 +453,6 @@ def print_global_constants(fp, soc):
   fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(soc.cache_line_size.get()/soc.ARCH_BITS))) + ";\n")
   fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log2(soc.ARCH_BITS/8))) +";\n")
   fp.write("  constant GLOB_OFFSET_BITS : integer := GLOB_WORD_OFFSET_BITS + GLOB_BYTE_OFFSET_BITS;\n")
-  dma_words_per_line = soc.cache_line_size.get() / soc.noc.dma_noc_width.get()
-  if dma_words_per_line > 1:
-    dma_offset_bits = int(math.log2(dma_words_per_line))
-  else:
-    dma_offset_bits = 1
-  fp.write("  constant GLOB_DMA_WORD_OFFSET_BITS : integer := " + str(dma_offset_bits) + ";\n")
   fp.write("  constant GLOB_ADDR_INCR : integer := " + str(int(soc.ARCH_BITS/8)) +";\n")
   # TODO: Keep physical address to 32 bits for now to reduce tag size. This will increase to support more memory
   fp.write("  constant GLOB_PHYS_ADDR_BITS : integer := " + str(32) +";\n")

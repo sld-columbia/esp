@@ -140,11 +140,13 @@ architecture rtl of esp_acc_dma is
   signal pconfig : apb_config_type;
   constant hprot : std_logic_vector(7 downto 0) := "00000011";
 
-  constant DMA_OFFSET_BITS: integer := log2(DMA_NOC_WIDTH / 8);
-  constant len_pad : std_logic_vector(DMA_OFFSET_BITS - 1 downto 0) := (others => '0');
+  constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
   constant WORDS_PER_FLIT : integer := DMA_NOC_WIDTH / ARCH_BITS;
   constant WPF_BITS : integer := ncpu_log(WORDS_PER_FLIT);
-  constant noc_word_pad : std_logic_vector(WPF_BITS - 1 downto 0) := (others => '0');
+
+  constant dma_words : integer := DMA_NOC_WIDTH / ARCH_BITS;
+  constant dma_word_bits : integer := ncpu_log(dma_words);
+  constant dma_word_pad : std_logic_vector(dma_word_bits - 1 downto 0) := (others => '0');
 
   -- Fix endianness
   function fix_endian (
@@ -493,17 +495,7 @@ begin  -- rtl
       end if;
       tmp(31 downto 0) := bankreg(PT_ADDRESS_REG);
       address := tmp(GLOB_PHYS_ADDR_BITS - 1 downto 0);
-      if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
-        offset := address(W_OFF_RANGE_LO + WPF_BITS - 1 downto W_OFF_RANGE_LO);
-      else
-        offset := (others => '0');
-      end if;
-      len_tmp := bankreg(PT_NCHUNK_REG) + offset - 1;
-      if WORDS_PER_FLIT = 1 then
-        length := 1 + len_tmp;
-      else
-        length := 1 + (noc_word_pad & len_tmp(31 downto WPF_BITS));
-      end if;
+      length := bankreg(PT_NCHUNK_REG);
       if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
         msg_type := REQ_DMA_READ;
       else
@@ -512,7 +504,7 @@ begin  -- rtl
     elsif pending_dma_write = '1' then
       -- accelerator write burst
       address := dma_address;
-      length  := len_pad & dma_length(31 downto DMA_OFFSET_BITS);
+      length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
       if bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P) = '1' then
         msg_type := RSP_P2P;
         is_p2p := '1';
@@ -526,7 +518,7 @@ begin  -- rtl
     else
       -- accelerator read burst
       address := dma_address;
-      length  := len_pad & dma_length(31 downto DMA_OFFSET_BITS);
+      length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
       if bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P) = '1' then
         msg_type := REQ_P2P;
         is_p2p := '1';
@@ -720,7 +712,11 @@ begin  -- rtl
 
     preamble := get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out_int);
     msg := get_msg_type(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & header_r);
-    len := payload_length_r(31 downto 0);
+    if DMA_NOC_WIDTH > ARCH_BITS then
+      len := dma_word_pad & payload_length_r(31 downto dma_word_bits);
+    else
+      len := payload_length_r(31 downto 0);
+    end if;
     if count /= len then
       payload_data(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
     else
@@ -762,7 +758,7 @@ begin  -- rtl
         clear_acc_done <= '1';
         if bankreg(CMD_REG)(CMD_BIT_START) = '1' and tlb_empty = '1' and scatter_gather /= 0 then
           sample_flits <= '1';
-          if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
+          if DMA_NOC_WIDTH > ARCH_BITS and (coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL) then
             set_word_count <= '1';
           end if;
           if coherence /= ACC_COH_FULL then

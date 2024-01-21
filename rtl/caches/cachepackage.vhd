@@ -78,15 +78,12 @@ package cachepackage is
   constant W_OFF_RANGE_LO : integer := (OFFSET_BITS - WORD_OFFSET_BITS);
   constant B_OFF_RANGE_HI : integer := (BYTE_OFFSET_BITS - 1);
   constant B_OFF_RANGE_LO : integer := 0;
-  constant DMA_OFF_RANGE_HI : integer := (OFFSET_BITS - 1);
-  constant DMA_OFF_RANGE_LO : integer := (OFFSET_BITS - DMA_WORD_OFFSET_BITS);
 
   -----------------------------------------------------------------------------
   -- Types
   -----------------------------------------------------------------------------
   subtype addr_t is std_logic_vector(ADDR_BITS - 1 downto 0);
   subtype word_offset_t is std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
-  subtype dma_word_offset_t is std_logic_vector(DMA_WORD_OFFSET_BITS - 1 downto 0);
   subtype line_addr_t is std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
   subtype cpu_msg_t is std_logic_vector(CPU_MSG_TYPE_WIDTH - 1 downto 0);
   subtype hsize_t is std_logic_vector(HSIZE_WIDTH - 1 downto 0);
@@ -127,7 +124,8 @@ package cachepackage is
   constant HSIZE_HW : hsize_t := "001";
   constant HSIZE_W  : hsize_t := "010";
 
-  constant dma32_words : integer := ARCH_BITS / 32;
+  constant dma_words : integer := DMA_NOC_WIDTH / ARCH_BITS;
+  constant dma32_words : integer := DMA_NOC_WIDTH / 32;
 
   -- Constants to handle special case in which there is no memory tile
   -- In this case LLC and memory-related components won't be present in the
