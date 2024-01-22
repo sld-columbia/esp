@@ -63,7 +63,7 @@ RTL_ACC-distclean = $(addsuffix -distclean, $(RTL_ACC))
 
 THIRDPARTY_PATH = $(ESP_ROOT)/accelerators/third-party
 ifdef CPU_ARCH
-THIRDPARTY_ACC  = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell if grep -q $(CPU_ARCH) $(THIRDPARTY_PATH)/$(acc)/$(acc).hosts; then echo $(acc); fi))
+THIRDPARTY_ACC  = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell if grep -q $(CONFIG_DMA_NOC_WIDTH) $(THIRDPARTY_PATH)/$(acc)/$(acc).dma_widths; then echo $(acc); fi))
 else
 THIRDPARTY_ACC  = ""
 endif

@@ -68,13 +68,13 @@ class Components():
     dirs = get_immediate_subdirectories(acc_dir)
     dirs = sorted(dirs, key=str.upper)
     for acc in dirs:
-      cpu_support = False
-      with open(acc_dir + "/" + acc + "/" + acc + ".hosts") as f:
+      dma_support = False
+      with open(acc_dir + "/" + acc + "/" + acc + ".dma_widths") as f:
         for line in f:
-          if line.find(str(CPU_ARCH)) != -1:
-            cpu_support = True
+          if line.find(str(DMA_WIDTH)) != -1:
+            dma_support = True
 
-      if cpu_support == True:
+      if dma_support == True:
         self.POINTS[acc.upper()] = []
         with open(acc_dir + "/" + acc + "/vendor") as f:
           vendor = f.readline().strip()

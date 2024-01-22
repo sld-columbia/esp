@@ -1940,6 +1940,12 @@ if (not os.path.exists(tmp_l2_dir) or not os.path.exists(tmp_llc_dir)):
   print("             Please check the \"Use RTL\" option in the \"Cache Configuration\" tab when configuring ESP.")
 
 for acc in axi_accelerators:
+  f = open(axi_acc_dir + "/" + acc + "/" + acc + ".dma_widths")
+  buf = f.read()
+  if not str(noc_width) in buf:
+    print("    INFO: System DMA_WIDTH is " + str(noc_width) + "; skipping " + acc)
+    continue
+
   accd = AxiAccelerator()
   accd.name = acc
 
