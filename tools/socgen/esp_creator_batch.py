@@ -44,7 +44,7 @@ EMU_TECH = sys.argv[6]
 EMU_FREQ = sys.argv[7]
 
 root = Tk()
-soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, False)
+soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, False, root)
 
 esp_config = soc_config(soc)
 create_socmap(esp_config, soc)

@@ -64,7 +64,7 @@ class Tile():
        for p in soc.IPs.POINTS[selection]:
          if point == p:
            self.point_select.setvalue(point)
-           break;
+           break
          else:
            self.point_select.setvalue(str(soc.IPs.POINTS[selection][0]))
        self.point_select.pack(side=LEFT)
