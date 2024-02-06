@@ -16,79 +16,76 @@ const size_t MEM_SIZE = (384 * 8) / DMA_WIDTH;
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "vitbfly2_wrap.h"
+    #include "vitbfly2_wrap.h"
 #endif
 
-    class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
+class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
+{
+  public:
+    // ACC instance
+#ifdef CADENCE
+    vitbfly2_wrapper *acc;
+#else
+    vitbfly2 *acc;
+#endif
+
+    // Constructor
+    SC_HAS_PROCESS(system_t);
+    system_t(sc_module_name name, std::string in_path, std::string gold_path)
+        : esp_system<DMA_WIDTH, MEM_SIZE>(name)
+        , input_data_path(in_path)
+        , image_gold_test_path(gold_path)
     {
-    public:
-
-        // ACC instance
+        // ACC
 #ifdef CADENCE
-        vitbfly2_wrapper *acc;
+        acc = new vitbfly2_wrapper("vitbfly2_wrapper");
 #else
-        vitbfly2 *acc;
+        acc = new vitbfly2("vitbfly2_wrapper");
 #endif
 
-        // Constructor
-        SC_HAS_PROCESS(system_t);
-        system_t(sc_module_name name,
-                 std::string in_path,
-                 std::string gold_path)
-            : esp_system<DMA_WIDTH, MEM_SIZE>(name)
-            , input_data_path(in_path)
-            , image_gold_test_path(gold_path)
-        {
-            // ACC
-#ifdef CADENCE
-            acc = new vitbfly2_wrapper("vitbfly2_wrapper");
-#else
-            acc = new vitbfly2("vitbfly2_wrapper");
-#endif
+        // Binding ACC
+        acc->clk(clk);
+        acc->rst(acc_rst);
+        acc->dma_read_ctrl(dma_read_ctrl);
+        acc->dma_write_ctrl(dma_write_ctrl);
+        acc->dma_read_chnl(dma_read_chnl);
+        acc->dma_write_chnl(dma_write_chnl);
+        acc->conf_info(conf_info);
+        acc->conf_done(conf_done);
+        acc->acc_done(acc_done);
+        acc->debug(debug);
+    }
 
-            // Binding ACC
-            acc->clk(clk);
-            acc->rst(acc_rst);
-            acc->dma_read_ctrl(dma_read_ctrl);
-            acc->dma_write_ctrl(dma_write_ctrl);
-            acc->dma_read_chnl(dma_read_chnl);
-            acc->dma_write_chnl(dma_write_chnl);
-            acc->conf_info(conf_info);
-            acc->conf_done(conf_done);
-            acc->acc_done(acc_done);
-            acc->debug(debug);
-        }
+    // Processes
 
-        // Processes
+    // Configure accelerator
+    void config_proc();
 
-        // Configure accelerator
-        void config_proc();
+    // Load internal memory
+    void load_memory();
 
-        // Load internal memory
-        void load_memory();
+    // Dump internal memory
+    void dump_memory();
 
-        // Dump internal memory
-        void dump_memory();
+    // Validate accelerator results
+    int validate();
 
-        // Validate accelerator results
-        int validate();
+    // Optionally free resources (arrays)
+    // void clean_up(void);
 
-        // Optionally free resources (arrays)
-        // void clean_up(void);
+    // Accelerator-specific data
+    // uint32_t n_Invocations; // number of accelerator invocations
 
-        // Accelerator-specific data
-        // uint32_t n_Invocations; // number of accelerator invocations
+    // Path for the input data
+    std::string input_data_path;
 
-        // Path for the input data
-        std::string input_data_path;
+    // Path for the gold memory image results (output image)
+    std::string image_gold_test_path;
 
-        // Path for the gold memory image results (output image)
-        std::string image_gold_test_path;
+    // For validate
+    int *imgOut;
 
-        // For validate
-        int *imgOut;
-
-        // Other Functions
-    };
+    // Other Functions
+};
 
 #endif // __SYSTEM_HPP__
