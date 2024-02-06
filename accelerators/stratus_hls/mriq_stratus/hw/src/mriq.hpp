@@ -12,21 +12,19 @@
 #include "mriq_directives.hpp"
 #include "fpdata.hpp"
 #define __round_mask(x, y) ((y)-1)
-#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+#define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 /* <<--defines-->> */
 
-
 #define DATA_WIDTH FPDATA_S_WL // could be 32 or 24
-#define DMA_SIZE SIZE_WORD
-
+#define DMA_SIZE   SIZE_WORD
 
 class mriq : public esp_accelerator_3P<DMA_WIDTH>
 {
-public:
+  public:
     // Constructor
     SC_HAS_PROCESS(mriq);
-    mriq(const sc_module_name& name)
-    : esp_accelerator_3P<DMA_WIDTH>(name)
+    mriq(const sc_module_name &name)
+        : esp_accelerator_3P<DMA_WIDTH>(name)
         , cfg("config")
     {
         // Signal binding
@@ -49,8 +47,7 @@ public:
         HLS_MAP_plm(plm_y_pong, PLM_X_NAME);
         HLS_MAP_plm(plm_z_pong, PLM_X_NAME);
 
-
-#if(ARCH==0) // if loading all K-space data into PLM, no need for ping-pong
+#if (ARCH == 0) // if loading all K-space data into PLM, no need for ping-pong
 
         HLS_MAP_plm(plm_kx, PLM_K_NAME);
         HLS_MAP_plm(plm_ky, PLM_K_NAME);
@@ -71,9 +68,6 @@ public:
         HLS_MAP_plm(plm_phiR_pong, PLM_K_NAME);
         HLS_MAP_plm(plm_phiI_pong, PLM_K_NAME);
 #endif
-
-
-
     }
 
     // Processes
@@ -91,20 +85,14 @@ public:
     esp_config_proc cfg;
 
     // Functions
-    template<typename T>
-    void dma_read(T array[], uint32_t dma_index, uint32_t dma_length);
+    template <typename T> void dma_read(T array[], uint32_t dma_index, uint32_t dma_length);
 
-    template<typename T>
-    void dma_write(T array[], uint32_t dma_index, uint32_t dma_length);
+    template <typename T> void dma_write(T array[], uint32_t dma_index, uint32_t dma_length);
 
-    void ComputeQ(FPDATA_S x,FPDATA_S y,FPDATA_S z, uint16_t  batch_size_k,
-		  bool pingpong_k, FPDATA_S *sin_table,
-		  FPDATA_L *Qr, FPDATA_L *Qi);
-
+    void ComputeQ(FPDATA_S x, FPDATA_S y, FPDATA_S z, uint16_t batch_size_k, bool pingpong_k, FPDATA_S *sin_table,
+                  FPDATA_L *Qr, FPDATA_L *Qi);
 
     FPDATA_S mySinf(FPDATA_L angle, FPDATA_S *sin_table);
-
-
 
     // Private local memories
     // FPDATA_S_WORD means data with smaller values.
@@ -117,13 +105,12 @@ public:
     FPDATA_S_WORD plm_y_pong[PLM_X_WORD];
     FPDATA_S_WORD plm_z_pong[PLM_X_WORD];
 
-
     FPDATA_L_WORD plm_Qr_ping[PLM_X_WORD];
     FPDATA_L_WORD plm_Qi_ping[PLM_X_WORD];
     FPDATA_L_WORD plm_Qr_pong[PLM_X_WORD];
     FPDATA_L_WORD plm_Qi_pong[PLM_X_WORD];
 
-#if(ARCH==0)
+#if (ARCH == 0)
 
     FPDATA_S_WORD plm_kx[PLM_K_WORD];
     FPDATA_S_WORD plm_ky[PLM_K_WORD];
@@ -145,9 +132,6 @@ public:
     FPDATA_S_WORD plm_phiI_pong[PLM_K_WORD];
 
 #endif
-
-
 };
-
 
 #endif /* __MRIQ_HPP__ */
