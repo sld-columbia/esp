@@ -13,16 +13,16 @@
 #include "fft2_directives.hpp"
 
 #define __round_mask(x, y) ((y)-1)
-#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+#define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 /* <<--defines-->> */
 #define MAX_LOGN_SAMPLES 14
 #define MAX_NUM_SAMPLES  (1 << MAX_LOGN_SAMPLES)
-#define DATA_WIDTH FX_WIDTH
+#define DATA_WIDTH       FX_WIDTH
 
 #if (FX_WIDTH == 64)
-#define DMA_SIZE SIZE_DWORD
+    #define DMA_SIZE SIZE_DWORD
 #elif (FX_WIDTH == 32)
-#define DMA_SIZE SIZE_WORD
+    #define DMA_SIZE SIZE_WORD
 #endif // FX_WIDTH
 
 #define PLM_IN_WORD  (MAX_NUM_SAMPLES << 1)
@@ -30,14 +30,14 @@
 
 class fft2 : public esp_accelerator_3P<DMA_WIDTH>
 {
-public:
+  public:
     // Handshake between store and load for auto-refills
     handshake_t store_to_load;
 
     // Constructor
     SC_HAS_PROCESS(fft2);
-    fft2(const sc_module_name& name)
-    : esp_accelerator_3P<DMA_WIDTH>(name)
+    fft2(const sc_module_name &name)
+        : esp_accelerator_3P<DMA_WIDTH>(name)
         , cfg("config")
         , store_to_load("store-to-load")
     {
@@ -94,8 +94,6 @@ public:
 
     // Private local memories
     sc_dt::sc_int<DATA_WIDTH> A0[PLM_IN_WORD];
-
 };
-
 
 #endif /* __FFT2_HPP__ */

@@ -13,18 +13,17 @@
 #include "esp_templates.hpp"
 
 #define MAX_BUFFERS_FULL 4
-const size_t MEM_SIZE = MAX_BUFFERS_FULL * (2 * 262144) / (DMA_WIDTH/8);
+const size_t MEM_SIZE = MAX_BUFFERS_FULL * (2 * 262144) / (DMA_WIDTH / 8);
 
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "fft2_wrap.h"
+    #include "fft2_wrap.h"
 #endif
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
-public:
-
+  public:
     // ACC instance
 #ifdef CADENCE
     fft2_wrapper *acc;
@@ -57,19 +56,19 @@ public:
 
         /* <<--params-default-->> */
         // use_input_files = 1
-        //logn_samples = 6;
-        //num_ffts = 46;
+        // logn_samples = 6;
+        // num_ffts = 46;
 
         use_input_files = 0;
-        logn_samples = 12;
-        num_ffts = 15;
+        logn_samples    = 12;
+        num_ffts        = 15;
 
-        //use_input_files = 1;
-        //logn_samples = 6;
-        //num_ffts = 1;
-        num_samples = (1 << logn_samples);
-        do_inverse = 0;
-        do_shift = 0;
+        // use_input_files = 1;
+        // logn_samples = 6;
+        // num_ffts = 1;
+        num_samples  = (1 << logn_samples);
+        do_inverse   = 0;
+        do_shift     = 0;
         scale_factor = 1;
     }
 
@@ -100,9 +99,9 @@ public:
     uint32_t out_words_adj;
     uint32_t in_size;
     uint32_t out_size;
-    float *in;
-    float *out;
-    float *gold;
+    float *  in;
+    float *  out;
+    float *  gold;
 
     uint32_t use_input_files;
     // Other Functions
