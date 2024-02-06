@@ -127,9 +127,15 @@ static struct esp_driver nightvision_driver = {
     .arg_size      = sizeof(struct nightvision_stratus_access),
 };
 
-static int __init nightvision_init(void) { return esp_driver_register(&nightvision_driver); }
+static int __init nightvision_init(void)
+{
+    return esp_driver_register(&nightvision_driver);
+}
 
-static void __exit nightvision_exit(void) { esp_driver_unregister(&nightvision_driver); }
+static void __exit nightvision_exit(void)
+{
+    esp_driver_unregister(&nightvision_driver);
+}
 
 module_init(nightvision_init) module_exit(nightvision_exit)
 

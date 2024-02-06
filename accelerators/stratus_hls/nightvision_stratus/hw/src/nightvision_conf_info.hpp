@@ -53,7 +53,9 @@ class conf_info_t
     }
 
     // VCD dumping function
-    friend void sc_trace(sc_trace_file *tf, const conf_info_t &v, const std::string &NAME) {}
+    friend void sc_trace(sc_trace_file *tf, const conf_info_t &v, const std::string &NAME)
+    {
+    }
 
     // redirection operator
     friend ostream &operator<<(ostream &os, conf_info_t const &conf_info)
