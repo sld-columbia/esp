@@ -11,8 +11,7 @@
 //
 class conf_info_t
 {
-public:
-
+  public:
     uint32_t unused;
 
     //
@@ -20,11 +19,13 @@ public:
     //
     conf_info_t()
         : unused(0)
-    {}
+    {
+    }
 
     conf_info_t(uint32_t u)
         : unused(u)
-    {}
+    {
+    }
 
     // equals operator
     inline bool operator==(const conf_info_t &rhs) const
@@ -33,7 +34,7 @@ public:
     }
 
     // assignment operator
-    inline conf_info_t& operator=(const conf_info_t& other)
+    inline conf_info_t &operator=(const conf_info_t &other)
     {
         unused = other.unused;
         return *this;
@@ -41,13 +42,13 @@ public:
 
     // VCD dumping function
     friend void sc_trace(sc_trace_file *tf, const conf_info_t &v, const std::string &NAME)
-    {}
+    {
+    }
 
     // redirection operator
-    friend ostream& operator << (ostream& os, conf_info_t const &conf_info)
+    friend ostream &operator<<(ostream &os, conf_info_t const &conf_info)
     {
-        os << "{ unused = " << conf_info.unused
-           << "}";
+        os << "{ unused = " << conf_info.unused << "}";
         return os;
     }
 };

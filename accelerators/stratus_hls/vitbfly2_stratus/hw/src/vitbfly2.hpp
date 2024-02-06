@@ -17,12 +17,12 @@
 
 class vitbfly2 : public esp_accelerator_3P<DMA_WIDTH>
 {
-public:
+  public:
     // Output <-> Input
 
     // Constructor
     SC_HAS_PROCESS(vitbfly2);
-    vitbfly2(const sc_module_name& name)
+    vitbfly2(const sc_module_name &name)
         : esp_accelerator_3P<DMA_WIDTH>(name)
         , cfg("config")
     {
@@ -65,6 +65,5 @@ public:
 
     // Private state variables
 };
-
 
 #endif /* __VITBFLY2_HPP__ */

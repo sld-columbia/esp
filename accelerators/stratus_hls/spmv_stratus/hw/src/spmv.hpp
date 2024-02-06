@@ -14,35 +14,34 @@
 #define PLM_COLS_SIZE 1024
 #define PLM_VALS_SIZE 1024
 #define PLM_VECT_SIZE 8192
-#define PLM_OUT_SIZE 256
+#define PLM_OUT_SIZE  256
 
 class spmv : public esp_accelerator_3P<DMA_WIDTH>
 {
-    public:
-
+  public:
     // Computation <-> Computation
 
     // Constructor
     SC_HAS_PROCESS(spmv);
-    spmv(const sc_module_name& name)
-	: esp_accelerator_3P<DMA_WIDTH>(name)
-	, cfg("config")
-        {
-            // Signal binding
-            cfg.bind_with(*this);
+    spmv(const sc_module_name &name)
+        : esp_accelerator_3P<DMA_WIDTH>(name)
+        , cfg("config")
+    {
+        // Signal binding
+        cfg.bind_with(*this);
 
-	    // Binding for memories
-            HLS_MAP_ROWS0;
-            HLS_MAP_ROWS1;
-            HLS_MAP_COLS0;
-            HLS_MAP_COLS1;
-            HLS_MAP_VALS0;
-            HLS_MAP_VALS1;
-            HLS_MAP_VECT0;
-            HLS_MAP_VECT1;
-            HLS_MAP_OUT0;
-            HLS_MAP_OUT1;
-        }
+        // Binding for memories
+        HLS_MAP_ROWS0;
+        HLS_MAP_ROWS1;
+        HLS_MAP_COLS0;
+        HLS_MAP_COLS1;
+        HLS_MAP_VALS0;
+        HLS_MAP_VALS1;
+        HLS_MAP_VECT0;
+        HLS_MAP_VECT1;
+        HLS_MAP_OUT0;
+        HLS_MAP_OUT1;
+    }
 
     // Processes
 
@@ -61,10 +60,10 @@ class spmv : public esp_accelerator_3P<DMA_WIDTH>
     // Functions
 
     // Private local memories
-    uint32_t ROWS0[PLM_ROWS_SIZE];
-    uint32_t ROWS1[PLM_ROWS_SIZE];
-    uint32_t COLS0[PLM_COLS_SIZE];
-    uint32_t COLS1[PLM_COLS_SIZE];
+    uint32_t    ROWS0[PLM_ROWS_SIZE];
+    uint32_t    ROWS1[PLM_ROWS_SIZE];
+    uint32_t    COLS0[PLM_COLS_SIZE];
+    uint32_t    COLS1[PLM_COLS_SIZE];
     FPDATA_WORD VALS0[PLM_VALS_SIZE];
     FPDATA_WORD VALS1[PLM_VALS_SIZE];
     FPDATA_WORD VECT0[PLM_VECT_SIZE];

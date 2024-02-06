@@ -15,14 +15,16 @@ bool check_error_threshold(double out, double gold, double &error)
     assert(!isinf(gold) && !isnan(gold));
 
     // return an error if out is Infinite or NaN
-    if (isinf(out) || isnan(out)) { return true; }
+    if (isinf(out) || isnan(out)) {
+        return true;
+    }
 
     if (gold != 0)
         error = fabs((gold - out) / gold);
     else if (out != 0)
         error = fabs((out - gold) / out);
     else
-	error = 0;
+        error = 0;
 
     return (error > MAX_ERROR_THRESHOLD); // && !(out < 0.5 && out > -0.5));
 }

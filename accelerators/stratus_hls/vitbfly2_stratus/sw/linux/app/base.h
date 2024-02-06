@@ -29,7 +29,7 @@
  * created by Phil Karn. For more info see: gr-dvbt/lib/d_viterbi.h
  */
 
-void reset();
-uint8_t* depuncture(uint8_t *in);
+void     reset();
+uint8_t *depuncture(uint8_t *in);
 
 #endif

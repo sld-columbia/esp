@@ -11,18 +11,17 @@
 
 #include "esp_templates.hpp"
 
-const size_t MEM_SIZE = 5304320 / (DMA_WIDTH/8);
+const size_t MEM_SIZE = 5304320 / (DMA_WIDTH / 8);
 
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "mriq_wrap.h"
+    #include "mriq_wrap.h"
 #endif
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
-public:
-
+  public:
     // ACC instance
 #ifdef CADENCE
     mriq_wrapper *acc;
@@ -54,9 +53,9 @@ public:
         acc->debug(debug);
 
         /* <<--params-default-->> */
-        num_batch_k = 1;
+        num_batch_k  = 1;
         batch_size_k = 16;
-        num_batch_x = 1;
+        num_batch_x  = 1;
         batch_size_x = 4;
     }
 
@@ -94,10 +93,9 @@ public:
     float *out;
     float *in;
 
-  // Other Functions
+    // Other Functions
 
-  void load_mem(float *in, int offset, int32_t base_index, int32_t size);
-
+    void load_mem(float *in, int offset, int32_t base_index, int32_t size);
 };
 
 #endif // __SYSTEM_HPP__

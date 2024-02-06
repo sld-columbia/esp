@@ -15,10 +15,10 @@
 
 class dummy : public esp_accelerator_3P<DMA_WIDTH>
 {
-public:
+  public:
     // Constructor
     SC_HAS_PROCESS(dummy);
-    dummy(const sc_module_name& name)
+    dummy(const sc_module_name &name)
         : esp_accelerator_3P<DMA_WIDTH>(name)
         , cfg("config")
     {
@@ -48,7 +48,6 @@ public:
     // Private local memories
     uint64_t plm0[PLM_SIZE];
     uint64_t plm1[PLM_SIZE];
-
 };
 
 #endif /* __DUMMY_HPP__ */

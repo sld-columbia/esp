@@ -17,24 +17,22 @@
 #include "esp_templates.hpp"
 #include "utils.hpp"
 
-const size_t input_max_size = 3211264; // TODO: it should not be hardcoded
+const size_t input_max_size   = 3211264; // TODO: it should not be hardcoded
 const size_t weights_max_size = 2359296; // TODO: it should not be hardcoded
-const size_t bias_max_size = 29296; // TODO: it should not be hardcoded
-const size_t output_max_size = 3211264; // TODO: it should not be hardcoded
+const size_t bias_max_size    = 29296;   // TODO: it should not be hardcoded
+const size_t output_max_size  = 3211264; // TODO: it should not be hardcoded
 // Hard-coded 8 because the data word will never be more than 8 bytes
 const size_t MEM_SIZE = (input_max_size + weights_max_size + bias_max_size + output_max_size) * 8;
 
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "conv2d_wrap.h"
+    #include "conv2d_wrap.h"
 #endif
-
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
-public:
-
+  public:
     // ACC instance
 #ifdef CADENCE
     conv2d_wrapper *acc;
@@ -101,7 +99,7 @@ public:
     int32_t output_pool_h;
     int32_t output_pool_w;
     int32_t batch_size;
-    
+
     uint32_t in_words_adj;
     uint32_t weights_words_adj;
     uint32_t bias_words_adj;
@@ -111,11 +109,11 @@ public:
     uint32_t bias_size;
     uint32_t out_size;
 
-    float* input;
-    float* weights;
-    float* bias;
-    float* hw_output;
-    float* sw_output;
+    float *input;
+    float *weights;
+    float *bias;
+    float *hw_output;
+    float *sw_output;
 
     // Other Functions
 };

@@ -16,13 +16,12 @@ const size_t MEM_SIZE = 5000;
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "dummy_wrap.h"
+    #include "dummy_wrap.h"
 #endif
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
-public:
-
+  public:
     // ACC instance
 #ifdef CADENCE
     dummy_wrapper *acc;

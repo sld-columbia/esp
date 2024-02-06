@@ -11,7 +11,7 @@
 #include <math.h>
 
 unsigned int fft_rev(unsigned int v);
-void fft_bit_reverse(float *w, unsigned int n, unsigned int bits);
-int fft_comp(float *data, unsigned int n, unsigned int logn, int sign, bool rev);
+void         fft_bit_reverse(float *w, unsigned int n, unsigned int bits);
+int          fft_comp(float *data, unsigned int n, unsigned int logn, int sign, bool rev);
 
 #endif /* TEST_FFT_H */

@@ -12,18 +12,17 @@
 
 #include "esp_templates.hpp"
 
-const size_t MEM_SIZE = 262144 / (DMA_WIDTH/8);
+const size_t MEM_SIZE = 262144 / (DMA_WIDTH / 8);
 
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "fft_wrap.h"
+    #include "fft_wrap.h"
 #endif
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
-public:
-
+  public:
     // ACC instance
 #ifdef CADENCE
     fft_wrapper *acc;
@@ -55,10 +54,10 @@ public:
         acc->debug(debug);
 
         /* <<--params-default-->> */
-        log_len = 8;
-        len = (1 << log_len);
-        do_peak = 0;
-        do_bitrev = 1;
+        log_len    = 8;
+        len        = (1 << log_len);
+        do_peak    = 0;
+        do_bitrev  = 1;
         batch_size = 4;
     }
 
@@ -88,9 +87,9 @@ public:
     uint32_t out_words_adj;
     uint32_t in_size;
     uint32_t out_size;
-    float *in;
-    float *out;
-    float *gold;
+    float *  in;
+    float *  out;
+    float *  gold;
 
     // Other Functions
 };

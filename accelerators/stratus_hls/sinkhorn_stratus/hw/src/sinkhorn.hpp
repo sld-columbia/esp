@@ -14,22 +14,22 @@
 #include "utils/esp_handshake.hpp"
 
 #define __round_mask(x, y) ((y)-1)
-#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+#define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 /* <<--defines-->> */
 #define P_MAX 230
 #define Q_MAX 180
 #define M_MAX 3
 
-#define DATA_WIDTH 32
-#define LOG_DATA_WIDTH 5
-#define DMA_SIZE SIZE_WORD
-#define PLM_OUT_WORD 40960
-#define PLM_IN_X_WORD P_MAX*M_MAX
-#define PLM_IN_Y_WORD Q_MAX*M_MAX
-#define PLM_TOTAL_IN_WORD PLM_IN_X_WORD+PLM_IN_Y_WORD
+#define DATA_WIDTH        32
+#define LOG_DATA_WIDTH    5
+#define DMA_SIZE          SIZE_WORD
+#define PLM_OUT_WORD      40960
+#define PLM_IN_X_WORD     P_MAX *M_MAX
+#define PLM_IN_Y_WORD     Q_MAX *M_MAX
+#define PLM_TOTAL_IN_WORD PLM_IN_X_WORD + PLM_IN_Y_WORD
 #define PLM_INTERMED_WORD 256
 
-#define PRECISION 5
+#define PRECISION           5
 #define READ_INPUT_WRITE_CK 2
 //#define WRITE_OUTPUT 4 // equal to READ_INPUT
 //#define READ_C_WRITE_K 8 // Multiple of 4
@@ -45,8 +45,7 @@
 
 class sinkhorn : public esp_accelerator_3P<DMA_WIDTH>
 {
-public:
-
+  public:
     handshake_t accel_ready;
 
     // Store <-> Internal Computation
@@ -54,7 +53,7 @@ public:
 
     // Constructor
     SC_HAS_PROCESS(sinkhorn);
-    sinkhorn(const sc_module_name& name)
+    sinkhorn(const sc_module_name &name)
         : esp_accelerator_3P<DMA_WIDTH>(name)
         , cfg("config")
         , accel_ready("accel_ready")
@@ -74,7 +73,7 @@ public:
         accel_ready.bind_with(*this);
         compute_ready.bind_with(*this);
 
-        //Binding memories
+        // Binding memories
         HLS_MAP_inputx_plm(inputX);
         HLS_MAP_inputy_plm(inputY);
         HLS_MAP_intermed_plm(x_a);
@@ -107,13 +106,13 @@ public:
     esp_config_proc cfg;
 
     // Functions
-    void compute_C(uint32_t p, uint32_t q, uint32_t m, FPDATA_WORD gamma);
-    void compute_P(uint32_t p, uint32_t q, uint32_t maxiter/*, FPDATA_WORD gamma*/);
-    void compute_CP(uint32_t p, uint32_t q);
+    void   compute_C(uint32_t p, uint32_t q, uint32_t m, FPDATA_WORD gamma);
+    void   compute_P(uint32_t p, uint32_t q, uint32_t maxiter /*, FPDATA_WORD gamma*/);
+    void   compute_CP(uint32_t p, uint32_t q);
     FPDATA kernel_operation(uint32_t p, uint32_t q, bool a_or_b);
-    //void kernel_op_alt(uint32_t p, uint32_t q, uint32_t iter);
+    // void kernel_op_alt(uint32_t p, uint32_t q, uint32_t iter);
     FPDATA neg_exp(FPDATA exponent);
-    void compute_store_P();
+    void   compute_store_P();
 
     inline void reset_computeP_output();
     inline void reset_store_computeP_output();
@@ -129,28 +128,26 @@ public:
     FPDATA_WORD C[PLM_OUT_WORD];
     FPDATA_WORD K[PLM_OUT_WORD];
 
-    //FPDATA precision_const[PRECISION];
+    // FPDATA precision_const[PRECISION];
 
-    //Registers
-    sc_signal<FPDATA_WORD> CP_sum;
-    sc_signal<FPDATA_WORD> ping_val1;
-    sc_signal<FPDATA_WORD> ping_val2;
-    sc_signal<FPDATA_WORD> pong_val1;
-    sc_signal<FPDATA_WORD> pong_val2;
-    sc_signal<uint32_t> p_rows;
-    sc_signal<uint32_t> q_cols;
-    sc_signal<uint32_t> m_rows;
-    sc_signal<FPDATA_WORD> gamma;
-    sc_signal<uint32_t> maxiter;
-    sc_signal<uint32_t> p2p_in;
-    sc_signal<uint32_t> p2p_out;
-    sc_signal<uint32_t> p2p_iter;
-    sc_signal<uint32_t> store_state;
+    // Registers
+    sc_signal<FPDATA_WORD>  CP_sum;
+    sc_signal<FPDATA_WORD>  ping_val1;
+    sc_signal<FPDATA_WORD>  ping_val2;
+    sc_signal<FPDATA_WORD>  pong_val1;
+    sc_signal<FPDATA_WORD>  pong_val2;
+    sc_signal<uint32_t>     p_rows;
+    sc_signal<uint32_t>     q_cols;
+    sc_signal<uint32_t>     m_rows;
+    sc_signal<FPDATA_WORD>  gamma;
+    sc_signal<uint32_t>     maxiter;
+    sc_signal<uint32_t>     p2p_in;
+    sc_signal<uint32_t>     p2p_out;
+    sc_signal<uint32_t>     p2p_iter;
+    sc_signal<uint32_t>     store_state;
     sc_dt::sc_bv<DMA_WIDTH> dataBv_ping;
     sc_dt::sc_bv<DMA_WIDTH> dataBv_pong;
-
 };
-
 
 inline void sinkhorn::computeP_store_handshake()
 {

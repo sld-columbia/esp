@@ -32,25 +32,24 @@ void dummy::load_input()
         conf_info_t config = this->conf_info.read();
 
         tokens = config.tokens;
-        batch = config.batch;
+        batch  = config.batch;
     }
 
     // Load
-    bool ping = true;
+    bool     ping   = true;
     uint32_t offset = 0;
     for (int n = 0; n < batch; n++)
-        for (int b = tokens; b > 0; b -= PLM_SIZE)
-        {
+        for (int b = tokens; b > 0; b -= PLM_SIZE) {
             HLS_PROTO("load-dma");
 
-            uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
+            uint32_t   len = b > PLM_SIZE ? PLM_SIZE : b;
             dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
             offset += len;
 
             this->dma_read_ctrl.put(dma_info);
 
             for (uint16_t i = 0; i < len; i++) {
-                uint64_t data;
+                uint64_t         data;
                 sc_dt::sc_bv<64> data_bv;
 
 #if (DMA_WIDTH == 64)
@@ -78,8 +77,6 @@ void dummy::load_input()
     }
 }
 
-
-
 void dummy::store_output()
 {
     // Reset
@@ -101,19 +98,18 @@ void dummy::store_output()
         conf_info_t config = this->conf_info.read();
 
         tokens = config.tokens;
-        batch = config.batch;
+        batch  = config.batch;
     }
 
     // Store
-    bool ping = true;
+    bool     ping   = true;
     uint32_t offset = 0;
     for (int n = 0; n < batch; n++)
-        for (int b = tokens; b > 0; b -= PLM_SIZE)
-        {
+        for (int b = tokens; b > 0; b -= PLM_SIZE) {
             HLS_PROTO("store-dma");
             this->store_compute_handshake();
 
-            uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
+            uint32_t   len = b > PLM_SIZE ? PLM_SIZE : b;
             dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
             offset += len;
 
@@ -147,7 +143,6 @@ void dummy::store_output()
     }
 }
 
-
 void dummy::compute_kernel()
 {
     // Reset
@@ -166,7 +161,6 @@ void dummy::compute_kernel()
         cfg.wait_for_config(); // config process
         conf_info_t config = this->conf_info.read();
     }
-
 
     // Compute (dummy does nothing)
     while (true) {

@@ -11,15 +11,15 @@
 //
 class conf_info_t
 {
-public:
-
+  public:
     //
     // constructors
     //
     conf_info_t()
         : tokens(0)
         , batch(0)
-    {}
+    {
+    }
 
     // equals operator
     inline bool operator==(const conf_info_t &rhs) const
@@ -28,23 +28,22 @@ public:
     }
 
     // assignment operator
-    inline conf_info_t& operator=(const conf_info_t& other)
+    inline conf_info_t &operator=(const conf_info_t &other)
     {
         tokens = other.tokens;
-        batch = other.batch;
+        batch  = other.batch;
         return *this;
     }
 
     // VCD dumping function
     friend void sc_trace(sc_trace_file *tf, const conf_info_t &v, const std::string &NAME)
-    {}
+    {
+    }
 
     // redirection operator
-    friend ostream& operator << (ostream& os, conf_info_t const &conf_info)
+    friend ostream &operator<<(ostream &os, conf_info_t const &conf_info)
     {
-        os << "{ tokens = " << conf_info.tokens
-           << ", batch = "  << conf_info.batch
-           << "}";
+        os << "{ tokens = " << conf_info.tokens << ", batch = " << conf_info.batch << "}";
         return os;
     }
 

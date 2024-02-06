@@ -13,18 +13,17 @@
 
 #include "esp_templates.hpp"
 
-const size_t MEM_SIZE = 43448 / (DMA_WIDTH/8);
+const size_t MEM_SIZE = 43448 / (DMA_WIDTH / 8);
 
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "vitdodec_wrap.h"
+    #include "vitdodec_wrap.h"
 #endif
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
-public:
-
+  public:
     // ACC instance
 #ifdef CADENCE
     vitdodec_wrapper *acc;
@@ -56,9 +55,9 @@ public:
         acc->debug(debug);
 
         /* <<--params-default-->> */
-        cbps = 48;
+        cbps       = 48;
         ntraceback = 5;
-        data_bits = 288;
+        data_bits  = 288;
     }
 
     // Processes
@@ -85,9 +84,9 @@ public:
     uint32_t out_words_adj;
     uint32_t in_size;
     uint32_t out_size;
-    int8_t *in;
-    int8_t *out;
-    int8_t *gold;
+    int8_t * in;
+    int8_t * out;
+    int8_t * gold;
 
     // Other Functions
 };
