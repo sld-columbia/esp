@@ -128,7 +128,7 @@ architecture mesh of sync_noc_set is
 --      local_x   : std_logic_vector(2 downto 0);
 --      local_y   : std_logic_vector(2 downto 0);
       has_sync  : integer range 0 to 1;
-      this_noc_flit_size : integer range 32 to 1024); --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      this_noc_flit_size : integer range 32 to 1026); --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
     port (
       clk           : in  std_logic;
       clk_tile      : in  std_logic;
