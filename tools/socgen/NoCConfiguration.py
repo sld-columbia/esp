@@ -63,6 +63,7 @@ class Tile():
        display_points = [point for point in soc.IPs.POINTS[selection] if dma_width in point]
        self.point_select.setitems(display_points)
        point = self.point.get()
+       self.point_select.setvalue("")
        for p in display_points:
          if point == p:
            self.point_select.setvalue(point)
@@ -337,6 +338,16 @@ class NoC():
              tot_acc_l2 += 1
     return tot_acc_l2
 
+  def get_acc_impl_valid(self, soc):
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
+         tile = self.topology[y][x]
+         selection = tile.ip_type.get()
+         if soc.IPs.ACCELERATORS.count(selection):
+           if tile.point_select.getvalue() == "":
+             return False
+    return True
+
   def get_mem_num(self, soc):
     tot_mem = 0
     for y in range(0, self.rows):
@@ -556,6 +567,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     tot_slmddr = self.noc.get_slmddr_num(self.soc)
     tot_acc = self.noc.get_acc_num(self.soc)
     regions = self.noc.get_clk_regions()
+    acc_impl_valid = self.noc.get_acc_impl_valid(self.soc)
     for y in range(0, self.noc.rows):
       for x in range(0, self.noc.cols):
         tile = self.noc.topology[y][x]
@@ -654,7 +666,7 @@ class NoCFrame(Pmw.ScrolledFrame):
        (self.noc.dma_noc_width.get() >= self.soc.mem_link_width.get()) and \
        ((self.soc.cache_en.get() == 1) or (self.noc.coh_noc_width.get() == self.soc.ARCH_BITS)) and \
        (self.noc.coh_noc_width.get() >= self.soc.ARCH_BITS) and \
-       (self.noc.coh_noc_width.get() >= self.soc.ARCH_BITS):
+       (self.noc.coh_noc_width.get() >= self.soc.ARCH_BITS) and acc_impl_valid:
       # Spandex beta warning
       if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
         string += "***              Spandex support is still beta                 ***\n"
@@ -726,6 +738,8 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Coherence NoC width must be greater than or equal to the CPU architecture size\n"
       if (self.noc.dma_noc_width.get() < self.soc.ARCH_BITS):
         string += "DMA NoC width must be greater than or equal to the CPU architecture size\n"
+      if (not acc_impl_valid):
+        string += "All accelerators must have a selected implementation\n"
 
     # Update message box
     self.message.insert(0.0, string)
