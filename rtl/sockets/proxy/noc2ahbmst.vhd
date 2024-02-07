@@ -698,7 +698,7 @@ begin  -- rtl
           -- Accelerators work with data widht equal to the selected processor,
           -- however, non-coherent Ethernet DMA makes 32-bits bursts
           v.addr          := r.addr + target_dma_incr;
-          if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS then
+          if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS or word_rem = 0 then
             v.word_cnt := 0;
             dma_snd_wrreq   <= '1';
           end if;
