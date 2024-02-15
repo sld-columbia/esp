@@ -156,35 +156,30 @@ architecture rtl of esp_acc_dma is
     variable dout : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
   begin
     -- If architecture is little endian, then return data as is
-    if GLOB_CPU_AXI = 1 then
+    if GLOB_CPU_RISCV = 1 then
       dout := din;
     else
-      case sz is
+      for j in 0 to (DMA_NOC_WIDTH / ARCH_BITS) - 1 loop
+        case sz is
+          when HSIZE_WORD =>
+            for i in 0 to (ARCH_BITS / 32) - 1 loop
+              dout(32 * (i + 1) - 1 + ARCH_BITS * j downto 32 * i + ARCH_BITS * j) := din(ARCH_BITS - 32 * i - 1 + ARCH_BITS * j downto ARCH_BITS - 32 * (i + 1) + ARCH_BITS * j);
+            end loop;
 
-        when HSIZE_DWORD =>
-          for i in 0 to (ARCH_BITS / 64) - 1 loop
-            dout(64 * (i + 1) - 1 downto 64 * i) := din(ARCH_BITS - 64 * i - 1 downto ARCH_BITS - 64 * (i + 1));
-          end loop;
+          when HSIZE_HWORD =>
+            for i in 0 to (ARCH_BITS / 16) - 1 loop
+              dout(16 * (i + 1) - 1 + ARCH_BITS * j downto 16 * i + ARCH_BITS * j) := din(ARCH_BITS - 16 * i - 1 + ARCH_BITS * j downto ARCH_BITS - 16 * (i + 1) + ARCH_BITS * j);
+            end loop;
 
-        when HSIZE_WORD =>
-          for i in 0 to (DMA_NOC_WIDTH / 32) - 1 loop
-            dout(32 * (i + 1) - 1 downto 32 * i) := din(DMA_NOC_WIDTH - 32 * i - 1 downto DMA_NOC_WIDTH - 32 * (i + 1));
-          end loop;
+          when HSIZE_BYTE =>
+            for i in 0 to (ARCH_BITS / 8) - 1 loop
+              dout(8 * (i + 1) - 1 + ARCH_BITS * j downto 8 * i + ARCH_BITS * j) := din(ARCH_BITS - 8 * i - 1 + ARCH_BITS * j downto ARCH_BITS - 8 * (i + 1) + ARCH_BITS * j);
+            end loop;
 
-        when HSIZE_HWORD =>
-          for i in 0 to (DMA_NOC_WIDTH / 16) - 1 loop
-            dout(16 * (i + 1) - 1 downto 16 * i) := din(DMA_NOC_WIDTH - 16 * i - 1 downto DMA_NOC_WIDTH - 16 * (i + 1));
-          end loop;
-
-        when HSIZE_BYTE =>
-          for i in 0 to (DMA_NOC_WIDTH / 8) - 1 loop
-            dout(8 * (i + 1) - 1 downto 8 * i) := din(DMA_NOC_WIDTH - 8 * i - 1 downto DMA_NOC_WIDTH - 8 * (i + 1));
-          end loop;
-
-        when others =>
-          dout := din;
-
-      end case;
+          when others =>
+            dout(ARCH_BITS * (j + 1) - 1 downto ARCH_BITS * j) := din(ARCH_BITS * (j + 1) - 1 downto ARCH_BITS * j);
+        end case;
+      end loop;
     end if;
     return dout;
   end fix_endian;
