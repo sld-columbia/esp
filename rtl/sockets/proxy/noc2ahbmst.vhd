@@ -698,7 +698,7 @@ begin  -- rtl
           -- Accelerators work with data widht equal to the selected processor,
           -- however, non-coherent Ethernet DMA makes 32-bits bursts
           v.addr          := r.addr + target_dma_incr;
-          if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS or word_rem = 0 then
+          if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS or word_rem = 0 or eth_dma = 1 then
             v.word_cnt := 0;
             dma_snd_wrreq   <= '1';
           end if;
@@ -867,14 +867,14 @@ begin  -- rtl
           v.addr   := r.addr + target_dma_incr;
           v.word_cnt := r.word_cnt + 1;
           v.htrans := HTRANS_SEQ;
-          if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS then
+          if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS or eth_dma = 1 then
             v.word_cnt := 0;
             if dma_rcv_empty = '1' then
               v.htrans := HTRANS_BUSY;
               v.state  := dma_write_busy;
             else
               if (dma_preamble = PREAMBLE_TAIL) then
-                if (DMA_NOC_WIDTH = ARCH_BITS) then
+                if (DMA_NOC_WIDTH = ARCH_BITS or eth_dma = 1) then
                   v.hbusreq := '0';
                 end if;
                 v.state   := write_last_data;
@@ -906,7 +906,7 @@ begin  -- rtl
         if (v.ready = '1' and dma_rcv_empty = '0') then
           v.htrans := HTRANS_SEQ;
           if (dma_preamble = PREAMBLE_TAIL) then
-            if (DMA_NOC_WIDTH = ARCH_BITS) then
+            if (DMA_NOC_WIDTH = ARCH_BITS or eth_dma = 1) then
               v.hbusreq := '0';
             end if;
             v.state   := write_last_data;
@@ -930,7 +930,7 @@ begin  -- rtl
             if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS - 1 then
               v.hbusreq := '0';
             end if;
-            if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS then
+            if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS or eth_dma = 1 then
               v.htrans := HTRANS_IDLE;
               v.hwrite := '0';
               v.state  := write_complete;
