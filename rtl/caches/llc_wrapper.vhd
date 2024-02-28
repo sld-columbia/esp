@@ -1315,7 +1315,7 @@ begin  -- architecture rtl
               reg.req_id := std_logic_vector(to_unsigned(tile_dma_id(reg.tile_id), NLLC_MAX_LOG2));
             end if;
 
-            if ARCH_BITS /= 32 and eth_dma_id = tile_dma_id(reg.tile_id) then
+            if DMA_NOC_WIDTH /= 32 and eth_dma_id = tile_dma_id(reg.tile_id) then
               reg.dma32 := '1';
             else
               reg.dma32 := '0';
@@ -1348,7 +1348,7 @@ begin  -- architecture rtl
             reg.word_cnt := to_integer(unsigned(reg.woffset)) / dma_words;
             reg.state    := rcv_data_dma;
             if reg.dma32 = '1' then
-              reg.dma32_cnt := to_integer(unsigned(reg.woffset)) * 2 mod dma32_words;
+              reg.dma32_cnt := (to_integer(unsigned(reg.woffset)) * (ARCH_BITS / 32)) mod dma32_words;
             end if;
 
           end if;
@@ -1370,7 +1370,7 @@ begin  -- architecture rtl
             llc_dma_req_in_data_word_offset <= reg.woffset;
             llc_dma_req_in_data_req_id      <= reg.req_id;
             -- Save DMA read length to most significant word in line field
-            if reg.dma32 = '1' then
+            if reg.dma32 = '1' and ARCH_BITS /= 32 then
 --pragma translate_off
               assert ARCH_BITS <= 64 report "Ethernet DMA32 not supported on architectures with bit-width greater than 64" severity error;
 --pragma translate_on
@@ -1419,7 +1419,7 @@ begin  -- architecture rtl
                 if reg.dma32 = '0' then
                   llc_dma_req_in_data_valid_words <= std_logic_vector(to_unsigned(reg.word_cnt * dma_words + dma_words - 1, WORD_OFFSET_BITS)) - reg.woffset;
                 else
-                  llc_dma_req_in_data_valid_words <= std_logic_vector(to_unsigned(reg.word_cnt * dma_words + dma_req_in_reg.dma32_cnt / 2, WORD_OFFSET_BITS)) - reg.woffset;
+                  llc_dma_req_in_data_valid_words <= std_logic_vector(to_unsigned(reg.word_cnt * dma_words + dma_req_in_reg.dma32_cnt / (ARCH_BITS / 32), WORD_OFFSET_BITS)) - reg.woffset;
                 end if;
                 llc_dma_req_in_data_line        <= reg.line;
                 llc_dma_req_in_data_req_id      <= reg.req_id;
@@ -1996,9 +1996,9 @@ begin  -- architecture rtl
             end if;
           end if;
 
-          if ARCH_BITS /= 32 and dest_init = eth_dma_id then
+          if DMA_NOC_WIDTH /= 32 and dest_init = eth_dma_id then
             reg.dma32 := '1';
-            reg.dma32_cnt := to_integer(unsigned(reg.woffset)) * 2 mod dma32_words;
+            reg.dma32_cnt := (to_integer(unsigned(reg.woffset)) * (ARCH_BITS / 32)) mod dma32_words;
           else
             reg.dma32 := '0';
           end if;
