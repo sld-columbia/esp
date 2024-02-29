@@ -5,11 +5,25 @@
 #define __DUMMY_DIRECTIVES_HPP__
 
 
-#if (DMA_WIDTH == 64)
+#if (DMA_WIDTH == 512)
 #define DMA_BEAT_PER_WORD 1
+#define DMA_WORD_PER_BEAT 8
+#define DMA_SIZE SIZE_DWORD
+#elif (DMA_WIDTH == 256)
+#define DMA_BEAT_PER_WORD 1
+#define DMA_WORD_PER_BEAT 4
+#define DMA_SIZE SIZE_DWORD
+#elif (DMA_WIDTH == 128)
+#define DMA_BEAT_PER_WORD 1
+#define DMA_WORD_PER_BEAT 2
+#define DMA_SIZE SIZE_DWORD
+#elif (DMA_WIDTH == 64)
+#define DMA_BEAT_PER_WORD 1
+#define DMA_WORD_PER_BEAT 1
 #define DMA_SIZE SIZE_DWORD
 #elif (DMA_WIDTH == 32)
 #define DMA_BEAT_PER_WORD 2
+#define DMA_WORD_PER_BEAT 0
 #define DMA_SIZE SIZE_WORD
 #endif
 

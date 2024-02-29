@@ -8,4 +8,4 @@
 #
 # See the ESP documentation for more info
 #
-dummy_plm 512 64 1w:0r 0w:1r
+dummy_plm 512 64 8w:0r 0w:8r
