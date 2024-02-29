@@ -53,7 +53,7 @@ entity fpga_proxy_top is
     jtag_clk_p        : in    std_ulogic;
     jtag_clk_n        : in    std_ulogic;
     -- Memory link
-    fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+    fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
     fpga_valid_in     : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_valid_out    : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_clk_in       : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -299,12 +299,11 @@ architecture rtl of fpga_proxy_top is
   attribute mark_debug of diagnostic_toggle : signal is "true";
 
   -- AHB proxy extended
-  type noc_flit_vector is array (natural range <>) of noc_flit_type;
   signal extended_ahbm_rcv_rdreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal extended_ahbm_rcv_data_out : noc_flit_vector(0 to CFG_NMEM_TILE - 1);
+  signal extended_ahbm_rcv_data_out : coh_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
   signal extended_ahbm_rcv_empty    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
   signal extended_ahbm_snd_wrreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal extended_ahbm_snd_data_in  : noc_flit_vector(0 to CFG_NMEM_TILE - 1);
+  signal extended_ahbm_snd_data_in  : coh_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
   signal extended_ahbm_snd_full     : std_logic_vector(0 to CFG_NMEM_TILE - 1);
 
   attribute mark_debug of extended_ahbm_rcv_rdreq    : signal is "true";
@@ -315,7 +314,6 @@ architecture rtl of fpga_proxy_top is
   attribute mark_debug of extended_ahbm_snd_full     : signal is "true";
 
   -- AHB proxy queues
-  type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
   signal ahbm_rcv_rdreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
   signal ahbm_rcv_data_out : misc_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
   signal ahbm_rcv_empty    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
@@ -432,8 +430,8 @@ architecture rtl of fpga_proxy_top is
   -----------------------------------------------------------------------------
   -- FPGA proxy
   signal fpga_data_ien       : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-  signal fpga_data_in        : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
-  signal fpga_data_out       : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+  signal fpga_data_in        : std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
+  signal fpga_data_out       : std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
   signal fpga_valid_in_int   : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_valid_out_int  : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_clk_in_int     : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -690,9 +688,9 @@ begin  -- architecture rtl
   fpga_io_gen : for i in 0 to CFG_NMEM_TILE - 1 generate
 
     -- Bidirection data pins
-    fpga_iopad_data_gen : for j in 0 to ARCH_BITS - 1 generate
+    fpga_iopad_data_gen : for j in 0 to CFG_MEM_LINK_BITS - 1 generate
         fpga_data_pad  : iopad generic map (tech => FPGA_PROXY_TECH, level => cmos, voltage => x18v, oepol => 1) 
-          port map (fpga_data(memswap(i) * ARCH_BITS + j), fpga_data_in(i * ARCH_BITS + j), fpga_data_ien(i), fpga_data_out(i * ARCH_BITS + j));
+          port map (fpga_data(memswap(i) * CFG_MEM_LINK_BITS + j), fpga_data_in(i * CFG_MEM_LINK_BITS + j), fpga_data_ien(i), fpga_data_out(i * CFG_MEM_LINK_BITS + j));
     end generate fpga_iopad_data_gen;
 
     -- Valid bit
@@ -742,8 +740,8 @@ begin  -- architecture rtl
       port map (
         clk             => sys_clk(i),
         rstn            => rstn,
-        fpga_data_in    => fpga_data_in((i + 1) * (ARCH_BITS) - 1 downto i * (ARCH_BITS)),
-        fpga_data_out   => fpga_data_out((i + 1) * (ARCH_BITS) - 1 downto i * (ARCH_BITS)),
+        fpga_data_in    => fpga_data_in((i + 1) * (CFG_MEM_LINK_BITS) - 1 downto i * (CFG_MEM_LINK_BITS)),
+        fpga_data_out   => fpga_data_out((i + 1) * (CFG_MEM_LINK_BITS) - 1 downto i * (CFG_MEM_LINK_BITS)),
         fpga_valid_in   => fpga_valid_in_int(i),
         fpga_valid_out  => fpga_valid_out_int(i),
         fpga_data_ien   => fpga_data_ien(i),
@@ -757,14 +755,15 @@ begin  -- architecture rtl
     -- Handle EDCL requests to memory (load program/data)
     noc2ahbmst_i  : noc2ahbmst
       generic map (
-        tech        => FPGA_PROXY_TECH,
-        hindex      => 1,
-        axitran     => 0,
-        little_end  => 0,
-        eth_dma     => 0,
-        narrow_noc  => 0,
-        cacheline   => 1,
-        l2_cache_en => 0)
+        tech                => FPGA_PROXY_TECH,
+        hindex              => 1,
+        axitran             => 0,
+        little_end          => 0,
+        eth_dma             => 0,
+        narrow_noc          => 0,
+        cacheline           => 1,
+        l2_cache_en         => 0,
+        this_noc_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
         rst                       => rstn,
         clk                       => sys_clk(i),
@@ -926,8 +925,8 @@ begin  -- architecture rtl
   end process rcv_mux_gen;
 
   -- Mux selectors
-  target_x <= get_destination_x(MISC_NOC_FLIT_SIZE, noc_flit_pad & mux_ahbs_snd_data_out);
-  target_y <= get_destination_y(MISC_NOC_FLIT_SIZE, noc_flit_pad & mux_ahbs_snd_data_out);
+  target_x <= get_destination_x(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & mux_ahbs_snd_data_out);
+  target_y <= get_destination_y(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & mux_ahbs_snd_data_out);
 
   mux_state_gen: process (main_clk, rstn) is
   begin  -- process mux_state_gen
@@ -975,16 +974,17 @@ begin  -- architecture rtl
   -- Handle EDCL requests to memory
   ahbslv2noc_1 : ahbslv2noc
     generic map (
-      tech             => FPGA_PROXY_TECH,
-      hindex           => this_remote_ahb_slv_en,
-      hconfig          => fixed_ahbso_hconfig,
-      mem_hindex       => ddr_hindex(0),
-      mem_num          => CFG_NMEM_TILE,
-      mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1),
-      slv_y            => tile_y(io_tile_id),
-      slv_x            => tile_x(io_tile_id),
-      retarget_for_dma => 1,
-      dma_length       => CFG_DLINE)
+      tech                  => FPGA_PROXY_TECH,
+      hindex                => this_remote_ahb_slv_en,
+      hconfig               => fixed_ahbso_hconfig,
+      mem_hindex            => ddr_hindex(0),
+      mem_num               => CFG_NMEM_TILE,
+      mem_info              => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1),
+      this_noc_flit_size    => COH_NOC_FLIT_SIZE,
+      slv_y                 => tile_y(io_tile_id),
+      slv_x                 => tile_x(io_tile_id),
+      retarget_for_dma      => 1,
+      dma_length            => CFG_DLINE)
     port map (
       rst                        => rstn,
       clk                        => main_clk,
@@ -1132,16 +1132,16 @@ begin  -- architecture rtl
 
   rst_l <= not(rst);
 
-  fpga_proxy_jtag0: fpga_proxy_jtag
-      port map (
-        rst    => rst_l,
-        tdi    => tdi_jtag,
-        tdo    => tdo_jtag,
-        tms    => tms_in,
-        tclk   => jtag_clk,
-        main_clk   => main_clk,
-        ahbsi  => ahbsi_in,
-        ahbso  => ahbso_apb);
+  --fpga_proxy_jtag0: fpga_proxy_jtag
+  --    port map (
+  --      rst    => rst_l,
+  --      tdi    => tdi_jtag,
+  --      tdo    => tdo_jtag,
+  --      tms    => tms_in,
+  --      tclk   => jtag_clk,
+  --      main_clk   => main_clk,
+  --      ahbsi  => ahbsi_in,
+  --      ahbso  => ahbso_apb);
 
   jtag_apb_config0: jtag_apb_config
     generic map (

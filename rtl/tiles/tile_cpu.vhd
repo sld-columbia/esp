@@ -62,40 +62,40 @@ entity tile_cpu is
     noc4_mon_noc_vec   : in monitor_noc_type;
     noc5_mon_noc_vec   : in monitor_noc_type;
     noc6_mon_noc_vec   : in monitor_noc_type;
-    test1_output_port   : in noc_flit_type;
+    test1_output_port   : in coh_noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
-    test2_output_port   : in noc_flit_type;
+    test2_output_port   : in coh_noc_flit_type;
     test2_data_void_out : in std_ulogic;
     test2_stop_in       : in std_ulogic;
-    test3_output_port   : in noc_flit_type;
+    test3_output_port   : in coh_noc_flit_type;
     test3_data_void_out : in std_ulogic;
     test3_stop_in       : in std_ulogic;
-    test4_output_port   : in noc_flit_type;
+    test4_output_port   : in dma_noc_flit_type;
     test4_data_void_out : in std_ulogic;
     test4_stop_in       : in std_ulogic;
     test5_output_port   : in misc_noc_flit_type;
     test5_data_void_out : in std_ulogic;
     test5_stop_in       : in std_ulogic;
-    test6_output_port   : in noc_flit_type;
+    test6_output_port   : in dma_noc_flit_type;
     test6_data_void_out : in std_ulogic;
     test6_stop_in       : in std_ulogic;
-    test1_input_port    : out noc_flit_type;
+    test1_input_port    : out coh_noc_flit_type;
     test1_data_void_in  : out std_ulogic;
     test1_stop_out      : out std_ulogic;
-    test2_input_port    : out noc_flit_type;
+    test2_input_port    : out coh_noc_flit_type;
     test2_data_void_in  : out std_ulogic;
     test2_stop_out      : out std_ulogic;
-    test3_input_port    : out noc_flit_type;
+    test3_input_port    : out coh_noc_flit_type;
     test3_data_void_in  : out std_ulogic;
     test3_stop_out      : out std_ulogic;
-    test4_input_port    : out noc_flit_type;
+    test4_input_port    : out dma_noc_flit_type;
     test4_data_void_in  : out std_ulogic;
     test4_stop_out      : out std_ulogic;
     test5_input_port    : out misc_noc_flit_type;
     test5_data_void_in  : out std_ulogic;
     test5_stop_out      : out std_ulogic;
-    test6_input_port    : out noc_flit_type;
+    test6_input_port    : out dma_noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
     mon_cache          : out monitor_cache_type;
@@ -165,26 +165,26 @@ architecture rtl of tile_cpu is
 
   -- Queues
   signal coherence_req_wrreq        : std_ulogic;
-  signal coherence_req_data_in      : noc_flit_type;
+  signal coherence_req_data_in      : coh_noc_flit_type;
   signal coherence_req_full         : std_ulogic;
   signal coherence_fwd_rdreq        : std_ulogic;
-  signal coherence_fwd_data_out     : noc_flit_type;
+  signal coherence_fwd_data_out     : coh_noc_flit_type;
   signal coherence_fwd_empty        : std_ulogic;
   signal coherence_rsp_rcv_rdreq    : std_ulogic;
-  signal coherence_rsp_rcv_data_out : noc_flit_type;
+  signal coherence_rsp_rcv_data_out : coh_noc_flit_type;
   signal coherence_rsp_rcv_empty    : std_ulogic;
   signal coherence_rsp_snd_wrreq    : std_ulogic;
-  signal coherence_rsp_snd_data_in  : noc_flit_type;
+  signal coherence_rsp_snd_data_in  : coh_noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
   signal coherence_fwd_snd_wrreq    : std_ulogic;
-  signal coherence_fwd_snd_data_in  : noc_flit_type;
+  signal coherence_fwd_snd_data_in  : coh_noc_flit_type;
   signal coherence_fwd_snd_full     : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
-  signal dma_rcv_data_out           : noc_flit_type;
+  signal dma_rcv_data_out           : dma_noc_flit_type;
   signal dma_rcv_empty              : std_ulogic;
   signal dma_snd_wrreq              : std_ulogic;
-  signal dma_snd_data_in_cpu        : noc_flit_type;
-  signal dma_snd_data_in            : noc_flit_type;
+  signal dma_snd_data_in_cpu        : dma_noc_flit_type;
+  signal dma_snd_data_in            : dma_noc_flit_type;
   signal dma_snd_full               : std_ulogic;
   signal remote_ahbs_snd_wrreq      : std_ulogic;
   signal remote_ahbs_snd_data_in    : misc_noc_flit_type;
@@ -823,16 +823,17 @@ begin
     -- Memory request/response sue planes 1 and 3; other slaves use plane 5
     ahbslv2noc_1 : ahbslv2noc
       generic map (
-        tech             => CFG_FABTECH,
-        hindex           => this_remote_ahb_slv_en,
-        hconfig          => cpu_tile_fixed_ahbso_hconfig,
-        mem_hindex       => ddr_hindex(0),
-        mem_num          => CFG_NMEM_TILE,
-        mem_info         => tile_mem_list,
-        slv_y            => tile_y(io_tile_id),
-        slv_x            => tile_x(io_tile_id),
-        retarget_for_dma => 0,
-        dma_length       => CFG_DLINE)
+        tech                => CFG_FABTECH,
+        hindex              => this_remote_ahb_slv_en,
+        hconfig             => cpu_tile_fixed_ahbso_hconfig,
+        mem_hindex          => ddr_hindex(0),
+        mem_num             => CFG_NMEM_TILE,
+        mem_info            => tile_mem_list,
+        this_noc_flit_size  => COH_NOC_FLIT_SIZE,
+        slv_y               => tile_y(io_tile_id),
+        slv_x               => tile_x(io_tile_id),
+        retarget_for_dma    => 0,
+        dma_length          => CFG_DLINE)
       port map (
         rst                        => cleanrstn,
         clk                        => clk_feedthru,
@@ -866,16 +867,17 @@ begin
     -- Remote uncached slaves
     ahbslv2noc_1 : ahbslv2noc
       generic map (
-        tech             => CFG_FABTECH,
-        hindex           => this_remote_ahb_slv_en,
-        hconfig          => cpu_tile_fixed_ahbso_hconfig,
-        mem_hindex       => ddr_hindex(0),
-        mem_num          => CFG_NMEM_TILE,
-        mem_info         => tile_mem_list,
-        slv_y            => tile_y(io_tile_id),
-        slv_x            => tile_x(io_tile_id),
-        retarget_for_dma => 0,
-        dma_length       => CFG_DLINE)
+        tech                => CFG_FABTECH,
+        hindex              => this_remote_ahb_slv_en,
+        hconfig             => cpu_tile_fixed_ahbso_hconfig,
+        mem_hindex          => ddr_hindex(0),
+        mem_num             => CFG_NMEM_TILE,
+        mem_info            => tile_mem_list,
+        this_noc_flit_size  => COH_NOC_FLIT_SIZE,
+        slv_y               => tile_y(io_tile_id),
+        slv_x               => tile_x(io_tile_id),
+        retarget_for_dma    => 0,
+        dma_length          => CFG_DLINE)
       port map (
         rst                        => cleanrstn,
         clk                        => clk_feedthru,
@@ -902,16 +904,17 @@ begin
   -- Remote uncached slaves: shared-local memory; using DMA planes
   ahbslv2noc_3 : ahbslv2noc
     generic map (
-      tech             => CFG_FABTECH,
-      hindex           => slm_ahb_mask,
-      hconfig          => cpu_tile_fixed_ahbso_hconfig,
-      mem_hindex       => -1,
-      mem_num          => CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
-      mem_info         => tile_slm_list,
-      slv_y            => tile_y(io_tile_id),
-      slv_x            => tile_x(io_tile_id),
-      retarget_for_dma => 0,
-      dma_length       => CFG_DLINE)
+      tech                  => CFG_FABTECH,
+      hindex                => slm_ahb_mask,
+      hconfig               => cpu_tile_fixed_ahbso_hconfig,
+      mem_hindex            => -1,
+      mem_num               => CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
+      mem_info              => tile_slm_list,
+      this_noc_flit_size    => DMA_NOC_FLIT_SIZE,
+      slv_y                 => tile_y(io_tile_id),
+      slv_x                 => tile_x(io_tile_id),
+      retarget_for_dma      => 0,
+      dma_length            => CFG_DLINE)
     port map (
       rst                        => cleanrstn,
       clk                        => clk_feedthru,
@@ -948,14 +951,15 @@ begin
 
       axislv2noc_1: axislv2noc
         generic map (
-          tech         => CFG_FABTECH,
-          nmst         => 3,
-          retarget_for_dma => 0,
-          mem_axi_port => 1,
-          mem_num      => CFG_NMEM_TILE,
-          mem_info     => tile_mem_list,
-          slv_y        => tile_y(io_tile_id),
-          slv_x        => tile_x(io_tile_id))
+          tech                  => CFG_FABTECH,
+          nmst                  => 3,
+          retarget_for_dma      => 0,
+          mem_axi_port          => 1,
+          mem_num               => CFG_NMEM_TILE,
+          mem_info              => tile_mem_list,
+          this_noc_flit_size    => COH_NOC_FLIT_SIZE,
+          slv_y                 => tile_y(io_tile_id),
+          slv_x                 => tile_x(io_tile_id))
         port map (
           rst                        => rst,
           clk                        => clk_feedthru,
@@ -993,14 +997,15 @@ begin
 
       axislv2noc_1: axislv2noc
         generic map (
-          tech         => CFG_FABTECH,
-          nmst         => 3,
-          retarget_for_dma => 0,
-          mem_axi_port => 1,
-          mem_num      => CFG_NMEM_TILE,
-          mem_info     => tile_mem_list,
-          slv_y        => tile_y(io_tile_id),
-          slv_x        => tile_x(io_tile_id))
+          tech                  => CFG_FABTECH,
+          nmst                  => 3,
+          retarget_for_dma      => 0,
+          mem_axi_port          => 1,
+          mem_num               => CFG_NMEM_TILE,
+          mem_info              => tile_mem_list,
+          this_noc_flit_size    => COH_NOC_FLIT_SIZE,
+          slv_y                 => tile_y(io_tile_id),
+          slv_x                 => tile_x(io_tile_id))
         port map (
           rst                        => cleanrstn,
           clk                        => clk_feedthru,
@@ -1027,14 +1032,15 @@ begin
     -- Remote uncached slaves: shared-local memory; using DMA planes
     axislv2noc_3: axislv2noc
       generic map (
-        tech         => CFG_FABTECH,
-        nmst         => 2,
-        retarget_for_dma => 0,
-        mem_axi_port => -1,
-        mem_num      => CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
-        mem_info     => tile_slm_list,
-        slv_y        => tile_y(io_tile_id),
-        slv_x        => tile_x(io_tile_id))
+        tech                => CFG_FABTECH,
+        nmst                => 2,
+        retarget_for_dma    => 0,
+        mem_axi_port        => -1,
+        mem_num             => CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
+        mem_info            => tile_slm_list,
+        this_noc_flit_size  => DMA_NOC_FLIT_SIZE,
+        slv_y               => tile_y(io_tile_id),
+        slv_x               => tile_x(io_tile_id))
       port map (
         rst                        => cleanrstn,
         clk                        => clk_feedthru,
@@ -1234,8 +1240,8 @@ begin
   set_cpu_dma: process (dma_snd_data_in_cpu) is
   begin
     dma_snd_data_in <= dma_snd_data_in_cpu;
-    if get_preamble(NOC_FLIT_SIZE, dma_snd_data_in_cpu) = PREAMBLE_HEADER then
-      dma_snd_data_in(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 4) <= '1';
+    if get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_snd_data_in_cpu) = PREAMBLE_HEADER then
+      dma_snd_data_in(DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 4) <= '1';
     end if;
   end process set_cpu_dma;
 

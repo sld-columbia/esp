@@ -25,14 +25,18 @@ use work.cachepackage.all;
 
 entity noc2ahbmst is
   generic (
-    tech        : integer;
-    hindex      : integer range 0 to NAHBSLV - 1;
-    axitran     : integer range 0 to 1 := 0;
-    little_end  : integer range 0 to 1 := 0;
-    eth_dma     : integer range 0 to 1 := 0;
-    narrow_noc  : integer range 0 to 1 := 0;
-    cacheline   : integer;
-    l2_cache_en : integer);
+    tech                : integer;
+    hindex              : integer range 0 to NAHBSLV - 1;
+    axitran             : integer range 0 to 1 := 0;
+    little_end          : integer range 0 to 1 := 0;
+    eth_dma             : integer range 0 to 1 := 0;
+    narrow_noc          : integer range 0 to 1 := 0;
+    cacheline           : integer;
+    l2_cache_en         : integer;
+    this_coh_flit_size  : integer); --The coherence queues of this proxy are used for different purposes,
+                                    --including coherence messages, CPU DMA in SLM, and remote AHB
+                                    --transactions on NoC5. This parameter enables different instances
+                                    --of this proxy to interface with NoCs of different widths
   port (
     rst   : in  std_ulogic;
     clk   : in  std_ulogic;
@@ -43,23 +47,23 @@ entity noc2ahbmst is
 
     -- NoC1->tile
     coherence_req_rdreq       : out std_ulogic;
-    coherence_req_data_out    : in  noc_flit_type;
+    coherence_req_data_out    : in  std_logic_vector(this_coh_flit_size - 1 downto 0);
     coherence_req_empty       : in  std_ulogic;
     -- tile->NoC2
     coherence_fwd_wrreq       : out std_ulogic;
-    coherence_fwd_data_in     : out noc_flit_type;
+    coherence_fwd_data_in     : out std_logic_vector(this_coh_flit_size - 1 downto 0);
     coherence_fwd_full        : in  std_ulogic;
     -- tile->NoC3
     coherence_rsp_snd_wrreq   : out std_ulogic;
-    coherence_rsp_snd_data_in : out noc_flit_type;
+    coherence_rsp_snd_data_in : out std_logic_vector(this_coh_flit_size - 1 downto 0);
     coherence_rsp_snd_full    : in  std_ulogic;
     -- NoC4->tile
     dma_rcv_rdreq             : out std_ulogic;
-    dma_rcv_data_out          : in  noc_flit_type;
+    dma_rcv_data_out          : in  dma_noc_flit_type;
     dma_rcv_empty             : in  std_ulogic;
     -- tile->NoC4
     dma_snd_wrreq             : out std_ulogic;
-    dma_snd_data_in           : out noc_flit_type;
+    dma_snd_data_in           : out dma_noc_flit_type;
     dma_snd_full              : in  std_ulogic;
     dma_snd_atleast_4slots    : in  std_ulogic;
     dma_snd_exactly_3slots    : in  std_ulogic);
@@ -74,6 +78,8 @@ architecture rtl of noc2ahbmst is
 
   -- Default address increment
   constant default_incr : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0) := conv_std_logic_vector(GLOB_ADDR_INCR, GLOB_PHYS_ADDR_BITS);
+
+  constant this_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - this_coh_flit_size downto 0) := (others => '0');
 
   function target_word_hsize
     return std_logic_vector is
@@ -135,13 +141,14 @@ architecture rtl of noc2ahbmst is
                     dma_write_busy, write_busy, send_put_ack, send_put_ack_address);
 
   -- RSP_DATA
-  signal header        : noc_flit_type;
-  signal header_reg    : noc_flit_type;
-  signal sample_header : std_ulogic;
+  signal header         : std_logic_vector(this_coh_flit_size - 1 downto 0);
+  signal header_reg     : std_logic_vector(this_coh_flit_size - 1 downto 0);
+  signal sample_header  : std_ulogic;
 
   -- DMA_TO_DEV
-  signal dma_header        : noc_flit_type;
-  signal sample_dma_header : std_ulogic;
+  signal dma_header         : dma_noc_flit_type;
+  signal dma_header_reg     : dma_noc_flit_type;
+  signal sample_dma_header  : std_ulogic;
 
   -- common
   type reg_type is record
@@ -154,7 +161,8 @@ architecture rtl of noc2ahbmst is
     resp    : std_logic_vector(1 downto 0);
     addr    : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
     incr    : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
-    flit    : noc_flit_type;
+    coh_flit : std_logic_vector(this_coh_flit_size - 1 downto 0);
+    dma_flit : dma_noc_flit_type;
     hwdata  : std_logic_vector(ARCH_BITS - 1 downto 0);
     state   : ahbm_fsm;
     count   : integer;
@@ -164,7 +172,12 @@ architecture rtl of noc2ahbmst is
     hburst  : std_logic_vector(2 downto 0);
     hwrite  : std_ulogic;
     hbusreq : std_ulogic;
+    word_cnt : integer;
+    coh_noc_data : std_logic_vector(this_coh_flit_size - 1 downto 0);
+    dma_noc_data : dma_noc_flit_type;
+    is_dma  : std_ulogic;
   end record;
+
   constant reg_none : reg_type := (
     msg     => REQ_GETS_W,
     hprot   => "0011",
@@ -175,7 +188,8 @@ architecture rtl of noc2ahbmst is
     resp    => HRESP_OKAY,
     addr    => (others => '0'),
     incr    => default_incr,
-    flit    => (others => '0'),
+    coh_flit => (others => '0'),
+    dma_flit => (others => '0'),
     hwdata  => (others => '0'),
     state   => receive_header,
     count   => 0,
@@ -184,32 +198,39 @@ architecture rtl of noc2ahbmst is
     htrans  => HTRANS_IDLE,
     hburst  => HBURST_INCR,
     hwrite  => '0',
-    hbusreq => '0');
+    hbusreq => '0',
+    word_cnt => 0,
+    coh_noc_data => (others => '0'),
+    dma_noc_data => (others => '0'),
+    is_dma => '0'
+  );
 
   signal r, rin : reg_type;
 
   signal narrow_coherence_req_rdreq       : std_ulogic;
-  signal narrow_coherence_req_data_out    : noc_flit_type;
+  signal narrow_coherence_req_data_out    : std_logic_vector(this_coh_flit_size - 1 downto 0);
   signal narrow_coherence_req_empty       : std_ulogic;
   signal narrow_coherence_rsp_snd_wrreq   : std_ulogic;
-  signal narrow_coherence_rsp_snd_data_in : noc_flit_type;
+  signal narrow_coherence_rsp_snd_data_in : std_logic_vector(this_coh_flit_size - 1 downto 0);
   signal narrow_coherence_rsp_snd_full    : std_ulogic;
 
   type serdes_fsm is (passthru, rsp_msb, req_msb);
 
   signal serdes_current, serdes_next : serdes_fsm;
   signal sample_req, sample_rsp : std_ulogic;
-  signal req_reg : noc_flit_type;
-  signal rsp_reg : noc_flit_type;
+  signal req_reg : std_logic_vector(this_coh_flit_size - 1 downto 0);
+  signal rsp_reg : std_logic_vector(this_coh_flit_size - 1 downto 0);
 
-  attribute mark_debug : string;
-  -- attribute mark_debug of coherence_req_data_out : signal is "true";
-  -- attribute mark_debug of coherence_req_rdreq : signal is "true";
-  -- attribute mark_debug of coherence_rsp_snd_wrreq : signal is"true";
-  -- attribute mark_debug of coherence_rsp_snd_data_in : signal is"true";
-  -- attribute mark_debug of r : signal is"true";
-  -- attribute mark_debug of ahbmi : signal is"true";
-  -- attribute mark_debug of ahbmo : signal is"true";
+  --attribute mark_debug : string;
+  --attribute mark_debug of dma_rcv_data_out : signal is "true";
+  --attribute mark_debug of dma_rcv_rdreq : signal is "true";
+  --attribute mark_debug of dma_rcv_empty : signal is"true";
+  --attribute mark_debug of dma_snd_data_in : signal is "true";
+  --attribute mark_debug of dma_snd_wrreq : signal is "true";
+  --attribute mark_debug of dma_snd_full : signal is"true";
+  --attribute mark_debug of r : signal is"true";
+  --attribute mark_debug of ahbmi : signal is"true";
+  --attribute mark_debug of ahbmo : signal is"true";
 
 begin  -- rtl
 
@@ -220,11 +241,11 @@ begin  -- rtl
     variable input_msg_type     : noc_msg_type;
     variable preamble           : noc_preamble_type;
     variable msg_type           : noc_msg_type;
-    variable header_v           : noc_flit_type;
+    variable header_v           : std_logic_vector(this_coh_flit_size - 1 downto 0);
     variable reserved           : reserved_field_type;
     variable origin_y, origin_x : local_yx;
   begin  -- process make_packet
-    input_msg_type := get_msg_type(NOC_FLIT_SIZE, narrow_coherence_req_data_out);
+    input_msg_type := get_msg_type(this_coh_flit_size, this_noc_flit_pad & narrow_coherence_req_data_out);
     if input_msg_type = AHB_RD then
       -- Uncached request from generic master
       msg_type := RSP_AHB_RD;
@@ -244,9 +265,9 @@ begin  -- rtl
 
     reserved := (others => '0');
     header_v := (others => '0');
-    origin_y := get_origin_y(NOC_FLIT_SIZE, narrow_coherence_req_data_out);
-    origin_x := get_origin_x(NOC_FLIT_SIZE, narrow_coherence_req_data_out);
-    header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, origin_y, origin_x, msg_type, reserved);
+    origin_y := get_origin_y(this_coh_flit_size, this_noc_flit_pad & narrow_coherence_req_data_out);
+    origin_x := get_origin_x(this_coh_flit_size, this_noc_flit_pad & narrow_coherence_req_data_out);
+    header_v := create_header(this_coh_flit_size, local_y, local_x, origin_y, origin_x, msg_type, reserved);
     header   <= header_v;
   end process make_rsp_snd_packet;
   -----------------------------------------------------------------------------
@@ -255,11 +276,11 @@ begin  -- rtl
   make_dma_packet : process (dma_rcv_data_out, local_y, local_x)
     variable msg_type_req       : noc_msg_type;
     variable msg_type_rsp       : noc_msg_type;
-    variable header_v           : noc_flit_type;
+    variable header_v           : dma_noc_flit_type;
     variable reserved           : reserved_field_type;
     variable origin_y, origin_x : local_yx;
   begin  -- process make_packet
-    msg_type_req := get_msg_type(NOC_FLIT_SIZE, dma_rcv_data_out);
+    msg_type_req := get_msg_type(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
     if msg_type_req = REQ_DMA_READ then
       msg_type_rsp := RSP_DATA_DMA;
     else
@@ -268,9 +289,9 @@ begin  -- rtl
 
     reserved   := (others => '0');
     header_v   := (others => '0');
-    origin_y   := get_origin_y(NOC_FLIT_SIZE, dma_rcv_data_out);
-    origin_x   := get_origin_x(NOC_FLIT_SIZE, dma_rcv_data_out);
-    header_v   := create_header(NOC_FLIT_SIZE, local_y, local_x, origin_y, origin_x, msg_type_rsp, reserved);
+    origin_y   := get_origin_y(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
+    origin_x   := get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
+    header_v   := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, origin_y, origin_x, msg_type_rsp, reserved);
     dma_header <= header_v;
   end process make_dma_packet;
 
@@ -281,12 +302,14 @@ begin  -- rtl
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
-      header_reg <= (others => '0');
+      header_reg        <= (others => '0');
+      dma_header_reg    <= (others => '0');
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_header = '1' then
-        header_reg <= header;
-      elsif sample_dma_header = '1' then
-        header_reg <= dma_header;
+        header_reg      <= header;
+      end if;
+      if sample_dma_header = '1' then
+        dma_header_reg  <= dma_header;
       end if;
     end if;
   end process;
@@ -300,7 +323,7 @@ begin  -- rtl
   ahb_roundtrip : process (ahbmi, r,
                            narrow_coherence_req_empty, narrow_coherence_req_data_out,
                            narrow_coherence_rsp_snd_full,
-                           header_reg,
+                           header_reg, dma_header_reg,
                            dma_rcv_empty, dma_rcv_data_out,
                            dma_snd_full, dma_snd_atleast_4slots, dma_snd_exactly_3slots,
                            coherence_fwd_full)
@@ -308,6 +331,7 @@ begin  -- rtl
     variable reserved               : reserved_field_type;
     variable preamble, dma_preamble : noc_preamble_type;
     variable hwdata_be : std_logic_vector(ARCH_BITS - 1 downto 0);
+    variable word_rem               : integer;
   begin  -- process ahb_roundtrip
     -- Default ahbmo assignment
     v       := r;
@@ -316,8 +340,8 @@ begin  -- rtl
     v.resp  := ahbmi.hresp;
 
     reserved     := (others => '0');
-    preamble     := get_preamble(NOC_FLIT_SIZE, narrow_coherence_req_data_out);
-    dma_preamble := get_preamble(NOC_FLIT_SIZE, dma_rcv_data_out);
+    preamble     := get_preamble(this_coh_flit_size, this_noc_flit_pad & narrow_coherence_req_data_out);
+    dma_preamble := get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
 
     sample_header     <= '0';
     sample_dma_header <= '0';
@@ -335,11 +359,13 @@ begin  -- rtl
 
     case r.state is
       when receive_header =>
+        v.coh_noc_data := (others => '0');
+        v.dma_noc_data := (others => '0');
         if narrow_coherence_req_empty = '0' then
           narrow_coherence_req_rdreq <= '1';
           -- Sample request info
-          v.msg               := get_msg_type(NOC_FLIT_SIZE, narrow_coherence_req_data_out);
-          reserved            := get_reserved_field(NOC_FLIT_SIZE, narrow_coherence_req_data_out);
+          v.msg               := get_msg_type(this_coh_flit_size, this_noc_flit_pad & narrow_coherence_req_data_out);
+          reserved            := get_reserved_field(this_coh_flit_size, this_noc_flit_pad & narrow_coherence_req_data_out);
           if axitran = 0 then
             v.hprot             := reserved(3 downto 0);
             v.hsize_msb         := '0';
@@ -352,8 +378,8 @@ begin  -- rtl
         elsif dma_rcv_empty = '0' then
           dma_rcv_rdreq     <= '1';
           -- Sample DMA request
-          v.msg             := get_msg_type(NOC_FLIT_SIZE, dma_rcv_data_out);
-          reserved          := get_reserved_field(NOC_FLIT_SIZE, dma_rcv_data_out);
+          v.msg             := get_msg_type(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
+          reserved          := get_reserved_field(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
           v.hprot           := reserved(3 downto 0);
           sample_dma_header <= '1';
           v.state           := dma_receive_address;
@@ -575,7 +601,7 @@ begin  -- rtl
 
       when send_put_ack_address =>
         if (narrow_coherence_rsp_snd_full = '0') then
-          narrow_coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+          narrow_coherence_rsp_snd_data_in(this_coh_flit_size - 1 downto this_coh_flit_size - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
           narrow_coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= r.addr;
           narrow_coherence_rsp_snd_wrreq   <= '1';
           if r.msg = REQ_PUTM then
@@ -589,17 +615,18 @@ begin  -- rtl
         if (v.ready = '1') then
           -- Data bus granted
           -- Send header
-          dma_snd_data_in <= header_reg;
+          dma_snd_data_in <= dma_header_reg;
           dma_snd_wrreq   <= '1';
           -- Accelerators work with data widht equal to the selected processor,
           -- however, non-coherent Ethernet DMA makes 32-bits bursts
           v.addr          := r.addr + target_dma_incr;
           v.count         := r.count - 1;
-          if r.count = 1 then
+          word_rem := r.count;
+          if word_rem = 1 then
             v.hbusreq := '0';
             v.htrans  := HTRANS_IDLE;
           else
-            if r.count = 2 then
+            if word_rem = 2 then
               v.hbusreq := '0';
             end if;
             v.htrans := HTRANS_SEQ;
@@ -609,7 +636,7 @@ begin  -- rtl
 
       when send_address =>
         if v.ready = '1' then
-          narrow_coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+          narrow_coherence_rsp_snd_data_in(this_coh_flit_size - 1 downto this_coh_flit_size - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
           narrow_coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= r.addr;
           narrow_coherence_rsp_snd_wrreq   <= '1';
           v.count                   := r.count - 1;
@@ -626,7 +653,11 @@ begin  -- rtl
           else
             -- Send data to noc
             narrow_coherence_rsp_snd_wrreq   <= '1';
-            narrow_coherence_rsp_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
+            v.coh_noc_data(this_coh_flit_size -1 downto this_coh_flit_size - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+            for i in 1 to (this_coh_flit_size - PREAMBLE_WIDTH) / ARCH_BITS loop
+                v.coh_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+            end loop;
+            narrow_coherence_rsp_snd_data_in <= v.coh_noc_data;
             -- Update address and control bus
             if r.hsize = HSIZE_WORD then
               -- EDCL burst
@@ -643,7 +674,11 @@ begin  -- rtl
               v.hbusreq := '0';
               v.htrans  := HTRANS_IDLE;
             elsif r.count = 0 then
-              narrow_coherence_rsp_snd_data_in <= PREAMBLE_TAIL & fix_endian(ahbmi.hrdata);
+              v.coh_noc_data(this_coh_flit_size -1 downto this_coh_flit_size - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+              for i in 1 to (this_coh_flit_size - PREAMBLE_WIDTH) / ARCH_BITS loop
+                  v.coh_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+              end loop;
+              narrow_coherence_rsp_snd_data_in <= v.coh_noc_data;
               v.state                   := receive_header;
             else
               v.htrans := HTRANS_SEQ;
@@ -654,20 +689,28 @@ begin  -- rtl
       when dma_send_data =>
         if (v.ready = '1') then
           -- Send data to noc
-          dma_snd_wrreq   <= '1';
-          dma_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
+          v.dma_noc_data(DMA_NOC_FLIT_SIZE -1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+          v.dma_noc_data(ARCH_BITS * (r.word_cnt + 1) - 1 downto ARCH_BITS * r.word_cnt) := fix_endian(ahbmi.hrdata);
+          dma_snd_data_in <= v.dma_noc_data;
+          word_rem := r.count;
+          v.word_cnt := r.word_cnt + 1;
+          v.count     := r.count - 1;
           -- Accelerators work with data widht equal to the selected processor,
           -- however, non-coherent Ethernet DMA makes 32-bits bursts
           v.addr          := r.addr + target_dma_incr;
-          v.count         := r.count - 1;
-          if r.count = 2 then
+          if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS or word_rem = 0 or eth_dma = 1 then
+            v.word_cnt := 0;
+            dma_snd_wrreq   <= '1';
+          end if;
+          if word_rem = 2 then
             v.hbusreq := '0';
             v.htrans  := HTRANS_SEQ;
-          elsif r.count = 1 then
+          elsif word_rem = 1 then
             v.hbusreq := '0';
             v.htrans  := HTRANS_IDLE;
-          elsif r.count = 0 then
-            dma_snd_data_in <= PREAMBLE_TAIL & fix_endian(ahbmi.hrdata);
+          elsif word_rem = 0 then
+            v.dma_noc_data(DMA_NOC_FLIT_SIZE -1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+            dma_snd_data_in <= v.dma_noc_data;
             v.state         := receive_header;
           else
             if dma_snd_exactly_3slots = '1' then
@@ -682,7 +725,11 @@ begin  -- rtl
       when dma_send_busy =>
         if (v.ready = '1') then
           dma_snd_wrreq   <= '1';
-          dma_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
+          v.dma_noc_data(DMA_NOC_FLIT_SIZE -1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+          for i in 1 to DMA_NOC_WIDTH / ARCH_BITS loop
+            v.dma_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+          end loop;
+          dma_snd_data_in <= v.dma_noc_data;
           v.count         := r.count - 1;
           v.state := dma_wait_busy;
         end if;
@@ -713,17 +760,18 @@ begin  -- rtl
             -- Single word transfer: no request
             -- Prefetch
             narrow_coherence_req_rdreq <= '1';
-            v.flit              := narrow_coherence_req_data_out;
+            v.coh_flit          := narrow_coherence_req_data_out;
             v.hburst            := HBURST_SINGLE;
             v.htrans            := HTRANS_NONSEQ;
             v.hwrite            := '1';
             v.state             := write_last_data;
+            v.is_dma            := '0';
           elsif ((v.grant = '1') and (v.ready = '1')) then
             -- Owning already address bus
             -- More than one element burst
             -- Prefetch
             narrow_coherence_req_rdreq <= '1';
-            v.flit              := narrow_coherence_req_data_out;
+            v.coh_flit          := narrow_coherence_req_data_out;
             v.hbusreq           := '1';
             v.hburst            := HBURST_INCR;
             v.htrans            := HTRANS_NONSEQ;
@@ -751,17 +799,22 @@ begin  -- rtl
             -- Single word transfer: no request
             -- Prefetch
             dma_rcv_rdreq <= '1';
-            v.flit        := dma_rcv_data_out;
-            v.hburst      := HBURST_SINGLE;
+            v.dma_flit    := dma_rcv_data_out;
+            if (DMA_NOC_WIDTH = ARCH_BITS) then
+              v.hburst      := HBURST_SINGLE;
+            else
+              v.hburst      := HBURST_INCR;
+            end if;
             v.htrans      := HTRANS_NONSEQ;
             v.hwrite      := '1';
             v.state       := write_last_data;
+            v.is_dma      := '1';
           elsif ((v.grant = '1') and (v.ready = '1')) then
             -- Owning already address bus
             -- More than one element burst
             -- Prefetch
             dma_rcv_rdreq <= '1';
-            v.flit        := dma_rcv_data_out;
+            v.dma_flit    := dma_rcv_data_out;
             v.hbusreq     := '1';
             v.hburst      := HBURST_INCR;
             v.htrans      := HTRANS_NONSEQ;
@@ -769,7 +822,7 @@ begin  -- rtl
             v.state       := dma_write_data;
           else
             -- Need to get ownership of the bus
-            if (dma_preamble = PREAMBLE_TAIL) then
+            if (dma_preamble = PREAMBLE_TAIL and DMA_NOC_WIDTH = ARCH_BITS) then
               v.hburst := HBURST_SINGLE;
             else
               v.hburst := HBURST_INCR;
@@ -783,7 +836,7 @@ begin  -- rtl
       when write_data =>
         if (v.ready = '1') then
           -- Write data to memory
-          v.hwdata := r.flit(ARCH_BITS - 1 downto 0);
+          v.hwdata := r.coh_flit(ARCH_BITS - 1 downto 0);
           -- Update address and control
           if r.hsize = HSIZE_WORD then
             v.addr := r.addr + 4;
@@ -798,31 +851,39 @@ begin  -- rtl
             if (preamble = PREAMBLE_TAIL) then
               v.hbusreq := '0';
               v.state   := write_last_data;
+              v.is_dma  := '0';
             end if;
             -- Prefetch
             narrow_coherence_req_rdreq <= '1';
-            v.flit              := narrow_coherence_req_data_out;
+            v.coh_flit          := narrow_coherence_req_data_out;
           end if;
         end if;
 
       when dma_write_data =>
         if (v.ready = '1') then
           -- Write data to memory
-          v.hwdata := r.flit(ARCH_BITS - 1 downto 0);
+          v.hwdata := r.dma_flit((r.word_cnt + 1) * ARCH_BITS - 1 downto r.word_cnt * ARCH_BITS);
           -- Update address and control
           v.addr   := r.addr + target_dma_incr;
-          if dma_rcv_empty = '1' then
-            v.htrans := HTRANS_BUSY;
-            v.state  := dma_write_busy;
-          else
-            v.htrans := HTRANS_SEQ;
-            if (dma_preamble = PREAMBLE_TAIL) then
-              v.hbusreq := '0';
-              v.state   := write_last_data;
+          v.word_cnt := r.word_cnt + 1;
+          v.htrans := HTRANS_SEQ;
+          if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS or eth_dma = 1 then
+            v.word_cnt := 0;
+            if dma_rcv_empty = '1' then
+              v.htrans := HTRANS_BUSY;
+              v.state  := dma_write_busy;
+            else
+              if (dma_preamble = PREAMBLE_TAIL) then
+                if (DMA_NOC_WIDTH = ARCH_BITS or eth_dma = 1) then
+                  v.hbusreq := '0';
+                end if;
+                v.state   := write_last_data;
+                v.is_dma  := '1';
+              end if;
+              -- Prefetch
+              dma_rcv_rdreq <= '1';
+              v.dma_flit    := dma_rcv_data_out;
             end if;
-            -- Prefetch
-            dma_rcv_rdreq <= '1';
-            v.flit        := dma_rcv_data_out;
           end if;
         end if;
 
@@ -832,34 +893,61 @@ begin  -- rtl
           if (preamble = PREAMBLE_TAIL) then
             v.hbusreq := '0';
             v.state   := write_last_data;
+            v.is_dma  := '0';
           else
             v.state := write_data;
           end if;
           -- Prefetch
           narrow_coherence_req_rdreq <= '1';
-          v.flit              := narrow_coherence_req_data_out;
+          v.coh_flit          := narrow_coherence_req_data_out;
         end if;
 
       when dma_write_busy =>
         if (v.ready = '1' and dma_rcv_empty = '0') then
           v.htrans := HTRANS_SEQ;
           if (dma_preamble = PREAMBLE_TAIL) then
-            v.hbusreq := '0';
+            if (DMA_NOC_WIDTH = ARCH_BITS or eth_dma = 1) then
+              v.hbusreq := '0';
+            end if;
             v.state   := write_last_data;
+            v.is_dma  := '1';
           else
             v.state := dma_write_data;
           end if;
           -- Prefetch
           dma_rcv_rdreq <= '1';
-          v.flit        := dma_rcv_data_out;
+          v.dma_flit    := dma_rcv_data_out;
         end if;
 
       when write_last_data =>
         if (v.ready = '1') then
-          v.hwdata := r.flit(ARCH_BITS - 1 downto 0);
-          v.htrans := HTRANS_IDLE;
-          v.hwrite := '0';
-          v.state  := write_complete;
+          v.word_cnt := r.word_cnt + 1;
+          v.hwrite := '1';
+          v.htrans := HTRANS_SEQ;
+          v.addr   := r.addr + target_dma_incr;
+          if r.is_dma = '1' then
+            v.hwdata := r.dma_flit((r.word_cnt + 1) * ARCH_BITS - 1 downto r.word_cnt * ARCH_BITS);
+            if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS - 1 then
+              v.hbusreq := '0';
+            end if;
+            if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS or eth_dma = 1 then
+              v.htrans := HTRANS_IDLE;
+              v.hwrite := '0';
+              v.state  := write_complete;
+              v.word_cnt := 0;
+            end if;
+          else
+            v.hwdata := r.coh_flit((r.word_cnt + 1) * ARCH_BITS - 1 downto r.word_cnt * ARCH_BITS);
+            if v.word_cnt = (this_coh_flit_size - PREAMBLE_WIDTH) / ARCH_BITS - 1 then
+              v.hbusreq := '0';
+            end if;
+            if v.word_cnt = (this_coh_flit_size - PREAMBLE_WIDTH) / ARCH_BITS then
+              v.htrans := HTRANS_IDLE;
+              v.hwrite := '0';
+              v.state  := write_complete;
+              v.word_cnt := 0;
+            end if;
+          end if;
         end if;
 
       when write_complete =>
@@ -918,6 +1006,7 @@ begin  -- rtl
                          narrow_coherence_rsp_snd_wrreq,
                          narrow_coherence_rsp_snd_data_in,
                          coherence_rsp_snd_full)
+    variable wide_noc_data : std_logic_vector(this_coh_flit_size - 1 downto 0);
     begin  -- process serdes_beh
 
       serdes_next <= serdes_current;
@@ -938,10 +1027,12 @@ begin  -- rtl
           if r.state = send_data and r.hsize = HSIZE_DWORD and ahbmi.hready = '1' and coherence_rsp_snd_full = '0'then
             sample_rsp <= '1';
             coherence_rsp_snd_wrreq <= '1';
-            coherence_rsp_snd_data_in <=
-              PREAMBLE_BODY &
-              narrow_coherence_rsp_snd_data_in(31 downto 0) &
-              narrow_coherence_rsp_snd_data_in(31 downto 0);
+            wide_noc_data(this_coh_flit_size - 1 downto this_coh_flit_size - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+            for i in 1 to this_coh_flit_size / 32 loop
+              wide_noc_data(32 * i - 1 downto 32 * (i - 1)) :=
+                narrow_coherence_rsp_snd_data_in(31 downto 0);
+            end loop;
+            coherence_rsp_snd_data_in <= wide_noc_data;
             serdes_next <= rsp_msb;
           elsif (r.state = wr_request or r.state = write_data or r.state = write_busy) and
             (r.hsize_msb = '1' and ARCH_BITS /= 32) and
@@ -954,9 +1045,13 @@ begin  -- rtl
 
         when rsp_msb =>
           narrow_coherence_rsp_snd_full <= '1';
-          coherence_rsp_snd_data_in <=
-            rsp_reg(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) &
-            rsp_reg(ARCH_BITS - 1 downto ARCH_BITS - 32) & rsp_reg(ARCH_BITS - 1 downto ARCH_BITS - 32);
+          wide_noc_data(this_coh_flit_size - 1 downto this_coh_flit_size - PREAMBLE_WIDTH) :=
+            rsp_reg(this_coh_flit_size - 1 downto this_coh_flit_size - PREAMBLE_WIDTH);
+          for i in 1 to this_coh_flit_size / 32 loop
+            wide_noc_data(32 * i - 1 downto 32 * (i - 1)) :=
+              rsp_reg(ARCH_BITS - 1 downto ARCH_BITS - 32);
+          end loop;
+          coherence_rsp_snd_data_in <= wide_noc_data;
           if coherence_rsp_snd_full = '0' then
             coherence_rsp_snd_wrreq <= '1';
             serdes_next <= passthru;
@@ -966,7 +1061,7 @@ begin  -- rtl
           end if;
 
         when req_msb =>
-          narrow_coherence_req_data_out(NOC_FLIT_SIZE - 1 downto 64) <= coherence_req_data_out(NOC_FLIT_SIZE - 1 downto 64);
+          narrow_coherence_req_data_out(this_coh_flit_size - 1 downto 64) <= coherence_req_data_out(this_coh_flit_size - 1 downto 64);
           narrow_coherence_req_data_out(ARCH_BITS - 1 downto ARCH_BITS - 32) <= coherence_req_data_out(31 downto 0);
           narrow_coherence_req_data_out(31 downto 0) <= req_reg(31 downto 0);
           if coherence_req_empty = '0' and narrow_coherence_req_rdreq = '1'  then

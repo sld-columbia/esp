@@ -21,8 +21,8 @@ void system_t::config_proc()
     load_memory();
     {
         conf_info_t config;
-        config.tokens = MEM_SIZE / 2 * DMA_BEAT_PER_WORD;
-        config.batch = 2;
+        config.tokens = 2048;
+        config.batch = 1;
 
         wait(); conf_info.write(config);
         conf_done.write(true);
@@ -80,21 +80,32 @@ void system_t::load_memory()
     //  |  out data  |  | batch * tokens * sizeof(uint64_t)
     //  ==============  v
 
+#if (DMA_WORD_PER_BEAT == 0)
     for (int i = 0; i < MEM_SIZE / DMA_BEAT_PER_WORD; i++) {
-
         uint64_t data = 0xfeed0bac00000000L | (uint64_t) i;
         sc_dt::sc_bv<64> data_bv(data);
 
-        for (int j = 0; j < DMA_BEAT_PER_WORD; j++)
+        for (int j = 0; j < DMA_BEAT_PER_WORD; j++){
             mem[DMA_BEAT_PER_WORD * i + j] = data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
+        }
     }
-
+#else
+    for (int i = 0; i < MEM_SIZE / DMA_WORD_PER_BEAT; i++) {
+        sc_dt::sc_bv<DMA_WIDTH> data_bv;
+        for (int j = 0; j < DMA_WORD_PER_BEAT; j++) {
+            uint64_t data = 0xfeed0bac00000000L | (uint64_t) i * DMA_WORD_PER_BEAT + j;
+            data_bv.range((j+1)*64 - 1, j *64) = data;
+        }
+        mem[i] = data_bv;
+    }
+#endif
     ESP_REPORT_INFO("load memory completed");
 }
 
 void system_t::dump_memory()
 {
     // Get results from memory
+#if (DMA_WORD_PER_BEAT == 0)
     for (int i = 0; i < MEM_SIZE / DMA_BEAT_PER_WORD; i++) {
         sc_dt::sc_bv<64> data_bv;
 
@@ -104,6 +115,16 @@ void system_t::dump_memory()
         out[i] = data_bv.to_uint64();
 
     }
+#else
+    for (int i = 0; i < MEM_SIZE / DMA_WORD_PER_BEAT; i++) {
+        sc_dt::sc_bv<64> data_bv;
+        for (int j = 0; j < DMA_WORD_PER_BEAT; j++) {
+            data_bv = mem[i].range((j+1)*64 -1, j*64);
+            out[i * DMA_WORD_PER_BEAT + j] = data_bv.to_uint64();
+        }
+    }
+#endif
+
 
     ESP_REPORT_INFO("dump memory completed");
 }
@@ -113,7 +134,7 @@ int system_t::validate()
     uint32_t errors = 0;
 
     // Check for mismatches
-    for (int i = 0; i < MEM_SIZE / DMA_BEAT_PER_WORD; i++)
+    for (int i = 0; i < 2048; i++)
         if (out[i] != (0xfeed0bac00000000L | (uint64_t) i)) {
             std::cout << i << ": 0x" << std::hex << out[i] << std::dec << std::endl;
             errors++;

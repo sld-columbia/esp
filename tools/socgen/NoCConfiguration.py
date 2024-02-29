@@ -59,14 +59,17 @@ class Tile():
        self.label.config(bg="#78cbbb")
        self.point_label.pack(side=LEFT)
        self.vendor = soc.IPs.VENDOR[selection]
-       self.point_select.setitems(soc.IPs.POINTS[selection])
+       dma_width = str(soc.noc.dma_noc_width.get())
+       display_points = [point for point in soc.IPs.POINTS[selection] if dma_width in point]
+       self.point_select.setitems(display_points)
        point = self.point.get()
-       for p in soc.IPs.POINTS[selection]:
+       self.point_select.setvalue("")
+       for p in display_points:
          if point == p:
            self.point_select.setvalue(point)
            break;
          else:
-           self.point_select.setvalue(str(soc.IPs.POINTS[selection][0]))
+           self.point_select.setvalue(str(display_points[0]))
        self.point_select.pack(side=LEFT)
     else:
        self.label.config(bg='white')
@@ -101,7 +104,7 @@ class Tile():
            self.has_pll.set(0)
          if self.has_clkbuf.get() == 1 :
            self.has_clkbuf.set(0)
-      if soc.IPs.ACCELERATORS.count(selection):
+      if soc.IPs.ACCELERATORS.count(selection) and soc.cache_en.get() == 1 and soc.noc.noc_width.get() == soc.ARCH_BITS:
         self.has_l2_selection.config(state=NORMAL)
       else:
         if soc.IPs.PROCESSORS.count(selection) and soc.cache_en.get() == 1:
@@ -335,6 +338,16 @@ class NoC():
              tot_acc_l2 += 1
     return tot_acc_l2
 
+  def get_acc_impl_valid(self, soc):
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
+         tile = self.topology[y][x]
+         selection = tile.ip_type.get()
+         if soc.IPs.ACCELERATORS.count(selection):
+           if tile.point_select.getvalue() == "":
+             return False
+    return True
+
   def get_mem_num(self, soc):
     tot_mem = 0
     for y in range(0, self.rows):
@@ -369,6 +382,8 @@ class NoC():
   def __init__(self):
     self.cols = 0
     self.rows = 0
+    self.coh_noc_width = IntVar()
+    self.dma_noc_width = IntVar()
     self.monitor_ddr = IntVar()
     self.monitor_mem = IntVar()
     self.monitor_inj = IntVar()
@@ -470,6 +485,13 @@ class NoCFrame(Pmw.ScrolledFrame):
     Label(self.config_noc_frame, text="Cols: ").pack(side = LEFT)
     self.COLS = Entry(self.config_noc_frame, width=3)
     self.COLS.pack(side = LEFT)
+
+    noc_width_choices = ["32", "64", "128", "256", "512", "1024"]
+    Label(self.noc_config_frame, text = "Coherence NoC Planes (1,2,3) Bitwidth: ", height=1).pack()
+    OptionMenu(self.noc_config_frame, self.noc.coh_noc_width, *noc_width_choices).pack()
+    Label(self.noc_config_frame, text = "DMA NoC Planes (4,6) Bitwidth: ", height=1).pack()
+    OptionMenu(self.noc_config_frame, self.noc.dma_noc_width, *noc_width_choices).pack()
+    Label(self.noc_config_frame, text = "MMIO/Irq NoC Plane (5) Bitwidth is always 32", height=1).pack(side=TOP)
     Button(self.noc_config_frame, text = "Config", command=self.create_noc).pack(side=TOP)
 
     Label(self.noc_config_frame, height=1).pack()
@@ -483,6 +505,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     Checkbutton(self.noc_config_frame, text="Monitor LLC Hit/Miss", variable=self.noc.monitor_llc, anchor=W, width=20).pack()
     self.monitor_dvfs_selection = Checkbutton(self.noc_config_frame, text="Monitor DVFS", variable=self.noc.monitor_dvfs, width=20, anchor=W)
     self.monitor_dvfs_selection.pack()
+
 
     #statistics
     Label(self.noc_config_frame, height=1).pack()
@@ -544,6 +567,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     tot_slmddr = self.noc.get_slmddr_num(self.soc)
     tot_acc = self.noc.get_acc_num(self.soc)
     regions = self.noc.get_clk_regions()
+    acc_impl_valid = self.noc.get_acc_impl_valid(self.soc)
     for y in range(0, self.noc.rows):
       for x in range(0, self.noc.cols):
         tile = self.noc.topology[y][x]
@@ -634,7 +658,16 @@ class NoCFrame(Pmw.ScrolledFrame):
        (not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3))) and \
        (self.soc.cache_spandex.get() == 0 or self.soc.CPU_ARCH.get() == "ariane" or self.soc.cache_en.get() == 0) and \
        (tot_cpu == 1 or self.soc.cache_en.get()) and \
-       (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
+       (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1) and \
+       (self.soc.cache_en.get() != 1 or self.soc.cache_line_size.get() >= self.noc.coh_noc_width.get()) and \
+       (self.soc.cache_en.get() != 1 or self.soc.cache_line_size.get() >= self.noc.dma_noc_width.get()) and \
+       (self.soc.cache_line_size.get() >= self.soc.mem_link_width.get()) and \
+       (self.noc.coh_noc_width.get() >= self.soc.mem_link_width.get()) and \
+       (self.noc.dma_noc_width.get() >= self.soc.mem_link_width.get()) and \
+       ((self.soc.cache_en.get() == 1) or (self.noc.coh_noc_width.get() == self.soc.ARCH_BITS)) and \
+       (self.noc.coh_noc_width.get() >= self.soc.ARCH_BITS) and \
+       (self.noc.coh_noc_width.get() >= self.soc.ARCH_BITS) and acc_impl_valid and \
+       (self.soc.cache_line_size.get() == 128 or (self.soc.cache_spandex.get() == 0 and self.soc.cache_rtl.get() == 1)):
       # Spandex beta warning
       if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
         string += "***              Spandex support is still beta                 ***\n"
@@ -690,6 +723,27 @@ class NoCFrame(Pmw.ScrolledFrame):
       string += pll_string
       if (clk_region_skip > 0):
         string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead\n"
+      if (self.soc.cache_en.get() == 1 and self.soc.cache_line_size.get() < self.noc.coh_noc_width.get()):
+        string += "Cache line size must be greater than or equal to coherence NoC bitwidth\n"
+      if (self.soc.cache_en.get() == 1 and self.soc.cache_line_size.get() < self.noc.dma_noc_width.get()):
+        string += "Cache line size must be greater than or equal to DMA NoC bitwidth\n"
+      if (self.soc.cache_line_size.get() < self.soc.mem_link_width.get()):
+        string += "Cache line size must be greater than or equal to mem link bitwidth\n"
+      if (self.noc.coh_noc_width.get() < self.soc.mem_link_width.get()):
+        string += "Coherence NoC bitwdith must be greater than or equal to mem link bitwidth\n"
+      if (self.noc.dma_noc_width.get() < self.soc.mem_link_width.get()):
+        string += "DMA NoC bitwdith must be greater than or equal to mem link bitwidth\n"
+      if (self.soc.cache_en.get() != 1) and (self.noc.coh_noc_width.get() != self.soc.ARCH_BITS):
+        string += "Caches must be enabled to support a coherence NoC width larger than the CPU architecture size\n"
+      if (self.noc.coh_noc_width.get() < self.soc.ARCH_BITS):
+        string += "Coherence NoC width must be greater than or equal to the CPU architecture size\n"
+      if (self.noc.dma_noc_width.get() < self.soc.ARCH_BITS):
+        string += "DMA NoC width must be greater than or equal to the CPU architecture size\n"
+      if (not acc_impl_valid):
+        string += "All accelerators must have a selected implementation\n"
+      if (self.soc.cache_line_size.get() > 128 and (self.soc.cache_spandex.get() == 1 or self.soc.cache_rtl.get() == 0)):
+        string += "Only ESP RTL caches support cache line size greater than 128 bits"
+
     # Update message box
     self.message.insert(0.0, string)
 

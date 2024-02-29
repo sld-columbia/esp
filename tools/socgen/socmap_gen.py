@@ -446,12 +446,14 @@ def print_global_constants(fp, soc):
   fp.write("  ------ Global architecture parameters\n")
 
   fp.write("  ------ General\n")
-  fp.write("  constant ARCH_BITS : integer := " + str(soc.DMA_WIDTH) + ";\n")
-  # Keep cache-line size constant to 128 bits for now. We don't want huge line buffers
-  fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(128/soc.DMA_WIDTH))) + ";\n")
-  fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log2(soc.DMA_WIDTH/8))) +";\n")
+  fp.write("  constant ARCH_BITS : integer := " + str(soc.ARCH_BITS) + ";\n")
+  fp.write("  constant COH_NOC_WIDTH : integer := " + str(soc.noc.coh_noc_width.get()) + ";\n")
+  fp.write("  constant DMA_NOC_WIDTH : integer := " + str(soc.noc.dma_noc_width.get()) + ";\n")
+  fp.write("  constant MAX_NOC_WIDTH : integer := " + str(soc.noc.coh_noc_width.get() if soc.noc.coh_noc_width.get() > soc.noc.dma_noc_width.get() else soc.noc.dma_noc_width.get()) + ";\n")
+  fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(soc.cache_line_size.get()/soc.ARCH_BITS))) + ";\n")
+  fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log2(soc.ARCH_BITS/8))) +";\n")
   fp.write("  constant GLOB_OFFSET_BITS : integer := GLOB_WORD_OFFSET_BITS + GLOB_BYTE_OFFSET_BITS;\n")
-  fp.write("  constant GLOB_ADDR_INCR : integer := " + str(int(soc.DMA_WIDTH/8)) +";\n")
+  fp.write("  constant GLOB_ADDR_INCR : integer := " + str(int(soc.ARCH_BITS/8)) +";\n")
   # TODO: Keep physical address to 32 bits for now to reduce tag size. This will increase to support more memory
   fp.write("  constant GLOB_PHYS_ADDR_BITS : integer := " + str(32) +";\n")
   fp.write("  constant GLOB_MAXIOSLV : integer := " + str(NAPBS) + ";\n\n")
@@ -503,12 +505,13 @@ def print_constants(fp, soc, esp_config):
     fp.write("  constant CFG_L2_ENABLE   : integer := 0;\n")
     fp.write("  constant CFG_L2_DISABLE  : integer := 1;\n")
     fp.write("  constant CFG_LLC_ENABLE  : integer := 0;\n")
-  fp.write("  constant CFG_L2_SETS     : integer := " + str(soc.l2_sets.get()      ) +  ";\n")
-  fp.write("  constant CFG_L2_WAYS     : integer := " + str(soc.l2_ways.get()      ) +  ";\n")
-  fp.write("  constant CFG_LLC_SETS    : integer := " + str(soc.llc_sets.get()     ) +  ";\n")
-  fp.write("  constant CFG_LLC_WAYS    : integer := " + str(soc.llc_ways.get()     ) +  ";\n")
-  fp.write("  constant CFG_ACC_L2_SETS : integer := " + str(soc.acc_l2_sets.get()  ) +  ";\n")
-  fp.write("  constant CFG_ACC_L2_WAYS : integer := " + str(soc.acc_l2_ways.get()  ) +  ";\n\n")
+  fp.write("  constant CFG_CACHE_LINE_SIZE  : integer := " + str(soc.cache_line_size.get()  ) +  ";\n")
+  fp.write("  constant CFG_L2_SETS          : integer := " + str(soc.l2_sets.get()          ) +  ";\n")
+  fp.write("  constant CFG_L2_WAYS          : integer := " + str(soc.l2_ways.get()          ) +  ";\n")
+  fp.write("  constant CFG_LLC_SETS         : integer := " + str(soc.llc_sets.get()         ) +  ";\n")
+  fp.write("  constant CFG_LLC_WAYS         : integer := " + str(soc.llc_ways.get()         ) +  ";\n")
+  fp.write("  constant CFG_ACC_L2_SETS      : integer := " + str(soc.acc_l2_sets.get()      ) +  ";\n")
+  fp.write("  constant CFG_ACC_L2_WAYS      : integer := " + str(soc.acc_l2_ways.get()      ) +  ";\n\n")
 
   #
   fp.write("  ------ Caches interrupt line\n")
@@ -542,6 +545,9 @@ def print_constants(fp, soc, esp_config):
   fp.write("  ------ Custom IO Link\n")
   fp.write("  constant CFG_IOLINK_EN : integer := " + str(soc.iolink_en.get()) + ";\n")
   fp.write("  constant CFG_IOLINK_BITS : integer := " + str(soc.iolink_width.get()) + ";\n\n")
+
+  fp.write("  ------ Custom Memory Link to FPGA for DDR access\n")
+  fp.write("  constant CFG_MEM_LINK_BITS : integer := " + str(soc.mem_link_width.get()) + ";\n\n")
 
   #
   fp.write("  ------ SVGA\n")
@@ -621,7 +627,7 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_DUART : integer := 1;\n\n")
 
 def print_slm(fp, soc, esp_config):
-  abits = int(math.log(esp_config.slm_kbytes,2) + 8 - soc.DMA_WIDTH/64)
+  abits = int(math.log(esp_config.slm_kbytes,2) + 8 - soc.ARCH_BITS/64)
   fp.write('slm_sram_be_%dabits_64dbits ' %abits + str(2**abits) + ' 64' + ' 1w:0r 0w:1r')
 
 def print_mapping(fp, soc, esp_config):
@@ -2283,11 +2289,11 @@ def print_cache_config(fp, soc, esp_config):
   fp.write("\n")
   addr_bits = 32
   byte_bits = 2
-  word_bits = 2
+  word_bits = int(math.log2(soc.cache_line_size.get()/soc.ARCH_BITS))
   if soc.CPU_ARCH.get() == "ariane":
     addr_bits = 32
     byte_bits = 3
-    word_bits = 1
+    word_bits = int(math.log2(soc.cache_line_size.get()/soc.ARCH_BITS))
     fp.write("`define LLSC\n")
   if soc.CPU_ARCH.get() == "leon3":
     fp.write("`define BIG_ENDIAN\n")
@@ -2301,6 +2307,7 @@ def print_cache_config(fp, soc, esp_config):
   fp.write("`define L2_SETS      " + str(soc.l2_sets.get()) + "\n")
   fp.write("`define LLC_WAYS     " + str(soc.llc_ways.get()) + "\n")
   fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get())) + "\n")
+  fp.write("`define DMA_NOC_WIDTH    " + str(int(soc.noc.dma_noc_width.get())) + "\n")
   fp.write("\n")
   fp.write("`endif // __CACHES_CFG_SVH__\n")
 

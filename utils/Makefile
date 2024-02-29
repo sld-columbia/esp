@@ -39,9 +39,9 @@ include $(ESP_ROOT)/utils/make/design.mk
 
 ### NoC flit-width (not including head and tail bits)
 ifneq ($(findstring ariane, $(CPU_ARCH)),)
-NOC_WIDTH = 64
+ARCH_BITS = 64
 else
-NOC_WIDTH = 32
+ARCH_BITS = 32
 endif
 
 

@@ -103,7 +103,7 @@ begin
 
     async_fifo_01 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE+8,
+        g_data_width => MAX_NOC_FLIT_SIZE+8,
         g_size       => 200)
       port map (
         rst_wr_n_i => rst,
@@ -120,7 +120,7 @@ begin
   end generate GEN_FIFOS_jtag2apb;
 
   mux_6to1_2 : mux_6to1
-    generic map(sz => NOC_FLIT_SIZE+8)
+    generic map(sz => MAX_NOC_FLIT_SIZE+8)
     port map(
       sel => req_fifo,
       A   => fifo_out_data(0),
@@ -183,7 +183,7 @@ begin
 
 
   sipo_2 : sipo_jtag
-    generic map (DIM       => NOC_FLIT_SIZE+8,
+    generic map (DIM       => MAX_NOC_FLIT_SIZE+8,
                  shift_dir => 1)
     port map (
       rst       => rst,

@@ -36,6 +36,7 @@ endif
 CFLAGS += -I../include
 CFLAGS += -I../../common/include
 CFLAGS += -I$(DESIGN_PATH)
+CFLAGS += -DCACHELINE_WIDTH=$(CACHELINE_WIDTH)
 LDFLAGS := -lm
 EXTRA_CFLAGS += -Wall -Werror
 CC := $(CROSS_COMPILE)gcc

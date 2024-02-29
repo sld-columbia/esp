@@ -34,16 +34,17 @@ use work.nocpackage.all;
 
 entity ahbslv2noc is
   generic (
-    tech             : integer;
-    hindex           : std_logic_vector(0 to NAHBSLV - 1);
-    hconfig          : ahb_slv_config_vector;
-    mem_hindex       : integer range -1 to NAHBSLV - 1;
-    mem_num          : integer;
-    mem_info         : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
-    slv_y            : local_yx;
-    slv_x            : local_yx;
-    retarget_for_dma : integer range 0 to 1 := 0;
-    dma_length       : integer := 4);
+    tech                : integer;
+    hindex              : std_logic_vector(0 to NAHBSLV - 1);
+    hconfig             : ahb_slv_config_vector;
+    mem_hindex          : integer range -1 to NAHBSLV - 1;
+    mem_num             : integer;
+    mem_info            : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
+    this_noc_flit_size  : integer;
+    slv_y               : local_yx;
+    slv_x               : local_yx;
+    retarget_for_dma    : integer range 0 to 1 := 0;
+    dma_length          : integer := 4);
   port (
     rst                        : in  std_ulogic;
     clk                        : in  std_ulogic;
@@ -54,11 +55,11 @@ entity ahbslv2noc is
     dma_selected               : in  std_ulogic;
     -- tile->NoC1
     coherence_req_wrreq        : out std_ulogic;
-    coherence_req_data_in      : out noc_flit_type;
+    coherence_req_data_in      : out std_logic_vector(this_noc_flit_size - 1 downto 0);
     coherence_req_full         : in  std_ulogic;
     -- Noc3->tile
     coherence_rsp_rcv_rdreq    : out std_ulogic;
-    coherence_rsp_rcv_data_out : in  noc_flit_type;
+    coherence_rsp_rcv_data_out : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
     coherence_rsp_rcv_empty    : in  std_ulogic;
     -- tile->NoC5
     remote_ahbs_snd_wrreq      : out std_ulogic;
@@ -93,6 +94,8 @@ architecture rtl of ahbslv2noc is
   signal load_start, load_done : std_ulogic;
 
   constant zero_ahb_flags : std_logic_vector(0 to NAHBSLV - 1) := (others => '0');
+
+  constant this_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - this_noc_flit_size downto 0) := (others => '0');
 
   -- attribute mark_debug : string;
   -- attribute mark_debug of dma_selected               : signal is "true";
@@ -291,11 +294,11 @@ begin  -- rtl
     payload_data(31 downto 0) := ahbreadword(ahbsi.hwdata);
 
     if dst_is_mem_reg = '1' then
-      rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+      rsp_preamble := get_preamble(this_noc_flit_size, this_noc_flit_pad & coherence_rsp_rcv_data_out);
     else
-      rsp_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_ahbs_rcv_data_out);
+      rsp_preamble := get_preamble(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & remote_ahbs_rcv_data_out);
     end if;
-    coherence_rsp_rcv_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+    coherence_rsp_rcv_preamble := get_preamble(this_noc_flit_size, this_noc_flit_pad & coherence_rsp_rcv_data_out);
 
     -- Default ahbso assignment
     for i in 0 to NAHBSLV - 1 loop
@@ -345,7 +348,7 @@ begin  -- rtl
           end if;
         elsif dst_is_mem_reg = '1' then
           if coherence_req_full = '0' then
-            coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH) <=
+            coherence_req_data_in(this_noc_flit_size - 1 downto this_noc_flit_size - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH) <=
               header_reg(MISC_NOC_FLIT_SIZE - 1 downto NEXT_ROUTING_WIDTH);
             coherence_req_data_in(NEXT_ROUTING_WIDTH - 1 downto 0) <=
               header_reg(NEXT_ROUTING_WIDTH - 1 downto 0);
@@ -364,7 +367,7 @@ begin  -- rtl
         hready := '0';
         if dst_is_mem_reg = '1' then
           if coherence_req_full = '0' then
-            coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <=
+            coherence_req_data_in(this_noc_flit_size - 1 downto this_noc_flit_size - PREAMBLE_WIDTH) <=
               payload_address_reg(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
             coherence_req_data_in(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <=
               payload_address_reg(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
@@ -394,7 +397,7 @@ begin  -- rtl
       when request_length =>
         hready := '0';
         if coherence_req_full = '0' then
-          coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <=
+          coherence_req_data_in(this_noc_flit_size - 1 downto this_noc_flit_size - PREAMBLE_WIDTH) <=
             payload_length_reg(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
           coherence_req_data_in(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <=
             payload_length_reg(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
@@ -407,7 +410,7 @@ begin  -- rtl
         if dst_is_mem_reg = '1' then
           if coherence_req_full = '0' then
             hready := '1';
-            coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <=
+            coherence_req_data_in(this_noc_flit_size - 1 downto this_noc_flit_size - PREAMBLE_WIDTH) <=
               payload_data(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
             coherence_req_data_in(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <=
               payload_data(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
