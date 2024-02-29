@@ -90,7 +90,7 @@ begin
         variable testin_addr : std_logic_vector(31 downto 0); --replace
                                                               --with sipo
         -- variable flit66 : std_logic_vector(71 downto 0);--(103 downto 0);
-        variable flit66 : std_logic_vector(75 downto 0);--(103 downto 0);
+        variable flit66 : std_logic_vector(MAX_NOC_FLIT_SIZE + 9 downto 0);--(103 downto 0);
         variable flit34 : std_logic_vector(39 downto 0);--(71 downto 0);
 
         variable source : source_t ;
@@ -186,12 +186,12 @@ begin
                 addr1:=addr(0);
                 addr2:=addr(1);
                 addr3:=addr(2);
-                testin1 := X"00000" & '0' & flit66(NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
+                testin1 := X"00000" & '0' & flit66(MAX_NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
                 testin2 := flit66(58+4 downto 27+4);
                 testin3 := flit66(26+4 downto 4+4) & source(1) & "0" & flit66(0+4) & "1";
                 assert false report "write1" severity note;
                 if flit66(0+4)='0' then
-                  hwrite(out_line, flit66(NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
+                  hwrite(out_line, flit66(MAX_NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
                   hwrite(out_line, flit66(4 downto 4), right, 4);
                   writeline(out_file1,out_line);
                 end if;
@@ -199,12 +199,12 @@ begin
                 addr1:=addr(3);
                 addr2:=addr(4);
                 addr3:=addr(5);
-                testin1 := X"00000" & '0' & flit66(NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
+                testin1 := X"00000" & '0' & flit66(MAX_NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
                 testin2 := flit66(58+4 downto 27+4);
                 testin3 := flit66(26+4 downto 4+4) & source(1) & "0" & flit66(0+4) & "1";
                 assert false report "write2" severity note;
                 if flit66(0+4)='0' then
-                  hwrite(out_line, flit66(NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
+                  hwrite(out_line, flit66(MAX_NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
                   hwrite(out_line, flit66(4 downto 4), right, 4);
                   writeline(out_file2,out_line);
                 end if;
@@ -212,12 +212,12 @@ begin
                 addr1:=addr(6);
                 addr2:=addr(7);
                 addr3:=addr(8);
-                testin1 := X"00000" & '0' & flit66(NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
+                testin1 := X"00000" & '0' & flit66(MAX_NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
                 testin2 := flit66(58+4 downto 27+4);
                 testin3 := flit66(26+4 downto 4+4) & source(1) & "0" & flit66(0+4) & "1";
                 assert false report "write3" severity note;
                 if flit66(0+4)='0' then
-                  hwrite(out_line, flit66(NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
+                  hwrite(out_line, flit66(MAX_NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
                   hwrite(out_line, flit66(4 downto 4), right, 4);
                   writeline(out_file3,out_line);
                 end if;
@@ -225,12 +225,12 @@ begin
                 addr1:=addr(9);
                 addr2:=addr(10);
                 addr3:=addr(11);
-                testin1 := X"00000" & '0' & flit66(NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
+                testin1 := X"00000" & '0' & flit66(MAX_NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
                 testin2 := flit66(58+4 downto 27+4);
                 testin3 := flit66(26+4 downto 4+4) & source(1) & "0" & flit66(0+4) & "1";
                 assert false report "write4" severity note;
                 if flit66(0+4)='0' then
-                  hwrite(out_line, flit66(NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
+                  hwrite(out_line, flit66(MAX_NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
                   hwrite(out_line, flit66(4 downto 4), right, 4);
                   writeline(out_file4,out_line);
                 end if;
@@ -251,12 +251,12 @@ begin
                 addr1:=addr(15);
                 addr2:=addr(16);
                 addr3:=addr(17);
-                testin1 := X"00000" & '0' & flit66(NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
+                testin1 := X"00000" & '0' & flit66(MAX_NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
                 testin2 := flit66(58+4 downto 27+4);
                 testin3 := flit66(26+4 downto 4+4) & source(1) & "0" & flit66(0+4) & "1";
                 assert false report "write6" severity note;
                 if flit66(0+4)='0' then
-                  hwrite(out_line, flit66(NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
+                  hwrite(out_line, flit66(MAX_NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
                   hwrite(out_line, flit66(4 downto 4), right, 4);
                   writeline(out_file6,out_line);
                 end if;

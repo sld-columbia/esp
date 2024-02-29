@@ -31,31 +31,31 @@ entity empty_tile_q is
     apb_snd_full            : out std_ulogic;
 
     -- Cachable data plane 1 -> request messages
-    noc1_out_data : in  noc_flit_type;
+    noc1_out_data : in  coh_noc_flit_type;
     noc1_out_void : in  std_ulogic;
     noc1_out_stop : out std_ulogic;
-    noc1_in_data  : out noc_flit_type;
+    noc1_in_data  : out coh_noc_flit_type;
     noc1_in_void  : out std_ulogic;
     noc1_in_stop  : in  std_ulogic;
     -- Cachable data plane 2 -> forwarded messages
-    noc2_out_data : in  noc_flit_type;
+    noc2_out_data : in  coh_noc_flit_type;
     noc2_out_void : in  std_ulogic;
     noc2_out_stop : out std_ulogic;
-    noc2_in_data  : out noc_flit_type;
+    noc2_in_data  : out coh_noc_flit_type;
     noc2_in_void  : out std_ulogic;
     noc2_in_stop  : in  std_ulogic;
     -- Cachable data plane 3 -> response messages
-    noc3_out_data : in  noc_flit_type;
+    noc3_out_data : in  coh_noc_flit_type;
     noc3_out_void : in  std_ulogic;
     noc3_out_stop : out std_ulogic;
-    noc3_in_data  : out noc_flit_type;
+    noc3_in_data  : out coh_noc_flit_type;
     noc3_in_void  : out std_ulogic;
     noc3_in_stop  : in  std_ulogic;
     -- Non cachable data data plane 4 -> DMA response
-    noc4_out_data : in  noc_flit_type;
+    noc4_out_data : in  dma_noc_flit_type;
     noc4_out_void : in  std_ulogic;
     noc4_out_stop : out std_ulogic;
-    noc4_in_data  : out noc_flit_type;
+    noc4_in_data  : out dma_noc_flit_type;
     noc4_in_void  : out std_ulogic;
     noc4_in_stop  : in  std_ulogic;
     -- Configuration plane 5 -> RD/WR registers
@@ -66,10 +66,10 @@ entity empty_tile_q is
     noc5_in_void  : out std_ulogic;
     noc5_in_stop  : in  std_ulogic;
     -- Non cachable data data plane 6 -> DMA requests
-    noc6_out_data : in  noc_flit_type;
+    noc6_out_data : in  dma_noc_flit_type;
     noc6_out_void : in  std_ulogic;
     noc6_out_stop : out std_ulogic;
-    noc6_in_data  : out noc_flit_type;
+    noc6_in_data  : out dma_noc_flit_type;
     noc6_in_void  : out std_ulogic;
     noc6_in_stop  : in  std_ulogic);
 

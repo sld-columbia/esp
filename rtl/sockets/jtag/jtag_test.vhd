@@ -43,79 +43,79 @@ entity jtag_test is
     tms                 : in  std_ulogic;
     tclk                : in  std_ulogic;
     -- NoC out to Test/TileQ in
-    noc1_output_port    : in  noc_flit_type;
+    noc1_output_port    : in  coh_noc_flit_type;
     noc1_data_void_out  : in  std_ulogic;
     noc1_stop_in        : out std_ulogic;
-    noc2_output_port    : in  noc_flit_type;
+    noc2_output_port    : in  coh_noc_flit_type;
     noc2_data_void_out  : in  std_ulogic;
     noc2_stop_in        : out std_ulogic;
-    noc3_output_port    : in  noc_flit_type;
+    noc3_output_port    : in  coh_noc_flit_type;
     noc3_data_void_out  : in  std_ulogic;
     noc3_stop_in        : out std_ulogic;
-    noc4_output_port    : in  noc_flit_type;
+    noc4_output_port    : in  dma_noc_flit_type;
     noc4_data_void_out  : in  std_ulogic;
     noc4_stop_in        : out std_ulogic;
     noc5_output_port    : in  misc_noc_flit_type;
     noc5_data_void_out  : in  std_ulogic;
     noc5_stop_in        : out std_ulogic;
-    noc6_output_port    : in  noc_flit_type;
+    noc6_output_port    : in  dma_noc_flit_type;
     noc6_data_void_out  : in  std_ulogic;
     noc6_stop_in        : out std_ulogic;
     -- Test/NoC out to TileQ in
-    test1_output_port   : out noc_flit_type;
+    test1_output_port   : out coh_noc_flit_type;
     test1_data_void_out : out std_ulogic;
     test1_stop_in       : in  std_ulogic;
-    test2_output_port   : out noc_flit_type;
+    test2_output_port   : out coh_noc_flit_type;
     test2_data_void_out : out std_ulogic;
     test2_stop_in       : in  std_ulogic;
-    test3_output_port   : out noc_flit_type;
+    test3_output_port   : out coh_noc_flit_type;
     test3_data_void_out : out std_ulogic;
     test3_stop_in       : in  std_ulogic;
-    test4_output_port   : out noc_flit_type;
+    test4_output_port   : out dma_noc_flit_type;
     test4_data_void_out : out std_ulogic;
     test4_stop_in       : in  std_ulogic;
     test5_output_port   : out misc_noc_flit_type;
     test5_data_void_out : out std_ulogic;
     test5_stop_in       : in  std_ulogic;
-    test6_output_port   : out noc_flit_type;
+    test6_output_port   : out dma_noc_flit_type;
     test6_data_void_out : out std_ulogic;
     test6_stop_in       : in  std_ulogic;
     -- TileQ out to Test/NoC in
-    test1_input_port    : in  noc_flit_type;
+    test1_input_port    : in  coh_noc_flit_type;
     test1_data_void_in  : in  std_ulogic;
     test1_stop_out      : out std_ulogic;
-    test2_input_port    : in  noc_flit_type;
+    test2_input_port    : in  coh_noc_flit_type;
     test2_data_void_in  : in  std_ulogic;
     test2_stop_out      : out std_ulogic;
-    test3_input_port    : in  noc_flit_type;
+    test3_input_port    : in  coh_noc_flit_type;
     test3_data_void_in  : in  std_ulogic;
     test3_stop_out      : out std_ulogic;
-    test4_input_port    : in  noc_flit_type;
+    test4_input_port    : in  dma_noc_flit_type;
     test4_data_void_in  : in  std_ulogic;
     test4_stop_out      : out std_ulogic;
     test5_input_port    : in  misc_noc_flit_type;
     test5_data_void_in  : in  std_ulogic;
     test5_stop_out      : out std_ulogic;
-    test6_input_port    : in  noc_flit_type;
+    test6_input_port    : in  dma_noc_flit_type;
     test6_data_void_in  : in  std_ulogic;
     test6_stop_out      : out std_ulogic;
     -- Test/TileQ out to NoC in
-    noc1_input_port     : out noc_flit_type;
+    noc1_input_port     : out coh_noc_flit_type;
     noc1_data_void_in   : out std_ulogic;
     noc1_stop_out       : in  std_ulogic;
-    noc2_input_port     : out noc_flit_type;
+    noc2_input_port     : out coh_noc_flit_type;
     noc2_data_void_in   : out std_ulogic;
     noc2_stop_out       : in  std_ulogic;
-    noc3_input_port     : out noc_flit_type;
+    noc3_input_port     : out coh_noc_flit_type;
     noc3_data_void_in   : out std_ulogic;
     noc3_stop_out       : in  std_ulogic;
-    noc4_input_port     : out noc_flit_type;
+    noc4_input_port     : out dma_noc_flit_type;
     noc4_data_void_in   : out std_ulogic;
     noc4_stop_out       : in  std_ulogic;
     noc5_input_port     : out misc_noc_flit_type;
     noc5_data_void_in   : out std_ulogic;
     noc5_stop_out       : in  std_ulogic;
-    noc6_input_port     : out noc_flit_type;
+    noc6_input_port     : out dma_noc_flit_type;
     noc6_data_void_in   : out std_ulogic;
     noc6_stop_out       : in  std_ulogic);
 
@@ -200,45 +200,50 @@ architecture rtl of jtag_test is
   signal fwd_rd_empty_o5 : std_ulogic;
   signal fwd_rd_empty_o6 : std_ulogic;
 
-  type test_vect is array(1 to 6) of noc_flit_type;
-  signal test_in, test_in_sync : test_vect;
+  type coh_vect is array(1 to 3) of coh_noc_flit_type;
+  signal coh_test_in, coh_test_in_sync : coh_vect;
 
-  signal sipo_comp         : std_logic_vector(NOC_FLIT_SIZE downto 0);
-  signal test_comp, sipo_c : std_logic_vector(NOC_FLIT_SIZE-1 downto 0);
+  type dma_vect is array(1 to 2) of dma_noc_flit_type;
+  signal dma_test_in, dma_test_in_sync : dma_vect;
+
+  signal misc_test_in, misc_test_in_sync : misc_noc_flit_type;
+
+  signal sipo_comp         : std_logic_vector(MAX_NOC_FLIT_SIZE downto 0);
+  signal test_comp, sipo_c : std_logic_vector(MAX_NOC_FLIT_SIZE-1 downto 0);
   signal mismatch_detected : std_ulogic;
-  signal data              : std_logic_vector(NOC_FLIT_SIZE+7 downto 0);
-  type t_comp is array (1 to 6) of std_logic_vector(NOC_FLIT_SIZE+8 downto 0);
+  signal data              : std_logic_vector(MAX_NOC_FLIT_SIZE+7 downto 0);
+  type t_comp is array (1 to 6) of std_logic_vector(MAX_NOC_FLIT_SIZE+8 downto 0);
   signal sipo_comp_i       : t_comp;
 
   signal source_compare : std_logic_vector(6 downto 0);
-  signal test_out       : std_logic_vector(NOC_FLIT_SIZE downto 0);
-  signal piso_in        : std_logic_vector(NOC_FLIT_SIZE+7 downto 0);
+  signal test_out       : std_logic_vector(MAX_NOC_FLIT_SIZE downto 0);
+  signal piso_in        : std_logic_vector(MAX_NOC_FLIT_SIZE+7 downto 0);
   signal piso0_in       : std_logic_vector(7 downto 0);
 
   --signals for logic CPU->JTAG
-  signal A, B, C, D, E, F : std_logic_vector(NOC_FLIT_SIZE downto 0);
+  signal A, B, C, D, E, F : std_logic_vector(MAX_NOC_FLIT_SIZE downto 0);
 
-  signal test1_out, t1_out      : noc_flit_type;
+  signal test1_out, t1_out      : coh_noc_flit_type;
   signal test1_cpu_data_void_in : std_ulogic;
   signal test1_cpu_stop_out     : std_ulogic;
   signal t1_cpu_data_void_in    : std_ulogic;
 
-  signal test2_out, t2_out      : noc_flit_type;
+  signal test2_out, t2_out      : coh_noc_flit_type;
   signal test2_cpu_data_void_in : std_ulogic;
   signal test2_cpu_stop_out     : std_ulogic;
   signal t2_cpu_data_void_in    : std_ulogic;
 
-  signal test3_out, t3_out      : noc_flit_type;
+  signal test3_out, t3_out      : coh_noc_flit_type;
   signal test3_cpu_data_void_in : std_ulogic;
   signal test3_cpu_stop_out     : std_ulogic;
   signal t3_cpu_data_void_in    : std_ulogic;
 
-  signal test4_out, t4_out      : noc_flit_type;
+  signal test4_out, t4_out      : dma_noc_flit_type;
   signal test4_cpu_data_void_in : std_ulogic;
   signal test4_cpu_stop_out     : std_ulogic;
   signal t4_cpu_data_void_in    : std_ulogic;
 
-  signal test6_out, t6_out      : noc_flit_type;
+  signal test6_out, t6_out      : dma_noc_flit_type;
   signal test6_cpu_data_void_in : std_ulogic;
   signal test6_cpu_stop_out     : std_ulogic;
   signal t6_cpu_data_void_in    : std_ulogic;
@@ -753,10 +758,10 @@ begin
       end if;
     end process;
 
-    GEN_SIPO : for i in 1 to 6 generate
+    GEN_SIPO_COH : for i in 1 to 3 generate
 
       sipo_i : sipo_jtag
-        generic map (DIM => NOC_FLIT_SIZE+9,
+        generic map (DIM => COH_NOC_FLIT_SIZE+9,
                      en_mo => 1)
         port map (
           rst       => rst,
@@ -765,14 +770,57 @@ begin
           en_in     => sipo_en_i(i),
           serial_in => tdi_i(i),
           test_comp => sipo_comp_i(i),
-          data_out  => test_in(i),
+          data_out  => coh_test_in(i),
           op        => op_i(i),
           done      => sipo_done_i(i),
           end_trace => end_trace(i));
 
+    end generate GEN_SIPO_COH;
 
-    end generate GEN_SIPO;
+    sipo_4 : sipo_jtag
+      generic map (DIM => DMA_NOC_FLIT_SIZE+9,
+                   en_mo => 1)
+      port map (
+        rst       => rst,
+        clk       => tclk,
+        clear     => sipo_clear_i(4),
+        en_in     => sipo_en_i(4),
+        serial_in => tdi_i(4),
+        test_comp => sipo_comp_i(4),
+        data_out  => dma_test_in(1),
+        op        => op_i(4),
+        done      => sipo_done_i(4),
+        end_trace => end_trace(4));
 
+    sipo_5 : sipo_jtag
+      generic map (DIM => MISC_NOC_FLIT_SIZE+9,
+                   en_mo => 1)
+      port map (
+        rst       => rst,
+        clk       => tclk,
+        clear     => sipo_clear_i(5),
+        en_in     => sipo_en_i(5),
+        serial_in => tdi_i(5),
+        test_comp => sipo_comp_i(5),
+        data_out  => misc_test_in,
+        op        => op_i(5),
+        done      => sipo_done_i(5),
+        end_trace => end_trace(5));
+
+    sipo_6 : sipo_jtag
+      generic map (DIM => DMA_NOC_FLIT_SIZE+9,
+                   en_mo => 1)
+      port map (
+        rst       => rst,
+        clk       => tclk,
+        clear     => sipo_clear_i(6),
+        en_in     => sipo_en_i(6),
+        serial_in => tdi_i(6),
+        test_comp => sipo_comp_i(6),
+        data_out  => dma_test_in(2),
+        op        => op_i(6),
+        done      => sipo_done_i(6),
+        end_trace => end_trace(6));
 
     demux_1to6_1 : demux_1to6
       port map(
@@ -800,22 +848,22 @@ begin
 
     async_fifo_01 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE,
+        g_data_width => COH_NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
         rst_wr_n_i => rst,
         clk_wr_i   => tclk,
         we_i       => we_in(1),
-        d_i        => test_in(1),
+        d_i        => coh_test_in(1),
         wr_full_o  => fwd_wr_full_o(1),
         rst_rd_n_i => tile_rst,
         clk_rd_i   => refclk,
         rd_i       => rd_i(1),
-        q_o        => test_in_sync(1),
+        q_o        => coh_test_in_sync(1),
         rd_empty_o => fwd_rd_empty_o1);
 
 
-    test1_output_port   <= test_in_sync(1) when tms_int.sync = '1' else noc1_output_port;
+    test1_output_port   <= coh_test_in_sync(1) when tms_int.sync = '1' else noc1_output_port;
     test1_data_void_out <= fwd_rd_empty_o1 when tms_int.sync = '1' else noc1_data_void_out;
 
 
@@ -825,22 +873,22 @@ begin
 
     async_fifo_02 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE,
+        g_data_width => COH_NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
         rst_wr_n_i => rst,
         clk_wr_i   => tclk,
         we_i       => we_in(2),
-        d_i        => test_in(2),
+        d_i        => coh_test_in(2),
         wr_full_o  => fwd_wr_full_o(2),
         rst_rd_n_i => tile_rst,
         clk_rd_i   => refclk,
         rd_i       => rd_i(2),
-        q_o        => test_in_sync(2),
+        q_o        => coh_test_in_sync(2),
         rd_empty_o => fwd_rd_empty_o2);
 
 
-    test2_output_port   <= test_in_sync(2) when tms_int.sync = '1' else noc2_output_port;
+    test2_output_port   <= coh_test_in_sync(2) when tms_int.sync = '1' else noc2_output_port;
     test2_data_void_out <= fwd_rd_empty_o2 when tms_int.sync = '1' else noc2_data_void_out;
 
 
@@ -849,22 +897,22 @@ begin
 
     async_fifo_03 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE,
+        g_data_width => COH_NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
         rst_wr_n_i => rst,
         clk_wr_i   => tclk,
         we_i       => we_in(3),
-        d_i        => test_in(3),
+        d_i        => coh_test_in(3),
         wr_full_o  => fwd_wr_full_o(3),
         rst_rd_n_i => tile_rst,
         clk_rd_i   => refclk,
         rd_i       => rd_i(3),
-        q_o        => test_in_sync(3),
+        q_o        => coh_test_in_sync(3),
         rd_empty_o => fwd_rd_empty_o3);
 
 
-    test3_output_port   <= test_in_sync(3) when tms_int.sync = '1' else noc3_output_port;
+    test3_output_port   <= coh_test_in_sync(3) when tms_int.sync = '1' else noc3_output_port;
     test3_data_void_out <= fwd_rd_empty_o3 when tms_int.sync = '1' else noc3_data_void_out;
 
     --from NoC plane 4
@@ -872,22 +920,22 @@ begin
 
     async_fifo_04 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE,
+        g_data_width => DMA_NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
         rst_wr_n_i => rst,
         clk_wr_i   => tclk,
         we_i       => we_in(4),
-        d_i        => test_in(4),
+        d_i        => dma_test_in(1),
         wr_full_o  => fwd_wr_full_o(4),
         rst_rd_n_i => tile_rst,
         clk_rd_i   => refclk,
         rd_i       => rd_i(4),
-        q_o        => test_in_sync(4),
+        q_o        => dma_test_in_sync(1),
         rd_empty_o => fwd_rd_empty_o4);
 
 
-    test4_output_port   <= test_in_sync(4) when tms_int.sync = '1' else noc4_output_port;
+    test4_output_port   <= dma_test_in_sync(1) when tms_int.sync = '1' else noc4_output_port;
     test4_data_void_out <= fwd_rd_empty_o4 when tms_int.sync = '1' else noc4_data_void_out;
 
     --from NoC plane 5
@@ -901,16 +949,16 @@ begin
         rst_wr_n_i => rst,
         clk_wr_i   => tclk,
         we_i       => we_in(5),
-        d_i        => test_in(5)(MISC_NOC_FLIT_SIZE-1 downto 0),
+        d_i        => misc_test_in,
         wr_full_o  => fwd_wr_full_o(5),
         rst_rd_n_i => tile_rst,
         clk_rd_i   => refclk,
         rd_i       => rd_i(5),
-        q_o        => test_in_sync(5)(MISC_NOC_FLIT_SIZE-1 downto 0),
+        q_o        => misc_test_in_sync,
         rd_empty_o => fwd_rd_empty_o5);
 
 
-    test5_output_port   <= test_in_sync(5)(MISC_NOC_FLIT_SIZE-1 downto 0) when tms_int.sync = '1' else noc5_output_port;
+    test5_output_port   <= misc_test_in_sync when tms_int.sync = '1' else noc5_output_port;
     test5_data_void_out <= fwd_rd_empty_o5                                when tms_int.sync = '1' else noc5_data_void_out;
 
 
@@ -919,34 +967,34 @@ begin
 
     async_fifo_06 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE,
+        g_data_width => DMA_NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
         rst_wr_n_i => rst,
         clk_wr_i   => tclk,
         we_i       => we_in(6),
-        d_i        => test_in(6),
+        d_i        => dma_test_in(2),
         wr_full_o  => fwd_wr_full_o(6),
         rst_rd_n_i => tile_rst,
         clk_rd_i   => refclk,
         rd_i       => rd_i(6),
-        q_o        => test_in_sync(6),
+        q_o        => dma_test_in_sync(2),
         rd_empty_o => fwd_rd_empty_o6);
 
 
-    test6_output_port   <= test_in_sync(6) when tms_int.sync = '1' else noc6_output_port;
+    test6_output_port   <= dma_test_in_sync(2) when tms_int.sync = '1' else noc6_output_port;
     test6_data_void_out <= fwd_rd_empty_o6 when tms_int.sync = '1' else noc6_data_void_out;
 
     -- Pick data for comparison with expected value
     process(r.compare, sipo_comp_i)
     begin
       case r.compare is
-        when "100000" => sipo_comp <= sipo_comp_i(1)(NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(1)(1);
-        when "010000" => sipo_comp <= sipo_comp_i(2)(NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(2)(1);
-        when "001000" => sipo_comp <= sipo_comp_i(3)(NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(3)(1);
-        when "000100" => sipo_comp <= sipo_comp_i(4)(NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(4)(1);
-        when "000010" => sipo_comp <= sipo_comp_i(5)(NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(5)(1);
-        when "000001" => sipo_comp <= sipo_comp_i(6)(NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(6)(1);
+        when "100000" => sipo_comp <= sipo_comp_i(1)(MAX_NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(1)(1);
+        when "010000" => sipo_comp <= sipo_comp_i(2)(MAX_NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(2)(1);
+        when "001000" => sipo_comp <= sipo_comp_i(3)(MAX_NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(3)(1);
+        when "000100" => sipo_comp <= sipo_comp_i(4)(MAX_NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(4)(1);
+        when "000010" => sipo_comp <= sipo_comp_i(5)(MAX_NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(5)(1);
+        when "000001" => sipo_comp <= sipo_comp_i(6)(MAX_NOC_FLIT_SIZE+8 downto 9) & sipo_comp_i(6)(1);
         when others   => sipo_comp <= (others => '0');
       end case;
     end process;
@@ -969,14 +1017,14 @@ begin
       end if;
     end process tdoout;
 
-    sipo_c <= sipo_comp(NOC_FLIT_SIZE downto 1);
+    sipo_c <= sipo_comp(MAX_NOC_FLIT_SIZE downto 1);
 
     -- to NoC plane 1
     we_in_out(1) <= t1_cpu_data_void_in nor test1_cpu_stop_out;
 
     async_fifo_i1 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE,
+        g_data_width => MAX_NOC_FLIT_SIZE,
         g_size       => 4)
       port map (
         rst_wr_n_i => tile_rst,
@@ -1005,7 +1053,7 @@ begin
 
     async_fifo_i2 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE,
+        g_data_width => MAX_NOC_FLIT_SIZE,
         g_size       => 4)
       port map (
         rst_wr_n_i => tile_rst,
@@ -1032,7 +1080,7 @@ begin
 
     async_fifo_i3 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE,
+        g_data_width => MAX_NOC_FLIT_SIZE,
         g_size       => 4)
       port map (
         rst_wr_n_i => tile_rst,
@@ -1059,7 +1107,7 @@ begin
 
     async_fifo_i4 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE,
+        g_data_width => MAX_NOC_FLIT_SIZE,
         g_size       => 4)
       port map (
         rst_wr_n_i => tile_rst,
@@ -1113,7 +1161,7 @@ begin
 
     async_fifo_i6 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE,
+        g_data_width => MAX_NOC_FLIT_SIZE,
         g_size       => 4)
       port map (
         rst_wr_n_i => tile_rst,
@@ -1171,12 +1219,12 @@ begin
     B <= test2_out & mismatch_detected;
     C <= test3_out & mismatch_detected;
     D <= test4_out & mismatch_detected;
-    E <= noc_flit_pad & test5_out & mismatch_detected;
+    E <= misc_noc_flit_pad & test5_out & mismatch_detected;
     F <= test6_out & mismatch_detected;
 
 
     mux_6to1_1 : mux_6to1
-      generic map(sz => NOC_FLIT_SIZE+1)
+      generic map(sz => MAX_NOC_FLIT_SIZE+1)
       port map(
         sel => r.compare,
         A   => A,
@@ -1202,10 +1250,10 @@ begin
         Y        => tdo_data0,
         done     => piso_done0);
 
-    test_comp <= piso_in(NOC_FLIT_SIZE+6 downto 7);
+    test_comp <= piso_in(MAX_NOC_FLIT_SIZE+6 downto 7);
 
     piso_1 : piso_jtag
-      generic map(sz => NOC_FLIT_SIZE+8)
+      generic map(sz => MAX_NOC_FLIT_SIZE+8)
       port map(
         rst      => rst,
         clk      => tclk,

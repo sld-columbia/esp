@@ -63,7 +63,7 @@ RTL_ACC-distclean = $(addsuffix -distclean, $(RTL_ACC))
 
 THIRDPARTY_PATH = $(ESP_ROOT)/accelerators/third-party
 ifdef CPU_ARCH
-THIRDPARTY_ACC  = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell if grep -q $(CPU_ARCH) $(THIRDPARTY_PATH)/$(acc)/$(acc).hosts; then echo $(acc); fi))
+THIRDPARTY_ACC  = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell if grep -q $(CONFIG_DMA_NOC_WIDTH) $(THIRDPARTY_PATH)/$(acc)/$(acc).dma_widths; then echo $(acc); fi))
 else
 THIRDPARTY_ACC  = ""
 endif
@@ -206,11 +206,11 @@ $(STRATUSHLS_ACC-plot): %-plot : %-wdir
 	$(QUIET_RUN)ACCELERATOR=$(@:-plot=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-plot=)/hw/hls-work-$(TECHLIB) plot
 
 $(STRATUSHLS_ACC-exe):
-	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(STRATUSHLS_ACC_PATH)/$(@:-exe=)/hw/sim run
+	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(ARCH_BITS) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(STRATUSHLS_ACC_PATH)/$(@:-exe=)/hw/sim run
 
 $(STRATUSHLS_ACC-clean): %-clean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
-	@ACCELERATOR=$(@:-clean=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) $(MAKE) -C $(STRATUSHLS_ACC_PATH)/$(@:-clean=)/hw/sim clean
+	@ACCELERATOR=$(@:-clean=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(ARCH_BITS) $(MAKE) -C $(STRATUSHLS_ACC_PATH)/$(@:-clean=)/hw/sim clean
 	@$(RM) $(HLS_LOGS)/$(@:-clean=)*.log
 
 $(STRATUSHLS_ACC-distclean): %-distclean : %-wdir
@@ -352,7 +352,7 @@ $(CATAPULTHLS_ACC-sim): %-sim : %-wdir
 
 $(CATAPULTHLS_ACC-clean): %-clean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
-	@ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) $(MAKE) -C $(CATAPULTHLS_ACC_PATH)/$(@:-clean=)/hw/sim clean
+	@ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(ARCH_BITS) $(MAKE) -C $(CATAPULTHLS_ACC_PATH)/$(@:-clean=)/hw/sim clean
 	@$(RM) $(HLS_LOGS)/$(@:-clean=)*.log
 
 $(CATAPULTHLS_ACC-distclean): %-distclean : %-wdir
@@ -418,7 +418,7 @@ SOCKETGEN_DEPS += $(ESP_CFG_BUILD)/socmap.vhd $(ESP_CFG_BUILD)/esp_global.vhd
 ### ESP Wrappers ###
 socketgen: $(SOCKETGEN_DEPS)
 	$(QUIET_MKDIR) $(RM) $@; mkdir -p $@
-	$(QUIET_RUN)$(ESP_ROOT)/tools/socketgen/socketgen.py $(NOC_WIDTH) $(CPU_ARCH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/accelerators/third-party $(ESP_ROOT)/tools/socketgen/templates ./socketgen
+	$(QUIET_RUN)$(ESP_ROOT)/tools/socketgen/socketgen.py $(ARCH_BITS) $(CPU_ARCH) $(CONFIG_CACHE_LINE_SIZE) $(CONFIG_DMA_NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/accelerators/third-party $(ESP_ROOT)/tools/socketgen/templates ./socketgen
 	@touch $@
 
 socketgen-clean:
@@ -482,7 +482,7 @@ $(ACC-baremetal): $(BAREMETAL_BIN) soft-build $(ESP_CFG_BUILD)/socmap.vhd
 	if [ `ls -1 $$ACC_PATH/sw/baremetal/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
 		mkdir -p $$BUILD_PATH; \
-		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) BUILD_PATH=$$BUILD_PATH $(MAKE) -C  $$ACC_PATH/sw/baremetal; \
+		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) BUILD_PATH=$$BUILD_PATH CACHELINE_WIDTH=$(CONFIG_CACHE_LINE_SIZE) $(MAKE) -C  $$ACC_PATH/sw/baremetal; \
 		if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -gt 0 ]; then \
 			if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -eq 1 ]; then \
 				echo '   ' CP $@; cp $$BUILD_PATH/*.bin $(BAREMETAL_BIN)/$(@:-baremetal=).bin ; \

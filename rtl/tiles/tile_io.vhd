@@ -93,40 +93,40 @@ entity tile_io is
     noc4_mon_noc_vec   : in monitor_noc_type;
     noc5_mon_noc_vec   : in monitor_noc_type;
     noc6_mon_noc_vec   : in monitor_noc_type;
-    test1_output_port   : in noc_flit_type;
+    test1_output_port   : in coh_noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
-    test2_output_port   : in noc_flit_type;
+    test2_output_port   : in coh_noc_flit_type;
     test2_data_void_out : in std_ulogic;
     test2_stop_in       : in std_ulogic;
-    test3_output_port   : in noc_flit_type;
+    test3_output_port   : in coh_noc_flit_type;
     test3_data_void_out : in std_ulogic;
     test3_stop_in       : in std_ulogic;
-    test4_output_port   : in noc_flit_type;
+    test4_output_port   : in dma_noc_flit_type;
     test4_data_void_out : in std_ulogic;
     test4_stop_in       : in std_ulogic;
     test5_output_port   : in misc_noc_flit_type;
     test5_data_void_out : in std_ulogic;
     test5_stop_in       : in std_ulogic;
-    test6_output_port   : in noc_flit_type;
+    test6_output_port   : in dma_noc_flit_type;
     test6_data_void_out : in std_ulogic;
     test6_stop_in       : in std_ulogic;
-    test1_input_port    : out noc_flit_type;
+    test1_input_port    : out coh_noc_flit_type;
     test1_data_void_in  : out std_ulogic;
     test1_stop_out      : out std_ulogic;
-    test2_input_port    : out noc_flit_type;
+    test2_input_port    : out coh_noc_flit_type;
     test2_data_void_in  : out std_ulogic;
     test2_stop_out      : out std_ulogic;
-    test3_input_port    : out noc_flit_type;
+    test3_input_port    : out coh_noc_flit_type;
     test3_data_void_in  : out std_ulogic;
     test3_stop_out      : out std_ulogic;
-    test4_input_port    : out noc_flit_type;
+    test4_input_port    : out dma_noc_flit_type;
     test4_data_void_in  : out std_ulogic;
     test4_stop_out      : out std_ulogic;
     test5_input_port    : out misc_noc_flit_type;
     test5_data_void_in  : out std_ulogic;
     test5_stop_out      : out std_ulogic;
-    test6_input_port    : out noc_flit_type;
+    test6_input_port    : out dma_noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
     mon_dvfs           : out monitor_dvfs_type
@@ -223,10 +223,10 @@ architecture rtl of tile_io is
   signal ahbs_snd_full             : std_ulogic;
   -- Extended remote_ahbs_* signals that
   signal ahbm_rcv_rdreq      : std_ulogic;
-  signal ahbm_rcv_data_out   : noc_flit_type;
+  signal ahbm_rcv_data_out   : arch_noc_flit_type;
   signal ahbm_rcv_empty      : std_ulogic;
   signal ahbm_snd_wrreq      : std_ulogic;
-  signal ahbm_snd_data_in    : noc_flit_type;
+  signal ahbm_snd_data_in    : arch_noc_flit_type;
   signal ahbm_snd_full       : std_ulogic;
 
   signal remote_ahbs_rcv_rdreq     : std_ulogic;
@@ -236,18 +236,18 @@ architecture rtl of tile_io is
   signal remote_ahbs_snd_data_in   : misc_noc_flit_type;
   signal remote_ahbs_snd_full      : std_ulogic;
   signal dma_rcv_rdreq             : std_ulogic;
-  signal dma_rcv_data_out          : noc_flit_type;
+  signal dma_rcv_data_out          : dma_noc_flit_type;
   signal dma_rcv_empty             : std_ulogic;
   signal dma_snd_wrreq             : std_ulogic;
-  signal dma_snd_data_in           : noc_flit_type;
+  signal dma_snd_data_in           : dma_noc_flit_type;
   signal dma_snd_full              : std_ulogic;
   signal dma_snd_atleast_4slots    : std_ulogic;
   signal dma_snd_exactly_3slots    : std_ulogic;
   signal coherent_dma_rcv_rdreq    : std_ulogic;
-  signal coherent_dma_rcv_data_out : noc_flit_type;
+  signal coherent_dma_rcv_data_out : dma_noc_flit_type;
   signal coherent_dma_rcv_empty    : std_ulogic;
   signal coherent_dma_snd_wrreq    : std_ulogic;
-  signal coherent_dma_snd_data_in  : noc_flit_type;
+  signal coherent_dma_snd_data_in  : dma_noc_flit_type;
   signal coherent_dma_snd_full     : std_ulogic;
   signal apb_rcv_rdreq             : std_ulogic;
   signal apb_rcv_data_out          : misc_noc_flit_type;
@@ -1017,16 +1017,17 @@ begin
 
   ahbslv2noc_1 : ahbslv2noc
     generic map (
-      tech             => CFG_FABTECH,
-      hindex           => this_remote_ahb_slv_en,
-      hconfig          => fixed_ahbso_hconfig,
-      mem_hindex       => ddr_hindex(0),
-      mem_num          => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
-      mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1),
-      slv_y            => tile_y(io_tile_id),
-      slv_x            => tile_x(io_tile_id),
-      retarget_for_dma => 1,
-      dma_length       => CFG_DLINE)
+      tech                  => CFG_FABTECH,
+      hindex                => this_remote_ahb_slv_en,
+      hconfig               => fixed_ahbso_hconfig,
+      mem_hindex            => ddr_hindex(0),
+      mem_num               => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
+      mem_info              => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1),
+      this_noc_flit_size    => DMA_NOC_FLIT_SIZE,
+      slv_y                 => tile_y(io_tile_id),
+      slv_x                 => tile_x(io_tile_id),
+      retarget_for_dma      => 1,
+      dma_length            => CFG_DLINE)
     port map (
       rst                        => rst,
       clk                        => clk,
@@ -1194,14 +1195,15 @@ begin
   -- Requestes may be directed to the frame buffer or the boot ROM
   noc2ahbmst_1 : noc2ahbmst
     generic map (
-      tech        => CFG_FABTECH,
-      hindex      => CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN,
-      axitran     => GLOB_CPU_AXI,
-      little_end  => GLOB_CPU_RISCV,
-      narrow_noc  => 1,
-      eth_dma     => 0,
-      cacheline   => 1,
-      l2_cache_en => 0)
+      tech                  => CFG_FABTECH,
+      hindex                => CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN,
+      axitran               => GLOB_CPU_AXI,
+      little_end            => GLOB_CPU_RISCV,
+      narrow_noc            => 1,
+      eth_dma               => 0,
+      cacheline             => 1,
+      l2_cache_en           => 0,
+      this_coh_flit_size    => ARCH_NOC_FLIT_SIZE)
     port map (
       rst                       => rst,
       clk                       => clk,

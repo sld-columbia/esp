@@ -152,7 +152,8 @@ architecture tlb of esp_acc_tlb is
   signal one_sig : std_logic_vector(31 downto 0);
   signal fff_sig : std_logic_vector(31 downto 0);
 
-  constant address_pad_lsb : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
+  constant DMA_OFFSET_BITS : integer := log2(DMA_NOC_WIDTH / 8);
+  constant address_pad_lsb : std_logic_vector(DMA_OFFSET_BITS - 1 downto 0) := (others => '0');
 
 begin  -- tlb
 
@@ -186,12 +187,12 @@ begin  -- tlb
   fff_sig <= fff;
   chunk_size_in  <= left_shift(one_sig, chunk_shift);
   dma_offset_mask_in <= not left_shift(fff_sig, chunk_shift);
-  vaddress_in <= (rd_index(31 - GLOB_BYTE_OFFSET_BITS downto 0) & address_pad_lsb) + bankreg(SRC_OFFSET_REG)
+  vaddress_in <= (rd_index(31 - DMA_OFFSET_BITS downto 0) & address_pad_lsb) + bankreg(SRC_OFFSET_REG)
                  when rd_request = '1' else
-                 (wr_index(31 - GLOB_BYTE_OFFSET_BITS downto 0) & address_pad_lsb) + bankreg(DST_OFFSET_REG);
-  remaining_length_in <= (rd_length(31 - GLOB_BYTE_OFFSET_BITS downto 0) & address_pad_lsb)
+                 (wr_index(31 - DMA_OFFSET_BITS downto 0) & address_pad_lsb) + bankreg(DST_OFFSET_REG);
+  remaining_length_in <= (rd_length(31 - DMA_OFFSET_BITS downto 0) & address_pad_lsb)
                          when rd_request = '1' else
-                         (wr_length(31 - GLOB_BYTE_OFFSET_BITS downto 0) & address_pad_lsb);
+                         (wr_length(31 - DMA_OFFSET_BITS downto 0) & address_pad_lsb);
   -- Stage 1 input
   chunk_index_in <= right_shift(vaddress, chunk_shift);
   dma_offset_in <= vaddress and dma_offset_mask;

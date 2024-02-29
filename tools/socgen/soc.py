@@ -55,9 +55,9 @@ class Components():
         for item in dp_info:
           if re.match(r'dma[1-9]+', item, re.M|re.I):
             dp_dma_width = int(item.replace("dma", ""))
-            if dp_dma_width != DMA_WIDTH:
-              skip = True
-              break;
+            #if dp_dma_width != DMA_WIDTH:
+            #  skip = True
+            #  break;
         if skip:
           continue
         self.POINTS[acc.upper()].append(dp)
@@ -68,13 +68,13 @@ class Components():
     dirs = get_immediate_subdirectories(acc_dir)
     dirs = sorted(dirs, key=str.upper)
     for acc in dirs:
-      cpu_support = False
-      with open(acc_dir + "/" + acc + "/" + acc + ".hosts") as f:
+      dma_support = False
+      with open(acc_dir + "/" + acc + "/" + acc + ".dma_widths") as f:
         for line in f:
-          if line.find(str(CPU_ARCH)) != -1:
-            cpu_support = True
+          if line.find(str(DMA_WIDTH)) != -1:
+            dma_support = True
 
-      if cpu_support == True:
+      if dma_support == True:
         self.POINTS[acc.upper()] = []
         with open(acc_dir + "/" + acc + "/vendor") as f:
           vendor = f.readline().strip()
@@ -93,7 +93,7 @@ class SoC_Config():
   IP_ADDR = ""
   TECH = "virtex7"
   FPGA_BOARD = "xilinx-vc707-xc7vx485t"
-  DMA_WIDTH = 32
+  ARCH_BITS = 32
 
   def changed(self, *args): 
     if self.cache_impl.get() == "ESP RTL":
@@ -158,6 +158,12 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     cols = int(item[2])
+    line = fp.readline()
+    item = line.split()
+    self.noc.coh_noc_width.set(int(item[2]))
+    line = fp.readline()
+    item = line.split()
+    self.noc.dma_noc_width.set(int(item[2]))
     self.noc.create_topology(self.noc.top, rows, cols)
     # CONFIG_CPU_CACHES = L2_SETS L2_WAYS LLC_SETS LLC_WAYS
     line = fp.readline()
@@ -193,6 +199,10 @@ class SoC_Config():
     item = line.split()
     self.acc_l2_sets.set(int(item[2]))
     self.acc_l2_ways.set(int(item[3]))
+    # CONFIG_CACHE_LINE_SIZE = CACHE_LINE_BITS
+    line = fp.readline()
+    item = line.split()
+    self.cache_line_size.set(int(item[2]))
     # CONFIG_SLM_KBYTES
     line = fp.readline()
     item = line.split()
@@ -218,6 +228,10 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     self.iolink_width.set(int(item[2]))
+    # Mem Link
+    line = fp.readline()
+    item = line.split()
+    self.mem_link_width.set(int(item[2]))
     # SVGA
     line = fp.readline()
     if line.find("CONFIG_SVGA_EN = y") != -1:
@@ -310,6 +324,8 @@ class SoC_Config():
       fp.write("#CONFIG_HAS_SG is not set\n")
     fp.write("CONFIG_NOC_ROWS = " + str(self.noc.rows) + "\n")
     fp.write("CONFIG_NOC_COLS = " + str(self.noc.cols) + "\n")
+    fp.write("CONFIG_COH_NOC_WIDTH = " + str(self.noc.coh_noc_width.get()) + "\n")
+    fp.write("CONFIG_DMA_NOC_WIDTH = " + str(self.noc.dma_noc_width.get()) + "\n")
     if self.cache_en.get() == 1:
       fp.write("CONFIG_CACHE_EN = y\n")
     else:
@@ -324,6 +340,7 @@ class SoC_Config():
       fp.write("#CONFIG_CACHE_SPANDEX is not set\n")
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
+    fp.write("CONFIG_CACHE_LINE_SIZE = " + str(self.cache_line_size.get()) + "\n")
     fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n")
     if self.jtag_en.get() == 1:
       fp.write("CONFIG_JTAG_EN = y\n")
@@ -338,6 +355,7 @@ class SoC_Config():
     else:
       fp.write("#CONFIG_IOLINK_EN is not set\n")
     fp.write("CONFIG_IOLINK_WIDTH = " + str(self.iolink_width.get()) + "\n")
+    fp.write("CONFIG_MEM_LINK_WIDTH = " + str(self.mem_link_width.get()) + "\n")
     if self.svga_en.get() == 1:
       fp.write("CONFIG_SVGA_EN = y\n")
     else:
@@ -457,8 +475,8 @@ class SoC_Config():
   def set_IP(self):
     self.IP_ADDR = str(int('0x' + self.dsu_ip[:2], 16)) + "." + str(int('0x' + self.dsu_ip[2:4], 16)) + "." + str(int('0x' + self.dsu_ip[4:6], 16)) + "." + str(int('0x' + self.dsu_ip[6:], 16))
 
-  def __init__(self, DMA_WIDTH, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, temporary):
-    self.DMA_WIDTH = DMA_WIDTH
+  def __init__(self, ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, temporary):
+    self.ARCH_BITS = ARCH_BITS
     self.TECH_TYPE = TECH_TYPE
     self.TECH = TECH
     self.LINUX_MAC = LINUX_MAC
@@ -481,6 +499,7 @@ class SoC_Config():
     self.llc_ways = IntVar()
     self.acc_l2_sets = IntVar()
     self.acc_l2_ways = IntVar()
+    self.cache_line_size = IntVar()
     # SLM
     self.slm_kbytes = IntVar()
     # Peripherals
@@ -488,6 +507,7 @@ class SoC_Config():
     self.eth_en = IntVar()
     self.iolink_en = IntVar()
     self.iolink_width = IntVar()
+    self.mem_link_width = IntVar()
     self.svga_en = IntVar()
     # Debug Link
     self.dsu_ip = ""
@@ -518,5 +538,5 @@ class SoC_Config():
     self.set_IP()
 
     # Discover components
-    self.IPs = Components(self.TECH, self.DMA_WIDTH, self.CPU_ARCH.get())
+    self.IPs = Components(self.TECH, self.noc.dma_noc_width.get(), self.CPU_ARCH.get())
     self.update_list_of_ips()
