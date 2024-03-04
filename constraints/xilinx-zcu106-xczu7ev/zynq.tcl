@@ -8,7 +8,7 @@ set AHBDW [lindex $argv 0]
 create_bd_design "zynqmpsoc"
 
 # ZYNQ MP SoC PS
-create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.3 zynq_ultra_ps_e_0
+create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0
 apply_bd_automation -rule xilinx.com:bd_rule:zynq_ultra_ps_e -config {apply_board_preset "1" }  [get_bd_cells zynq_ultra_ps_e_0]
 set_property -dict [list \
 			CONFIG.PSU__PSS_REF_CLK__FREQMHZ {33.333333} \
@@ -55,8 +55,8 @@ exclude_bd_addr_seg [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_LPS_OCM] -t
 exclude_bd_addr_seg [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_PCIE_LOW] -target_address_space [get_bd_addr_spaces AHB_INTERFACE_0]
 exclude_bd_addr_seg [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_QSPI] -target_address_space [get_bd_addr_spaces AHB_INTERFACE_0]
 assign_bd_address [get_bd_addr_segs {zynq_ultra_ps_e_0/SAXIGP0/HPC0_DDR_LOW }]
-set_property offset 0x40000000 [get_bd_addr_segs {AHB_INTERFACE_0/SEG_zynq_ultra_ps_e_0_HPC0_DDR_LOW}]
-set_property range 1G [get_bd_addr_segs {AHB_INTERFACE_0/SEG_zynq_ultra_ps_e_0_HPC0_DDR_LOW}]
+set_property offset 0x00000000 [get_bd_addr_segs {AHB_INTERFACE_0/SEG_zynq_ultra_ps_e_0_HPC0_DDR_LOW}]
+set_property range 2G [get_bd_addr_segs {AHB_INTERFACE_0/SEG_zynq_ultra_ps_e_0_HPC0_DDR_LOW}]
 
 # Add ILA
 create_bd_cell -type ip -vlnv xilinx.com:ip:system_ila:1.1 system_ila_0
