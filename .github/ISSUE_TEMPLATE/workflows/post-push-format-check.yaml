@@ -1,0 +1,57 @@
+name: Post-push Format Checker
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+      - demo
+
+jobs:
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install vsg
+        run: |
+          pip3 install vsg
+          echo 'export PATH="$PATH:/home/espuser/.local/bin/"' >> ~/.bashrc
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install clang-format
+
+      - name: Install autopep8
+        run: |
+          pip3 install autopep8
+
+      - name: Install Verible
+        run: |
+          wget https://github.com/chipsalliance/verible/releases/download/v0.0-3545-ge4028f19/verible-v0.0-3545-ge4028f19-linux-static-x86_64.tar.gz
+          tar -xvf verible-v0.0-3545-ge4028f19-linux-static-x86_64.tar.gz
+          rm verible-v0.0-3545-ge4028f19-linux-static-x86_64.tar.gz
+          mv verible-v0.0-3545-ge4028f19/ verible 
+          export PATH=$PATH:/home/espuser/verible/bin
+          echo 'export PATH="$PATH:/home/espuser/verible/bin"' >> ~/.bashrc
+
+      - name: Source .bashrc
+        run: |
+          source ~/.bashrc
+
+      - name: Navigate to script directory
+        run: cd $GITHUB_WORKSPACE/utils/scripts
+
+      - name: Run format check
+        run: |
+          chmod +x $GITHUB_WORKSPACE/utils/scripts/format_modified.sh
+          if ! $GITHUB_WORKSPACE/utils/scripts/format_modified.sh -g -ca; then
+            echo "Code format check failed. Please fix the formatting issues by running the following script: /utils/scripts/format_modified.sh"
+            exit 1 
+          fi
