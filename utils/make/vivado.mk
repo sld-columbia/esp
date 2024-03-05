@@ -56,7 +56,7 @@ ifneq ($(findstring profpga, $(BOARD)),)
 	done;
 	@for ver in $(VERILOG_PROFPGA); do \
 		rtl=$(PROFPGA)/hdl/$$ver; \
-		echo "read_verilog -library profpga $$rtl" >> $@; \
+		echo "read_verilog -library profpga -sv $$rtl" >> $@; \
 	done;
 endif
 	@for rtl in $(VHDL_PKGS); do \
