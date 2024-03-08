@@ -140,8 +140,8 @@ architecture rtl of llc_wrapper is
   signal llc_dma_req_in_data_coh_msg     : mix_msg_t;
   signal llc_dma_req_in_data_hprot       : hprot_t;
   signal llc_dma_req_in_data_addr        : line_addr_t;
-  signal llc_dma_req_in_data_word_offset : word_offset_t;
-  signal llc_dma_req_in_data_valid_words : word_offset_t;
+  signal llc_dma_req_in_data_word_offset : dma_word_offset_t;
+  signal llc_dma_req_in_data_valid_words : dma_word_offset_t;
   signal llc_dma_req_in_data_line        : line_t;
   signal llc_dma_req_in_data_req_id      : llc_coh_dev_id_t;
   signal llc_dma_req_in_data_word_mask   : word_mask_t;
@@ -174,7 +174,7 @@ architecture rtl of llc_wrapper is
   signal llc_dma_rsp_out_data_invack_cnt  : invack_cnt_t;
   signal llc_dma_rsp_out_data_req_id      : llc_coh_dev_id_t;
   signal llc_dma_rsp_out_data_dest_id     : cache_id_t;  -- not used
-  signal llc_dma_rsp_out_data_word_offset : word_offset_t;
+  signal llc_dma_rsp_out_data_word_offset : dma_word_offset_t;
   signal llc_dma_rsp_out_data_word_mask   : word_mask_t;
 
   signal llc_fwd_out_ready        : std_ulogic;
@@ -344,9 +344,9 @@ architecture rtl of llc_wrapper is
     state      : dma_rsp_out_fsm;
     coh_msg    : coh_msg_t;
     dma32      : std_ulogic;
-    dma32_cnt  : integer range 0 to dma32_words - 1;
+    dma32_cnt  : integer range 0 to dma_words - 1;
     addr       : line_addr_t;
-    woffset    : word_offset_t;
+    woffset    : dma_word_offset_t;
     line       : line_t;
     word_cnt   : natural range 0 to 31;
     invack_cnt : invack_cnt_t;
@@ -421,10 +421,10 @@ architecture rtl of llc_wrapper is
     state    : dma_req_in_fsm;
     coh_msg  : mix_msg_t;
     dma32    : std_ulogic;
-    dma32_cnt  : integer range 0 to dma32_words - 1;
+    dma32_cnt  : integer range 0 to dma_words - 1;
     hprot    : hprot_t;
     addr     : line_addr_t;
-    woffset  : word_offset_t;
+    woffset  : dma_word_offset_t;
     line     : line_t;
     req_id   : llc_coh_dev_id_t;
     word_cnt : natural range 0 to 31;
@@ -1335,7 +1335,7 @@ begin  -- architecture rtl
           dma_rcv_rdreq <= '1';
 
           reg.addr    := dma_rcv_data_out(ADDR_BITS - 1 downto LINE_RANGE_LO);
-          reg.woffset := dma_rcv_data_out(W_OFF_RANGE_HI downto W_OFF_RANGE_LO);
+          reg.woffset := dma_rcv_data_out(DMA_OFF_RANGE_HI downto DMA_OFF_RANGE_LO);
 
           reg.line    := (others => '0');
 
@@ -1348,7 +1348,7 @@ begin  -- architecture rtl
             reg.word_cnt := to_integer(unsigned(reg.woffset)) / dma_words;
             reg.state    := rcv_data_dma;
             if reg.dma32 = '1' then
-              reg.dma32_cnt := (to_integer(unsigned(reg.woffset)) * (ARCH_BITS / 32)) mod dma32_words;
+              reg.dma32_cnt := to_integer(unsigned(reg.woffset)) mod dma_words;
             end if;
 
           end if;
@@ -1370,14 +1370,11 @@ begin  -- architecture rtl
             llc_dma_req_in_data_word_offset <= reg.woffset;
             llc_dma_req_in_data_req_id      <= reg.req_id;
             -- Save DMA read length to most significant word in line field
-            if reg.dma32 = '1' and ARCH_BITS /= 32 then
---pragma translate_off
-              assert ARCH_BITS <= 64 report "Ethernet DMA32 not supported on architectures with bit-width greater than 64" severity error;
---pragma translate_on
-              word32_tmp := dma_rcv_data_out(31 downto 0) + X"00000001";
-              reg.line(BITS_PER_LINE - ADDR_BITS + 32 - 1 downto BITS_PER_LINE - ADDR_BITS) := '0' & word32_tmp(31 downto 1);
-            else
+            if eth_dma_id = tile_dma_id(reg.tile_id) or ARCH_BITS = 32 then
               reg.line(BITS_PER_LINE - 1 downto BITS_PER_LINE - ADDR_BITS) := dma_rcv_data_out(ADDR_BITS - 1 downto 0);
+            else
+              --on 64-bit architectures, accelerator DMA requests have lengths in terms of 64-bit words
+              reg.line(BITS_PER_LINE - 1 downto BITS_PER_LINE - ADDR_BITS) := dma_rcv_data_out(ADDR_BITS - 2 downto 0) & '0';
             end if;
             llc_dma_req_in_data_line <= reg.line;
 
@@ -1403,7 +1400,7 @@ begin  -- architecture rtl
                          (DMA_NOC_WIDTH * reg.word_cnt) + (32 * reg.dma32_cnt)) :=
                   dma_rcv_data_out(31 downto 0);
 
-                reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma32_words;
+                reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma_words;
 
               else
                 reg.line((DMA_NOC_WIDTH * reg.word_cnt) + DMA_NOC_WIDTH - 1 downto
@@ -1417,9 +1414,9 @@ begin  -- architecture rtl
                 llc_dma_req_in_data_addr        <= reg.addr;
                 llc_dma_req_in_data_word_offset <= reg.woffset;
                 if reg.dma32 = '0' then
-                  llc_dma_req_in_data_valid_words <= std_logic_vector(to_unsigned(reg.word_cnt * dma_words + dma_words - 1, WORD_OFFSET_BITS)) - reg.woffset;
+                  llc_dma_req_in_data_valid_words <= std_logic_vector(to_unsigned(reg.word_cnt * dma_words + dma_words - 1, DMA_WORD_OFFSET_BITS)) - reg.woffset;
                 else
-                  llc_dma_req_in_data_valid_words <= std_logic_vector(to_unsigned(reg.word_cnt * dma_words + dma_req_in_reg.dma32_cnt / (ARCH_BITS / 32), WORD_OFFSET_BITS)) - reg.woffset;
+                  llc_dma_req_in_data_valid_words <= std_logic_vector(to_unsigned(reg.word_cnt * dma_words + dma_req_in_reg.dma32_cnt, DMA_WORD_OFFSET_BITS)) - reg.woffset;
                 end if;
                 llc_dma_req_in_data_line        <= reg.line;
                 llc_dma_req_in_data_req_id      <= reg.req_id;
@@ -1449,7 +1446,7 @@ begin  -- architecture rtl
                        (DMA_NOC_WIDTH * reg.word_cnt) + (32 * reg.dma32_cnt)) :=
               dma_rcv_data_out(31 downto 0);
 
-              reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma32_words;
+              reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma_words;
 
               if reg.dma32_cnt = 0 then
                 reg.word_cnt := reg.word_cnt + 1;
@@ -1769,7 +1766,7 @@ begin  -- architecture rtl
     variable dest_y    : local_yx;
     variable reserved  : reserved_field_type;
     variable preamble  : noc_preamble_type;
-    variable last_lv   : std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
+    variable last_lv   : std_logic_vector(DMA_WORD_OFFSET_BITS - 1 downto 0);
     variable last      : integer range 0 to WORDS_PER_LINE - 1;
     variable mix_msg   : mix_msg_t;
 
@@ -1779,7 +1776,7 @@ begin  -- architecture rtl
     reg.asserts := (others => '0');
 
     last        := WORDS_PER_LINE - 1;
-    last_lv     := std_logic_vector(to_unsigned(last, WORD_OFFSET_BITS));
+    last_lv     := std_logic_vector(to_unsigned(last, DMA_WORD_OFFSET_BITS));
 
     dest_init := 0;
     dest_x    := (others => '0');
@@ -1947,7 +1944,7 @@ begin  -- architecture rtl
     variable dest_x    : local_yx;
     variable dest_y    : local_yx;
     variable preamble  : noc_preamble_type;
-    variable last_lv   : std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
+    variable last_lv   : std_logic_vector(DMA_WORD_OFFSET_BITS - 1 downto 0);
     variable last      : integer range 0 to WORDS_PER_LINE - 1;
     variable mix_msg   : mix_msg_t;
 
@@ -1957,7 +1954,7 @@ begin  -- architecture rtl
     reg.asserts := (others => '0');
 
     last        := WORDS_PER_LINE - 1;
-    last_lv     := std_logic_vector(to_unsigned(last, WORD_OFFSET_BITS));
+    last_lv     := std_logic_vector(to_unsigned(last, DMA_WORD_OFFSET_BITS));
 
     dest_init := 0;
     dest_x    := (others => '0');
@@ -1998,7 +1995,7 @@ begin  -- architecture rtl
 
           if DMA_NOC_WIDTH /= 32 and dest_init = eth_dma_id then
             reg.dma32 := '1';
-            reg.dma32_cnt := (to_integer(unsigned(reg.woffset)) * (ARCH_BITS / 32)) mod dma32_words;
+            reg.dma32_cnt := to_integer(unsigned(reg.woffset)) mod dma_words;
           else
             reg.dma32 := '0';
           end if;
@@ -2053,10 +2050,10 @@ begin  -- architecture rtl
       -- SEND DATA DMA
       when send_data_dma =>
 
-        last_lv := reg.woffset + reg.invack_cnt(WORD_OFFSET_BITS downto 1);
+        last_lv := reg.woffset + reg.invack_cnt(DMA_WORD_OFFSET_BITS downto 1);
         last    := to_integer(unsigned(last_lv)) / dma_words;
 
-        if reg.invack_cnt(0) = '1' and reg.word_cnt = last and ((reg.dma32 = '0') or (reg.dma32_cnt = dma32_words - 1)) then
+        if reg.invack_cnt(0) = '1' and reg.word_cnt = last and ((reg.dma32 = '0') or (reg.dma32_cnt = dma_words - 1)) then
           preamble := PREAMBLE_TAIL;
         else
           preamble := PREAMBLE_BODY;
@@ -2074,7 +2071,7 @@ begin  -- architecture rtl
             dma_snd_wrreq <= not reg.stall;       -- send last word from this cache line
 
             if reg.dma32 /= '0' then
-              reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma32_words;
+              reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma_words;
             end if;
 
             if reg.dma32_cnt = 0 then
@@ -2115,7 +2112,7 @@ begin  -- architecture rtl
               dma_snd_wrreq   <= '1';   -- send current word from this cache line
 
               if reg.dma32 /= '0' then
-                reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma32_words;
+                reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma_words;
               end if;
 
               if reg.dma32_cnt = 0 then
