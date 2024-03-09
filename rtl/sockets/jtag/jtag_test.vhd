@@ -206,7 +206,8 @@ architecture rtl of jtag_test is
   type dma_vect is array(1 to 2) of dma_noc_flit_type;
   signal dma_test_in, dma_test_in_sync : dma_vect;
 
-  signal misc_test_in, misc_test_in_sync : misc_noc_flit_type;
+  --TODO: use misc_noc_flit_type
+  signal misc_test_in, misc_test_in_sync : dma_noc_flit_type;
 
   signal sipo_comp         : std_logic_vector(MAX_NOC_FLIT_SIZE downto 0);
   signal test_comp, sipo_c : std_logic_vector(MAX_NOC_FLIT_SIZE-1 downto 0);
@@ -258,6 +259,8 @@ architecture rtl of jtag_test is
 
   signal fwd_rd_empty_o5out : std_ulogic;
   signal fwd_wr_full_o5out  : std_ulogic;
+
+  constant jtag_misc_noc_flit_pad : std_logic_vector(31 downto 0) := X"00000000";
 
   attribute keep : boolean;
   -- attribute keep of tclk_int : signal is true;
@@ -792,8 +795,9 @@ begin
         done      => sipo_done_i(4),
         end_trace => end_trace(4));
 
+    -- TODO: use MISC_NOC_FLIT_SIZE
     sipo_5 : sipo_jtag
-      generic map (DIM => MISC_NOC_FLIT_SIZE+9,
+      generic map (DIM => DMA_NOC_FLIT_SIZE+9,
                    en_mo => 1)
       port map (
         rst       => rst,
@@ -949,17 +953,17 @@ begin
         rst_wr_n_i => rst,
         clk_wr_i   => tclk,
         we_i       => we_in(5),
-        d_i        => misc_test_in,
+        d_i        => misc_test_in(MISC_NOC_FLIT_SIZE-1 downto 0),
         wr_full_o  => fwd_wr_full_o(5),
         rst_rd_n_i => tile_rst,
         clk_rd_i   => refclk,
         rd_i       => rd_i(5),
-        q_o        => misc_test_in_sync,
+        q_o        => misc_test_in_sync(MISC_NOC_FLIT_SIZE-1 downto 0),
         rd_empty_o => fwd_rd_empty_o5);
 
 
-    test5_output_port   <= misc_test_in_sync when tms_int.sync = '1' else noc5_output_port;
-    test5_data_void_out <= fwd_rd_empty_o5                                when tms_int.sync = '1' else noc5_data_void_out;
+    test5_output_port   <= misc_test_in_sync(MISC_NOC_FLIT_SIZE-1 downto 0) when tms_int.sync = '1' else noc5_output_port;
+    test5_data_void_out <= fwd_rd_empty_o5                                  when tms_int.sync = '1' else noc5_data_void_out;
 
 
     --from NoC plane 6
@@ -1219,7 +1223,7 @@ begin
     B <= test2_out & mismatch_detected;
     C <= test3_out & mismatch_detected;
     D <= test4_out & mismatch_detected;
-    E <= misc_noc_flit_pad & test5_out & mismatch_detected;
+    E <= jtag_misc_noc_flit_pad & test5_out & mismatch_detected;
     F <= test6_out & mismatch_detected;
 
 
