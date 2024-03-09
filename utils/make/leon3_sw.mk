@@ -89,6 +89,9 @@ $(SOFT_BUILD)/systest.exe: systest.c $(SOFT_BUILD)/lib3tests.a
 
 $(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
 	$(QUIET_OBJCP)$(CROSS_COMPILE_ELF)objcopy -O srec --gap-fill 0 $< $@
+	@if [ -n "$(SIM_DATA_FILES)" ]; then\
+		python3 $(ESP_ROOT)/utils/scripts/srec/modify_srec.py $@ $(SIM_DATA_FILES) $(START_ADDRS);\
+	fi
 
 leon3-soft-clean:
 	$(QUIET_CLEAN)$(RM) $(OFILES) $(SOFT_BUILD)/lib3tests.a $(SOFT_BUILD)/prom.o
