@@ -763,7 +763,7 @@ begin  -- architecture rtl
         narrow_noc          => 0,
         cacheline           => 1,
         l2_cache_en         => 0,
-        this_noc_flit_size  => ARCH_NOC_FLIT_SIZE)
+        this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
         rst                       => rstn,
         clk                       => sys_clk(i),
