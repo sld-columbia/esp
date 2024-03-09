@@ -112,6 +112,9 @@ $(SOFT_BUILD)/systest.bin: $(TEST_PROGRAM)
 
 $(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
 	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O srec --gap-fill 0 $< $@
+	@if [ -n "$(SIM_DATA_FILES)" ]; then\
+		python3 $(ESP_ROOT)/utils/scripts/srec/modify_srec.py $@ $(SIM_DATA_FILES) $(START_ADDRS);\
+	fi
 
 
 sysroot:
