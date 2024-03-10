@@ -48,7 +48,11 @@ HLS4ML_ACC-exe       = $(addsuffix -exe, $(HLS4ML_ACC))
 
 CHISEL_PATH          = $(ESP_ROOT)/accelerators/chisel/hw
 CHISEL_ACC_PATH      = $(CHISEL_PATH)/src/main/scala/esp/examples
+ifneq ("$(wildcard $(ESP_ROOT)/rtl/caches/.git)", "")
 CHISEL_ACC           = $(shell ls $(CHISEL_ACC_PATH)/*.scala | awk -F/ '{print $$(NF)}' | sed 's/\.scala//g')
+else
+CHISEL_ACC           =
+endif
 CHISEL_ACC_PATHS     = $(addprefix $(ESP_ROOT)/accelerators/chisel/, $(CHISEL_ACC))
 CHISEL_ACC-clean     = $(addsuffix -clean, $(CHISEL_ACC))
 CHISEL_ACC-distclean = $(addsuffix -distclean, $(CHISEL_ACC))

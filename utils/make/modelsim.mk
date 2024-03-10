@@ -100,8 +100,10 @@ endif
 			echo $(SPACES)"$(VLOG) -work work $$rtl"; \
 			$(VLOG) -work work $$rtl || exit; \
 		done;
+ifneq ("$(wildcard $(ESP_ROOT)/rtl/peripherals/bsg/.git)", "")
 	@echo $(SPACES)"### Compile BSG Verilog source files ###";
 	@$(MAKE) bsg-sim-compile
+endif
 	@cd modelsim; \
 	echo $(SPACES)"vmake > vsim.mk"; \
 	vmake 2> /dev/null > vsim.mk; \
