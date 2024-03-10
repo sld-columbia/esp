@@ -48,10 +48,11 @@ genus/srcs.tcl: genus $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 		else \
 			[[ $$rtl =~ techmap/virtex  ]] || echo "$(GENUS_VLOG) $$rtl" >> $@; \
 		fi; \
-	done; \
-	echo "### Compile BSG Verilog source files ###" >> $@; \
-		echo "$(GENUS_VLOG) $(GENUS_BSG_VLOGOPT) $(BSG_VLOG_SRCS)" >> $@; \
-
+	done;
+ifneq ("$(wildcard $(ESP_ROOT)/rtl/peripherals/bsg/.git)", "")
+	@echo "### Compile BSG Verilog source files ###" >> $@; \
+	echo "$(GENUS_VLOG) $(GENUS_BSG_VLOGOPT) $(BSG_VLOG_SRCS)" >> $@;
+endif
 
 genus/$(DESIGN): genus genus/srcs.tcl genus/incdir.tcl
 
