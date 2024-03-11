@@ -50,7 +50,7 @@
 // Author: Michele Petracca
 ////////////////////////////////////////////////////////////////////////////////
 
-module lookahead_router
+module lookahead_router_multicast
   #(
     parameter noc::noc_flow_control_t FlowControl = noc::kFlowControlAckNack,
     parameter int unsigned DataWidth = 64,
@@ -1108,7 +1108,7 @@ module lookahead_router
       
       assign current_routing[g_i] = 5'h1 << g_i ;
 
-        lookahead_routing 
+        lookahead_routing_multicast 
         #(
            .DEST_SIZE(DEST_SIZE)
         )

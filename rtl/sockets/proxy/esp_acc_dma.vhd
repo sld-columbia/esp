@@ -554,14 +554,14 @@ begin  -- rtl
       p2p_header_v(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
     else
       if DEST_SIZE = 1 then
-        p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, msg_type, hprot);
+        p2p_header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, msg_type, hprot);
       -- else if DEST_SIZE = 2 then
       -- ajay_v hprot can be added
       --   p2p_header_v := create_header_2dest(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(5), p2p_dst(4), p2p_dst(3), p2p_dst(2), p2p_dst(1), p2p_dst(0), msg_type);
       elsif DEST_SIZE = 4 then
-        p2p_header_v := create_header_4dest(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(5), p2p_dst(4), p2p_dst(3), p2p_dst(2), p2p_dst(1), p2p_dst(0), msg_type);
+        p2p_header_v := create_header_4dest(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(5), p2p_dst(4), p2p_dst(3), p2p_dst(2), p2p_dst(1), p2p_dst(0), msg_type);
       elsif DEST_SIZE = 6 then
-        p2p_header_v := create_header_6dest(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(9), p2p_dst(8), p2p_dst(7), p2p_dst(6), p2p_dst(5), p2p_dst(4), p2p_dst(3), p2p_dst(2), p2p_dst(1), p2p_dst(0), msg_type);
+        p2p_header_v := create_header_6dest(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(9), p2p_dst(8), p2p_dst(7), p2p_dst(6), p2p_dst(5), p2p_dst(4), p2p_dst(3), p2p_dst(2), p2p_dst(1), p2p_dst(0), msg_type);
       end if;
     end if;
 

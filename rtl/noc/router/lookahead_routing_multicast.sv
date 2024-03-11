@@ -24,7 +24,7 @@
 // - next_routing: one-hot encoded routing direction for the next hop.
 //
 
-module lookahead_routing #(
+module lookahead_routing_multicast #(
   parameter integer DEST_SIZE = 6)
   (
    input logic clk,

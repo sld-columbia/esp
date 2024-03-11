@@ -166,7 +166,7 @@ begin
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => COH_NOC_FLIT_SIZE,
-      DEST_SIZE => 6)
+      DEST_SIZE => 1)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -199,7 +199,7 @@ begin
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => COH_NOC_FLIT_SIZE,
-      DEST_SIZE => 6)
+      DEST_SIZE => 1)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -232,7 +232,7 @@ begin
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => COH_NOC_FLIT_SIZE,
-      DEST_SIZE => 6)
+      DEST_SIZE => 1)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
