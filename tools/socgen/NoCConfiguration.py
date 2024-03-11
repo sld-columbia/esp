@@ -384,6 +384,7 @@ class NoC():
     self.rows = 0
     self.coh_noc_width = IntVar()
     self.dma_noc_width = IntVar()
+    self.multicast_en = IntVar()
     self.monitor_ddr = IntVar()
     self.monitor_mem = IntVar()
     self.monitor_inj = IntVar()
@@ -491,6 +492,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     OptionMenu(self.noc_config_frame, self.noc.coh_noc_width, *noc_width_choices).pack()
     Label(self.noc_config_frame, text = "DMA NoC Planes (4,6) Bitwidth: ", height=1).pack()
     OptionMenu(self.noc_config_frame, self.noc.dma_noc_width, *noc_width_choices).pack()
+    Checkbutton(self.noc_config_frame, text="Enable Multicast on DMA Planes", variable=self.noc.multicast_en, anchor=W, width=30).pack()
     Label(self.noc_config_frame, text = "MMIO/Irq NoC Plane (5) Bitwidth is always 32", height=1).pack(side=TOP)
     Button(self.noc_config_frame, text = "Config", command=self.create_noc).pack(side=TOP)
 

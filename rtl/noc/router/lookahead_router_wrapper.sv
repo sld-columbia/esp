@@ -34,7 +34,7 @@ module lookahead_router_wrapper
   assign position.y = CONST_localy;
 
   generate
-    if (DEST_SIZE == 1) begin
+    if (DEST_SIZE <= 1) begin
       lookahead_router
         #(
           .FlowControl(FlowControl),

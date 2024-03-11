@@ -6,6 +6,7 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
+use work.esp_global.all;
 use work.monitor_pkg.all;
 use work.nocpackage.all;
 
@@ -264,7 +265,7 @@ begin
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => DMA_NOC_FLIT_SIZE,
-      DEST_SIZE => 6)
+      DEST_SIZE => 6 * MULTICAST_NOC_EN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -330,7 +331,7 @@ begin
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => DMA_NOC_FLIT_SIZE,
-      DEST_SIZE => 6)
+      DEST_SIZE => 6 * MULTICAST_NOC_EN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
