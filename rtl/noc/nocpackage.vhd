@@ -191,7 +191,10 @@ package nocpackage is
   -- FIFOs depth
   constant ROUTER_DEPTH : integer := 4;
 
+  constant MAX_MCAST_DESTS : integer := 6;
+
   type yx_vec is array (natural range <>) of std_logic_vector(2 downto 0);
+  type routing_vec is array (natural range <>) of std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
 
   type tile_mem_info is record
     x     : local_yx;
@@ -448,51 +451,15 @@ package nocpackage is
     reserved          : reserved_field_type)
     return std_logic_vector;
 
-  function create_header_2dest (
+  function create_header_mcast (
     constant flit_sz  : integer;
     local_y           : local_yx;
     local_x           : local_yx;
-    remote_y1         : local_yx;
-    remote_x1         : local_yx;
-    remote_y2         : local_yx;
-    remote_x2         : local_yx;
---    val               : std_logic_vector(1 downto 0);
-    msg_type          : noc_msg_type)
-    return std_logic_vector;
-
-  function create_header_4dest (
-    constant flit_sz  : integer;
-    local_y           : local_yx;
-    local_x           : local_yx;
-    remote_y1         : local_yx;
-    remote_x1         : local_yx;
-    remote_y2         : local_yx;
-    remote_x2         : local_yx;
-    remote_y3         : local_yx;
-    remote_x3         : local_yx;
-    remote_y4         : local_yx;
-    remote_x4         : local_yx;
---    val               : std_logic_vector(1 downto 0);
-    msg_type          : noc_msg_type)
-    return std_logic_vector;
-
-  function create_header_6dest (
-    constant flit_sz  : integer;
-    local_y           : local_yx;
-    local_x           : local_yx;
-    remote_y1         : local_yx;
-    remote_x1         : local_yx;
-    remote_y2         : local_yx;
-    remote_x2         : local_yx;
-    remote_y3         : local_yx;
-    remote_x3         : local_yx;
-    remote_y4         : local_yx;
-    remote_x4         : local_yx;
-    remote_y5         : local_yx;
-    remote_x5         : local_yx;
-    remote_y6         : local_yx;
-    remote_x6         : local_yx;
---    val               : std_logic_vector(1 downto 0);
+    remote_y_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_x_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_y_comb     : local_yx;
+    remote_x_comb     : local_yx;
+    mcast_ndests      : integer;
     msg_type          : noc_msg_type)
     return std_logic_vector;
 
@@ -741,369 +708,32 @@ package body nocpackage is
     return header;
   end create_header;
 
-  function create_header_2dest (
+function create_header_mcast (
     constant flit_sz  : integer;
     local_y           : local_yx;
     local_x           : local_yx;
-    remote_y1         : local_yx;
-    remote_x1         : local_yx;
-    remote_y2         : local_yx;
-    remote_x2         : local_yx;
---    remote_dst        : dest_arr(3 downto 0);
---    val               : std_logic_vector(1 downto 0);
+    remote_y_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_x_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_y_comb     : local_yx;
+    remote_x_comb     : local_yx;
+    mcast_ndests      : integer;
     msg_type          : noc_msg_type)
     return std_logic_vector is
     variable header : std_logic_vector(flit_sz - 1 downto 0);
-    variable west1, east1, north1, south1 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable west2, east2, north2, south2 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable routing1, routing2 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-    --variable remote_y1, remote_x1, remote_y2, remote_x2 : local_yx;
-    -- variable go_left, go_right, go_up, go_down : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-
-  begin  -- create_header
-
-    -- remote_y1 := "000";--remote_dst(3);
-    -- remote_x1 := "000";--remote_dst(2);
-    -- remote_y2 := "000";--remote_dst(1);
-    -- remote_x2 := "000";--remote_dst(0);
-    header := (others => '0');
-
-
-    header(flit_sz - 1 downto
-           flit_sz - PREAMBLE_WIDTH) := PREAMBLE_HEADER;
-    header(flit_sz - PREAMBLE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - YX_WIDTH) := local_y;
-    header(flit_sz - PREAMBLE_WIDTH - YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH) := local_x;
-    header(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH) := remote_y1;
-    header(flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := remote_x1;
-    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
-    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 5*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y2;
-    header(flit_sz - PREAMBLE_WIDTH - 5*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x2;
-    header(flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - MSG_TYPE_WIDTH - 2) := "11";
-    header(flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - 3 - MSG_TYPE_WIDTH - 1 downto 5) := (others=>'0');
-
-	-- west1 = local_x > remote_x1 ?
-	--    //00100 : 11011
-	--    noc::goWest : ~noc::goWest; 
-  --   east1 = local_x < remote_x1 ?
-  --          // 01000 : 10111
-  --          noc::goEast : ~noc::goEast;
-  --   north1 = local_y > remote_y1 ?
-  --           // 01101 : 11110
-  --           noc::goNorth | noc::goWest | noc::goEast : ~noc::goNorth;
-  --   south1 = local_y < remote_y1 ?
-  --           // 01110 : 11101
-  --           noc::goSouth | noc::goWest | noc::goEast : ~noc::goSouth; 
-
-  --   // Result is go_local when none of the above is true
- 	-- routing1 = west1 & east1 & north1 & south1;
-
-
-  if local_x > remote_x1 then
-    west1 := "00100";
-  else
-    west1 := "11011";
-  end if;
-
-  if local_x < remote_x1 then
-    east1 := "01000";
-  else
-    east1 := "10111";
-  end if;
-  
-  if local_y < remote_y1 then
-      routing1 := "01110" and west1 and east1;
-    else
-      routing1 := "01101" and west1 and east1;
-    end if;
-
-    if local_y = remote_y1 and local_x = remote_x1 then
-      routing1 := "10000";
-    end if;
-
-  --   north1 := "00001" and west1 and east1;
-  -- else
-  --   north1 := "11110";
-  -- end if;
-
-  -- if local_y < remote_y1 then
-  --   south1 := "00010" and west1 and east1;
-  -- else
-  --   south1 := "11101";
-  -- end if;
-
-  -- Result is go_local when none of the above is true
- 	--routing1 := west1 and east1 and north1 and south1;
-
-	-- west2 = local_x > remote_x2 ?
-	--    //00100 : 11011
-	--    noc::goWest : ~noc::goWest; 
-  --   east2 = local_x < remote_x2 ?
-  --          // 01000 : 10111
-  --          noc::goEast : ~noc::goEast;
-  --   north2 = local_y > remote_y2 ?
-  --           // 01101 : 11110
-  --           noc::goNorth | noc::goWest | noc::goEast : ~noc::goNorth;
-  --   south2 = local_y < remote_y2 ?
-  --           // 01110 : 11101
-  --           noc::goSouth | noc::goWest | noc::goEast : ~noc::goSouth; 
-
-  --   // Result is go_local when none of the above is true
- 	-- routing2 = west2 & east2 & north2 & south2;
-
-
-    if local_x > remote_x2 then
-    west2:= "00100";
-  else
-    west2:= "11011";
-  end if;
-
-  if local_x < remote_x2 then
-    east2:= "01000";
-  else
-    east2:= "10111";
-  end if;
-  
-
-  if local_y < remote_y2 then
-    routing2 := "01110" and west2 and east2;
-  else
-    routing2 := "01101" and west2 and east2;
-  end if;
-
-  if local_y = remote_y2 and local_x = remote_x2 then
-    routing2 := "10000";
-  end if;
-
-
-  -- if local_y > remote_y2 then
-  --   north2:= "00001" and west2 and east2;
-  -- else
-  --   north2:= "11110";
-  -- end if;
-
-  -- if local_y < remote_y2 then
-  --   south2:= "00010" and west2 and east2;
-  -- else
-  --   south2:= "11101";
-  -- end if;
-
-  -- Result is go_local when none of the above is true
- 	-- routing2 := west2 and east2 and north2 and south2;
-
-    -- if (local_x < remote_x1 || local_x < remote_x2)
-    --   go_right := 'b01000;
-    -- else
-    --   go_right := 'b10111;
-
-    -- if (local_x > remote_x1 || local_x > remote_x2)
-    --   go_left := 'b00100;
-    -- else
-    -- go_left := 'b11011;
-
-    -- if ((local_y < remote_y) or (local_y < remote_y))
-    --   header[NEXT_ROUTING_WIDTH - 1 : 0] := 'b01110 and go_left and go_right;
-    -- else if ((local_y > remote_y) or (local_y > remote_y))
-    --   header[NEXT_ROUTING_WIDTH - 1 : 0] := 'b01101 and go_left and go_right;
-
-    -- if (((local_y == remote_y) && (local_x == remote_x)) or ((local_y == remote_y) && (local_x == remote_x)))
-    -- header[NEXT_ROUTING_WIDTH - 1 : 0] := 'b10000 or header[NEXT_ROUTING_WIDTH-1:0];
-
-    header(NEXT_ROUTING_WIDTH-1 downto 0) := routing1 or routing2;
-
-    return header;
-  end create_header_2dest;
-
-function create_header_4dest (
-    constant flit_sz  : integer;
-    local_y           : local_yx;
-    local_x           : local_yx;
-    remote_y1         : local_yx;
-    remote_x1         : local_yx;
-    remote_y2         : local_yx;
-    remote_x2         : local_yx;
-    remote_y3         : local_yx;
-    remote_x3         : local_yx;
-    remote_y4         : local_yx;
-    remote_x4         : local_yx;
-    msg_type          : noc_msg_type)
-    return std_logic_vector is
-    variable header : std_logic_vector(flit_sz - 1 downto 0);
-    variable west1, east1, north1, south1 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable west2, east2, north2, south2 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable west3, east3, north3, south3 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable west4, east4, north4, south4 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable routing1, routing2, routing3, routing4 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
+    variable go_right, go_left, go_up, go_down, routing: std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
+    variable remote_y, remote_x : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
 
   begin  -- create_header_ndest
 
     header := (others => '0');
 
-    header(flit_sz - 1 downto
-           flit_sz - PREAMBLE_WIDTH) := PREAMBLE_HEADER;
-    header(flit_sz - PREAMBLE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - YX_WIDTH) := local_y;
-    header(flit_sz - PREAMBLE_WIDTH - YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH) := local_x;
-    header(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH) := remote_y1;
-    header(flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := remote_x1;
-    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
-    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 5*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y2;
-    header(flit_sz - PREAMBLE_WIDTH - 5*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x2;
-    header(flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 7*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y3;
-    header(flit_sz - PREAMBLE_WIDTH - 7*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 8*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x3;
-    header(flit_sz - PREAMBLE_WIDTH - 8*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 9*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y4;
-    header(flit_sz - PREAMBLE_WIDTH - 9*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 10*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x4;
-    header(flit_sz - PREAMBLE_WIDTH - 10*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 10*YX_WIDTH - MSG_TYPE_WIDTH - 4) := "1111";
-    header(flit_sz - PREAMBLE_WIDTH - 10*YX_WIDTH - 5 - MSG_TYPE_WIDTH - 1 downto 5) := (others=>'0');
+    remote_y := (others => (others => '0'));
+    remote_y(mcast_ndests - 1 downto 0) := remote_y_arr(mcast_ndests - 1 downto 0);
+    remote_y(mcast_ndests) := remote_y_comb;
 
-  -- Destination 1 routing
-  if local_x > remote_x1 then
-    west1 := "00100";
-  else
-    west1 := "11011";
-  end if;
-
-  if local_x < remote_x1 then
-    east1 := "01000";
-  else
-    east1 := "10111";
-  end if;
-  
-  if local_y < remote_y1 then
-      routing1 := "01110" and west1 and east1;
-    else
-      routing1 := "01101" and west1 and east1;
-    end if;
-
-    if local_y = remote_y1 and local_x = remote_x1 then
-      routing1 := "10000";
-    end if;
-
-  -- Destination 2 routing
-  if local_x > remote_x2 then
-    west2:= "00100";
-  else
-    west2:= "11011";
-  end if;
-
-  if local_x < remote_x2 then
-    east2:= "01000";
-  else
-    east2:= "10111";
-  end if;
-  
-
-  if local_y < remote_y2 then
-    routing2 := "01110" and west2 and east2;
-  else
-    routing2 := "01101" and west2 and east2;
-  end if;
-
-  if local_y = remote_y2 and local_x = remote_x2 then
-    routing2 := "10000";
-  end if;
-
-  -- Destination 3 routing
-  if local_x > remote_x3 then
-    west3:= "00100";
-  else
-    west3:= "11011";
-  end if;
-
-  if local_x < remote_x3 then
-    east3:= "01000";
-  else
-    east3:= "10111";
-  end if;
-  
-
-  if local_y < remote_y3 then
-    routing3 := "01110" and west3 and east3;
-  else
-    routing3 := "01101" and west3 and east3;
-  end if;
-
-  if local_y = remote_y3 and local_x = remote_x3 then
-    routing3 := "10000";
-  end if;
-
-  -- Destination 4 routing
-  if local_x > remote_x4 then
-    west4:= "00100";
-  else
-    west4:= "11011";
-  end if;
-
-  if local_x < remote_x4 then
-    east4:= "01000";
-  else
-    east4:= "10111";
-  end if;
-  
-
-  if local_y < remote_y4 then
-    routing4 := "01110" and west4 and east4;
-  else
-    routing4 := "01101" and west4 and east4;
-  end if;
-
-  if local_y = remote_y4 and local_x = remote_x4 then
-    routing4 := "10000";
-  end if;
-
-    header(NEXT_ROUTING_WIDTH-1 downto 0) := routing1 or routing2 or routing3 or routing4;
-
-    return header;
-  end create_header_4dest;
-
-function create_header_6dest (
-    constant flit_sz  : integer;
-    local_y           : local_yx;
-    local_x           : local_yx;
-    remote_y1         : local_yx;
-    remote_x1         : local_yx;
-    remote_y2         : local_yx;
-    remote_x2         : local_yx;
-    remote_y3         : local_yx;
-    remote_x3         : local_yx;
-    remote_y4         : local_yx;
-    remote_x4         : local_yx;
-    remote_y5         : local_yx;
-    remote_x5         : local_yx;
-    remote_y6         : local_yx;
-    remote_x6         : local_yx;
-    msg_type          : noc_msg_type)
-    return std_logic_vector is
-    variable header : std_logic_vector(flit_sz - 1 downto 0);
-    variable west1, east1, north1, south1 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable west2, east2, north2, south2 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable west3, east3, north3, south3 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable west4, east4, north4, south4 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable west5, east5, north5, south5 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable west6, east6, north6, south6 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-	  variable routing1, routing2, routing3, routing4, routing5, routing6 : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
-    
-  begin  -- create_header_ndest
-
-    header := (others => '0');
+    remote_x := (others => (others => '0'));
+    remote_x(mcast_ndests - 1 downto 0) := remote_x_arr(mcast_ndests - 1 downto 0);
+    remote_x(mcast_ndests) := remote_x_comb;
 
     header(flit_sz - 1 downto
            flit_sz - PREAMBLE_WIDTH) := PREAMBLE_HEADER;
@@ -1112,182 +742,49 @@ function create_header_6dest (
     header(flit_sz - PREAMBLE_WIDTH - YX_WIDTH - 1 downto
            flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH) := local_x;
     header(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH) := remote_y1;
+           flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH) := remote_y(0);
     header(flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := remote_x1;
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := remote_x(0);
     header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
            flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
-    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 5*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y2;
-    header(flit_sz - PREAMBLE_WIDTH - 5*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x2;
-    header(flit_sz - PREAMBLE_WIDTH - 6*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 7*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y3;
-    header(flit_sz - PREAMBLE_WIDTH - 7*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 8*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x3;
-    header(flit_sz - PREAMBLE_WIDTH - 8*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 9*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y4;
-    header(flit_sz - PREAMBLE_WIDTH - 9*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 10*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x4;
-    header(flit_sz - PREAMBLE_WIDTH - 10*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 11*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y5;
-    header(flit_sz - PREAMBLE_WIDTH - 11*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 12*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x5;
-    header(flit_sz - PREAMBLE_WIDTH - 12*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 13*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y6;
-    header(flit_sz - PREAMBLE_WIDTH - 13*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 14*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x6;       
-    header(flit_sz - PREAMBLE_WIDTH - 14*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 14*YX_WIDTH - MSG_TYPE_WIDTH - 6) := "111111";
-    header(flit_sz - PREAMBLE_WIDTH - 14*YX_WIDTH - 7 - MSG_TYPE_WIDTH - 1 downto 5) := (others=>'0');
+    for i in 1 to mcast_ndests loop
+      header(flit_sz - PREAMBLE_WIDTH - (4+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
+             flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y(i);
+      header(flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
+             flit_sz - PREAMBLE_WIDTH - (6+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x(i);
+    end loop;
 
-  -- Destination 1 routing
-  if local_x > remote_x1 then
-    west1 := "00100";
-  else
-    west1 := "11011";
-  end if;
 
-  if local_x < remote_x1 then
-    east1 := "01000";
-  else
-    east1 := "10111";
-  end if;
-  
-  if local_y < remote_y1 then
-      routing1 := "01110" and west1 and east1;
-    else
-      routing1 := "01101" and west1 and east1;
-    end if;
+    for i in 0 to mcast_ndests loop
+      header(flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS)*2*YX_WIDTH - MSG_TYPE_WIDTH - MAX_MCAST_DESTS + i) := '1';
 
-    if local_y = remote_y1 and local_x = remote_x1 then
-      routing1 := "10000";
-    end if;
+      if local_x < remote_x(i) then
+        go_right := "01000";
+      else
+        go_right := "10111";
+      end if;
 
-  -- Destination 2 routing
-  if local_x > remote_x2 then
-    west2:= "00100";
-  else
-    west2:= "11011";
-  end if;
+      if local_x > remote_x(i) then
+        go_left := "00100";
+      else
+        go_left := "11011";
+      end if;
 
-  if local_x < remote_x2 then
-    east2:= "01000";
-  else
-    east2:= "10111";
-  end if;
-  
+      if local_y < remote_y(i) then
+        routing := "01110" and go_left and go_right;
+      else
+        routing := "01101" and go_left and go_right;
+      end if;
 
-  if local_y < remote_y2 then
-    routing2 := "01110" and west2 and east2;
-  else
-    routing2 := "01101" and west2 and east2;
-  end if;
+      if local_y = remote_y(i) and local_x = remote_x(i) then
+        routing := "10000";
+      end if;
 
-  if local_y = remote_y2 and local_x = remote_x2 then
-    routing2 := "10000";
-  end if;
-
-  -- Destination 3 routing
-  if local_x > remote_x3 then
-    west3:= "00100";
-  else
-    west3:= "11011";
-  end if;
-
-  if local_x < remote_x3 then
-    east3:= "01000";
-  else
-    east3:= "10111";
-  end if;
-  
-
-  if local_y < remote_y3 then
-    routing3 := "01110" and west3 and east3;
-  else
-    routing3 := "01101" and west3 and east3;
-  end if;
-
-  if local_y = remote_y3 and local_x = remote_x3 then
-    routing3 := "10000";
-  end if;
-
-  -- Destination 4 routing
-  if local_x > remote_x4 then
-    west4:= "00100";
-  else
-    west4:= "11011";
-  end if;
-
-  if local_x < remote_x4 then
-    east4:= "01000";
-  else
-    east4:= "10111";
-  end if;
-  
-
-  if local_y < remote_y4 then
-    routing4 := "01110" and west4 and east4;
-  else
-    routing4 := "01101" and west4 and east4;
-  end if;
-
-  if local_y = remote_y4 and local_x = remote_x4 then
-    routing4 := "10000";
-  end if;
-
-  -- Destination 5 routing
-  if local_x > remote_x5 then
-    west5:= "00100";
-  else
-    west5:= "11011";
-  end if;
-
-  if local_x < remote_x5 then
-    east5:= "01000";
-  else
-    east5:= "10111";
-  end if;
-  
-
-  if local_y < remote_y5 then
-    routing5 := "01110" and west5 and east5;
-  else
-    routing5 := "01101" and west5 and east5;
-  end if;
-
-  if local_y = remote_y5 and local_x = remote_x5 then
-    routing5 := "10000";
-  end if;
-
-  -- Destination 6 routing
-  if local_x > remote_x6 then
-    west6:= "00100";
-  else
-    west6:= "11011";
-  end if;
-
-  if local_x < remote_x6 then
-    east6:= "01000";
-  else
-    east6:= "10111";
-  end if;
-  
-
-  if local_y < remote_y6 then
-    routing6 := "01110" and west6 and east6;
-  else
-    routing6 := "01101" and west6 and east6;
-  end if;
-
-  if local_y = remote_y6 and local_x = remote_x6 then
-    routing6 := "10000";
-  end if;
-
-    header(NEXT_ROUTING_WIDTH-1 downto 0) := routing1 or routing2 or routing3 or routing4 or routing5 or routing6;
+      header(NEXT_ROUTING_WIDTH-1 downto 0) := header(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
+    end loop;
 
     return header;
-  end create_header_6dest;
+  end create_header_mcast;
 
   function narrow_to_large_flit (
     narrow_flit : misc_noc_flit_type)

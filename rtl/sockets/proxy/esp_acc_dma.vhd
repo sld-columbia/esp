@@ -62,8 +62,7 @@ entity esp_acc_dma is
     scatter_gather     : integer range 0 to 1                 := 1;
     tlb_entries        : integer                              := 256;
     has_dvfs           : integer                              := 1;
-    has_pll            : integer;
-    DEST_SIZE          : integer                              := 6);
+    has_pll            : integer);
   port (
     rst           : in  std_ulogic;
     clk           : in  std_ulogic;
@@ -207,12 +206,10 @@ architecture rtl of esp_acc_dma is
   signal p2p_rsp_snd_data_in  : dma_noc_flit_type;
   signal p2p_rsp_snd_full     : std_ulogic;
   -- ajay_v
-  type dest_arr is array (natural range <>) of local_yx;
-  signal p2p_dst              : dest_arr(11 downto 0);
-  signal count_n_dest         : integer range 0 to 9;
-  signal count_n_dest2_y      : integer range 0 to 18;
-  signal count_n_dest2_x      : integer range 0 to 18;
-  -- signal temp_counter         : integer range 0 to 1;
+  signal p2p_dst_arr_x        : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
+  signal p2p_dst_arr_y        : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
+  signal count_n_dest         : integer range 0 to MAX_MCAST_DESTS - 1;
+  signal p2p_mcast_ndests     : integer range 0 to MAX_MCAST_DESTS - 1;
 
   -- IRQ
   signal irq      : std_ulogic;
@@ -469,9 +466,11 @@ begin  -- rtl
 
   p2p_dst_y <= get_origin_y(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
   p2p_dst_x <= get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
+  p2p_mcast_ndests <= to_integer(unsigned(bankreg(P2P_REG)(P2P_BIT_MCAST_DESTS + P2P_WIDTH_MCAST_DESTS - 1 downto P2P_BIT_MCAST_DESTS)));
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
-                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x)
+                        p2p_src_index_r, p2p_dst_arr_y, p2p_dst_arr_x, p2p_dst_y, p2p_dst_x,
+                        coherence, local_y, local_x)
     variable msg_type : noc_msg_type;
     variable header_v : dma_noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
@@ -553,16 +552,10 @@ begin  -- rtl
       p2p_header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
       p2p_header_v(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
     else
-      if DEST_SIZE = 1 then
-        p2p_header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, msg_type, hprot);
-      -- else if DEST_SIZE = 2 then
-      -- ajay_v hprot can be added
-      --   p2p_header_v := create_header_2dest(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(5), p2p_dst(4), p2p_dst(3), p2p_dst(2), p2p_dst(1), p2p_dst(0), msg_type);
-      elsif DEST_SIZE = 4 then
-        p2p_header_v := create_header_4dest(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(5), p2p_dst(4), p2p_dst(3), p2p_dst(2), p2p_dst(1), p2p_dst(0), msg_type);
-      elsif DEST_SIZE = 6 then
-        p2p_header_v := create_header_6dest(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, p2p_dst(9), p2p_dst(8), p2p_dst(7), p2p_dst(6), p2p_dst(5), p2p_dst(4), p2p_dst(3), p2p_dst(2), p2p_dst(1), p2p_dst(0), msg_type);
-      end if;
+      p2p_header_v := create_header_mcast(DMA_NOC_FLIT_SIZE, local_y, local_x,
+                                          p2p_dst_arr_y(MAX_MCAST_DESTS - 2 downto 0),
+                                          p2p_dst_arr_x(MAX_MCAST_DESTS - 2 downto 0),
+                                          p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type);
     end if;
 
     header_v := (others => '0');
@@ -719,10 +712,6 @@ begin  -- rtl
     p2p_rsp_snd_data_in <= (others => '0');
     p2p_rsp_snd_wrreq <= '0';
     p2p_req_rcv_rdreq <= '0';
-
-    count_n_dest2_y <= 0;
-    count_n_dest2_x <= 0;
-    -- temp_counter <= 0;
 
     p2p_src_index_inc <= '0';
 
@@ -942,12 +931,7 @@ begin  -- rtl
         burst <= '1';
         if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
           p2p_req_rcv_rdreq <= '1';
-          --if count_n_dest =  or count_n_dest = 2 then
-            count_n_dest2_y <= (count_n_dest*2)+1;
-            count_n_dest2_x <= (count_n_dest*2);
-          -- end if;
-          -- temp_counter <= '1';
-          if count_n_dest = DEST_SIZE-1 or DEST_SIZE = 1 then
+          if count_n_dest = p2p_mcast_ndests then
               sample_flits <= '1';
               dma_next <= send_header;
           end if;
@@ -1120,13 +1104,12 @@ begin  -- rtl
       count_n_dest <= 0;
     elsif clk'event and clk = '1' then  -- rising clock edge
       if dma_state = wait_req_p2p then
-        if count_n_dest = DEST_SIZE-1 and p2p_req_rcv_empty = '0' then
+        if count_n_dest = p2p_mcast_ndests and p2p_req_rcv_empty = '0' then
           count_n_dest <= 0;
         end if;
         if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
           count_n_dest <= count_n_dest + 1;
         end if;
-        
       end if;
     end if;
   end process;
@@ -1135,11 +1118,12 @@ begin  -- rtl
   dest_arr_mod : process (clk, rst, dma_state, p2p_req_rcv_rdreq, p2p_dst_x, p2p_dst_y)
   begin
   if rst = '0' then                   -- asynchronous reset (active low)
-      p2p_dst <= (others => (others => '0'));
+      p2p_dst_arr_x <= (others => (others => '0'));
+      p2p_dst_arr_y <= (others => (others => '0'));
     elsif clk'event and clk = '1' then  -- rising clock edge
       if dma_state = wait_req_p2p and p2p_req_rcv_rdreq = '1' then
-        p2p_dst(count_n_dest2_y) <= p2p_dst_y;
-        p2p_dst(count_n_dest2_x) <= p2p_dst_x;
+        p2p_dst_arr_x(count_n_dest) <= p2p_dst_x;
+        p2p_dst_arr_y(count_n_dest) <= p2p_dst_y;
       end if;
     end if;
   end process;
