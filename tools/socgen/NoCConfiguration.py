@@ -5,6 +5,7 @@
 
 from tkinter import *
 from tkinter.ttk import Separator
+from thirdparty import *
 import Pmw
 import xml.etree.ElementTree
 
@@ -344,7 +345,7 @@ class NoC():
          tile = self.topology[y][x]
          selection = tile.ip_type.get()
          if soc.IPs.ACCELERATORS.count(selection):
-           if tile.point_select.getvalue() == "":
+           if tile.point_select.getvalue() == "" and (not tile.ip_type.get().lower() in THIRDPARTY_COMPATIBLE):
              return False
     return True
 
@@ -782,4 +783,6 @@ class NoCFrame(Pmw.ScrolledFrame):
         tile = self.noc.topology[y][x]
         tile.ip_type.trace('w', self.changed)
         tile.clk_region.trace('w', self.changed)
+    self.soc.IPs = Components(self.soc.TECH, self.noc.dma_noc_width.get(), self.soc.CPU_ARCH.get())
+    self.soc.update_list_of_ips()
     self.changed()
