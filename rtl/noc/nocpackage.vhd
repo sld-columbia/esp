@@ -728,11 +728,10 @@ function create_header_mcast (
     header := (others => '0');
 
     remote_y := (others => (others => '0'));
-    remote_y(mcast_ndests - 1 downto 0) := remote_y_arr(mcast_ndests - 1 downto 0);
-    remote_y(mcast_ndests) := remote_y_comb;
-
     remote_x := (others => (others => '0'));
-    remote_x(mcast_ndests - 1 downto 0) := remote_x_arr(mcast_ndests - 1 downto 0);
+    remote_y(MAX_MCAST_DESTS - 2 downto 0) := remote_y_arr;
+    remote_x(MAX_MCAST_DESTS - 2 downto 0) := remote_x_arr;
+    remote_y(mcast_ndests) := remote_y_comb;
     remote_x(mcast_ndests) := remote_x_comb;
 
     header(flit_sz - 1 downto
@@ -747,7 +746,7 @@ function create_header_mcast (
            flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := remote_x(0);
     header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
            flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
-    for i in 1 to mcast_ndests loop
+    for i in 1 to MAX_MCAST_DESTS - 1 loop
       header(flit_sz - PREAMBLE_WIDTH - (4+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
              flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y(i);
       header(flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
@@ -755,31 +754,31 @@ function create_header_mcast (
     end loop;
 
 
-    for i in 0 to mcast_ndests loop
+    for i in 0 to MAX_MCAST_DESTS - 1 loop
       header(flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS)*2*YX_WIDTH - MSG_TYPE_WIDTH - MAX_MCAST_DESTS + i) := '1';
+      if i <= mcast_ndests then
+          if local_x < remote_x(i) then
+            go_right := "01000";
+          else
+            go_right := "10111";
+          end if;
 
-      if local_x < remote_x(i) then
-        go_right := "01000";
-      else
-        go_right := "10111";
+          if local_x > remote_x(i) then
+            go_left := "00100";
+          else
+            go_left := "11011";
+          end if;
+
+          if local_y < remote_y(i) then
+            routing := "01110" and go_left and go_right;
+          else
+            routing := "01101" and go_left and go_right;
+          end if;
+
+          if local_y = remote_y(i) and local_x = remote_x(i) then
+            routing := "10000";
+          end if;
       end if;
-
-      if local_x > remote_x(i) then
-        go_left := "00100";
-      else
-        go_left := "11011";
-      end if;
-
-      if local_y < remote_y(i) then
-        routing := "01110" and go_left and go_right;
-      else
-        routing := "01101" and go_left and go_right;
-      end if;
-
-      if local_y = remote_y(i) and local_x = remote_x(i) then
-        routing := "10000";
-      end if;
-
       header(NEXT_ROUTING_WIDTH-1 downto 0) := header(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
     end loop;
 
