@@ -82,19 +82,19 @@ module lookahead_router
 
   localparam bit FifoBypassEnable = FlowControl == noc::kFlowControlAckNack;
 
+  localparam int unsigned ReservedWidth =
+    DataWidth - 2*$bits(noc::xy_t) - $bits(noc::message_t) - $bits(noc::direction_t);
+
   typedef struct packed {
     noc::xy_t source;
     noc::xy_t destination;
     noc::message_t message;
+    logic [ReservedWidth-1:0] reserved;
   } packet_info_t;
-
-  localparam int unsigned ReservedWidth =
-    DataWidth - $bits(packet_info_t) - $bits(noc::direction_t);
 
   typedef struct packed {
     noc::preamble_t preamble;
     packet_info_t info;
-    logic [ReservedWidth-1:0] reserved;
     noc::direction_t routing;
   } header_t;
 

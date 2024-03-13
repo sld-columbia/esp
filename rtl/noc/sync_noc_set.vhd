@@ -265,7 +265,7 @@ begin
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => DMA_NOC_FLIT_SIZE,
-      DEST_SIZE => 6 * MULTICAST_NOC_EN)
+      DEST_SIZE => MAX_MCAST_DESTS * MULTICAST_NOC_EN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -331,7 +331,7 @@ begin
 --      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => DMA_NOC_FLIT_SIZE,
-      DEST_SIZE => 6 * MULTICAST_NOC_EN)
+      DEST_SIZE => MAX_MCAST_DESTS * MULTICAST_NOC_EN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,

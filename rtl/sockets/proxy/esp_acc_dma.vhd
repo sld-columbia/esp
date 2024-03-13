@@ -1106,8 +1106,7 @@ begin  -- rtl
       if dma_state = wait_req_p2p then
         if count_n_dest = p2p_mcast_ndests and p2p_req_rcv_empty = '0' then
           count_n_dest <= 0;
-        end if;
-        if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
+        elsif p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
           count_n_dest <= count_n_dest + 1;
         end if;
       end if;

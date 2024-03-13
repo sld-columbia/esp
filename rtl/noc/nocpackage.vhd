@@ -191,8 +191,6 @@ package nocpackage is
   -- FIFOs depth
   constant ROUTER_DEPTH : integer := 4;
 
-  constant MAX_MCAST_DESTS : integer := 6;
-
   type yx_vec is array (natural range <>) of std_logic_vector(2 downto 0);
   type routing_vec is array (natural range <>) of std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
 
@@ -722,7 +720,8 @@ function create_header_mcast (
     variable header : std_logic_vector(flit_sz - 1 downto 0);
     variable go_right, go_left, go_up, go_down, routing: std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
     variable remote_y, remote_x : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
-
+    constant RESERVED_OFFSET_MCAST : integer := flit_sz - PREAMBLE_WIDTH - NEXT_ROUTING_WIDTH - MSG_TYPE_WIDTH
+                                                - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MAX_MCAST_DESTS;
   begin  -- create_header_ndest
 
     header := (others => '0');
@@ -747,15 +746,16 @@ function create_header_mcast (
     header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
            flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
     for i in 1 to MAX_MCAST_DESTS - 1 loop
-      header(flit_sz - PREAMBLE_WIDTH - (4+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-             flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH) := remote_y(i);
-      header(flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-             flit_sz - PREAMBLE_WIDTH - (6+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH) := remote_x(i);
+      header(flit_sz - PREAMBLE_WIDTH - (4+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST - 1 downto
+             flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST) := remote_y(i);
+      header(flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST - 1 downto
+             flit_sz - PREAMBLE_WIDTH - (6+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST) := remote_x(i);
     end loop;
 
 
     for i in 0 to MAX_MCAST_DESTS - 1 loop
-      header(flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS)*2*YX_WIDTH - MSG_TYPE_WIDTH - MAX_MCAST_DESTS + i) := '1';
+      header(flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MSG_TYPE_WIDTH
+             - MAX_MCAST_DESTS - RESERVED_OFFSET_MCAST + i) := '1';
       if i <= mcast_ndests then
           if local_x < remote_x(i) then
             go_right := "01000";

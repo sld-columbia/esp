@@ -81,7 +81,10 @@ module lookahead_router_multicast
    input  logic [4:0] stop_in
    );
 
-  localparam integer DEST_ARR_SIZE = DEST_SIZE==1 || DEST_SIZE == 2 ? 1 : DEST_SIZE-1 ;
+  localparam integer DEST_ARR_SIZE = DEST_SIZE-1 ;
+
+  localparam int unsigned ReservedWidth =
+    DataWidth - (1 + DEST_SIZE) * $bits(noc::xy_t) - $bits(noc::message_t) - DEST_SIZE - $bits(noc::direction_t);
 
   // ajay_v
   // Modified the structure to add more destinataions and vaslid indications to each destination
@@ -90,6 +93,7 @@ module lookahead_router_multicast
     noc::xy_t destination;
     //xy_t destination_1;
     noc::message_t message;
+    logic [ReservedWidth-1:0] reserved;
     noc::xy_t [0:DEST_ARR_SIZE-1] destination_arr;
     bit [DEST_SIZE-1:0] val; // 1 indicates Destination still awaits, 0 indicates destination already reached/taken care
     //logic val; // 1 indicates Destination 1 still awaits, 0 indicates destination already reached/crossed
@@ -97,13 +101,9 @@ module lookahead_router_multicast
 
   localparam bit FifoBypassEnable = FlowControl == noc::kFlowControlAckNack;
 
-  localparam int unsigned ReservedWidth =
-    DataWidth - $bits(packet_info_t) - $bits(noc::direction_t);
-
   typedef struct packed {
     noc::preamble_t preamble;
     packet_info_t info; // source, destination[],val[],message(5 bit)
-    logic [ReservedWidth-1:0] reserved;
     noc::direction_t routing; // 5 bit logic indicates LEWSN
   } header_t;
 
@@ -187,9 +187,9 @@ module lookahead_router_multicast
   // Assign the whole Local In data to the data_in[Local] port 
   // If the valid is not set, then this will ensure that atleast the first destination is valid
   // This is to ensure the new router is backwards compatible  
-  assign data_in[noc::kLocalPort][PortWidth-1:ReservedWidth+5+1] = data_p_in[PortWidth-1:ReservedWidth+5+1];
-  assign data_in[noc::kLocalPort][ReservedWidth+5-1:0] = data_p_in[ReservedWidth+5-1:0];
-  assign data_in[noc::kLocalPort][ReservedWidth+5] = data_p_in[PortWidth-1] ? 1 : data_p_in[ReservedWidth+5];
+  assign data_in[noc::kLocalPort][PortWidth-1:$bits(noc::direction_t)+1] = data_p_in[PortWidth-1:$bits(noc::direction_t)+1];
+  assign data_in[noc::kLocalPort][$bits(noc::direction_t)-1:0] = data_p_in[$bits(noc::direction_t)-1:0];
+  assign data_in[noc::kLocalPort][$bits(noc::direction_t)] = data_p_in[PortWidth-1] ? 1 : data_p_in[$bits(noc::direction_t)];
 
 //  assign temp_data_in = data_p_in;
 //    assign data_in[noc::kLocalPort].header.preamble = temp_data_in.header.preamble;
