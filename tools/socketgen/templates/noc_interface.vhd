@@ -454,7 +454,7 @@ begin
       dma_snd_valid        <= '0';
     end if;
 
-    if coherence = ACC_COH_NONE then
+    if coherence /= ACC_COH_FULL then
       dma_rcv_rdreq        <= dma_rcv_rdreq_int;
       dma_snd_wrreq        <= dma_snd_wrreq_int;
     else
