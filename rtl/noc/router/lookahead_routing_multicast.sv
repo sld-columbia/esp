@@ -34,14 +34,13 @@ module lookahead_routing_multicast #(
    input noc::direction_t current_routing,
    output noc::direction_t next_routing
    );
-  
+
    logic [4:0] testing_local_west;
    logic [4:0] testing_local_east;
    logic [4:0] testing_local_north;
    logic [4:0] testing_local_south;
    logic [4:0] testing_local_local;
 
- 
    noc::direction_t [DEST_SIZE-1:0] routing_paths;
 
   function automatic noc::direction_t routing(
@@ -51,8 +50,8 @@ module lookahead_routing_multicast #(
     noc::direction_t west, east, north, south, local1;
 
     west = next_position.x > destination.x ?
-	  //  00100 : 11011;
-	   noc::goWest : ~noc::goWest; 
+	       //  00100 : 11011;
+	       noc::goWest : ~noc::goWest;
     east = next_position.x < destination.x ?
             // 01000 : 10111;
            noc::goEast : ~noc::goEast;
@@ -62,22 +61,18 @@ module lookahead_routing_multicast #(
     south = next_position.y < destination.y ?
             //  01110 : 11101;
             noc::goSouth | noc::goWest | noc::goEast : ~noc::goSouth;
+
     if (next_position.y == destination.y && next_position.x == destination.x)
-	local1.go_local = 1;
- 
+	    local1.go_local = 1;
 
     // Result is go_local when none of the above is true
     routing = west & east & north & south;
-
-    //routing = local1;
 
     testing_local_west = west;
     testing_local_east =  east;
     testing_local_north = north;
     testing_local_south = south;
     testing_local_local = local1;
-
-
   endfunction
 
   // Compute next position for every possible routing except local port
@@ -100,61 +95,38 @@ module lookahead_routing_multicast #(
   end
 
   always_comb begin
-    // We don't need to consider the case in which current_routing is goLocal
-    // The function routing can be called for all destinations.
-    // This can be done for all the destinations and then the final next_routing can be a OR of all the next_routing times.
-    
-    // When current_routing is goLocal, we don't care about next_routing assignment
+    // The function processes routing for all destinations.
+    // final next_routing is an OR of all the next_routing computations
     next_routing = 5'b0;
-    for(int rout_num = 0; rout_num <DEST_SIZE; rout_num++) begin
-        routing_paths[rout_num] =5'b00000; 
+    for (int rout_num = 0; rout_num < DEST_SIZE; rout_num++) begin
+        routing_paths[rout_num] = 5'b00000;
     end
-    for(int dest_num = 0; dest_num < DEST_SIZE; dest_num++) begin
-      if(val[dest_num])begin
-        if((position.x == destination[dest_num].x && position.y == destination[dest_num].y)) begin
+
+    for (int dest_num = 0; dest_num < DEST_SIZE; dest_num++) begin
+      if (val[dest_num]) begin
+        if (position.x == destination[dest_num].x && position.y == destination[dest_num].y) begin
           routing_paths[dest_num].go_local = 0;
           routing_paths[dest_num].go_east = 0;
           routing_paths[dest_num].go_west = 0;
           routing_paths[dest_num].go_south = 0;
           routing_paths[dest_num].go_north = 0;
-        end
-
-        //if(current_routing == noc::goWest)    
-        else if(current_routing.go_west)
-        begin
+        end else if (current_routing.go_west) begin
           routing_paths[dest_num] = routing(next_position_q[noc::kWestPort], destination[dest_num]);
-        end 
-
-        //if(current_routing == noc::goEast)
-        else if(current_routing.go_east)
-        begin
+        end else if (current_routing.go_east) begin
           routing_paths[dest_num] = routing(next_position_q[noc::kEastPort], destination[dest_num]);
-        end
-
-        //if (current_routing == noc::goNorth) 
-        else if (current_routing.go_north) 
-        begin
+        end else if (current_routing.go_north) begin
           routing_paths[dest_num] = routing(next_position_q[noc::kNorthPort],destination[dest_num]);
-        end
-    
-        //if(current_routing == noc::goSouth)
-        else if(current_routing.go_south)
-        begin
+        end else if (current_routing.go_south) begin
           routing_paths[dest_num] = routing(next_position_q[noc::kSouthPort], destination[dest_num]);
-        end
-        //
-        //if(current_routing == noc::goLocal)
-        
-        else if(current_routing.go_local)
-        begin
+        end else if(current_routing.go_local) begin
           routing_paths[dest_num] = routing(next_position_q[noc::kLocalPort], destination[dest_num]);
         end
       end
     end
-    //next_routing = routing_paths[0] | routing_paths[1] | routing_paths[2];
-       
-    for(int rout_num = 0; rout_num <DEST_SIZE; rout_num++) begin
+
+    for (int rout_num = 0; rout_num < DEST_SIZE; rout_num++) begin
         next_routing = next_routing | routing_paths[rout_num];
     end
   end
+
 endmodule

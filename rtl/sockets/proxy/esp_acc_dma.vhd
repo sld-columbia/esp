@@ -205,7 +205,6 @@ architecture rtl of esp_acc_dma is
   signal p2p_rsp_snd_wrreq    : std_ulogic;
   signal p2p_rsp_snd_data_in  : dma_noc_flit_type;
   signal p2p_rsp_snd_full     : std_ulogic;
-  -- ajay_v
   signal p2p_dst_arr_x        : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
   signal p2p_dst_arr_y        : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
   signal count_n_dest         : integer range 0 to MAX_MCAST_DESTS - 1;
@@ -926,7 +925,6 @@ begin  -- rtl
           end if;
         end if;
 
-      -- ajay_v
       when wait_req_p2p =>
         burst <= '1';
         if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
@@ -1097,7 +1095,6 @@ begin  -- rtl
     end if;
   end process;
 
-  -- ajay_v
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
@@ -1113,7 +1110,6 @@ begin  -- rtl
     end if;
   end process;
 
-  -- ajay_v
   dest_arr_mod : process (clk, rst, dma_state, p2p_req_rcv_rdreq, p2p_dst_x, p2p_dst_y)
   begin
   if rst = '0' then                   -- asynchronous reset (active low)
