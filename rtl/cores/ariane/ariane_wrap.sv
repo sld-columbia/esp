@@ -121,7 +121,7 @@ module ariane_wrap
     output logic 			dram_b_ready,
     //    AR
     output logic [AXI_ID_WIDTH_SLV-1:0] dram_ar_id,
-    output logic [AXI_ADDR_WIDTH-1:0] 	dram_ar_addr,
+    output logic [64-1:0] 	dram_ar_addr,
     output logic [7:0] 			dram_ar_len,
     output logic [2:0] 			dram_ar_size,
     output logic [1:0] 			dram_ar_burst,
@@ -352,7 +352,7 @@ module ariane_wrap
 
    AXI_BUS
      #(
-       .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
+       .AXI_ADDR_WIDTH ( 64   ),
        .AXI_DATA_WIDTH ( AXI_DATA_WIDTH     ),
        .AXI_ID_WIDTH   ( AXI_ID_WIDTH ),
        .AXI_USER_WIDTH ( AXI_USER_WIDTH     )
@@ -360,7 +360,7 @@ module ariane_wrap
 
    AXI_BUS
      #(
-       .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH     ),
+       .AXI_ADDR_WIDTH ( 64     ),
        .AXI_DATA_WIDTH ( AXI_DATA_WIDTH     ),
        .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
        .AXI_USER_WIDTH ( AXI_USER_WIDTH     )
@@ -766,7 +766,7 @@ module ariane_wrap
    // ---------------
    AXI_BUS
      #(
-       .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
+       .AXI_ADDR_WIDTH ( 64   ),
        .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
        .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
        .AXI_USER_WIDTH ( AXI_USER_WIDTH   )

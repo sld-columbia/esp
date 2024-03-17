@@ -241,7 +241,7 @@ architecture rtl of tile_cpu is
   signal mosi       : axi_mosi_vector(0 to 4);
   signal somi       : axi_somi_vector(0 to 4);
 
-  signal ariane_drami : axi_mosi_type;
+  signal ariane_drami : axi_mosi_type_dram;
   signal ariane_dramo : axi_somi_type;
 
   signal cache_drami : axi_mosi_type;
@@ -701,7 +701,7 @@ begin
         SLMDDRBase       => X"0000_0000_C000_0000",
         SLMDDRLength     => X"0000_0000_4000_0000",  -- Reserving up to 1GB; devtree can set less
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
-        DRAMLength       => X"0000_0000_4000_0000",
+        DRAMLength       => X"0000_8000_4000_0000",
         DRAMCachedLength => conv_std_logic_vector(ariane_cacheable_len, 64))  -- TODO: length set automatically to match devtree
       port map (
         clk         => clk_feedthru,
@@ -939,7 +939,25 @@ begin
   ariane_cpu_tile_services_gen: if GLOB_CPU_ARCH = ariane generate
 
     ariane_with_cache_coherence: if CFG_L2_ENABLE /= 0 generate
-      cache_drami <= ariane_drami;
+      -- cache_drami <= ariane_drami;
+      cache_drami.aw <= ariane_drami.aw;
+      cache_drami.w  <= ariane_drami.w;
+      cache_drami.b  <= ariane_drami.b;
+      cache_drami.r  <= ariane_drami.r;
+
+      cache_drami.ar.id <= ariane_drami.ar.id;
+      cache_drami.ar.len <= ariane_drami.ar.len;
+      cache_drami.ar.size <= ariane_drami.ar.size;
+      cache_drami.ar.burst <= ariane_drami.ar.burst;
+      cache_drami.ar.lock <= ariane_drami.ar.lock;
+      cache_drami.ar.cache <= ariane_drami.ar.cache;
+      cache_drami.ar.prot <= ariane_drami.ar.prot;
+      cache_drami.ar.valid <= ariane_drami.ar.valid;
+      cache_drami.ar.qos <= ariane_drami.ar.qos;
+      cache_drami.ar.region <= ariane_drami.ar.region;
+      cache_drami.ar.user <= ariane_drami.ar.user;
+
+      cache_drami.ar.addr <= ariane_drami.ar.addr(31 downto 0);
       ariane_dramo <= cache_dramo;
 
       mosi(1) <= axi_mosi_none;
@@ -983,7 +1001,26 @@ begin
       cache_drami <= axi_mosi_none;
       ace_req     <= ace_req_none;
 
-      mosi(1) <= ariane_drami;
+      -- mosi(1) <= ariane_drami;
+      mosi(1).aw <= ariane_drami.aw;
+      mosi(1).w  <= ariane_drami.w;
+      mosi(1).b  <= ariane_drami.b;
+      mosi(1).r  <= ariane_drami.r;
+
+      mosi(1).ar.id <= ariane_drami.ar.id;
+      mosi(1).ar.len <= ariane_drami.ar.len;
+      mosi(1).ar.size <= ariane_drami.ar.size;
+      mosi(1).ar.burst <= ariane_drami.ar.burst;
+      mosi(1).ar.lock <= ariane_drami.ar.lock;
+      mosi(1).ar.cache <= ariane_drami.ar.cache;
+      mosi(1).ar.prot <= ariane_drami.ar.prot;
+      mosi(1).ar.valid <= ariane_drami.ar.valid;
+      mosi(1).ar.qos <= ariane_drami.ar.qos;
+      mosi(1).ar.region <= ariane_drami.ar.region;
+      mosi(1).ar.user <= ariane_drami.ar.user;
+
+      mosi(1).ar.addr <= ariane_drami.ar.addr(31 downto 0);
+
       ariane_dramo <= somi(1);
 
       coherence_rsp_snd_data_in <= (others => '0');

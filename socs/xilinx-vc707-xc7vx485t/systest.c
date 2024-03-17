@@ -7,5 +7,8 @@ int main(int argc, char **argv)
 {
 	printf("Hello from ESP!\n");
 
+        int *x = (int *) (1L << 33);
+        printf("Here: %x at %lx\n", *x, (unsigned long) x);
+
 	return 0;
 }
