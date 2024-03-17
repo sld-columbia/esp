@@ -144,7 +144,7 @@ begin
 
     rin <= v;
 
-    ahbo.haddr   <= haddr;
+    ahbo.haddr(31 downto 0)   <= haddr;
     ahbo.htrans  <= htrans;
     ahbo.hbusreq <= hbusreq;
     ahbo.hwdata  <= hwdata;

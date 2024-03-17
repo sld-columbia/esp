@@ -385,7 +385,7 @@ begin
   begin
 
     v := r; hgrant := (others => '0'); defmst := '0';
-    haddr := msto(r.hmaster).haddr;
+    haddr := msto(r.hmaster).haddr(31 downto 0);
 
     nhmaster := r.hmaster;
 
@@ -621,7 +621,7 @@ begin
     end if;
 
     if (split = 0) or (r.defmst = '0') then
-      vslvi.haddr      := haddr;
+      vslvi.haddr(31 downto 0)      := haddr;
       vslvi.htrans     := msto(r.hmaster).htrans;
       vslvi.hwrite     := msto(r.hmaster).hwrite;
       vslvi.hsize      := msto(r.hmaster).hsize;
@@ -756,7 +756,7 @@ begin
         if lmsti.hready = '1' then
           hwrite := lslvi.hwrite;
           hsize := lslvi.hsize;
-          haddr := lslvi.haddr;
+          haddr := lslvi.haddr(31 downto 0);
           htrans := lslvi.htrans;
           hmaster := lslvi.hmaster;
         end if;

@@ -235,7 +235,11 @@ begin  -- architecture rtl
   ahbmo.hbusreq                         <= msto.hbusreq;
   ahbmo.hlock                           <= msto.hlock;
   ahbmo.htrans                          <= msto.htrans;
-  ahbmo.haddr                           <= msto.haddr;
+  ahbmo.haddr(31 downto 0)                           <= msto.haddr;
+  haddr_padding: if GLOB_PHYS_ADDR_BITS > 32 generate
+      ahbmo.haddr(GLOB_PHYS_ADDR_BITS-1 downto 32) <= (others => '0');
+  end generate;
+  ahbmo.haddr(31 downto 0)                           <= msto.haddr;
   ahbmo.hwrite                          <= msto.hwrite;
   ahbmo.hsize                           <= msto.hsize;
   ahbmo.hburst                          <= msto.hburst;

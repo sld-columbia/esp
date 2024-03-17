@@ -211,7 +211,7 @@ begin  -- rtl
     end if;
 
     -- Set address flit
-    payload_address(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= ahbsi.haddr;
+    payload_address(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= ahbsi.haddr(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);
 
     -- Create header flit
     reserved := (others => '0');

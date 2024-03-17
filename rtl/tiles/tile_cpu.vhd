@@ -668,7 +668,7 @@ begin
 
     -- We handle I/O with a model of the UART. Therefore when core writes
     -- `to_host` we've reached the call to exit
-    cpuerr <= '1' when  ahbmo(0).htrans /= HTRANS_IDLE and ahbmo(0).haddr = X"8000149C" else '0';
+    cpuerr <= '1' when  ahbmo(0).htrans /= HTRANS_IDLE and ahbmo(0).haddr(31 downto 0) = X"8000149C" else '0';
 
     -- L1 is only present optionally for instructions; no need to flush it
     -- L2 can be flushed immediately when necessary.
@@ -733,7 +733,7 @@ begin
 
     -- exit() writes to this address right before completing the program
     -- Next instruction is a jump to current PC.
-    cpuerr <= '1' when ariane_drami.aw.addr = X"80001000" and ariane_drami.aw.valid = '1' else '0';
+    cpuerr <= '1' when  ahbmo(0).htrans /= HTRANS_IDLE and ahbmo(0).haddr(31 downto 0) = X"8000149C" else '0';
 
     -- RISC-V PLIC/CLINT outputs
     irq       <= irqi.irl(1 downto 0);
@@ -957,7 +957,7 @@ begin
       cache_drami.ar.region <= ariane_drami.ar.region;
       cache_drami.ar.user <= ariane_drami.ar.user;
 
-      cache_drami.ar.addr <= ariane_drami.ar.addr(31 downto 0);
+      cache_drami.ar.addr <= ariane_drami.ar.addr;
       ariane_dramo <= cache_dramo;
 
       mosi(1) <= axi_mosi_none;
@@ -1019,7 +1019,7 @@ begin
       mosi(1).ar.region <= ariane_drami.ar.region;
       mosi(1).ar.user <= ariane_drami.ar.user;
 
-      mosi(1).ar.addr <= ariane_drami.ar.addr(31 downto 0);
+      mosi(1).ar.addr <= ariane_drami.ar.addr;
 
       ariane_dramo <= somi(1);
 

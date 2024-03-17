@@ -292,6 +292,7 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
   subtype amba_irq_type     is integer range 0 to NAHBIRQ-1;
   subtype ahb_addr_type     is integer range 0 to 16#fff#;
   constant zx : std_logic_vector(31 downto 0) := (others => '0');
+  constant zxl : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0) := (others => '0');
   constant zahbdw : std_logic_vector(AHBDW-1 downto 0) := (others => '0');
   constant zxirq : std_logic_vector(NAHBIRQ-1 downto 0) := (others => '0');
   constant zy : std_logic_vector(0 to 31) := (others => '0');
@@ -301,14 +302,14 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
     (zx, zxirq(NAHBIRQ-1 downto 0), (others => zx), 0);
   constant apb3_none : apb3_slv_out_type :=
     (zx, '1', '0', zxirq(NAHBIRQ-1 downto 0), (others => zx), 0);
-  constant ahbm_none : ahb_mst_out_type := ( '0', '0', "00", zx,
+  constant ahbm_none : ahb_mst_out_type := ( '0', '0', "00", zxl,
    '0', "000", "000", "0000", zahbdw, zxirq(NAHBIRQ-1 downto 0), (others => zx), 0);
   constant ahbm_in_none : ahb_mst_in_type := ((others => '0'), '0', (others => '0'),
    zahbdw, zxirq(NAHBIRQ-1 downto 0), '0', '0', '0', '0', ztestin);
   constant ahbs_none : ahb_slv_out_type := (
    '1', "00", zahbdw, zx(NAHBMST-1 downto 0), zxirq(NAHBIRQ-1 downto 0), (others => zx), 0);
   constant ahbs_in_none : ahb_slv_in_type := (
-   zy(0 to NAHBSLV-1), zx, '0', "00", "000", "000", zahbdw,
+   zy(0 to NAHBSLV-1), zxl, '0', "00", "000", "000", zahbdw,
    "0000", '1', "0000", '0', zy(0 to NAHBAMR-1), zxirq(NAHBIRQ-1 downto 0),
    '0', '0', '0', '0', ztestin);
 
