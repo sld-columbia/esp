@@ -32,5 +32,7 @@ noc/router/noc_pkg.sv
 noc/router/router_fifo.sv
 noc/router/router_arbiter.sv
 noc/router/lookahead_routing.sv
+noc/router/lookahead_routing_multicast.sv
 noc/router/lookahead_router.sv
+noc/router/lookahead_router_multicast.sv
 noc/router/lookahead_router_wrapper.sv
