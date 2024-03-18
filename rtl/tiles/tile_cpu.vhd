@@ -241,7 +241,7 @@ architecture rtl of tile_cpu is
   signal mosi       : axi_mosi_vector(0 to 4);
   signal somi       : axi_somi_vector(0 to 4);
 
-  signal ariane_drami : axi_mosi_type_dram;
+  signal ariane_drami : axi_mosi_type;
   signal ariane_dramo : axi_somi_type;
 
   signal cache_drami : axi_mosi_type;
@@ -668,7 +668,7 @@ begin
 
     -- We handle I/O with a model of the UART. Therefore when core writes
     -- `to_host` we've reached the call to exit
-    cpuerr <= '1' when  ahbmo(0).htrans /= HTRANS_IDLE and ahbmo(0).haddr(31 downto 0) = X"8000149C" else '0';
+    cpuerr <= '1' when  ahbmo(0).htrans /= HTRANS_IDLE and ahbmo(0).haddr = X"8000149C" else '0';
 
     -- L1 is only present optionally for instructions; no need to flush it
     -- L2 can be flushed immediately when necessary.
@@ -733,7 +733,7 @@ begin
 
     -- exit() writes to this address right before completing the program
     -- Next instruction is a jump to current PC.
-    cpuerr <= '1' when  ahbmo(0).htrans /= HTRANS_IDLE and ahbmo(0).haddr(31 downto 0) = X"8000149C" else '0';
+    cpuerr <= '1' when ariane_drami.aw.addr(31 downto 0) = X"80001000" and ariane_drami.aw.valid = '1' else '0';
 
     -- RISC-V PLIC/CLINT outputs
     irq       <= irqi.irl(1 downto 0);
@@ -939,25 +939,7 @@ begin
   ariane_cpu_tile_services_gen: if GLOB_CPU_ARCH = ariane generate
 
     ariane_with_cache_coherence: if CFG_L2_ENABLE /= 0 generate
-      -- cache_drami <= ariane_drami;
-      cache_drami.aw <= ariane_drami.aw;
-      cache_drami.w  <= ariane_drami.w;
-      cache_drami.b  <= ariane_drami.b;
-      cache_drami.r  <= ariane_drami.r;
-
-      cache_drami.ar.id <= ariane_drami.ar.id;
-      cache_drami.ar.len <= ariane_drami.ar.len;
-      cache_drami.ar.size <= ariane_drami.ar.size;
-      cache_drami.ar.burst <= ariane_drami.ar.burst;
-      cache_drami.ar.lock <= ariane_drami.ar.lock;
-      cache_drami.ar.cache <= ariane_drami.ar.cache;
-      cache_drami.ar.prot <= ariane_drami.ar.prot;
-      cache_drami.ar.valid <= ariane_drami.ar.valid;
-      cache_drami.ar.qos <= ariane_drami.ar.qos;
-      cache_drami.ar.region <= ariane_drami.ar.region;
-      cache_drami.ar.user <= ariane_drami.ar.user;
-
-      cache_drami.ar.addr <= ariane_drami.ar.addr;
+      cache_drami <= ariane_drami;
       ariane_dramo <= cache_dramo;
 
       mosi(1) <= axi_mosi_none;
@@ -1001,26 +983,7 @@ begin
       cache_drami <= axi_mosi_none;
       ace_req     <= ace_req_none;
 
-      -- mosi(1) <= ariane_drami;
-      mosi(1).aw <= ariane_drami.aw;
-      mosi(1).w  <= ariane_drami.w;
-      mosi(1).b  <= ariane_drami.b;
-      mosi(1).r  <= ariane_drami.r;
-
-      mosi(1).ar.id <= ariane_drami.ar.id;
-      mosi(1).ar.len <= ariane_drami.ar.len;
-      mosi(1).ar.size <= ariane_drami.ar.size;
-      mosi(1).ar.burst <= ariane_drami.ar.burst;
-      mosi(1).ar.lock <= ariane_drami.ar.lock;
-      mosi(1).ar.cache <= ariane_drami.ar.cache;
-      mosi(1).ar.prot <= ariane_drami.ar.prot;
-      mosi(1).ar.valid <= ariane_drami.ar.valid;
-      mosi(1).ar.qos <= ariane_drami.ar.qos;
-      mosi(1).ar.region <= ariane_drami.ar.region;
-      mosi(1).ar.user <= ariane_drami.ar.user;
-
-      mosi(1).ar.addr <= ariane_drami.ar.addr;
-
+      mosi(1) <= ariane_drami;
       ariane_dramo <= somi(1);
 
       coherence_rsp_snd_data_in <= (others => '0');

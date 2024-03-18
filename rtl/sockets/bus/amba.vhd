@@ -380,21 +380,6 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
     user   : std_logic_vector(XUSER_WIDTH-1 downto 0);
   end record;
 
-  type axi_ar_mosi_type_dram is record -- Master Output Slave Input for DRAM
-    id     : std_logic_vector (XID_WIDTH-1 downto 0);
-    addr   : std_logic_vector (64 - 1 downto 0);
-    len    : std_logic_vector (7 downto 0);
-    size   : std_logic_vector (2 downto 0);
-    burst  : std_logic_vector (1 downto 0);
-    lock   : std_logic;
-    cache  : std_logic_vector (3 downto 0);
-    prot   : std_logic_vector (2 downto 0);
-    valid  : std_logic;
-    qos    : std_logic_vector (3 downto 0);
-    region : std_logic_vector(3 downto 0);
-    user   : std_logic_vector(XUSER_WIDTH-1 downto 0);
-  end record;
-
   type axi_ar_somi_type is record -- Slave Output Master Input
     ready  : std_logic;
   end record;
@@ -428,14 +413,6 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
     w   : axi_w_mosi_type;
     b   : axi_b_mosi_type;
     ar  : axi_ar_mosi_type;
-    r   : axi_r_mosi_type;
-  end record;
-
-  type axi_mosi_type_dram is record -- Master Output Slave Input for DRAM
-    aw  : axi_aw_mosi_type;
-    w   : axi_w_mosi_type;
-    b   : axi_b_mosi_type;
-    ar  : axi_ar_mosi_type_dram;
     r   : axi_r_mosi_type;
   end record;
 

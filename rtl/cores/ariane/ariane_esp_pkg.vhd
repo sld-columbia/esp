@@ -35,7 +35,7 @@ package ariane_esp_pkg is
       ipi         : in  std_logic;
       romi        : out axi_mosi_type;
       romo        : in  axi_somi_type;
-      drami       : out axi_mosi_type_dram;
+      drami       : out axi_mosi_type;
       dramo       : in  axi_somi_type;
       clinti      : out axi_mosi_type;
       clinto      : in  axi_somi_type;

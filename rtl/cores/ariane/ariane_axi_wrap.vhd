@@ -36,7 +36,7 @@ entity ariane_axi_wrap is
     ipi         : in  std_logic;
     romi        : out axi_mosi_type;
     romo        : in  axi_somi_type;
-    drami       : out axi_mosi_type_dram;
+    drami       : out axi_mosi_type;
     dramo       : in  axi_somi_type;
     clinti      : out axi_mosi_type;
     clinto      : in  axi_somi_type;
@@ -167,7 +167,7 @@ architecture rtl of ariane_axi_wrap is
       dram_b_valid    : in  std_logic;
       dram_b_ready    : out std_logic;
       dram_ar_id      : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
-      dram_ar_addr    : out std_logic_vector(64-1 downto 0);
+      dram_ar_addr    : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
       dram_ar_len     : out std_logic_vector(7 downto 0);
       dram_ar_size    : out std_logic_vector(2 downto 0);
       dram_ar_burst   : out std_logic_vector(1 downto 0);
