@@ -171,6 +171,14 @@ class SoC_Config():
     self.noc.create_topology(self.noc.top, rows, cols)
     # CONFIG_CPU_CACHES = L2_SETS L2_WAYS LLC_SETS LLC_WAYS
     line = fp.readline()
+    if line.find("CONFIG_MULTICAST_NOC_EN = y") != -1:
+      self.noc.multicast_en.set(1)
+    else:
+      self.noc.multicast_en.set(0)
+    line = fp.readline()
+    item = line.split()
+    self.noc.max_mcast_dests.set(int(item[2]))
+    line = fp.readline()
     if line.find("CONFIG_CACHE_EN = y") != -1:
       self.cache_en.set(1)
     else:
@@ -330,6 +338,11 @@ class SoC_Config():
     fp.write("CONFIG_NOC_COLS = " + str(self.noc.cols) + "\n")
     fp.write("CONFIG_COH_NOC_WIDTH = " + str(self.noc.coh_noc_width.get()) + "\n")
     fp.write("CONFIG_DMA_NOC_WIDTH = " + str(self.noc.dma_noc_width.get()) + "\n")
+    if self.noc.multicast_en.get() == 1:
+      fp.write("CONFIG_MULTICAST_NOC_EN = y\n")
+    else:
+      fp.write("#CONFIG_MULTICAST_NOC_EN is not set\n")
+    fp.write("CONFIG_MAX_MCAST_DESTS = " + str(self.noc.max_mcast_dests.get()) + "\n")
     if self.cache_en.get() == 1:
       fp.write("CONFIG_CACHE_EN = y\n")
     else:

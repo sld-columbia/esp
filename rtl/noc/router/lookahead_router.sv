@@ -83,12 +83,18 @@ module lookahead_router
   localparam bit FifoBypassEnable = FlowControl == noc::kFlowControlAckNack;
 
   localparam int unsigned ReservedWidth =
-    DataWidth - $bits(noc::packet_info_t) - $bits(noc::direction_t);
+    DataWidth - 2*$bits(noc::xy_t) - $bits(noc::message_t) - $bits(noc::direction_t);
+
+  typedef struct packed {
+    noc::xy_t source;
+    noc::xy_t destination;
+    noc::message_t message;
+    logic [ReservedWidth-1:0] reserved;
+  } packet_info_t;
 
   typedef struct packed {
     noc::preamble_t preamble;
-    noc::packet_info_t info;
-    logic [ReservedWidth-1:0] reserved;
+    packet_info_t info;
     noc::direction_t routing;
   } header_t;
 
@@ -481,7 +487,7 @@ module lookahead_router
 // pragma coverage off
 //VCS coverage off
 
-  if (DataWidth < $bits(noc::packet_info_t) + $bits(noc::direction_t)) begin : gen_a_data_width
+  if (DataWidth < $bits(packet_info_t) + $bits(noc::direction_t)) begin : gen_a_data_width
     $fatal(2'd2, "Fail: DataWidth insufficient to hold packet and routing information.");
   end
 
