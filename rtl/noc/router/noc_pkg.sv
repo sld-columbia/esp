@@ -94,10 +94,4 @@ package noc;
     logic tail;
   } preamble_t;
 
-  typedef struct packed {
-    xy_t source;
-    xy_t destination;
-    message_t message;
-  } packet_info_t;
-
 endpackage
