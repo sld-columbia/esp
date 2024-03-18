@@ -385,6 +385,8 @@ class NoC():
     self.rows = 0
     self.coh_noc_width = IntVar()
     self.dma_noc_width = IntVar()
+    self.multicast_en = IntVar()
+    self.max_mcast_dests = IntVar()
     self.monitor_ddr = IntVar()
     self.monitor_mem = IntVar()
     self.monitor_inj = IntVar()
@@ -493,6 +495,10 @@ class NoCFrame(Pmw.ScrolledFrame):
     Label(self.noc_config_frame, text = "DMA NoC Planes (4,6) Bitwidth: ", height=1).pack()
     OptionMenu(self.noc_config_frame, self.noc.dma_noc_width, *noc_width_choices).pack()
     Label(self.noc_config_frame, text = "MMIO/Irq NoC Plane (5) Bitwidth is always 32", height=1).pack(side=TOP)
+    Checkbutton(self.noc_config_frame, text="Enable Multicast on DMA Planes", variable=self.noc.multicast_en, anchor=W, width=30).pack()
+    max_multicast_choices = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"]
+    Label(self.noc_config_frame, text = "Maximum Multicast Destinations: ", height=1).pack()
+    OptionMenu(self.noc_config_frame, self.noc.max_mcast_dests, *max_multicast_choices).pack()
     Button(self.noc_config_frame, text = "Config", command=self.create_noc).pack(side=TOP)
 
     Label(self.noc_config_frame, height=1).pack()
@@ -671,7 +677,10 @@ class NoCFrame(Pmw.ScrolledFrame):
        (self.soc.cache_line_size.get() == 128 or (self.soc.cache_spandex.get() == 0 and self.soc.cache_rtl.get() == 1)) and \
        (self.soc.jtag_en.get() == 0 or (self.noc.dma_noc_width.get() == 64 and self.noc.coh_noc_width.get() == 64)) and \
        ((self.soc.TECH != "asic" and self.soc.TECH != "inferred" and self.soc.ESP_EMU_TECH == "none") \
-         or tot_mem == 0 or self.soc.cache_en.get() == 1):
+         or tot_mem == 0 or self.soc.cache_en.get() == 1) and \
+       (not self.noc.multicast_en.get() or self.noc.dma_noc_width.get() > 128 or \
+       (self.noc.dma_noc_width.get() == 128 and self.noc.max_mcast_dests.get() <= 14) or \
+       (self.noc.dma_noc_width.get() == 64 and self.noc.max_mcast_dests.get() <= 5)):
       # Spandex beta warning
       if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
         string += "***              Spandex support is still beta                 ***\n"
@@ -679,6 +688,8 @@ class NoCFrame(Pmw.ScrolledFrame):
         #if self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
         if self.soc.TECH != "asic" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
           string += "    Use a smaller implementation if not using a Virtex US/US+\n"
+      if self.noc.multicast_en.get():
+        string += "***              Multicast NoC is in beta testing                ***\n"
       self.done.config(state=NORMAL)
     else:
       if (self.noc.cols > 8 or self.noc.rows > 8): 
@@ -752,6 +763,12 @@ class NoCFrame(Pmw.ScrolledFrame):
       if ((self.soc.TECH == "asic" or self.soc.TECH == "inferred" or self.soc.ESP_EMU_TECH != "none") \
            and tot_mem >= 1 and self.soc.cache_en.get() == 0):
         string += "Caches must be enabled for ASIC design with memory tiles.\n"
+      if (self.noc.multicast_en.get() and self.noc.dma_noc_width.get() == 64 and self.noc.max_mcast_dests.get() > 5):
+        string += "64-bit DMA NoC supports up to 5 multicast destinations.\n"
+      if (self.noc.multicast_en.get() and self.noc.dma_noc_width.get() == 128 and self.noc.max_mcast_dests.get() > 14):
+        string += "128-bit DMA NoC supports up to 14 multicast destinations.\n"
+      if (self.noc.multicast_en.get() and self.noc.dma_noc_width.get() == 32):
+        string += "32-bit DMA NoC does not support multicast.\n"
 
     # Update message box
     self.message.insert(0.0, string)
