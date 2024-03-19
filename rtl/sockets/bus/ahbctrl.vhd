@@ -31,6 +31,7 @@ use work.stdlib.all;
 use work.amba.all;
 use work.config_types.all;
 use work.config.all;
+use work.esp_global.all;
 -- pragma translate_off
 use work.devices.all;
 use std.textio.all;
@@ -374,7 +375,7 @@ begin
   variable cfgsel  : std_ulogic;
   variable hresp   : std_logic_vector(1 downto 0);
   variable hrdata  : std_logic_vector(AHBDW-1 downto 0);
-  variable haddr   : std_logic_vector(31 downto 0);
+  variable haddr   : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
   variable hirq    : std_logic_vector(NAHBIRQ-1 downto 0);
   variable arb     : std_ulogic;
   variable hconfndx : integer range 0 to 7;
@@ -385,7 +386,7 @@ begin
   begin
 
     v := r; hgrant := (others => '0'); defmst := '0';
-    haddr := msto(r.hmaster).haddr(31 downto 0);
+    haddr := msto(r.hmaster).haddr;
 
     nhmaster := r.hmaster;
 
@@ -621,7 +622,7 @@ begin
     end if;
 
     if (split = 0) or (r.defmst = '0') then
-      vslvi.haddr(31 downto 0)      := haddr;
+      vslvi.haddr      := haddr;
       vslvi.htrans     := msto(r.hmaster).htrans;
       vslvi.hwrite     := msto(r.hmaster).hwrite;
       vslvi.hsize      := msto(r.hmaster).hsize;
@@ -726,7 +727,7 @@ begin
     variable hsize : std_logic_vector(2 downto 0);
     variable htrans : std_logic_vector(1 downto 0);
     variable hmaster : std_logic_vector(3 downto 0);
-    variable haddr : std_logic_vector(31 downto 0);
+    variable haddr : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
     variable hwdata, hrdata : std_logic_vector(127 downto 0);
     variable mbit, bitoffs : integer;
     variable t : integer;
@@ -756,7 +757,7 @@ begin
         if lmsti.hready = '1' then
           hwrite := lslvi.hwrite;
           hsize := lslvi.hsize;
-          haddr := lslvi.haddr(31 downto 0);
+          haddr := lslvi.haddr;
           htrans := lslvi.htrans;
           hmaster := lslvi.hmaster;
         end if;
