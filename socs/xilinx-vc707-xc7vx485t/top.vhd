@@ -348,7 +348,7 @@ begin
       generic map (
         hindex => 0,
         tech   => 0,
-        kbytes => 2 * 1024,
+        kbytes => 4 * 1024,
         pipe   => 0,
         maccsz => AHBDW,
         fname  => "ram.srec"
