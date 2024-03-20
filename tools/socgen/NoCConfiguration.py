@@ -61,7 +61,7 @@ class Tile():
        self.point_label.pack(side=LEFT)
        self.vendor = soc.IPs.VENDOR[selection]
        dma_width = str(soc.noc.dma_noc_width.get())
-       display_points = [point for point in soc.IPs.POINTS[selection] if dma_width in point]
+       display_points = [point for point in soc.IPs.POINTS[selection] if "dma" + str(dma_width) in point]
        self.point_select.setitems(display_points)
        point = self.point.get()
        self.point_select.setvalue("")
@@ -662,12 +662,12 @@ class NoCFrame(Pmw.ScrolledFrame):
        (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1) and \
        (self.soc.cache_en.get() != 1 or self.soc.cache_line_size.get() >= self.noc.coh_noc_width.get()) and \
        (self.soc.cache_en.get() != 1 or self.soc.cache_line_size.get() >= self.noc.dma_noc_width.get()) and \
-       (self.soc.cache_line_size.get() >= self.soc.mem_link_width.get()) and \
-       (self.noc.coh_noc_width.get() >= self.soc.mem_link_width.get()) and \
-       (self.noc.dma_noc_width.get() >= self.soc.mem_link_width.get()) and \
+       (self.soc.TECH != "asic" or self.soc.cache_line_size.get() >= self.soc.mem_link_width.get()) and \
+       (self.soc.TECH != "asic" or self.noc.coh_noc_width.get() >= self.soc.mem_link_width.get()) and \
+       (self.soc.TECH != "asic" or self.noc.dma_noc_width.get() >= self.soc.mem_link_width.get()) and \
        ((self.soc.cache_en.get() == 1) or (self.noc.coh_noc_width.get() == self.soc.ARCH_BITS)) and \
        (self.noc.coh_noc_width.get() >= self.soc.ARCH_BITS) and \
-       (self.noc.coh_noc_width.get() >= self.soc.ARCH_BITS) and acc_impl_valid and \
+       (self.noc.dma_noc_width.get() >= self.soc.ARCH_BITS) and acc_impl_valid and \
        (self.soc.cache_line_size.get() == 128 or (self.soc.cache_spandex.get() == 0 and self.soc.cache_rtl.get() == 1)):
       # Spandex beta warning
       if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
@@ -728,13 +728,13 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Cache line size must be greater than or equal to coherence NoC bitwidth\n"
       if (self.soc.cache_en.get() == 1 and self.soc.cache_line_size.get() < self.noc.dma_noc_width.get()):
         string += "Cache line size must be greater than or equal to DMA NoC bitwidth\n"
-      if (self.soc.cache_line_size.get() < self.soc.mem_link_width.get()):
+      if (self.soc.TECH == "asic" and self.soc.cache_line_size.get() < self.soc.mem_link_width.get()):
         string += "Cache line size must be greater than or equal to mem link bitwidth\n"
-      if (self.noc.coh_noc_width.get() < self.soc.mem_link_width.get()):
+      if (self.soc.TECH == "asic" and self.noc.coh_noc_width.get() < self.soc.mem_link_width.get()):
         string += "Coherence NoC bitwdith must be greater than or equal to mem link bitwidth\n"
-      if (self.noc.dma_noc_width.get() < self.soc.mem_link_width.get()):
+      if (self.soc.TECH == "asic" and self.noc.dma_noc_width.get() < self.soc.mem_link_width.get()):
         string += "DMA NoC bitwdith must be greater than or equal to mem link bitwidth\n"
-      if (self.soc.cache_en.get() != 1) and (self.noc.coh_noc_width.get() != self.soc.ARCH_BITS):
+      if (self.soc.cache_en.get() != 1) and (self.noc.coh_noc_width.get() > self.soc.ARCH_BITS):
         string += "Caches must be enabled to support a coherence NoC width larger than the CPU architecture size\n"
       if (self.noc.coh_noc_width.get() < self.soc.ARCH_BITS):
         string += "Coherence NoC width must be greater than or equal to the CPU architecture size\n"
