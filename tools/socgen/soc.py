@@ -142,6 +142,10 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     self.CPU_ARCH.set(item[2])
+    if item[2] == "ariane":
+        self.ARCH_BITS = 64
+    else:
+        self.ARCH_BITS = 32
     # CPU count (skip this info while rebuilding SoC config)
     line = fp.readline()
     # Scatter-gather
