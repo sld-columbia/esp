@@ -124,6 +124,9 @@ architecture rtl of mem2ext is
   signal sample_tran_count : std_ulogic;
   signal tran_count_en : std_ulogic;
 
+  signal word_cnt_reg, word_cnt_next   : integer := 0;
+  signal data_line_reg, data_line_next : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
+
   -- State synchronizer
   type rcv_sync_type is record
     sync_clk  : std_ulogic;
@@ -312,8 +315,12 @@ begin  -- architecture rtl
         dma_writing_reg <= '0';
         llc_writing_reg <= '0';
         tran_count_reg  <= (others => '0');
+        word_cnt_reg    <= 0;
+        data_line_reg   <= (others => '0');
       else
         ext_current <= ext_next;
+        word_cnt_reg <= word_cnt_next;
+        data_line_reg <= data_line_next;
         if sample_header = '1' then
           req_reg         <= req;
           dma_header_reg  <= dma_header;
@@ -332,9 +339,10 @@ begin  -- architecture rtl
   ext_fsm: process (ext_current, req_reg, dma_writing_reg, llc_writing_reg, tran_count_reg,
                     llc_ext_req_valid, llc_ext_req_data, llc_ext_rsp_ready,
                     dma_rcv_data_out, dma_rcv_empty, dma_snd_full, dma_header_reg,
-                    ext_snd_full, ext_rcv_data_out, ext_rcv_empty) is
+                    ext_snd_full, ext_rcv_data_out, ext_rcv_empty,
+                    word_cnt_reg, data_line_reg) is
   variable word_cnt  : integer := 0;
-  variable data_line      : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
+  variable data_line : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
   begin  -- process ext_fsm
 
     -- State
@@ -360,6 +368,9 @@ begin  -- architecture rtl
     ext_snd_wrreq <= '0';
     ext_snd_data_in <= (others => '0');
     ext_rcv_rdreq <= '0';
+
+    word_cnt := word_cnt_reg;
+    data_line := data_line_reg;
 
     case ext_current is
       when idle =>
@@ -478,8 +489,6 @@ begin  -- architecture rtl
               ext_snd_data_in <= dma_rcv_data_out((word_cnt + 1) * CFG_MEM_LINK_BITS - 1 downto word_cnt * CFG_MEM_LINK_BITS);
               if dma_rcv_empty = '0' then
                 if word_cnt = DMA_NOC_FLIT_SIZE / CFG_MEM_LINK_BITS - 1 then
-                  -- Decrement counter
-                  tran_count_en <= '1';
                   -- reset word count
                   word_cnt := 0;
                   -- Pop DMA queue
@@ -488,6 +497,8 @@ begin  -- architecture rtl
                   -- increment word count
                   word_cnt := word_cnt + 1;
                 end if;
+                -- Decrement counter
+                tran_count_en <= '1';
                 -- Push ext queue
                 ext_snd_wrreq <= '1';
               end if;
@@ -533,9 +544,7 @@ begin  -- architecture rtl
               end if;
               if dma_snd_full = '0' then
                 data_line((word_cnt + 1) * CFG_MEM_LINK_BITS - 1 downto word_cnt * CFG_MEM_LINK_BITS) := ext_rcv_data_out;
-                if word_cnt = DMA_NOC_FLIT_SIZE / CFG_MEM_LINK_BITS - 1 then
-                  -- Decrement counter
-                  tran_count_en <= '1';
+                if word_cnt = DMA_NOC_FLIT_SIZE / CFG_MEM_LINK_BITS - 1 or tran_count_reg = X"00000001" then
                   -- Push to DMA snd queue
                   dma_snd_data_in(DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH -1 downto 0) <= data_line;
                   dma_snd_wrreq <= '1';
@@ -545,6 +554,8 @@ begin  -- architecture rtl
                   -- increment word count
                   word_cnt := word_cnt + 1;
                 end if;
+                -- Decrement counter
+                tran_count_en <= '1';
                 -- Pop ext queue
                 ext_rcv_rdreq <= '1';
               end if;
@@ -556,6 +567,8 @@ begin  -- architecture rtl
         ext_next <= idle;
 
     end case;
+    word_cnt_next <= word_cnt;
+    data_line_next <= data_line;
   end process ext_fsm;
 
 end architecture rtl;
