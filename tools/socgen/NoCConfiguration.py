@@ -668,7 +668,10 @@ class NoCFrame(Pmw.ScrolledFrame):
        ((self.soc.cache_en.get() == 1) or (self.noc.coh_noc_width.get() == self.soc.ARCH_BITS)) and \
        (self.noc.coh_noc_width.get() >= self.soc.ARCH_BITS) and \
        (self.noc.dma_noc_width.get() >= self.soc.ARCH_BITS) and acc_impl_valid and \
-       (self.soc.cache_line_size.get() == 128 or (self.soc.cache_spandex.get() == 0 and self.soc.cache_rtl.get() == 1)):
+       (self.soc.cache_line_size.get() == 128 or (self.soc.cache_spandex.get() == 0 and self.soc.cache_rtl.get() == 1)) and \
+       (self.soc.jtag_en.get() == 0 or (self.noc.dma_noc_width.get() == 64 and self.noc.coh_noc_width.get() == 64)) and \
+       ((self.soc.TECH != "asic" and self.soc.TECH != "inferred" and self.soc.ESP_EMU_TECH == "none") \
+         or tot_mem == 0 or self.soc.cache_en.get() == 1):
       # Spandex beta warning
       if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
         string += "***              Spandex support is still beta                 ***\n"
@@ -681,16 +684,16 @@ class NoCFrame(Pmw.ScrolledFrame):
       if (self.noc.cols > 8 or self.noc.rows > 8): 
         string += "Maximum number of rows and columns is 8.\n"
       if (tot_cpu == 0):
-        string += "At least one CPU is required\n"
+        string += "At least one CPU is required.\n"
       if (tot_cpu > 1 and not self.soc.cache_en.get()):
         string += "Caches are required for multicore SoCs.\n"
       if (tot_io == 0):
-        string += "At least I/O tile is required\n"
+        string += "At least I/O tile is required.\n"
       if (tot_cpu > NCPU_MAX):
         new_err = "Maximum number of supported CPUs is " + str(NCPU_MAX) + ".\n"
         string += new_err
       if (tot_io > 1):
-        string += "Multiple I/O tiles are not supported\n"
+        string += "Multiple I/O tiles are not supported.\n"
       if (tot_mem < 1 and tot_slm < 1):
         string += "There must be at least 1 memory tile or 1 SLM tile.\n"
       if (tot_mem > self.soc.nmem_max):
@@ -698,13 +701,13 @@ class NoCFrame(Pmw.ScrolledFrame):
       if (tot_mem == 0 and (self.soc.CPU_ARCH.get() != "ibex")):
         string += "SLM tiles can be used in place of memory tiles only with the lowRISC ibex core.\n"
       if (tot_mem == 0 and (self.soc.cache_en.get() == 1)):
-        string += "There must be at least 1 memory tile to enable the ESP cache hierarchy. " + self.soc.CPU_ARCH.get() + "\n"
+        string += "There must be at least 1 memory tile to enable the ESP cache hierarchy.\n"
       if (tot_mem == 3): 
         string += "Number of memory tiles must be a power of 2.\n" 
       if (tot_slm > NSLM_MAX):
-        string += "There must be no more than " + str(NSLM_MAX) + " SLD tiles.\n"
+        string += "There must be no more than " + str(NSLM_MAX) + " SLM tiles.\n"
       if (tot_slm > 1 and self.soc.slm_kbytes.get() < 1024):
-        string += "SLM size must be 1024 KB or more if placing more than one SLM tile"
+        string += "SLM size must be 1024 KB or more if placing more than one SLM tile.\n"
       if (self.soc.llc_sets.get() >= 8192 and self.soc.llc_ways.get() >= 16 and tot_mem == 1): 
         string += "A 2MB LLC (8192 sets and 16 ways) requires multiple memory tiles.\n"
       if (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)):
@@ -718,32 +721,37 @@ class NoCFrame(Pmw.ScrolledFrame):
       if (tot_llc_coherent > NLLC_COHERENT_MAX):
         string += "Maximum number of supported LLC-coherent devices is " + str(NLLC_COHERENT_MAX) + ".\n"
       if (self.soc.cache_spandex.get() != 0 and self.soc.CPU_ARCH.get() != "ariane" and self.soc.cache_en.get() == 1):
-        string += "Spandex currently supports only RISC-V Ariane processor core"
+        string += "Spandex currently supports only RISC-V Ariane processor core.\n"
       if (tot_clkbuf > 9):
         string += "The FPGA board supports no more than 9 CLKBUF's.\n"
       string += pll_string
       if (clk_region_skip > 0):
-        string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead\n"
+        string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead.\n"
       if (self.soc.cache_en.get() == 1 and self.soc.cache_line_size.get() < self.noc.coh_noc_width.get()):
-        string += "Cache line size must be greater than or equal to coherence NoC bitwidth\n"
+        string += "Cache line size must be greater than or equal to coherence NoC bitwidth.\n"
       if (self.soc.cache_en.get() == 1 and self.soc.cache_line_size.get() < self.noc.dma_noc_width.get()):
-        string += "Cache line size must be greater than or equal to DMA NoC bitwidth\n"
+        string += "Cache line size must be greater than or equal to DMA NoC bitwidth.\n"
       if (self.soc.TECH == "asic" and self.soc.cache_line_size.get() < self.soc.mem_link_width.get()):
-        string += "Cache line size must be greater than or equal to mem link bitwidth\n"
+        string += "Cache line size must be greater than or equal to mem link bitwidth.\n"
       if (self.soc.TECH == "asic" and self.noc.coh_noc_width.get() < self.soc.mem_link_width.get()):
-        string += "Coherence NoC bitwdith must be greater than or equal to mem link bitwidth\n"
+        string += "Coherence NoC bitwdith must be greater than or equal to mem link bitwidth.\n"
       if (self.soc.TECH == "asic" and self.noc.dma_noc_width.get() < self.soc.mem_link_width.get()):
-        string += "DMA NoC bitwdith must be greater than or equal to mem link bitwidth\n"
+        string += "DMA NoC bitwdith must be greater than or equal to mem link bitwidth.\n"
       if (self.soc.cache_en.get() != 1) and (self.noc.coh_noc_width.get() > self.soc.ARCH_BITS):
-        string += "Caches must be enabled to support a coherence NoC width larger than the CPU architecture size\n"
+        string += "Caches must be enabled to support a coherence NoC width larger than the CPU architecture size.\n"
       if (self.noc.coh_noc_width.get() < self.soc.ARCH_BITS):
-        string += "Coherence NoC width must be greater than or equal to the CPU architecture size\n"
+        string += "Coherence NoC width must be greater than or equal to the CPU architecture size.\n"
       if (self.noc.dma_noc_width.get() < self.soc.ARCH_BITS):
-        string += "DMA NoC width must be greater than or equal to the CPU architecture size\n"
+        string += "DMA NoC width must be greater than or equal to the CPU architecture size.\n"
       if (not acc_impl_valid):
-        string += "All accelerators must have a selected implementation\n"
+        string += "All accelerators must have a selected implementation.\n"
       if (self.soc.cache_line_size.get() > 128 and (self.soc.cache_spandex.get() == 1 or self.soc.cache_rtl.get() == 0)):
-        string += "Only ESP RTL caches support cache line size greater than 128 bits"
+        string += "Only ESP RTL caches support cache line size greater than 128 bits.\n"
+      if (self.soc.jtag_en.get() == 1 and (self.noc.dma_noc_width.get() != 64 or self.noc.coh_noc_width.get() != 64)):
+        string += "JTAG is only supported for 64-bit coherence and DMA NoC planes.\n"
+      if ((self.soc.TECH == "asic" or self.soc.TECH == "inferred" or self.soc.ESP_EMU_TECH != "none") \
+           and tot_mem >= 1 and self.soc.cache_en.get() == 0):
+        string += "Caches must be enabled for ASIC design with memory tiles.\n"
 
     # Update message box
     self.message.insert(0.0, string)

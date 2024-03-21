@@ -548,7 +548,7 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_IOLINK_BITS : integer := " + str(soc.iolink_width.get()) + ";\n\n")
 
   fp.write("  ------ Custom Memory Link to FPGA for DDR access\n")
-  fp.write("  constant CFG_MEM_LINK_BITS : integer := " + str(soc.mem_link_width.get()) + ";\n\n")
+  fp.write("  constant CFG_MEM_LINK_BITS : integer := " + str(soc.ARCH_BITS) + ";\n\n")
 
   #
   fp.write("  ------ SVGA\n")
