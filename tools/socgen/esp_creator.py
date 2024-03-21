@@ -155,8 +155,7 @@ class PeripheralFrame(Frame):
         Label(periph_config_frame, text = "No Custom IO Link", fg="red").grid(row=4, column=1)
 
     if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-        Label(periph_config_frame, text = "FPGA Memory Link Width: ").grid(row=6, column=1)
-        OptionMenu(periph_config_frame, soc.mem_link_width, *mem_link_width_choices, command=main_frame.update_noc_config).grid(row=6, column=2)
+        Label(periph_config_frame, text = "FPGA Memory Link", fg="darkgreen").grid(row=6, column=1)
     else:
         Label(periph_config_frame, text = "No FPGA Memory Link", fg="red").grid(row=5, column=1)
 
