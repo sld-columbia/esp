@@ -501,10 +501,10 @@ architecture rtl of fpga_proxy_top is
 
   -- AHB proxy extended
   signal extended_ahbm_rcv_rdreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal extended_ahbm_rcv_data_out : coh_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
+  signal extended_ahbm_rcv_data_out : arch_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
   signal extended_ahbm_rcv_empty    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
   signal extended_ahbm_snd_wrreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal extended_ahbm_snd_data_in  : coh_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
+  signal extended_ahbm_snd_data_in  : arch_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
   signal extended_ahbm_snd_full     : std_logic_vector(0 to CFG_NMEM_TILE - 1);
 
   -- AHB proxy queues

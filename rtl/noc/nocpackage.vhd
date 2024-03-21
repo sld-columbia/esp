@@ -65,6 +65,7 @@ package nocpackage is
   type coh_noc_flit_vector is array (natural range <>) of coh_noc_flit_type;
   type dma_noc_flit_vector is array (natural range <>) of dma_noc_flit_type;
   type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
+  type arch_noc_flit_vector is array (natural range <>) of arch_noc_flit_type;
 
 
   --Rather than define seaprate functions for interacting with each NoC width,
