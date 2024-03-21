@@ -40,22 +40,22 @@ architecture behav of testbench is
   signal emdio    : std_logic;
 
   -- DVI
-  signal tft_nhpd        : std_ulogic;
-  signal tft_clk_p       : std_ulogic;
-  signal tft_clk_n       : std_ulogic;
-  signal tft_data        : std_logic_vector(23 downto 0);
-  signal tft_hsync       : std_ulogic;
-  signal tft_vsync       : std_ulogic;
-  signal tft_de          : std_ulogic;
-  signal tft_dken        : std_ulogic;
-  signal tft_ctl1_a1_dk1 : std_ulogic;
-  signal tft_ctl2_a2_dk2 : std_ulogic;
-  signal tft_a3_dk3      : std_ulogic;
-  signal tft_isel        : std_ulogic;
-  signal tft_bsel        : std_logic;
-  signal tft_dsel        : std_logic;
-  signal tft_edge        : std_ulogic;
-  signal tft_npd         : std_ulogic;
+--  signal tft_nhpd        : std_ulogic;
+--  signal tft_clk_p       : std_ulogic;
+--  signal tft_clk_n       : std_ulogic;
+--  signal tft_data        : std_logic_vector(23 downto 0);
+--  signal tft_hsync       : std_ulogic;
+--  signal tft_vsync       : std_ulogic;
+--  signal tft_de          : std_ulogic;
+--  signal tft_dken        : std_ulogic;
+--  signal tft_ctl1_a1_dk1 : std_ulogic;
+--  signal tft_ctl2_a2_dk2 : std_ulogic;
+--  signal tft_a3_dk3      : std_ulogic;
+--  signal tft_isel        : std_ulogic;
+--  signal tft_bsel        : std_logic;
+--  signal tft_dsel        : std_logic;
+--  signal tft_edge        : std_ulogic;
+--  signal tft_npd         : std_ulogic;
 
   -- Clock and reset
   signal reset        : std_ulogic := '1';
@@ -152,8 +152,8 @@ architecture behav of testbench is
   signal profpga_clk0_n  : std_ulogic := '1';  -- 100 MHz clock
   signal profpga_sync0_p : std_ulogic;
   signal profpga_sync0_n : std_ulogic;
-  signal dmbi_h2f        : std_ulogic_vector(19 downto 0);
-  signal dmbi_f2h        : std_ulogic_vector(19 downto 0);
+  signal dmbi_h2f        : std_logic_vector(19 downto 0);
+  signal dmbi_f2h        : std_logic_vector(19 downto 0);
 
   component top
     generic (
@@ -164,8 +164,8 @@ architecture behav of testbench is
       profpga_clk0_n    : in    std_ulogic;  -- 100 MHz clock
       profpga_sync0_p   : in    std_ulogic;
       profpga_sync0_n   : in    std_ulogic;
-      dmbi_h2f          : in    std_ulogic_vector(19 downto 0);
-      dmbi_f2h          : out   std_ulogic_vector(19 downto 0);
+      dmbi_h2f          : in    std_logic_vector(19 downto 0);
+      dmbi_f2h          : out   std_logic_vector(19 downto 0);
       -- Main ESP clock
       esp_clk_p         : in    std_ulogic;  -- 78.125 MHz clock
       esp_clk_n         : in    std_ulogic;  -- 78.125 MHz clock
@@ -263,22 +263,22 @@ architecture behav of testbench is
       emdc              : out   std_ulogic;
       emdio             : inout std_logic;
       -- DVI
-      tft_nhpd          : in    std_ulogic;  -- Hot plug
-      tft_clk_p         : out   std_ulogic;
-      tft_clk_n         : out   std_ulogic;
-      tft_data          : out   std_logic_vector(23 downto 0);
-      tft_hsync         : out   std_ulogic;
-      tft_vsync         : out   std_ulogic;
-      tft_de            : out   std_ulogic;
-      tft_dken          : out   std_ulogic;
-      tft_ctl1_a1_dk1   : out   std_ulogic;
-      tft_ctl2_a2_dk2   : out   std_ulogic;
-      tft_a3_dk3        : out   std_ulogic;
-      tft_isel          : out   std_ulogic;
-      tft_bsel          : out   std_logic;
-      tft_dsel          : out   std_logic;
-      tft_edge          : out   std_ulogic;
-      tft_npd           : out   std_ulogic;
+--      tft_nhpd          : in    std_ulogic;  -- Hot plug
+--      tft_clk_p         : out   std_ulogic;
+--      tft_clk_n         : out   std_ulogic;
+--      tft_data          : out   std_logic_vector(23 downto 0);
+--      tft_hsync         : out   std_ulogic;
+--      tft_vsync         : out   std_ulogic;
+--      tft_de            : out   std_ulogic;
+--      tft_dken          : out   std_ulogic;
+--      tft_ctl1_a1_dk1   : out   std_ulogic;
+--      tft_ctl2_a2_dk2   : out   std_ulogic;
+--      tft_a3_dk3        : out   std_ulogic;
+--      tft_isel          : out   std_ulogic;
+--      tft_bsel          : out   std_logic;
+--      tft_dsel          : out   std_logic;
+--      tft_edge          : out   std_ulogic;
+--      tft_npd           : out   std_ulogic;
       -- LEDs
       LED_RED           : out   std_ulogic;
       LED_GREEN         : out   std_ulogic;
@@ -306,8 +306,8 @@ begin
   c2_sys_clk_n <= not c2_sys_clk_n after 4.0 ns;
   c3_sys_clk_p <= not c3_sys_clk_p after 4.0 ns;
   c3_sys_clk_n <= not c3_sys_clk_n after 4.0 ns;
-  esp_clk_p    <= not esp_clk_p    after 6.4 ns;
-  esp_clk_n    <= not esp_clk_n    after 6.4 ns;
+  esp_clk_p    <= not esp_clk_p    after 5.0 ns;
+  esp_clk_n    <= not esp_clk_n    after 5.0 ns;
 
   -- UART
   uart_rxd  <= '0';
@@ -435,22 +435,22 @@ begin
       etx_er            => etx_er,
       emdc              => emdc,
       emdio             => emdio,
-      tft_nhpd          => '0',
-      tft_clk_p         => tft_clk_p,
-      tft_clk_n         => tft_clk_n,
-      tft_data          => tft_data,
-      tft_hsync         => tft_hsync,
-      tft_vsync         => tft_vsync,
-      tft_de            => tft_de,
-      tft_dken          => tft_dken,
-      tft_ctl1_a1_dk1   => tft_ctl1_a1_dk1,
-      tft_ctl2_a2_dk2   => tft_ctl2_a2_dk2,
-      tft_a3_dk3        => tft_a3_dk3,
-      tft_isel          => tft_isel,
-      tft_bsel          => tft_bsel,
-      tft_dsel          => tft_dsel,
-      tft_edge          => tft_edge,
-      tft_npd           => tft_npd,
+--      tft_nhpd          => '0',
+--      tft_clk_p         => tft_clk_p,
+--      tft_clk_n         => tft_clk_n,
+--      tft_data          => tft_data,
+--      tft_hsync         => tft_hsync,
+--      tft_vsync         => tft_vsync,
+--      tft_de            => tft_de,
+--      tft_dken          => tft_dken,
+--      tft_ctl1_a1_dk1   => tft_ctl1_a1_dk1,
+--      tft_ctl2_a2_dk2   => tft_ctl2_a2_dk2,
+--      tft_a3_dk3        => tft_a3_dk3,
+--      tft_isel          => tft_isel,
+--      tft_bsel          => tft_bsel,
+--      tft_dsel          => tft_dsel,
+--      tft_edge          => tft_edge,
+--      tft_npd           => tft_npd,
       LED_RED           => open,
       LED_GREEN         => open,
       LED_BLUE          => open,
