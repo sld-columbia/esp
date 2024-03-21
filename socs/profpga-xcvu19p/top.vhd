@@ -44,8 +44,8 @@ entity top is
     profpga_clk0_n    : in    std_ulogic;  -- 100 MHz clock
     profpga_sync0_p   : in    std_ulogic;
     profpga_sync0_n   : in    std_ulogic;
-    dmbi_h2f          : in    std_ulogic_vector(19 downto 0);
-    dmbi_f2h          : out   std_ulogic_vector(19 downto 0);
+    dmbi_h2f          : in    std_logic_vector(19 downto 0);
+    dmbi_f2h          : out   std_logic_vector(19 downto 0);
     -- Main ESP clock
     esp_clk_p         : in    std_ulogic;  -- 78.25 MHz clock
     esp_clk_n         : in    std_ulogic;  -- 78.25 MHz clock
@@ -270,7 +270,7 @@ constant MAX_NMEM_TILES : integer := 4;
   signal ddr_ahbso : ahb_slv_out_vector_type(0 to MAX_NMEM_TILES - 1);
 
 -- Ethernet
-constant CPU_FREQ : integer := 90000;  -- cpu frequency in KHz
+constant CPU_FREQ : integer := 100000;  -- cpu frequency in KHz
 
   signal eth0_apbi   : apb_slv_in_type;
   signal eth0_apbo   : apb_slv_out_type;
