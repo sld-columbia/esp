@@ -1,0 +1,1 @@
+../../cores/ariane/ariane/src/common_cells/src/sram.sv

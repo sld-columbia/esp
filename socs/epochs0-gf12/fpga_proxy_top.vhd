@@ -1204,7 +1204,7 @@ begin  -- architecture rtl
     ext2ahbm_i : ext2ahbm
       generic map (
         hindex => 0,
-        little_end => GLOB_CPU_AXI)
+        little_end => GLOB_CPU_RISCV)
       port map (
         clk             => sys_clk(i),
         rstn            => rstn,
@@ -1527,7 +1527,7 @@ begin  -- architecture rtl
       paddr       => 16#800#,
       pmask       => 16#f00#,
       pirq        => 12,
-      little_end  => GLOB_CPU_AXI,      -- no caches on FPGA proxy
+      little_end  => GLOB_CPU_RISCV,      -- no caches on FPGA proxy
       memtech     => FPGA_PROXY_TECH,
       enable_mdio => 1,
       fifosize    => CFG_ETH_FIFO,
