@@ -97,7 +97,8 @@ int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const ch
 unsigned ioread32(struct esp_device *dev, unsigned offset);
 void iowrite32(struct esp_device *dev, unsigned offset, unsigned payload);
 void esp_flush(int coherence);
-void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsrcs);
+void esp_p2p_init(struct esp_device *dev, struct esp_device *srcs, unsigned nsrcs);
+void esp_set_acc_yx_table(struct esp_device *dev, struct esp_device *srcs, unsigned nsrcs);
 
 #define esp_get_y(_dev) (YX_MASK_YX & (ioread32(_dev, YX_REG) >> YX_SHIFT_Y))
 #define esp_get_x(_dev) (YX_MASK_YX & (ioread32(_dev, YX_REG) >> YX_SHIFT_X))
@@ -108,5 +109,7 @@ void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsr
 #define esp_p2p_set_y(_dev, _n, _y) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)))
 #define esp_p2p_set_x(_dev, _n, _x) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)))
 #define esp_p2p_set_mcast_ndests(_dev, _n) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_MCAST_NDESTS & (_n - 1)) << P2P_SHIFT_MCAST_NDESTS))
+#define esp_yx_reg_set_y(_dev, _y, _n, _i) iowrite32(_dev, YX_REG + _n, ioread32(_dev, YX_REG + _n) | (_y << (_i * 2 * YX_WIDTH + YX_WIDTH)))
+#define esp_yx_reg_set_x(_dev, _x, _n, _i) iowrite32(_dev, YX_REG + _n, ioread32(_dev, YX_REG + _n) | (_x << (_i * 2 * YX_WIDTH)))
 
 #endif /* __ESP_PROBE_H__ */
