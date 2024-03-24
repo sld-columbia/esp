@@ -822,6 +822,8 @@ package tile is
       wr_request           : in  std_ulogic;
       wr_index             : in  std_logic_vector(31 downto 0);
       wr_length            : in  std_logic_vector(31 downto 0);
+      src_is_p2p           : in  std_ulogic;
+      dst_is_p2p           : in  std_ulogic;
       dma_tran_start       : out std_ulogic;
       dma_tran_header_sent : in  std_ulogic;
       dma_tran_done        : in  std_ulogic;

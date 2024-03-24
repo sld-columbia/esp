@@ -392,6 +392,8 @@ begin  -- rtl
         wr_request           => wr_request,
         wr_index             => wr_index,
         wr_length            => wr_length,
+        src_is_p2p           => p2p_load,
+        dst_is_p2p           => p2p_store,
         dma_tran_start       => dma_tran_start,
         dma_tran_header_sent => dma_tran_header_sent,
         dma_tran_done        => dma_tran_done,
