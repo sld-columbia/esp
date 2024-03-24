@@ -28,33 +28,30 @@
 #define STATUS_MASK_DONE BIT(1)
 #define STATUS_MASK_ERR  BIT(2)
 
-/* bank(2)        : SELECT (which accelerator will run in 1 hot encoding) */
-#define SELECT_REG 0x08
+/* bank(2)        : RESERVED - Read only */
+#define DEVID_REG 0x08
 
-/* bank(3)        : RESERVED - Read only */
-#define DEVID_REG 0x0c
+/* bank(3)        : PT_ADDRESS (page table bus address) */
+#define PT_ADDRESS_REG 0x0c
 
-/* bank(4)        : PT_ADDRESS (page table bus address) */
-#define PT_ADDRESS_REG 0x10
+/* bank(4)        : PT_NCHUNK (number of physical contiguous buffers in memory) */
+#define PT_NCHUNK_REG 0x10
 
-/* bank(5)        : PT_NCHUNK (number of physical contiguous buffers in memory) */
-#define PT_NCHUNK_REG 0x14
+/* bank(5)        : PT_SHIFT (log2(cunk size)) */
+#define PT_SHIFT_REG 0x14
 
-/* bank(6)        : PT_SHIFT (log2(cunk size)) */
-#define PT_SHIFT_REG 0x18
+/* bank(6)        : PT_NCHUNK_MAX (maximum number of chunks supported) - Read only */
+#define PT_NCHUNK_MAX_REG 0x18
 
-/* bank(7)        : PT_NCHUNK_MAX (maximum number of chunks supported) - Read only */
-#define PT_NCHUNK_MAX_REG 0x1c
+/* bank(7)        : PT_ADDRESS_EXTENDED (page table bus address MSBs) */
+#define PT_ADDRESS_EXTENDED_REG 0x1c
 
-/* bank(8)        : PT_ADDRESS_EXTENDED (page table bus address MSBs) */
-#define PT_ADDRESS_EXTENDED_REG 0x20
-
-/* bank(9)        : Type of coherence (None, LLC, Full) - Read only */
-#define COHERENCE_REG 0x24
+/* bank(8)        : Type of coherence (None, LLC, Full) - Read only */
+#define COHERENCE_REG 0x20
 enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_COH_FULL, ACC_COH_AUTO};
 
-/* bank(10)       : Point-to-point configuration */
-#define P2P_REG 0x28
+/* bank(9)       : Point-to-point configuration */
+#define P2P_REG 0x24
 #define P2P_MASK_NSRCS 0x3
 #define P2P_MASK_SRC_IS_P2P BIT(2)
 #define P2P_MASK_DST_IS_P2P BIT(3)
@@ -64,22 +61,28 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 #define P2P_SHIFT_SRCS_X(_n) (4 + _n * 6)
 #define P2P_SHIFT_MCAST_NDESTS 28
 
-/* bank(11)       : RESERVED */
-#define YX_REG 0x2c
+/* bank(10)       : SRC_OFFSET (offset in bytes from beginning of physical buffer) */
+#define SRC_OFFSET_REG 0x28
+
+/* bank(11)       : DST_OFFSET (offset in bytes from beginning of physical buffer) */
+#define DST_OFFSET_REG 0x2C
+
+/* bank(12)       : RESERVED */
+#define SPANDEX_REG 0x30
+
+/* YX_REGs contain a mapping from an accelerator number to a physical tile coordinate */
+/* bank(13)       : YX_REG - LSBs reserved for local tile's coordinates */
+#define YX_REG 0x34
 #define YX_SHIFT_X 0
-#define YX_SHIFT_Y 16
+#define YX_SHIFT_Y 3
 #define YX_MASK_YX 0x7
+#define YX_WIDTH 3
 
-/* bank(12)       : SRC_OFFSET (offset in bytes from beginning of physical buffer) */
-#define SRC_OFFSET_REG 0x30
+/* bank(14)       : YX_REG_2 */
+#define YX_REG_2 0x38
 
-/* bank(13)       : DST_OFFSET (offset in bytes from beginning of physical buffer) */
-#define DST_OFFSET_REG 0x34
-
-/* bank(14)       : RESERVED */
-#define SPANDEX_REG 0x38
-
-/* bank(15)       : RESERVED */
+/* bank(15)       : YX_REG_3 */
+#define YX_REG_3 0x3c
 
 /* bank(16 to 63) : USR (user defined) */
 

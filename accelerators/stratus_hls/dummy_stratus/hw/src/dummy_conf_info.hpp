@@ -19,12 +19,15 @@ public:
     conf_info_t()
         : tokens(0)
         , batch(0)
+        , source(0)
+        , ndests(0)
     {}
 
     // equals operator
     inline bool operator==(const conf_info_t &rhs) const
     {
-        return (tokens == rhs.tokens) && (batch == rhs.batch);
+        return (tokens == rhs.tokens) && (batch == rhs.batch)
+               && (source == rhs.source) && (ndests == rhs.ndests);
     }
 
     // assignment operator
@@ -32,6 +35,8 @@ public:
     {
         tokens = other.tokens;
         batch = other.batch;
+        source = other.source;
+        ndests = other.ndests;
         return *this;
     }
 
@@ -44,12 +49,16 @@ public:
     {
         os << "{ tokens = " << conf_info.tokens
            << ", batch = "  << conf_info.batch
+           << ", source = "  << conf_info.source
+           << ", ndests = "  << conf_info.ndests
            << "}";
         return os;
     }
 
     uint32_t tokens;
     uint32_t batch;
+    uint32_t source;
+    uint32_t ndests;
 };
 
 #endif // __DUMMY_CONF_INFO_HPP__
