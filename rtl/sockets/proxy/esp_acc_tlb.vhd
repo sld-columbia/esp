@@ -76,6 +76,8 @@ entity esp_acc_tlb is
     wr_request           : in  std_ulogic;
     wr_index             : in  std_logic_vector(31 downto 0);
     wr_length            : in  std_logic_vector(31 downto 0);
+    src_is_p2p           : in  std_ulogic;
+    dst_is_p2p           : in  std_ulogic;
     dma_tran_start       : out std_ulogic;
     dma_tran_header_sent : in  std_ulogic;
     dma_tran_done        : in  std_ulogic;
@@ -144,8 +146,6 @@ architecture tlb of esp_acc_tlb is
   signal dma_read_start     : std_ulogic;
 
   -- P2P
-  signal src_is_p2p        : std_ulogic;
-  signal dst_is_p2p        : std_ulogic;
   signal is_p2p_in, is_p2p : std_ulogic;
 
   -- Auxiliary
@@ -159,8 +159,6 @@ begin  -- tlb
 
   tlb_empty <= tlb_empty_int;
   dma_length <= dma_length_int;
-  src_is_p2p <= bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P);
-  dst_is_p2p <= bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P);
 
   -- TODO: without scatter-gather we only support 32-bits physical address and data width
   no_scatter_gather: if scatter_gather = 0 generate
