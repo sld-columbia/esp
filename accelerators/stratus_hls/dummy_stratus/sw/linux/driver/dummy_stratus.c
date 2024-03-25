@@ -14,6 +14,8 @@
 
 #define DUMMY_LEN_REG		0x40
 #define DUMMY_BATCH_REG		0x44
+#define DUMMY_SOURCE_REG		0x48
+#define DUMMY_NDESTS_REG		0x4C
 
 struct dummy_stratus_device {
 	struct esp_device esp;
@@ -47,6 +49,8 @@ static void dummy_prep_xfer(struct esp_device *esp, void *arg)
 
 	iowrite32be(a->tokens, esp->iomem + DUMMY_LEN_REG);
 	iowrite32be(a->batch, esp->iomem + DUMMY_BATCH_REG);
+	iowrite32be(a->source, esp->iomem + DUMMY_SOURCE_REG);
+	iowrite32be(a->ndests, esp->iomem + DUMMY_NDESTS_REG);
 	iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
 	iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
 
