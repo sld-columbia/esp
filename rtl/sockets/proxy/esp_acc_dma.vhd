@@ -490,10 +490,12 @@ begin  -- rtl
     variable length : std_logic_vector(31 downto 0);
     variable len_tmp : std_logic_vector(31 downto 0);
     variable mem_x, mem_y : local_yx;
+    variable is_p2p : std_ulogic;
     variable p2p_src_x, p2p_src_y : local_yx;
     variable p2p_header_v : dma_noc_flit_type;
   begin  -- process make_packet
 
+    is_p2p := '0';
     len_tmp := (others => '0');
     offset := (others => '0');
 
@@ -518,6 +520,7 @@ begin  -- rtl
       length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
       if p2p_store = '1' then
         msg_type := RSP_P2P;
+        is_p2p := '1';
       else
         if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
           msg_type := REQ_DMA_WRITE;
@@ -531,6 +534,7 @@ begin  -- rtl
       length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
       if p2p_load = '1' then
         msg_type := REQ_P2P;
+        is_p2p := '1';
       else
         if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
           msg_type := REQ_DMA_READ;
@@ -572,7 +576,7 @@ begin  -- rtl
 
     header_v := (others => '0');
     header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, hprot);
-    if p2p_store = '0' and p2p_load = '0' then
+    if is_p2p = '0' then
       header <= header_v;
     else
       header <= p2p_header_v;
