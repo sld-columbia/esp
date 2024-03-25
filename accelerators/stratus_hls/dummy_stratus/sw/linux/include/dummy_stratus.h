@@ -21,6 +21,8 @@ struct dummy_stratus_access {
 	struct esp_access esp;
 	unsigned tokens;
 	unsigned batch;
+	unsigned source;
+	unsigned ndests;
 	unsigned src_offset;
 	unsigned dst_offset;
 };
