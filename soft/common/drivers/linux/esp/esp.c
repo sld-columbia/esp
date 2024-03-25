@@ -330,8 +330,8 @@ static long esp_p2p_init(struct esp_device *esp, struct esp_access *access)
 
 	esp_p2p_reset(esp);
 
-	for (i = 1; i <= access->p2p_nsrcs; i++)
-		if (!esp_set_src(esp, access->p2p_srcs[i-1], i, 0))
+	for (i = 0; i < access->p2p_nsrcs; i++)
+		if (!esp_set_src(esp, access->p2p_srcs[i], i, 0))
 			return -ENODEV;
 
 	if (access->p2p_store) {
@@ -353,8 +353,8 @@ static long esp_yx_table_init(struct esp_device *esp, struct esp_access *access)
 {
 	int i = 0;
 
-	for (i = 0; i < access->ndev_yx_table; i++) {
-    	if (!esp_set_src(esp, access->acc_yx_table[i], i, 1))
+	for (i = 1; i <= access->ndev_yx_table; i++) {
+    	if (!esp_set_src(esp, access->acc_yx_table[i-1], i, 1))
 			return -ENODEV;
 
     }
