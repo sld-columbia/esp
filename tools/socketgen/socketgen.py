@@ -117,7 +117,8 @@ class Component():
 #
 bits_per_line = 128
 words_per_line = 4
-phys_addr_bits = 32
+# TODO: Parameterize based off of .esp_config ideally?
+phys_addr_bits = 64
 word_offset_bits = 2
 byte_offset_bits = 2
 offset_bits = 4

@@ -451,8 +451,10 @@ def print_global_constants(fp, soc):
   fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log2(soc.DMA_WIDTH/8))) +";\n")
   fp.write("  constant GLOB_OFFSET_BITS : integer := GLOB_WORD_OFFSET_BITS + GLOB_BYTE_OFFSET_BITS;\n")
   fp.write("  constant GLOB_ADDR_INCR : integer := " + str(int(soc.DMA_WIDTH/8)) +";\n")
-  # TODO: Keep physical address to 32 bits for now to reduce tag size. This will increase to support more memory
-  fp.write("  constant GLOB_PHYS_ADDR_BITS : integer := " + str(32) +";\n")
+  if soc.CPU_ARCH.get() == "ariane" and soc.full_addr_space.get():
+      fp.write("  constant GLOB_PHYS_ADDR_BITS : integer := " + str(64) +";\n")
+  else:
+      fp.write("  constant GLOB_PHYS_ADDR_BITS : integer := " + str(32) +";\n")
   fp.write("  constant GLOB_MAXIOSLV : integer := " + str(NAPBS) + ";\n\n")
 
   #
@@ -2279,7 +2281,10 @@ def print_cache_config(fp, soc, esp_config):
   byte_bits = 2
   word_bits = 2
   if soc.CPU_ARCH.get() == "ariane":
-    addr_bits = 32
+    if soc.full_addr_space.get():
+        addr_bits = 64
+    else:
+        addr_bits = 32
     byte_bits = 3
     word_bits = 1
     fp.write("`define LLSC\n")

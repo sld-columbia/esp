@@ -446,7 +446,8 @@ begin
                 (slvo(i).hconfig(j)(15 downto 4) /= "000000000000")
               then hsel(i) := '1'; hmbsel(j-NAHBIR) := '1'; end if;
             when "11" =>
-              if ((ioen /= 0) and ((IOAREA and IOMSK) = (haddr(31 downto 20) and IOMSK))) and
+              if ((ioen /= 0) and ((IOAREA and IOMSK) = (haddr(31 downto 20) and IOMSK)) and
+                  (haddr(63 downto 32) = X"00000000")) and
                 ((slvo(i).hconfig(j)(31 downto 20) and slvo(i).hconfig(j)(15 downto 4)) =
                  (haddr(19 downto  8) and slvo(i).hconfig(j)(15 downto 4))) and
                 (slvo(i).hconfig(j)(15 downto 4) /= "000000000000")
@@ -473,7 +474,8 @@ begin
                   hsel(12) or hsel(13) or hsel(14) or hsel(15);
     nslave := conv_integer(bnslave(SIMAX downto 0));
 
-    if ((((IOAREA and IOMSK) = (haddr(31 downto 20) and IOMSK)) and (ioen /= 0))
+    if ((((IOAREA and IOMSK) = (haddr(31 downto 20) and IOMSK)) and (ioen /= 0) and
+        (haddr(63 downto 32) = X"00000000"))
       or ((IOAREA = haddr(31 downto 20)) and (ioen = 0))) and
        ((CFGAREA and CFGMSK) = (haddr(19 downto  8) and CFGMSK))
        and (cfgmask /= 0)

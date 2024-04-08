@@ -208,6 +208,10 @@ class CpuFrame(Frame):
     self.fpu_label = Label(self.cpu_frame, text="None", fg="red")
     self.fpu_label.grid(row=2, column=2)
     self.set_cpu_specific_labels(soc)
+
+    Label(self.cpu_frame, text = "Enable Full Address Space: ").grid(row=3, column=1)
+    Checkbutton(self.cpu_frame, text="", variable=soc.full_addr_space,
+                onvalue = 1, offvalue = 0).grid(row=3, column=2)
     
     ttk.Separator(self, orient="horizontal").pack(anchor="nw", fill=X, pady=10)
 

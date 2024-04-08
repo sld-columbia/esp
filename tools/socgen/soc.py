@@ -141,9 +141,17 @@ class SoC_Config():
     # CPU architecture
     line = fp.readline()
     item = line.split()
-    self.CPU_ARCH.set(item[2])
+    arch = item[2]
+    self.CPU_ARCH.set(arch)
     # CPU count (skip this info while rebuilding SoC config)
     line = fp.readline()
+    # CPU Address bits
+    line = fp.readline()
+    item = line.split()
+    if arch == "ariane" and line.find("32"):
+        self.full_addr_space.set(0)
+    else:
+        self.full_addr_space.set(1)
     # Scatter-gather
     line = fp.readline()
     if line.find("CONFIG_HAS_SG = y") != -1:
@@ -301,6 +309,10 @@ class SoC_Config():
     has_dvfs = False;
     fp.write("CPU_ARCH = " + self.CPU_ARCH.get() + "\n")
     fp.write("NCPU_TILE = " + str(self.noc.get_cpu_num(self)) + "\n")
+    if self.full_addr_space.get() and (self.CPU_ARCH.get() == "ariane"):
+        fp.write("GLOB_PHYS_ADDR_BITS = " + str(64) + "\n")
+    else:
+        fp.write("GLOB_PHYS_ADDR_BITS = " + str(32) + "\n")
     if self.transfers.get() == 1:
       fp.write("CONFIG_HAS_SG = y\n")
     else:
@@ -465,6 +477,7 @@ class SoC_Config():
     self.transfers = IntVar()
     # CPU architecture
     self.CPU_ARCH = StringVar()
+    self.full_addr_space = IntVar()
     # Cache hierarchy
     self.cache_en = IntVar()
     self.cache_rtl = IntVar()
