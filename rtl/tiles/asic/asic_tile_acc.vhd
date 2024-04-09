@@ -233,6 +233,10 @@ architecture rtl of asic_tile_acc is
   signal noc5_output_port_tile   : misc_noc_flit_type;
   signal noc6_output_port_tile   : dma_noc_flit_type;
 
+
+  signal acc_activity : std_ulogic;
+  signal LDOCTRL : std_logic_vector(7 downto 0);
+
 begin
 
   rst_noc : rstgen                      -- reset generator
@@ -356,9 +360,9 @@ begin
       pllclk              => clk_div,
       dco_clk             => dco_clk,
       dco_rstn            => dco_rstn,
-      dco_freq_sel        => dco_freq_sel,
+      dco_freq_sel        => LDOCTRL(7 downto 6),
       dco_div_sel         => dco_div_sel,
-      dco_fc_sel          => dco_fc_sel,
+      dco_fc_sel          => LDOCTRL(5 downto 0),
       dco_cc_sel          => dco_cc_sel,
       dco_clk_sel         => dco_clk_sel,
       dco_en              => dco_en,
@@ -400,6 +404,7 @@ begin
       test6_stop_out      => test6_stop_in_s,
       mon_dvfs_in         => monitor_dvfs_none,
       mon_noc             => mon_noc,
+      acc_activity		  => acc_activity,
       mon_acc             => open,
       mon_cache           => open,
       mon_dvfs            => open
@@ -423,9 +428,9 @@ begin
       -- CSRs
       tile_config             => open,
       -- DCO config
-      dco_freq_sel            => dco_freq_sel,
+      dco_freq_sel            => open,
       dco_div_sel             => dco_div_sel,
-      dco_fc_sel              => dco_fc_sel,
+      dco_fc_sel              => open,
       dco_cc_sel              => dco_cc_sel,
       dco_clk_sel             => dco_clk_sel,
       dco_en                  => dco_en,
@@ -507,6 +512,8 @@ begin
       noc6_stop_out           => noc6_stop_out,
       -- monitors
       mon_noc                 => mon_noc,
+      acc_activity			  => acc_activity,
+      LDOCTRL				  => LDOCTRL,
       -- synchronizers out to tile
       noc1_output_port_tile   => noc1_output_port_tile,
       noc1_data_void_out_tile => noc1_data_void_out_tile,

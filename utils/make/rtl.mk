@@ -58,6 +58,10 @@ else
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
 endif
 
+ifeq ($(CONFIG_HAS_DVFS),y)
+VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/dvfs_vlog.flist), $(ESP_ROOT)/rtl/$(f))
+endif
+
 # TO DO this is a temporary solution to include the token-based power management modules
 VLOG_SRCS += $(foreach f, $(ESP_ROOT)/../rtl/sockets/dvfs, $(shell (find $(f) -name "*.v")))
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.v")))
@@ -105,7 +109,7 @@ techmap_flist:
 		(find -L techmap/ -not \( -path techmap/unisim -prune \) -name "*.sv") >> $(ESP_ROOT)/utils/flist/techmap_vlog.flist  ; cd $(ESP_ROOT)/../$(PROJECT_NAME) )
 
 
-check_all_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD)
+check_all_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
 	@echo $(ALL_SIM_SRCS) > $@.new; \
 	if test -f $(RTL_CFG_BUILD)/$@.old; then \
 		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \
@@ -127,7 +131,7 @@ check_all_srcs-distclean:
 
 .PHONY: check_all_srcs check_all_srcs-distclean
 
-check_all_rtl_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD)
+check_all_rtl_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
 	@echo $(ALL_RTL_SRCS) > $@.new; \
 	if test -f $@.old; then \
 		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \

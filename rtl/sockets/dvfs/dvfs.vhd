@@ -171,6 +171,7 @@ component token_pm is
     noc_clk            : in  std_ulogic;
     refclk             : in  std_ulogic;
     tile_clk           : in  std_ulogic;
+	acc_activity       : in  std_ulogic;
     -- runtime configuration for LDO ctrl and token FSM
     pm_config          : in  pm_config_type;
     -- runtime status for LDO ctrl and token FSM
@@ -186,7 +187,9 @@ component token_pm is
     noc5_data_void_out : in  std_ulogic;
     noc5_stop_in       : out std_ulogic;
     -- LDO switch control
-    acc_clk            : out std_ulogic);
+    acc_clk            : out std_ulogic;
+    LDOCTRL			   : out std_logic_vector(7 downto 0)
+  );
 end component token_pm;
 
 end dvfs;

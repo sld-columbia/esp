@@ -40,7 +40,9 @@ entity noc_domain_socket is
     is_tile_io        : boolean              := false;
     SIMULATION        : boolean              := false;
     ROUTER_PORTS      : ports_vec            := "11111";
-    HAS_SYNC          : integer range 0 to 1 := 1);
+    HAS_SYNC          : integer range 0 to 1 := 1;
+    is_asic           : boolean              := false
+	);
   port (
     raw_rstn           : in  std_ulogic;
     noc_rstn           : in  std_ulogic;
@@ -137,6 +139,8 @@ entity noc_domain_socket is
 
     -- monitors
     mon_noc            : out monitor_noc_vector(1 to 6);
+    acc_activity	   : in std_ulogic;
+    LDOCTRL			   : out std_logic_vector(7 downto 0);
 
     -- synchronizers out to tile
     noc1_output_port_tile   : out coh_noc_flit_type;
@@ -298,7 +302,95 @@ architecture rtl of noc_domain_socket is
   signal noc5_output_port_tile_int   : misc_noc_flit_type;
   signal noc6_output_port            : dma_noc_flit_type;
 
-  attribute mark_debug                                : string;
+  attribute keep : string;
+  attribute keep of this_local_y                 : signal is "true";
+  attribute keep of this_local_x                 : signal is "true";
+  attribute keep of tile_config_int              : signal is "true";
+  attribute keep of tile_id                      : signal is "true";
+  attribute keep of apbi                         : signal is "true";
+  attribute keep of apbo                         : signal is "true";
+  attribute keep of pready                       : signal is "true";
+  attribute keep of pready_noc                   : signal is "true";
+  attribute keep of apb_snd_wrreq                : signal is "true";
+  attribute keep of apb_rcv_rdreq                : signal is "true";
+  attribute keep of noc1_stop_in_s               : signal is "true";
+  attribute keep of noc1_stop_out_s              : signal is "true";
+  attribute keep of noc1_stop_in_noc             : signal is "true";
+  attribute keep of noc1_stop_out_noc            : signal is "true";
+  attribute keep of noc1_data_void_in_s          : signal is "true";
+  attribute keep of noc1_data_void_out_s         : signal is "true";
+  attribute keep of noc1_data_void_in_noc        : signal is "true";
+  attribute keep of noc1_data_void_out_noc       : signal is "true";
+  attribute keep of noc2_stop_in_s               : signal is "true";
+  attribute keep of noc2_stop_out_s              : signal is "true";
+  attribute keep of noc2_stop_in_noc             : signal is "true";
+  attribute keep of noc2_stop_out_noc            : signal is "true";
+  attribute keep of noc2_data_void_in_s          : signal is "true";
+  attribute keep of noc2_data_void_out_s         : signal is "true";
+  attribute keep of noc2_data_void_in_noc        : signal is "true";
+  attribute keep of noc2_data_void_out_noc       : signal is "true";
+  attribute keep of noc3_stop_in_s               : signal is "true";
+  attribute keep of noc3_stop_out_s              : signal is "true";
+  attribute keep of noc3_stop_in_noc             : signal is "true";
+  attribute keep of noc3_stop_out_noc            : signal is "true";
+  attribute keep of noc3_data_void_in_s          : signal is "true";
+  attribute keep of noc3_data_void_out_s         : signal is "true";
+  attribute keep of noc3_data_void_in_noc        : signal is "true";
+  attribute keep of noc3_data_void_out_noc       : signal is "true";
+  attribute keep of noc4_stop_in_s               : signal is "true";
+  attribute keep of noc4_stop_out_s              : signal is "true";
+  attribute keep of noc4_stop_in_noc             : signal is "true";
+  attribute keep of noc4_stop_out_noc            : signal is "true";
+  attribute keep of noc4_data_void_in_s          : signal is "true";
+  attribute keep of noc4_data_void_out_s         : signal is "true";
+  attribute keep of noc4_data_void_in_noc        : signal is "true";
+  attribute keep of noc4_data_void_out_noc       : signal is "true";
+  attribute keep of noc5_stop_in_s               : signal is "true";
+  attribute keep of noc5_stop_out_s              : signal is "true";
+  attribute keep of noc5_stop_in_noc             : signal is "true";
+  attribute keep of noc5_stop_in_pm              : signal is "true";
+  attribute keep of noc5_stop_in_csr             : signal is "true";
+  attribute keep of noc5_stop_in_tile_int        : signal is "true";
+  attribute keep of noc5_stop_out_noc            : signal is "true";
+  attribute keep of noc5_stop_out_pm             : signal is "true";
+  attribute keep of noc5_stop_out_csr            : signal is "true";
+  attribute keep of noc5_stop_out_tile_int       : signal is "true";
+  attribute keep of noc5_data_void_in_s          : signal is "true";
+  attribute keep of noc5_data_void_out_s         : signal is "true";
+  attribute keep of noc5_data_void_in_noc        : signal is "true";
+  attribute keep of noc5_data_void_in_pm         : signal is "true";
+  attribute keep of noc5_data_void_in_csr        : signal is "true";
+  attribute keep of noc5_data_void_in_tile_int   : signal is "true";
+  attribute keep of noc5_data_void_out_noc       : signal is "true";
+  attribute keep of noc5_data_void_out_pm        : signal is "true";
+  attribute keep of noc5_data_void_out_csr       : signal is "true";
+  attribute keep of noc5_data_void_out_tile_int  : signal is "true";
+  attribute keep of noc6_stop_in_s               : signal is "true";
+  attribute keep of noc6_stop_out_s              : signal is "true";
+  attribute keep of noc6_stop_in_noc             : signal is "true";
+  attribute keep of noc6_stop_out_noc            : signal is "true";
+  attribute keep of noc6_data_void_in_s          : signal is "true";
+  attribute keep of noc6_data_void_out_s         : signal is "true";
+  attribute keep of noc6_data_void_in_noc        : signal is "true";
+  attribute keep of noc6_data_void_out_noc       : signal is "true";
+  attribute keep of noc1_input_port              : signal is "true";
+  attribute keep of noc2_input_port              : signal is "true";
+  attribute keep of noc3_input_port              : signal is "true";
+  attribute keep of noc4_input_port              : signal is "true";
+  attribute keep of noc5_input_port              : signal is "true";
+  attribute keep of noc5_input_port_pm           : signal is "true";
+  attribute keep of noc5_input_port_csr          : signal is "true";
+  attribute keep of noc5_input_port_tile_int     : signal is "true";
+  attribute keep of noc6_input_port              : signal is "true";
+  attribute keep of noc1_output_port             : signal is "true";
+  attribute keep of noc2_output_port             : signal is "true";
+  attribute keep of noc3_output_port             : signal is "true";
+  attribute keep of noc4_output_port             : signal is "true";
+  attribute keep of noc5_output_port             : signal is "true";
+  attribute keep of noc5_output_port_pm          : signal is "true";
+  attribute keep of noc5_output_port_csr         : signal is "true";
+  attribute keep of noc5_output_port_tile_int    : signal is "true";
+  attribute keep of noc6_output_port             : signal is "true";
 
 begin  -- architecture rtl
 
@@ -542,7 +634,10 @@ begin  -- architecture rtl
         noc5_output_port   => noc5_output_port_pm,
         noc5_data_void_out => noc5_data_void_out_pm,
         noc5_stop_in       => noc5_stop_in_pm,
-        acc_clk            => acc_clk);
+        acc_clk            => acc_clk,
+        acc_activity       => acc_activity,
+        LDOCTRL 		   => LDOCTRL
+    );
   end generate;
 
   no_token_pm_gen : if this_has_token_pm = 0 generate
@@ -551,6 +646,7 @@ begin  -- architecture rtl
     noc5_input_port_pm   <= (others => '0');
     noc5_data_void_in_pm <= '1';
     noc5_stop_in_pm      <= '0';
+    LDOCTRL <= (others => '0');
   end generate;
 
   noc5_mux_i : noc5_mux

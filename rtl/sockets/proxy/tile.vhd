@@ -796,6 +796,7 @@ package tile is
       dma_snd_full                  : in  std_ulogic;
       interrupt_wrreq               : out std_ulogic;
       interrupt_data_in             : out misc_noc_flit_type;
+	  acc_activity					: out std_ulogic;
       interrupt_full                : in  std_ulogic);
   end component;
 
@@ -1061,6 +1062,7 @@ package tile is
       dco_clk_sel        : out  std_ulogic;
       dco_en             : out  std_ulogic;
       dco_clk_delay_sel  : out std_logic_vector(11 downto 0);
+	  acc_activity		 : in std_ulogic;
       -- pad config
       pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NoC
@@ -1138,6 +1140,7 @@ package tile is
       noc6_stop_out      : out std_logic_vector(3 downto 0);
       -- monitors
       mon_noc            : out monitor_noc_vector(1 to 6);
+      LDOCTRL			 : out std_logic_vector(7 downto 0);
       -- synchronizers out to tile
       noc1_output_port_tile   : out coh_noc_flit_type;
       noc1_data_void_out_tile : out std_ulogic;
