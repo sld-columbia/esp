@@ -85,9 +85,9 @@ void mac_sysc_catapult:: load() {
                 uint32_t len1 = rem > PLM_IN_WORD ? PLM_IN_WORD : rem;
 
 #if (DMA_WORD_PER_BEAT == 0)
-                dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len1 * DMA_BEAT_PER_WORD, DMA_SIZE);
+                dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len1 * DMA_BEAT_PER_WORD, DMA_SIZE, 0);
 #else
-                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len1 / DMA_WORD_PER_BEAT, DMA_SIZE);
+                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len1 / DMA_WORD_PER_BEAT, DMA_SIZE, 0);
 #endif
 
                 offset +=len1;
@@ -468,9 +468,9 @@ void mac_sysc_catapult:: store() {
 
                 uint32_t len = rem > PLM_OUT_WORD ? PLM_OUT_WORD : rem;
 #if (DMA_WORD_PER_BEAT == 0)
-                dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+                dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE, 0);
 #else
-                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE, 0);
 #endif
                 offset += len;
 
