@@ -50,8 +50,8 @@ void CCS_BLOCK(sha1_cxx_catapult)(
     uint32 dma_write_data_length = PLM_OUT_SIZE;
 
     // DMA configuration
-    dma_info_t dma_read_info = {0, 0, 0};
-    dma_info_t dma_write_info = {0, 0, 0};
+    dma_info_t dma_read_info = {0, 0, 0, 0};
+    dma_info_t dma_write_info = {0, 0, 0, 0};
 
     // Accelerator configuration
     conf_info_t config;
@@ -78,7 +78,7 @@ void CCS_BLOCK(sha1_cxx_catapult)(
     // - Do some math (ceil) to get the number of data and DMA words given in_bytes
     dma_read_data_index = 0;
     dma_read_data_length = (in_bytes + 4 - 1) / 4; // ceil(in_bytes / 4)
-    dma_read_info = {dma_read_data_index, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD}; // ceil(dma_read_data_legnth / 2)
+    dma_read_info = {dma_read_data_index, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD, 0}; // ceil(dma_read_data_legnth / 2)
     bool dma_read_ctrl_done = false;
 LOAD_CTRL_LOOP:
     do { dma_read_ctrl_done = dma_read_ctrl.nb_write(dma_read_info); } while (!dma_read_ctrl_done);
@@ -128,7 +128,7 @@ LOAD_LOOP:
     // - There are 3 DMA-word as output (last 32bits are zeros)
     dma_write_data_index = dma_read_data_length;
     dma_write_data_length = PLM_OUT_SIZE;
-    dma_write_info = {(dma_write_data_index + 2 - 1) / 2, (dma_write_data_length + 2 - 1) / 2, SIZE_WORD};
+    dma_write_info = {(dma_write_data_index + 2 - 1) / 2, (dma_write_data_length + 2 - 1) / 2, SIZE_WORD, 0};
     bool dma_write_ctrl_done = false;
 STORE_CTRL_LOOP:
     do { dma_write_ctrl_done = dma_write_ctrl.nb_write(dma_write_info); } while (!dma_write_ctrl_done);

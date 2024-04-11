@@ -21,22 +21,24 @@ struct dma_info_t {
     uint32_t index;
     uint32_t length;
     ac_int<3,false> size;
+    ac_int<5,false> user;
 
-    static const unsigned int width = 32+32+3 ;
+    static const unsigned int width = 32+32+3+5 ;
     template <unsigned int Size> void Marshall(Marshaller<Size> &m) {
         m &index;
         m &length;
         m &size;
+        m &user;
     }
 
     dma_info_t()
-        : index(0), length(0) ,size(0){ }
+        : index(0), length(0), size(0), user(0) { }
 
-    dma_info_t(uint32_t i, uint32_t l, ac_int<3,false> s)
-        : index(i), length(l), size(s) { }
+    dma_info_t(uint32_t i, uint32_t l, ac_int<3,false> s, ac_int<5,false> u)
+        : index(i), length(l), size(s), user(u) { }
 
     dma_info_t(const dma_info_t &other)
-        : index(other.index), length(other.length), size(other.size) { }
+        : index(other.index), length(other.length), size(other.size), user(other.user) { }
 
     // Operators
 
@@ -46,6 +48,7 @@ struct dma_info_t {
         index = other.index;
         length = other.length;
         size = other.size;
+        user = other.user;
         return *this;
     }
 
@@ -54,7 +57,8 @@ struct dma_info_t {
     {
         return ((rhs.index == index)
                 && (rhs.length == length)
-                && (rhs.size == size));
+                && (rhs.size == size)
+                && (rhs.user == user));
     }
 
 
@@ -64,7 +68,9 @@ struct dma_info_t {
     friend ostream& operator<<(ostream &os, dma_info_t const &dma_info)
     {
         os << "{" << dma_info.index  << ","
-           << dma_info.length  << "}";
+           << dma_info.length  << ","
+           << dma_info.size  << ","
+           << dma_info.user  << "}";
         return os;
     }
 
@@ -78,6 +84,10 @@ struct dma_info_t {
         sc_trace(tf, v.index, sstm_c.str());
         sstm_c << name << ".length";
         sc_trace(tf, v.length, sstm_c.str());
+        sstm_c << name << ".size";
+        sc_trace(tf, v.size, sstm_c.str());
+        sstm_c << name << ".user";
+        sc_trace(tf, v.user, sstm_c.str());
     }
 
 };
