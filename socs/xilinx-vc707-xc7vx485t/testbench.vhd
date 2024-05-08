@@ -5,26 +5,26 @@
 ------------------------------------------------------------------------------
 
 library ieee;
-use ieee.std_logic_1164.all;
-use work.libdcom.all;
-use work.sim.all;
-use work.amba.all;
-use work.stdlib.all;
-use work.devices.all;
-use work.gencomp.all;
-
-use work.grlib_config.all;
+  use ieee.std_logic_1164.all;
+  use work.libdcom.all;
+  use work.sim.all;
+  use work.amba.all;
+  use work.stdlib.all;
+  use work.devices.all;
+  use work.gencomp.all;
+  use work.grlib_config.all;
 
 entity testbench is
-end;
+end entity testbench;
 
 architecture behav of testbench is
 
-  constant SIMULATION      : boolean := true;
+  constant SIMULATION : boolean := true;
 
   component top is
     generic (
-      SIMULATION      : boolean);
+      simulation : boolean
+    );
     port (
       reset        : in    std_ulogic;
       sys_clk_p    : in    std_ulogic;
@@ -60,12 +60,11 @@ architecture behav of testbench is
       uart_rtsn    : out   std_ulogic;
       button       : in    std_logic_vector(3 downto 0);
       switch       : inout std_logic_vector(4 downto 0);
-      led          : out   std_logic_vector(6 downto 0));
+      led          : out   std_logic_vector(6 downto 0)
+    );
   end component top;
 
-
   -- Bein TOP-level interface --
-
 
   -- Reset and clocl
   signal reset     : std_ulogic := '1';
@@ -112,7 +111,7 @@ architecture behav of testbench is
   signal switch : std_logic_vector(4 downto 0);
   signal led    : std_logic_vector(6 downto 0);
 
-  -- End TOP-level interface --
+-- End TOP-level interface --
 
 begin
 
@@ -125,7 +124,6 @@ begin
   ddr3_dq    <= (others => 'Z');
   ddr3_dqs_p <= (others => 'Z');
   ddr3_dqs_n <= (others => 'Z');
-
 
   -- Ethernet (There is no behavioral testbench for the SGMII PHY)
   gtrefclk_p <= not gtrefclk_p after 4 ns;
@@ -143,10 +141,10 @@ begin
   button <= (others => '0');
   switch <= (others => '0');
 
-
   top_1 : entity work.top
     generic map (
-      SIMULATION      => SIMULATION)
+      simulation => SIMULATION
+    )
     port map (
       reset        => reset,
       sys_clk_p    => sys_clk_p,
@@ -182,7 +180,8 @@ begin
       uart_rtsn    => uart_rtsn,
       button       => button,
       switch       => switch,
-      led          => led);
+      led          => led
+    );
 
-end;
+end architecture behav;
 

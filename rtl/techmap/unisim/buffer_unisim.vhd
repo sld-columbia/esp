@@ -16,71 +16,121 @@
 --
 --  You should have received a copy of the GNU General Public License
 --  along with this program; if not, write to the Free Software
---  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -----------------------------------------------------------------------------
--- Entity: 	clkbuf_xilinx
--- File:	clkbuf_xilinx.vhd
--- Author:	Marko Isomaki, Jiri GAisler - Gaisler Research
--- Description:	Clock buffer generator for Xilinx devices
+-- Entity:   clkbuf_xilinx
+-- File:  clkbuf_xilinx.vhd
+-- Author:  Marko Isomaki, Jiri GAisler - Gaisler Research
+-- Description:  Clock buffer generator for Xilinx devices
 ------------------------------------------------------------------------------
+
 library ieee;
-use ieee.std_logic_1164.all;
+  use ieee.std_logic_1164.all;
 -- pragma translate_off
+
 library unisim;
-use unisim.vcomponents.BUFGMUX;
-use unisim.vcomponents.BUFG;
+  use unisim.vcomponents.bufgmux;
+  use unisim.vcomponents.bufg;
 -- pragma translate_on
 
 entity clkbuf_xilinx is
-  generic(
-    buftype :  integer range 0 to 3 := 0);
-  port(
-    i       :  in  std_ulogic;
-    o       :  out std_ulogic
+  generic (
+    buftype : integer range 0 to 3 := 0
   );
-end entity;
+  port (
+    i : in    std_ulogic;
+    o : out   std_ulogic
+  );
+end entity clkbuf_xilinx;
 
 architecture rtl of clkbuf_xilinx is
-  component BUFGMUX port (O : out std_logic; I0, I1, S : in std_logic); end component;
-  component BUFG port (O : out std_logic; I : in std_logic); end component;
-  signal gnd  : std_ulogic;
-  signal x  : std_ulogic;
+
+  component bufgmux is port (
+      o  : out   std_logic;
+      i0 : in    std_logic;
+      i1 : in    std_logic;
+      s  : in    std_logic
+    ); end component;
+
+  component bufg is port (
+      o : out   std_logic;
+      i : in    std_logic
+    ); end component;
+
+  signal gnd : std_ulogic;
+  signal x   : std_ulogic;
   attribute syn_noclockbuf : boolean;
   attribute syn_noclockbuf of x : signal is true;
+
 begin
+
   gnd <= '0';
-  buf0 : if (buftype = 0) or (buftype > 2) generate 
+
+  buf0 : if (buftype = 0) or (buftype > 2) generate
     x <= i; o <= x;
-  end generate;
-  buf1 : if buftype = 1 generate 
-    buf : bufgmux port map(S => gnd, I0 => i, I1 => gnd, O => o);
-  end generate;
-  buf2 : if (buftype = 2) generate 
-    buf : bufg port map(I => i, O => o);
-  end generate;
-  
-end architecture;
+  end generate buf0;
+
+  buf1 : if buftype = 1 generate
+
+    buf : component bufgmux
+      port map (
+        s  => gnd,
+        i0 => i,
+        i1 => gnd,
+        o  => o
+      );
+
+  end generate buf1;
+
+  buf2 : if (buftype = 2) generate
+
+    buf : component bufg
+      port map (
+        i => i,
+        o => o
+      );
+
+  end generate buf2;
+
+end architecture rtl;
 
 library ieee;
-use ieee.std_logic_1164.all;
+  use ieee.std_logic_1164.all;
 -- pragma translate_off
+
 library unisim;
-use unisim.vcomponents.BUFGMUX;
+  use unisim.vcomponents.bufgmux;
 -- pragma translate_on
 
 entity clkmux_xilinx is
-  port(
-    i0, i1  :  in  std_ulogic;
-    sel     :  in  std_ulogic;
-    o       :  out std_ulogic
+  port (
+    i0  : in    std_ulogic;
+    i1  : in    std_ulogic;
+    sel : in    std_ulogic;
+    o   : out   std_ulogic
   );
-end entity;
+end entity clkmux_xilinx;
 
 architecture rtl of clkmux_xilinx is
-  component BUFGMUX port (O : out std_logic; I0, I1, S : in std_logic); end component;
+
+  component bufgmux is port (
+      o  : out   std_logic;
+      i0 : in    std_logic;
+      i1 : in    std_logic;
+      s  : in    std_logic
+    ); end component;
+
 begin
-  buf : bufgmux port map(S => sel, I0 => i0, I1 => i1, O => o);
-end architecture;
+
+  buf : component bufgmux
+    port map (
+      s  => sel,
+      i0 => i0,
+      i1 => i1,
+      o  => o
+    );
+
+end architecture rtl;
 
 
 

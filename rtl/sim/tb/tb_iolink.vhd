@@ -2,29 +2,30 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use work.esp_global.all;
-use work.stdlib.all;
--- pragma translate_off
-use work.sim.all;
-use std.textio.all;
-use work.stdio.all;
--- pragma translate_on
-use work.tb_pkg.all;
-use work.esp_global.all;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+  use work.esp_global.all;
+  use work.stdlib.all;
+  -- pragma translate_off
+  use work.sim.all;
+  use std.textio.all;
+  use work.stdio.all;
+  -- pragma translate_on
+  use work.tb_pkg.all;
+  use work.esp_global.all;
 
 entity tb_iolink is
   port (
-    reset                 : in  std_ulogic;
-    iolink_clk_in_int     : in  std_ulogic;
-    iolink_valid_in_int   : in  std_ulogic;
-    iolink_data_in_int    : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
-    iolink_clk_out_int    : in  std_ulogic;
-    iolink_credit_out_int : out std_ulogic;
-    iolink_valid_out_int  : out std_ulogic;
-    iolink_data_out_int   : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
-    iolink_data_oen       : out std_ulogic);
+    reset                 : in    std_ulogic;
+    iolink_clk_in_int     : in    std_ulogic;
+    iolink_valid_in_int   : in    std_ulogic;
+    iolink_data_in_int    : in    std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_clk_out_int    : in    std_ulogic;
+    iolink_credit_out_int : out   std_ulogic;
+    iolink_valid_out_int  : out   std_ulogic;
+    iolink_data_out_int   : out   std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_data_oen       : out   std_ulogic
+  );
 end entity tb_iolink;
 
 architecture rtl of tb_iolink is
@@ -42,10 +43,10 @@ begin
   ---------------------------------------------------------------------------
   -- Basic testbench for ESP SoC using IOLink
   ---------------------------------------------------------------------------
-  test_iolink : process
+  test_iolink : process is
 
     file bootloader : text open read_mode is "../soft-build/" & CPU_STR & "/prom.txt";
-    --file program    : text open read_mode is "../soft-build/ariane/systest.txt";
+    -- file program    : text open read_mode is "../soft-build/ariane/systest.txt";
 
     variable text_word, text_data : line;
     variable word_var             : std_logic_vector(31 downto 0);
@@ -67,70 +68,71 @@ begin
 
     -- TEST of CSR Read through IOLink; uncomment to run
     -- send address
-    --word <= X"000000006009078D";
-    --snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+    -- word <= X"000000006009078D";
+    -- snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
     -- send length
-    --word <= X"0000000000000001";
-    --snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+    -- word <= X"0000000000000001";
+    -- snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
 
-    --word <= X"0000000000014085";
-    --snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+    -- word <= X"0000000000014085";
+    -- snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
 
-    --iolink_data_oen <= '0';
+    -- iolink_data_oen <= '0';
 
-    --while true loop
+    -- while true loop
     --  wait until rising_edge(iolink_clk_in_int);
     --  if iolink_valid_in_int = '1' then
     --    word(15 downto 0) <= iolink_data_in_int;
     --    exit;
     --  end if;
-    --end loop;
+    -- end loop;
 
-    --while true loop
+    -- while true loop
     --  wait until rising_edge(iolink_clk_in_int);
     --    if iolink_valid_in_int = '1' then
     --    word(31 downto 16) <= iolink_data_in_int;
     --    exit;
     --  end if;
-    --end loop;
+    -- end loop;
 
-    --while true loop
+    -- while true loop
     --  wait until rising_edge(iolink_clk_in_int);
     --    if iolink_valid_in_int = '1' then
     --    word(47 downto 32) <= iolink_data_in_int;
     --    exit;
     --  end if;
-    --end loop;
+    -- end loop;
 
-    --while true loop
+    -- while true loop
     --  wait until rising_edge(iolink_clk_in_int);
     --    if iolink_valid_in_int = '1' then
     --    word(63 downto 48) <= iolink_data_in_int;
     --    exit;
     --  end if;
-    --end loop;
+    -- end loop;
 
-    --wait until rising_edge(iolink_clk_out_int);
-    --iolink_credit_out_int <= '1';
-    --wait until rising_edge(iolink_clk_out_int);
-    --iolink_credit_out_int <= '0';
-    --iolink_data_oen       <= '1';
+    -- wait until rising_edge(iolink_clk_out_int);
+    -- iolink_credit_out_int <= '1';
+    -- wait until rising_edge(iolink_clk_out_int);
+    -- iolink_credit_out_int <= '0';
+    -- iolink_data_oen       <= '1';
 
-    --wait for 0.2 ns;
+    -- wait for 0.2 ns;
 
-    --report "word: " & integer'image(to_integer(unsigned(word)));
-
+    -- report "word: " & integer'image(to_integer(unsigned(word)));
 
     ---------------------------------------------------------------------------
     -- send first 2 soft resets
     ---------------------------------------------------------------------------
     for i in 0 to 1 loop
+
       -- send address
-      if CPU_STR = "leon3" then
+      if (CPU_STR = "leon3") then
         word <= X"80000401";
       else
         word <= X"60000401";
       end if;
+
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       -- send length
       word <= X"00000001";
@@ -139,19 +141,21 @@ begin
       word <= X"00000001";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       wait for 100000 ns;
-    end loop;  -- i
+
+    end loop;                                                         -- i
 
     ---------------------------------------------------------------------------
     -- Send bootloader binary
     ---------------------------------------------------------------------------
     -- send address
-    if CPU_STR = "ibex" then
+    if (CPU_STR = "ibex") then
       word <= X"00000081";
-    elsif CPU_STR = "ariane" then
+    elsif (CPU_STR = "ariane") then
       word <= X"00010001";
     else
       word <= X"00000001";
     end if;
+
     snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
     -- send length
     readline(bootloader, text_word);
@@ -160,47 +164,50 @@ begin
     snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
     -- send data
     while not endfile(bootloader) loop
+
       readline(bootloader, text_word);
       hread(text_word, word_var, ok);
       word <= word_var;
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+
     end loop;
 
     ---------------------------------------------------------------------------
     -- Send program binary
     ---------------------------------------------------------------------------
     -- send address
-    --word           <= X"0000000080000001";
-    --snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+    -- word           <= X"0000000080000001";
+    -- snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
     -- send length
-    --readline(program, text_word);
-    --hread(text_word, word_var, ok);
-    --program_length := to_integer(unsigned(word_var));
-    --word           <= word_var + X"3e8";  -- add 0s at the end of the prorgam (TODO is it needed?)
-    --snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+    -- readline(program, text_word);
+    -- hread(text_word, word_var, ok);
+    -- program_length := to_integer(unsigned(word_var));
+    -- word           <= word_var + X"3e8";  -- add 0s at the end of the prorgam (TODO is it needed?)
+    -- snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
     -- send data
-    --while not endfile(program) loop
+    -- while not endfile(program) loop
     --  readline(program, text_word);
     --  hread(text_word, word_var, ok);
     --  word <= word_var;
     --  snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-    --end loop;
-    --word <= X"0000000000000000";  -- add 0s at the end of the prorgam (TODO is it needed?)
-    --for i in 0 to 999 loop
+    -- end loop;
+    -- word <= X"0000000000000000";  -- add 0s at the end of the prorgam (TODO is it needed?)
+    -- for i in 0 to 999 loop
     --  snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-    --end loop;
-
+    -- end loop;
 
     ---------------------------------------------------------------------------
     -- Send last 2 soft resets
     ---------------------------------------------------------------------------
     for i in 0 to 1 loop
+
       -- send address
-      if CPU_STR = "leon3" then
+      if (CPU_STR = "leon3") then
         word <= X"80000401";
       else
         word <= X"60000401";
       end if;
+
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       -- send length
       word <= X"00000001";
@@ -209,8 +216,11 @@ begin
       word <= X"00000001";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       wait for 100000 ns;
-    end loop;  -- i
-  end process;
-  -- pragma translate_on
+
+    end loop;                                                         -- i
+
+  end process test_iolink;
+
+-- pragma translate_on
 
 end architecture rtl;

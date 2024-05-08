@@ -5,79 +5,81 @@
 ------------------------------------------------------------------------------
 
 library ieee;
-use ieee.std_logic_1164.all;
-use work.libdcom.all;
-use work.sim.all;
-use work.amba.all;
-use work.stdlib.all;
-use work.devices.all;
-use work.gencomp.all;
-use work.grlib_config.all;
-use work.sim.all;
-use work.esp_global.all;
-use work.socmap.all;
+  use ieee.std_logic_1164.all;
+  use work.libdcom.all;
+  use work.sim.all;
+  use work.amba.all;
+  use work.stdlib.all;
+  use work.devices.all;
+  use work.gencomp.all;
+  use work.grlib_config.all;
+  use work.sim.all;
+  use work.esp_global.all;
+  use work.socmap.all;
 
 entity testbench is
-end;
+end entity testbench;
 
 architecture behav of testbench is
 
-  constant SIMULATION      : boolean := true;
+  constant SIMULATION : boolean := true;
 
-  constant promfile : string := "prom.srec";  -- rom contents
-  constant ramfile  : string := "ram.srec";   -- ram contents
+  constant PROMFILE : string := "prom.srec"; -- rom contents
+  constant RAMFILE  : string := "ram.srec";  -- ram contents
 
   component top is
     generic (
-      SIMULATION : boolean);
+      simulation : boolean
+    );
     port (
-      reset       : in  std_ulogic;
-      chip_refclk : in  std_ulogic;
-      uart_rxd    : in  std_ulogic;
-      uart_txd    : out std_ulogic;
-      uart_ctsn   : in  std_ulogic;
-      uart_rtsn   : out std_ulogic;
-      led         : out std_logic_vector(6 downto 0);
-      so_hready   : in  std_ulogic;
-      so_hresp    : in  std_logic_vector(1 downto 0);
-      so_hrdata   : in  std_logic_vector(AHBDW - 1 downto 0);
-      si_htrans   : out std_logic_vector(1 downto 0);
-      si_haddr    : out std_logic_vector(31 downto 0);
-      si_hwrite   : out std_ulogic;
-      si_hsize    : out std_logic_vector(2 downto 0);
-      si_hburst   : out std_logic_vector(2 downto 0);
-      si_hprot    : out std_logic_vector(3 downto 0);
-      si_hwdata   : out std_logic_vector(AHBDW - 1 downto 0);
-      si_hsel     : out std_ulogic;
-      si_hready   : out std_ulogic;
-      mi_hready   : out std_ulogic;
-      mi_hresp    : out std_logic_vector(1 downto 0);
-      mi_hrdata   : out std_logic_vector(31 downto 0);
-      mo_hlock    : in  std_ulogic;
-      mo_htrans   : in  std_logic_vector(1 downto 0);
-      mo_haddr    : in  std_logic_vector(31 downto 0);
-      mo_hwrite   : in  std_ulogic;
-      mo_hsize    : in  std_logic_vector(2 downto 0);
-      mo_hburst   : in  std_logic_vector(2 downto 0);
-      mo_hprot    : in  std_logic_vector(3 downto 0);
-      mo_hwdata   : in  std_logic_vector(31 downto 0));
+      reset       : in    std_ulogic;
+      chip_refclk : in    std_ulogic;
+      uart_rxd    : in    std_ulogic;
+      uart_txd    : out   std_ulogic;
+      uart_ctsn   : in    std_ulogic;
+      uart_rtsn   : out   std_ulogic;
+      led         : out   std_logic_vector(6 downto 0);
+      so_hready   : in    std_ulogic;
+      so_hresp    : in    std_logic_vector(1 downto 0);
+      so_hrdata   : in    std_logic_vector(AHBDW - 1 downto 0);
+      si_htrans   : out   std_logic_vector(1 downto 0);
+      si_haddr    : out   std_logic_vector(31 downto 0);
+      si_hwrite   : out   std_ulogic;
+      si_hsize    : out   std_logic_vector(2 downto 0);
+      si_hburst   : out   std_logic_vector(2 downto 0);
+      si_hprot    : out   std_logic_vector(3 downto 0);
+      si_hwdata   : out   std_logic_vector(AHBDW - 1 downto 0);
+      si_hsel     : out   std_ulogic;
+      si_hready   : out   std_ulogic;
+      mi_hready   : out   std_ulogic;
+      mi_hresp    : out   std_logic_vector(1 downto 0);
+      mi_hrdata   : out   std_logic_vector(31 downto 0);
+      mo_hlock    : in    std_ulogic;
+      mo_htrans   : in    std_logic_vector(1 downto 0);
+      mo_haddr    : in    std_logic_vector(31 downto 0);
+      mo_hwrite   : in    std_ulogic;
+      mo_hsize    : in    std_logic_vector(2 downto 0);
+      mo_hburst   : in    std_logic_vector(2 downto 0);
+      mo_hprot    : in    std_logic_vector(3 downto 0);
+      mo_hwdata   : in    std_logic_vector(31 downto 0)
+    );
   end component top;
 
   -- ESP top
-  signal so_hready   : std_ulogic;
-  signal so_hresp    : std_logic_vector(1 downto 0);
-  signal so_hrdata   : std_logic_vector(AHBDW - 1 downto 0);
-  signal si_htrans   : std_logic_vector(1 downto 0);
-  signal si_haddr    : std_logic_vector(31 downto 0);
-  signal si_hwrite   : std_ulogic;
-  signal si_hsize    : std_logic_vector(2 downto 0);
-  signal si_hburst   : std_logic_vector(2 downto 0);
-  signal si_hprot    : std_logic_vector(3 downto 0);
-  signal si_hwdata   : std_logic_vector(AHBDW - 1 downto 0);
-  signal mi_hready   : std_ulogic;
-  signal mi_hresp    : std_logic_vector(1 downto 0);
-  signal si_hsel     : std_ulogic;
-  signal si_hready   : std_ulogic;
+  signal so_hready : std_ulogic;
+  signal so_hresp  : std_logic_vector(1 downto 0);
+  signal so_hrdata : std_logic_vector(AHBDW - 1 downto 0);
+  signal si_htrans : std_logic_vector(1 downto 0);
+  signal si_haddr  : std_logic_vector(31 downto 0);
+  signal si_hwrite : std_ulogic;
+  signal si_hsize  : std_logic_vector(2 downto 0);
+  signal si_hburst : std_logic_vector(2 downto 0);
+  signal si_hprot  : std_logic_vector(3 downto 0);
+  signal si_hwdata : std_logic_vector(AHBDW - 1 downto 0);
+  signal mi_hready : std_ulogic;
+  signal mi_hresp  : std_logic_vector(1 downto 0);
+  signal si_hsel   : std_ulogic;
+  signal si_hready : std_ulogic;
 
   -- PS-side memory model
   signal ddr_ahbsi : ahb_slv_in_type;
@@ -96,7 +98,7 @@ architecture behav of testbench is
   signal uart_rtsn : std_ulogic;
 
   -- GPIO
-  signal led    : std_logic_vector(6 downto 0);
+  signal led : std_logic_vector(6 downto 0);
 
 begin
 
@@ -113,13 +115,17 @@ begin
   rstn <= not reset;
 
   ddr_ahbsi.hready <= si_hready;
+
   hsel_gen : process (si_hsel) is
   begin  -- process hsel_gen
+
     ddr_ahbsi.hsel                <= (others => '0');
     ddr_ahbsi.hsel(0)             <= si_hsel;
     ddr_ahbsi.hmaster             <= (others => '0');
     ddr_ahbsi.hmaster(CFG_DEFMST) <= '1';
+
   end process hsel_gen;
+
   ddr_ahbsi.htrans    <= si_htrans;
   ddr_ahbsi.haddr     <= si_haddr;
   ddr_ahbsi.hwrite    <= si_hwrite;
@@ -136,10 +142,10 @@ begin
   ddr_ahbsi.testin    <= (others => '0');
 
   so_hready <= ddr_ahbso.hready;
-  so_hresp <= ddr_ahbso.hresp;
+  so_hresp  <= ddr_ahbso.hresp;
   so_hrdata <= ddr_ahbso.hrdata;
 
-  ddr_model : ahbram_sim
+  ddr_model : component ahbram_sim
     generic map (
       hindex => 0,
       tech   => 0,
@@ -147,21 +153,21 @@ begin
       pipe   => 0,
       maccsz => AHBDW,
       fname  => "ram.srec"
-      )
-    port map(
+    )
+    port map (
       rst   => rstn,
       clk   => chip_refclk,
-      haddr => 16#400#, -- ZCU102 has fixed address mapping!
+      haddr => 16#400#,
       hmask => ddr_hmask(0),
       ahbsi => ddr_ahbsi,
       ahbso => ddr_ahbso
-      );
-
+    );
 
   -- ESP top
-  cpu : top
+  cpu : component top
     generic map (
-      SIMULATION => SIMULATION)
+      simulation => SIMULATION
+    )
     port map (
       reset       => reset,
       chip_refclk => chip_refclk,
@@ -193,7 +199,6 @@ begin
       mo_hburst   => (others => '0'),
       mo_hprot    => (others => '0'),
       mo_hwdata   => (others => '0')
-      );
+    );
 
-
-end;
+end architecture behav;

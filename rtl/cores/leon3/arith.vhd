@@ -16,136 +16,159 @@
 --
 --  You should have received a copy of the GNU General Public License
 --  along with this program; if not, write to the Free Software
---  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -----------------------------------------------------------------------------
--- Package: 	arith
--- File:	arith.vhd
--- Author:	Jiri Gaisler, Gaisler Research
--- Description:	Declaration of mul/div components
+-- Package:   arith
+-- File:  arith.vhd
+-- Author:  Jiri Gaisler, Gaisler Research
+-- Description:  Declaration of mul/div components
 ------------------------------------------------------------------------------
 
 library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
 
 package arith is
 
-type div32_in_type is record
-  y                : std_logic_vector(32 downto 0); -- Y (MSB divident)
-  op1              : std_logic_vector(32 downto 0); -- operand 1 (LSB divident)
-  op2              : std_logic_vector(32 downto 0); -- operand 2 (divisor)
-  flush            : std_logic;
-  signed           : std_logic;
-  start            : std_logic;
-end record;
+  type div32_in_type is record
+    y      : std_logic_vector(32 downto 0); -- Y (MSB divident)
+    op1    : std_logic_vector(32 downto 0); -- operand 1 (LSB divident)
+    op2    : std_logic_vector(32 downto 0); -- operand 2 (divisor)
+    flush  : std_logic;
+    signed : std_logic;
+    start  : std_logic;
+  end record div32_in_type;
 
-type div32_out_type is record
-  ready           : std_logic;
-  nready          : std_logic;
-  icc             : std_logic_vector(3 downto 0); -- ICC
-  result          : std_logic_vector(31 downto 0); -- div result
-end record;
+  type div32_out_type is record
+    ready  : std_logic;
+    nready : std_logic;
+    icc    : std_logic_vector(3 downto 0);  -- ICC
+    result : std_logic_vector(31 downto 0); -- div result
+  end record div32_out_type;
 
-type mul32_in_type is record
-  op1              : std_logic_vector(32 downto 0); -- operand 1
-  op2              : std_logic_vector(32 downto 0); -- operand 2
-  flush            : std_logic;
-  signed           : std_logic;
-  start            : std_logic;
-  mac              : std_logic;
-  acc              : std_logic_vector(39 downto 0);
-  --y                : std_logic_vector(7 downto 0); -- Y (MSB MAC register)
-  --asr18           : std_logic_vector(31 downto 0); -- LSB MAC register
-end record;
+  type mul32_in_type is record
+    op1    : std_logic_vector(32 downto 0); -- operand 1
+    op2    : std_logic_vector(32 downto 0); -- operand 2
+    flush  : std_logic;
+    signed : std_logic;
+    start  : std_logic;
+    mac    : std_logic;
+    acc    : std_logic_vector(39 downto 0);
+  -- y                : std_logic_vector(7 downto 0); -- Y (MSB MAC register)
+  -- asr18           : std_logic_vector(31 downto 0); -- LSB MAC register
+  end record mul32_in_type;
 
-type mul32_out_type is record
-  ready           : std_logic;
-  nready          : std_logic;
-  icc             : std_logic_vector(3 downto 0); -- ICC
-  result          : std_logic_vector(63 downto 0); -- mul result
-end record;
+  type mul32_out_type is record
+    ready  : std_logic;
+    nready : std_logic;
+    icc    : std_logic_vector(3 downto 0);  -- ICC
+    result : std_logic_vector(63 downto 0); -- mul result
+  end record mul32_out_type;
 
-component div32
-generic (scantest  : integer := 0);
-port (
-    rst     : in  std_ulogic;
-    clk     : in  std_ulogic;
-    holdn   : in  std_ulogic;
-    divi    : in  div32_in_type;
-    divo    : out div32_out_type;
-    testen  : in  std_ulogic := '0';
-    testrst : in  std_ulogic := '1'
-);
-end component;
+  component div32 is
+    generic (
+      scantest : integer := 0
+    );
+    port (
+      rst     : in    std_ulogic;
+      clk     : in    std_ulogic;
+      holdn   : in    std_ulogic;
+      divi    : in    div32_in_type;
+      divo    : out   div32_out_type;
+      testen  : in    std_ulogic := '0';
+      testrst : in    std_ulogic := '1'
+    );
+  end component;
 
-component mul32
-generic (
-    tech    : integer := 0;
-    multype : integer := 0;
-    pipe    : integer := 0;
-    mac     : integer := 0;
-    arch    : integer range 0 to 3 := 0;
-    scantest: integer := 0
-);
-port (
-    rst     : in  std_ulogic;
-    clk     : in  std_ulogic;
-    holdn   : in  std_ulogic;
-    muli    : in  mul32_in_type;
-    mulo    : out mul32_out_type;
-    testen  : in  std_ulogic := '0';
-    testrst : in  std_ulogic := '1'
-);
-end component;
+  component mul32 is
+    generic (
+      tech     : integer := 0;
+      multype  : integer := 0;
+      pipe     : integer := 0;
+      mac      : integer := 0;
+      arch     : integer range 0 to 3 := 0;
+      scantest : integer := 0
+    );
+    port (
+      rst     : in    std_ulogic;
+      clk     : in    std_ulogic;
+      holdn   : in    std_ulogic;
+      muli    : in    mul32_in_type;
+      mulo    : out   mul32_out_type;
+      testen  : in    std_ulogic := '0';
+      testrst : in    std_ulogic := '1'
+    );
+  end component;
 
-function smult ( a, b  : in  std_logic_vector) return std_logic_vector;
-function umult ( a, b  : in  std_logic_vector) return std_logic_vector;
+  function smult (
+    a,
+    b  : in  std_logic_vector
+  ) return std_logic_vector;
 
-end;
+  function umult (
+    a,
+    b  : in  std_logic_vector
+  ) return std_logic_vector;
+
+end package arith;
 
 package body arith is
 
-function smult ( a, b  : in  std_logic_vector) return std_logic_vector is
-  variable sa : signed (a'length-1 downto 0);
-  variable sb : signed (b'length-1 downto 0);
-  variable sc : signed ((a'length + b'length) -1 downto 0);
-  variable res : std_logic_vector ((a'length + b'length) -1 downto 0);
-begin
+  function smult (
+    a,
+    b  : in  std_logic_vector
+  ) return std_logic_vector is
 
-  sa := signed(a); sb := signed(b);
--- pragma translate_off
-  if is_x(a) or is_x(b) then
-    sc := (others => 'X');
-  else
--- pragma translate_on
-    sc := sa * sb;
--- pragma translate_off
-  end if;
--- pragma translate_on
-  res := std_logic_vector(sc);
-  return(res);
-end;
+    variable sa  : signed (a'length-1 downto 0);
+    variable sb  : signed (b'length-1 downto 0);
+    variable sc  : signed ((a'length + b'length) - 1 downto 0);
+    variable res : std_logic_vector((a'length + b'length) - 1 downto 0);
 
-function umult ( a, b  : in  std_logic_vector) return std_logic_vector is
-  variable sa : unsigned (a'length-1 downto 0);
-  variable sb : unsigned (b'length-1 downto 0);
-  variable sc : unsigned ((a'length + b'length) -1 downto 0);
-  variable res : std_logic_vector ((a'length + b'length) -1 downto 0);
-begin
+  begin
 
-  sa := unsigned(a); sb := unsigned(b);
--- pragma translate_off
-  if is_x(a) or is_x(b) then
-    sc := (others => 'X');
-  else
--- pragma translate_on
-    sc := sa * sb;
--- pragma translate_off
-  end if;
--- pragma translate_on
-  res := std_logic_vector(sc);
-  return(res);
-end;
+    sa := signed(a); sb := signed(b);
+    -- pragma translate_off
+    if (is_x(a) or is_x(b)) then
+      sc := (others => 'X');
+    else
+      -- pragma translate_on
+      sc := sa * sb;
+    -- pragma translate_off
+    end if;
 
-end;
+    -- pragma translate_on
+    res := std_logic_vector(sc);
+    return(res);
+
+  end function;
+
+  function umult (
+    a,
+    b  : in  std_logic_vector
+  ) return std_logic_vector is
+
+    variable sa  : unsigned (a'length-1 downto 0);
+    variable sb  : unsigned (b'length-1 downto 0);
+    variable sc  : unsigned ((a'length + b'length) - 1 downto 0);
+    variable res : std_logic_vector((a'length + b'length) - 1 downto 0);
+
+  begin
+
+    sa := unsigned(a); sb := unsigned(b);
+    -- pragma translate_off
+    if (is_x(a) or is_x(b)) then
+      sc := (others => 'X');
+    else
+      -- pragma translate_on
+      sc := sa * sb;
+    -- pragma translate_off
+    end if;
+
+    -- pragma translate_on
+    res := std_logic_vector(sc);
+    return(res);
+
+  end function;
+
+end package body arith;
 

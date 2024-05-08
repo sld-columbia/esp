@@ -5,29 +5,29 @@
 ------------------------------------------------------------------------------
 
 library ieee;
-use ieee.std_logic_1164.all;
-use work.libdcom.all;
-use work.sim.all;
-use work.amba.all;
-use work.stdlib.all;
-use work.devices.all;
-use work.gencomp.all;
-
-use work.grlib_config.all;
+  use ieee.std_logic_1164.all;
+  use work.libdcom.all;
+  use work.sim.all;
+  use work.amba.all;
+  use work.stdlib.all;
+  use work.devices.all;
+  use work.gencomp.all;
+  use work.grlib_config.all;
 
 entity testbench is
-end;
+end entity testbench;
 
 architecture behav of testbench is
 
-  constant SIMULATION      : boolean := true;
+  constant SIMULATION : boolean := true;
 
-  constant promfile : string := "prom.srec";  -- rom contents
-  constant ramfile  : string := "ram.srec";   -- ram contents
+  constant PROMFILE : string := "prom.srec"; -- rom contents
+  constant RAMFILE  : string := "ram.srec";  -- ram contents
 
   component top is
     generic (
-      SIMULATION      : boolean);
+      simulation : boolean
+    );
     port (
       reset            : in    std_ulogic;
       c0_sys_clk_p     : in    std_logic;
@@ -60,17 +60,18 @@ architecture behav of testbench is
       uart_txd         : out   std_ulogic;
       uart_ctsn        : in    std_ulogic;
       uart_rtsn        : out   std_ulogic;
-      led              : out   std_logic_vector(6 downto 0));
+      led              : out   std_logic_vector(6 downto 0)
+    );
   end component top;
 
--- Bein TOP-level interface --
+  -- Bein TOP-level interface --
 
--- Reset and clock
+  -- Reset and clock
   signal reset        : std_ulogic := '1';
   signal c0_sys_clk_p : std_logic  := '0';
   signal c0_sys_clk_n : std_logic  := '1';
 
--- DDR4
+  -- DDR4
   signal c0_ddr4_act_n    : std_logic;
   signal c0_ddr4_adr      : std_logic_vector(16 downto 0);
   signal c0_ddr4_ba       : std_logic_vector(1 downto 0);
@@ -86,7 +87,7 @@ architecture behav of testbench is
   signal c0_ddr4_dqs_c    : std_logic_vector(7 downto 0);
   signal c0_ddr4_dqs_t    : std_logic_vector(7 downto 0);
 
--- SGMII Ethernet
+  -- SGMII Ethernet
   signal gtrefclk_p : std_logic := '0';
   signal gtrefclk_n : std_logic := '1';
   signal txp        : std_logic;
@@ -98,14 +99,14 @@ architecture behav of testbench is
   signal eint       : std_ulogic;
   signal edummy     : std_ulogic;
 
--- UART
+  -- UART
   signal uart_rxd  : std_ulogic;
   signal uart_txd  : std_ulogic;
   signal uart_ctsn : std_ulogic;
   signal uart_rtsn : std_ulogic;
 
--- GPIO
-  signal led    : std_logic_vector(6 downto 0);
+  -- GPIO
+  signal led : std_logic_vector(6 downto 0);
 
 -- End TOP-level interface --
 
@@ -135,9 +136,10 @@ begin
   uart_rxd  <= '0';
   uart_ctsn <= '0';
 
-  cpu : top
+  cpu : component top
     generic map (
-      SIMULATION      => SIMULATION)
+      simulation => SIMULATION
+    )
     port map (
       reset            => reset,
       c0_sys_clk_p     => c0_sys_clk_p,
@@ -170,7 +172,7 @@ begin
       uart_txd         => uart_txd,
       uart_ctsn        => uart_ctsn,
       uart_rtsn        => uart_rtsn,
-      led              => led);
+      led              => led
+    );
 
-
-end;
+end architecture behav;

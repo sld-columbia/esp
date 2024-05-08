@@ -16,7 +16,7 @@
 --
 --  You should have received a copy of the GNU General Public License
 --  along with this program; if not, write to the Free Software
---  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -----------------------------------------------------------------------------
 -- Entity:      gen_iddr_reg
 -- File:        gen_iddr_reg.vhd
@@ -25,83 +25,128 @@
 ------------------------------------------------------------------------------
 
 library ieee;
-use ieee.std_logic_1164.all;
+  use ieee.std_logic_1164.all;
 
 entity gen_iddr_reg is
-  generic (scantest: integer; noasync: integer);
-  port(
-         Q1 : out std_ulogic;
-         Q2 : out std_ulogic;
-         C1 : in std_ulogic;
-         C2 : in std_ulogic;
-         CE : in std_ulogic;
-         D : in std_ulogic;
-         R : in std_ulogic;
-         S : in std_ulogic;
-         testen: in std_ulogic;
-         testrst: in std_ulogic
-      );
-end;
-  
+  generic (
+    scantest : integer;
+    noasync  : integer
+  );
+  port (
+    q1      : out   std_ulogic;
+    q2      : out   std_ulogic;
+    c1      : in    std_ulogic;
+    c2      : in    std_ulogic;
+    ce      : in    std_ulogic;
+    d       : in    std_ulogic;
+    r       : in    std_ulogic;
+    s       : in    std_ulogic;
+    testen  : in    std_ulogic;
+    testrst : in    std_ulogic
+  );
+end entity gen_iddr_reg;
+
 architecture rtl of gen_iddr_reg is
-  signal preQ2 : std_ulogic;
-  signal RI: std_ulogic;
+
+  signal preq2 : std_ulogic;
+  signal ri    : std_ulogic;
+
 begin
 
-  RI <= (not testrst) when (scantest/=0 and testen='1') else R;
+  ri <= (not testrst) when (scantest/=0 and testen='1') else
+        r;
 
-  ddrregp : process(RI,C1)
+  ddrregp : process (ri, c1) is
   begin
-    if RI = '1' and (noasync=0) then Q1 <= '0'; Q2 <= '0';
-    elsif rising_edge(C1) then Q1 <= D; Q2 <= preQ2; end if;
-  end process;
 
-  ddrregn : process(RI,C2)
+    if (ri = '1' and (noasync=0)) then
+      q1 <= '0';
+      q2 <= '0';
+    elsif rising_edge(c1) then
+      q1 <= d;
+      q2 <= preq2;
+    end if;
+
+  end process ddrregp;
+
+  ddrregn : process (ri, c2) is
   begin
-    if RI = '1' and (noasync=0) then preQ2 <= '0';
---    elsif falling_edge(C1) then preQ2 <= D; end if;
-    elsif rising_edge(C2) then preQ2 <= D; end if;
-  end process;
 
-end;
+    if (ri = '1' and (noasync=0)) then
+      preq2 <= '0';
+    --    elsif falling_edge(C1) then preQ2 <= D; end if;
+    elsif rising_edge(c2) then
+      preq2 <= d;
+    end if;
+
+  end process ddrregn;
+
+end architecture rtl;
 
 library ieee;
-use ieee.std_logic_1164.all;
+  use ieee.std_logic_1164.all;
 
 entity gen_oddr_reg is
-  generic (scantest: integer; noasync: integer);
+  generic (
+    scantest : integer;
+    noasync  : integer
+  );
   port (
-      Q : out std_ulogic;
-      C1 : in std_ulogic;
-      C2 : in std_ulogic;
-      CE : in std_ulogic;
-      D1 : in std_ulogic;
-      D2 : in std_ulogic;
-      R : in std_ulogic;
-      S : in std_ulogic;
-      testen: in std_ulogic;
-      testrst: in std_ulogic);
-end;
+    q       : out   std_ulogic;
+    c1      : in    std_ulogic;
+    c2      : in    std_ulogic;
+    ce      : in    std_ulogic;
+    d1      : in    std_ulogic;
+    d2      : in    std_ulogic;
+    r       : in    std_ulogic;
+    s       : in    std_ulogic;
+    testen  : in    std_ulogic;
+    testrst : in    std_ulogic
+  );
+end entity gen_oddr_reg;
 
 architecture rtl of gen_oddr_reg is
-  signal Q1,Q2: std_ulogic;
-  signal SEL : std_ulogic := '1';
-  signal RI,SI: std_ulogic;
+
+  signal q1, q2 : std_ulogic;
+  signal sel    : std_ulogic := '1';
+  signal ri, si : std_ulogic;
+
 begin
 
-  RI <= (not testrst) when (scantest/=0 and testen='1') else R;
-  SI <= '0' when (scantest/=0 and testen='1') else S;
+  ri <= (not testrst) when (scantest/=0 and testen='1') else
+        r;
+  si <= '0' when (scantest/=0 and testen='1') else
+        s;
 
-  Q <= Q1 when SEL = '1' else Q2;
-  
-  ddrregp: process(C1,RI,SI)
+  q <= q1 when sel = '1' else
+       q2;
+
+  ddrregp : process (c1, ri, si) is
   begin
-    if rising_edge(C1) then Q1 <= D1; Q2 <= D2; end if;
-    if SI='1' and noasync=0 then Q1 <= '1'; Q2 <= '1'; end if;
-    if RI='1' and noasync=0 then Q1 <= '0'; Q2 <= '0'; end if;
-    if C1='1' and noasync=0 then SEL <= '1'; else SEL <= '0'; end if;
-  end process;
-  
-end;
-  
+
+    if rising_edge(c1) then
+      q1 <= d1;
+      q2 <= d2;
+    end if;
+
+    if (si='1' and noasync=0) then
+      q1 <= '1';
+      q2 <= '1';
+    end if;
+
+    if (ri='1' and noasync=0) then
+      q1 <= '0';
+      q2 <= '0';
+    end if;
+
+    if (c1='1' and noasync=0) then
+      sel <= '1';
+    else
+      sel <= '0';
+    end if;
+
+  end process ddrregp;
+
+end architecture rtl;
+
 
