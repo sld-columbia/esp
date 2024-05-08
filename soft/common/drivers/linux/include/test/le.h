@@ -6,9 +6,9 @@
 #ifndef TEST_LE_H
 #define TEST_LE_H
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 size_t lefread(void *ptr, size_t size, size_t nmemb, FILE *stream);
 size_t lefwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);

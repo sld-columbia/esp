@@ -7,8 +7,8 @@
     #include <linux/ioctl.h>
     #include <linux/types.h>
 #else
-    #include <sys/ioctl.h>
     #include <stdint.h>
+    #include <sys/ioctl.h>
     #ifndef __user
         #define __user
     #endif

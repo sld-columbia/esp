@@ -1,34 +1,38 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 #ifdef WIN32
-#include <winsock2.h>
+    #include <winsock2.h>
 #endif
 #include <arpa/inet.h>
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
-  struct stat sbuf;
-  char x[128];
-  int i, res, fsize, abits, tmp;
-  FILE *fp, *wfp;
+    struct stat sbuf;
+    char x[128];
+    int i, res, fsize, abits, tmp;
+    FILE *fp, *wfp;
 
-  if (argc < 2) exit(1);
-  res = stat(argv[1], &sbuf);
-  if (res < 0) exit(2);
-  fsize = sbuf.st_size;
-  fp = fopen(argv[1], "rb");
-  wfp = fopen(argv[2], "w+");
-  if (fp == NULL) exit(2);
-  if (wfp == NULL) exit(2);
+    if (argc < 2) exit(1);
+    res = stat(argv[1], &sbuf);
+    if (res < 0) exit(2);
+    fsize = sbuf.st_size;
+    fp    = fopen(argv[1], "rb");
+    wfp   = fopen(argv[2], "w+");
+    if (fp == NULL) exit(2);
+    if (wfp == NULL) exit(2);
 
-  tmp = fsize; abits = 0;
-  while (tmp) {tmp >>= 1; abits++;}
-  printf("    INFO Creating %s : file size: %d bytes, address bits %d\n", argv[2], fsize, abits);
-  fprintf(wfp, "\n\
+    tmp   = fsize;
+    abits = 0;
+    while (tmp) {
+        tmp >>= 1;
+        abits++;
+    }
+    printf("    INFO Creating %s : file size: %d bytes, address bits %d\n", argv[2], fsize, abits);
+    fprintf(wfp, "\n\
 ----------------------------------------------------------------------------\n\
 --  This file is a part of the GRLIB VHDL IP LIBRARY\n\
 --  Copyright (C) 2010 Aeroflex Gaisler\n\
@@ -108,14 +112,15 @@ begin\n\
   comb : process (addr)\n\
   begin\n\
     case conv_integer(addr) is\n\
-", abits, fsize);
+",
+            abits, fsize);
 
-  i = 0;
-  while (!feof(fp)) {
-    fread(&tmp, 1, 4, fp);
-    fprintf(wfp, "    when 16#%05X# => romdata <= X\"%08X\";\n", i++, htonl(tmp));
-  }
-  fprintf(wfp, "\
+    i = 0;
+    while (!feof(fp)) {
+        fread(&tmp, 1, 4, fp);
+        fprintf(wfp, "    when 16#%05X# => romdata <= X\"%08X\";\n", i++, htonl(tmp));
+    }
+    fprintf(wfp, "\
     when others => romdata <= (others => '-');\n\
     end case;\n\
   end process;\n\
@@ -127,8 +132,8 @@ begin\n\
   end;\n\
 ");
 
- fclose (wfp);
- fclose (fp);
- return(0);
- exit(0);
+    fclose(wfp);
+    fclose(fp);
+    return (0);
+    exit(0);
 }

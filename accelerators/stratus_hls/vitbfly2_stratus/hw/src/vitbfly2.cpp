@@ -34,7 +34,6 @@ void vitbfly2::load_input()
     //     d_brtab27[i] = 0;
     // }
 
-
     // Config
     {
         HLS_DEFINE_PROTOCOL("load-config");
@@ -50,67 +49,66 @@ void vitbfly2::load_input()
         HLS_DEFINE_PROTOCOL("load-dma");
 
         uint32_t dma_addr = 0;
-        //for (uint16_t b = 0; b < /* number of transfers */; b++)
+        // for (uint16_t b = 0; b < /* number of transfers */; b++)
         {
             dma_info_t dma_info(dma_addr, 6 * 64 / WORDS_PER_DMA, SIZE_BYTE);
             // Configure DMA transaction
             this->dma_read_ctrl.put(dma_info);
 
             for (uint16_t j = 0; j < 6; j++)
-                for (uint16_t i = 0; i < 64; i += WORDS_PER_DMA)
-                {
+                for (uint16_t i = 0; i < 64; i += WORDS_PER_DMA) {
                     wait();
                     sc_dt::sc_bv<DMA_WIDTH> data = this->dma_read_chnl.get();
-                    switch(j) {
-                    case 0:
-                        for (int k = 0; k < WORDS_PER_DMA; k++) {
-                            HLS_UNROLL_LOOP_SIMPLE;
-                            mm0[i + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
-                        }
-                        break;
+                    switch (j) {
+                        case 0:
+                            for (int k = 0; k < WORDS_PER_DMA; k++) {
+                                HLS_UNROLL_LOOP_SIMPLE;
+                                mm0[i + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
+                            }
+                            break;
 
-                    case 1:
-                        for (int k = 0; k < WORDS_PER_DMA; k++) {
-                            HLS_UNROLL_LOOP_SIMPLE;
-                            mm1[i + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
-                        }
-                        break;
+                        case 1:
+                            for (int k = 0; k < WORDS_PER_DMA; k++) {
+                                HLS_UNROLL_LOOP_SIMPLE;
+                                mm1[i + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
+                            }
+                            break;
 
-                    case 2:
-                        for (int k = 0; k < WORDS_PER_DMA; k++) {
-                            HLS_UNROLL_LOOP_SIMPLE;
-                            pp0[i + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
-                        }
-                        break;
+                        case 2:
+                            for (int k = 0; k < WORDS_PER_DMA; k++) {
+                                HLS_UNROLL_LOOP_SIMPLE;
+                                pp0[i + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
+                            }
+                            break;
 
-                    case 3:
-                        for (int k = 0; k < WORDS_PER_DMA; k++) {
-                            HLS_UNROLL_LOOP_SIMPLE;
-                            pp1[i + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
-                        }
-                        break;
+                        case 3:
+                            for (int k = 0; k < WORDS_PER_DMA; k++) {
+                                HLS_UNROLL_LOOP_SIMPLE;
+                                pp1[i + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
+                            }
+                            break;
 
-                    case 4:
-                        for (int k = 0; k < WORDS_PER_DMA; k++) {
-                            HLS_UNROLL_LOOP_SIMPLE;
-                            unsigned index = i % 32;
-                            if (i < 32)
-                                d_brtab27[0][index + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
-                            else
-                                d_brtab27[1][index + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
-                        }
-                        break;
+                        case 4:
+                            for (int k = 0; k < WORDS_PER_DMA; k++) {
+                                HLS_UNROLL_LOOP_SIMPLE;
+                                unsigned index = i % 32;
+                                if (i < 32)
+                                    d_brtab27[0][index + k] =
+                                        data.range(((k + 1) << 3) - 1, k << 3).to_uint();
+                                else
+                                    d_brtab27[1][index + k] =
+                                        data.range(((k + 1) << 3) - 1, k << 3).to_uint();
+                            }
+                            break;
 
-                    case 5:
-                        for (int k = 0; k < WORDS_PER_DMA; k++) {
-                            HLS_UNROLL_LOOP_SIMPLE;
-                            symbols[i + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
-                        }
-                        break;
+                        case 5:
+                            for (int k = 0; k < WORDS_PER_DMA; k++) {
+                                HLS_UNROLL_LOOP_SIMPLE;
+                                symbols[i + k] = data.range(((k + 1) << 3) - 1, k << 3).to_uint();
+                            }
+                            break;
 
-                    default:
-                        break;
-
+                        default: break;
                     }
                 }
             this->load_compute_handshake();
@@ -122,8 +120,6 @@ void vitbfly2::load_input()
         this->process_done();
     }
 }
-
-
 
 void vitbfly2::store_output()
 {
@@ -163,44 +159,41 @@ void vitbfly2::store_output()
         this->dma_write_ctrl.put(dma_info);
 
         for (uint16_t j = 0; j < 4; j++)
-            for (uint16_t i = 0; i < 64; i += WORDS_PER_DMA)
-            {
+            for (uint16_t i = 0; i < 64; i += WORDS_PER_DMA) {
                 wait();
                 sc_dt::sc_bv<DMA_WIDTH> data;
 
-                switch(j) {
-                case 0:
-                    for (int k = 0; k < WORDS_PER_DMA; k++) {
-                        HLS_UNROLL_LOOP_SIMPLE;
-                        data.range(((k + 1) << 3) - 1, k << 3) = sc_bv<8>(mm0[i + k]);
-                    }
-                    break;
+                switch (j) {
+                    case 0:
+                        for (int k = 0; k < WORDS_PER_DMA; k++) {
+                            HLS_UNROLL_LOOP_SIMPLE;
+                            data.range(((k + 1) << 3) - 1, k << 3) = sc_bv<8>(mm0[i + k]);
+                        }
+                        break;
 
-                case 1:
-                    for (int k = 0; k < WORDS_PER_DMA; k++) {
-                        HLS_UNROLL_LOOP_SIMPLE;
-                        data.range(((k + 1) << 3) - 1, k << 3) = sc_bv<8>(mm1[i + k]);
-                    }
-                    break;
+                    case 1:
+                        for (int k = 0; k < WORDS_PER_DMA; k++) {
+                            HLS_UNROLL_LOOP_SIMPLE;
+                            data.range(((k + 1) << 3) - 1, k << 3) = sc_bv<8>(mm1[i + k]);
+                        }
+                        break;
 
-                case 2:
-                    for (int k = 0; k < WORDS_PER_DMA; k++) {
-                        HLS_UNROLL_LOOP_SIMPLE;
-                        data.range(((k + 1) << 3) - 1, k << 3) = sc_bv<8>(pp0[i + k]);
-                    }
-                    break;
+                    case 2:
+                        for (int k = 0; k < WORDS_PER_DMA; k++) {
+                            HLS_UNROLL_LOOP_SIMPLE;
+                            data.range(((k + 1) << 3) - 1, k << 3) = sc_bv<8>(pp0[i + k]);
+                        }
+                        break;
 
-                case 3:
-                    for (int k = 0; k < WORDS_PER_DMA; k++) {
-                        HLS_UNROLL_LOOP_SIMPLE;
-                        data.range(((k + 1) << 3) - 1, k << 3) = sc_bv<8>(pp1[i + k]);
-                    }
-                    break;
-
+                    case 3:
+                        for (int k = 0; k < WORDS_PER_DMA; k++) {
+                            HLS_UNROLL_LOOP_SIMPLE;
+                            data.range(((k + 1) << 3) - 1, k << 3) = sc_bv<8>(pp1[i + k]);
+                        }
+                        break;
                 }
 
                 this->dma_write_chnl.put(data);
-
             }
     }
 
@@ -210,7 +203,6 @@ void vitbfly2::store_output()
         this->process_done();
     }
 }
-
 
 void vitbfly2::compute_kernel()
 {
@@ -236,7 +228,6 @@ void vitbfly2::compute_kernel()
 
         // User-defined config code
     }
-
 
     // Compute
     {

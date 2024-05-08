@@ -21,40 +21,39 @@
  *   not all registers are readable, and that you may be overwriting important
  *   configuration parameters. Make sure you consult the tile CSRs source code
  *   in `rtl/sockets/crs`.
- * - Ser CSR_VAL to the expected value in the read-only mode, and to the value 
+ * - Ser CSR_VAL to the expected value in the read-only mode, and to the value
  *   to be written in the write&read mode.
  */
 
 #include <stdio.h>
 #ifndef __riscv
-#include <stdlib.h>
+    #include <stdlib.h>
 #endif
 
+#include "jtag_reg_rw.h"
 #include <esp_accelerator.h>
 #include <esp_probe.h>
-#include "jtag_reg_rw.h"
-
 
 // CSR offset
-#define CSR_BASE_ADDR 0x60090180
+#define CSR_BASE_ADDR   0x60090180
 #define CSR_TILE_OFFSET 0x200
-#define TILE_ID 0
+#define TILE_ID         0
 // example 1: 1 for read-only (value: TILE_ID), 1 for write&read (any value, e.g. 3)
 // example 2: 8 for read-only (value: 0x2af13ff4), 8 for write&read (any value, 0x2bf13ff4)
 #define CSR_REG_OFFSET 8
-#define CSR_TILE_ADDR (CSR_BASE_ADDR + CSR_TILE_OFFSET * TILE_ID)
+#define CSR_TILE_ADDR  (CSR_BASE_ADDR + CSR_TILE_OFFSET * TILE_ID)
 
 // CSR value
 #define CSR_VAL 0x2bf13ff4
 
 // Accelerator registers offset
-#define ACCREG_BASE_ADDR 0x60010000
+#define ACCREG_BASE_ADDR   0x60010000
 #define ACCREG_TILE_OFFSET 0x100
-#define ACC_ID 0
+#define ACC_ID             0
 // example:  7 for read-only (value: data_size in xml of accelerator, e.g. 4 for FFT2)
 //          16 for write&read (any value, e.g. 12345678)
 #define ACCREG_REG_OFFSET 7
-#define ACCREG_TILE_ADDR (ACCREG_BASE_ADDR + ACCREG_TILE_OFFSET * ACC_ID)
+#define ACCREG_TILE_ADDR  (ACCREG_BASE_ADDR + ACCREG_TILE_OFFSET * ACC_ID)
 
 // Accelerator register value
 #define ACCREG_VAL 4
@@ -63,7 +62,7 @@
 const int test_type = 1; // 0 = CSR read only, 1 = CSR write&read
                          // 2 = acc reg read only, 3 = acc reg write&read
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
     int i;
     unsigned offset, val, csr_val;
@@ -71,26 +70,24 @@ int main(int argc, char * argv[])
 
     // Set test configuration either for CSR or for accelerator registers
     if (test_type <= 1) {
-	dev.addr = CSR_TILE_ADDR;
-	offset = CSR_REG_OFFSET;
-	val = CSR_VAL;
-    } else {
-	dev.addr = ACCREG_TILE_ADDR;
-	offset = ACCREG_REG_OFFSET;
-	val = ACCREG_VAL;
+        dev.addr = CSR_TILE_ADDR;
+        offset   = CSR_REG_OFFSET;
+        val      = CSR_VAL;
+    }
+    else {
+        dev.addr = ACCREG_TILE_ADDR;
+        offset   = ACCREG_REG_OFFSET;
+        val      = ACCREG_VAL;
     }
 
     // Write
-    if (test_type == 1 || test_type == 3) {
-	iowrite32(&dev, offset * 4, val);
-    }
+    if (test_type == 1 || test_type == 3) { iowrite32(&dev, offset * 4, val); }
 
     // Read
-    csr_val = ioread32(&dev, offset * 4); 
-    if (csr_val != val)
-	printf("[ERROR] Expected : %u, read : %u.\n", val, csr_val);
+    csr_val = ioread32(&dev, offset * 4);
+    if (csr_val != val) printf("[ERROR] Expected : %u, read : %u.\n", val, csr_val);
     else
-	printf("Test PASSED!\n");
+        printf("Test PASSED!\n");
 
     return 0;
 }

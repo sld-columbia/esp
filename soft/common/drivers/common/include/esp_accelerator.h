@@ -6,24 +6,23 @@
 #ifndef __ESP_ACCELERATOR_H__
 #define __ESP_ACCELERATOR_H__
 
-#define BIT(nr)			(1UL << (nr))
+#define BIT(nr) (1UL << (nr))
 
 #ifndef __KERNEL__
-#define __round_mask(x, y) ((y)-1)
-#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+    #define __round_mask(x, y) ((y)-1)
+    #define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 #endif
-
 
 /***
  * ESP accelerator common definitions and registers offset
  ***/
 
 /* bank(0): CMD (reset if cleared) */
-#define CMD_REG 0x00
+#define CMD_REG        0x00
 #define CMD_MASK_START BIT(0)
 
 /* bank(1): STATUS (idle when cleared) - Read only */
-#define STATUS_REG 0x04
+#define STATUS_REG       0x04
 #define STATUS_MASK_RUN  BIT(0)
 #define STATUS_MASK_DONE BIT(1)
 #define STATUS_MASK_ERR  BIT(2)
@@ -51,19 +50,25 @@
 
 /* bank(9)        : Type of coherence (None, LLC, Full) - Read only */
 #define COHERENCE_REG 0x24
-enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_COH_FULL, ACC_COH_AUTO};
+enum accelerator_coherence {
+    ACC_COH_NONE = 0,
+    ACC_COH_LLC,
+    ACC_COH_RECALL,
+    ACC_COH_FULL,
+    ACC_COH_AUTO
+};
 
 /* bank(10)       : Point-to-point configuration */
-#define P2P_REG 0x28
-#define P2P_MASK_NSRCS 0x3
-#define P2P_MASK_SRC_IS_P2P BIT(2)
-#define P2P_MASK_DST_IS_P2P BIT(3)
-#define P2P_MASK_SRCS_YX 0x7
+#define P2P_REG              0x28
+#define P2P_MASK_NSRCS       0x3
+#define P2P_MASK_SRC_IS_P2P  BIT(2)
+#define P2P_MASK_DST_IS_P2P  BIT(3)
+#define P2P_MASK_SRCS_YX     0x7
 #define P2P_SHIFT_SRCS_Y(_n) (7 + _n * 6)
 #define P2P_SHIFT_SRCS_X(_n) (4 + _n * 6)
 
 /* bank(11)       : RESERVED */
-#define YX_REG 0x2c
+#define YX_REG     0x2c
 #define YX_SHIFT_X 0
 #define YX_SHIFT_Y 16
 #define YX_MASK_YX 0x7

@@ -25,7 +25,6 @@ struct dma_info_t {
 
     // Length
     ac_int<3, false> size;
-
 };
 
 #endif // __ESP_DMA_INFO_HPP__

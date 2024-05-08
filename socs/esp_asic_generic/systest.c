@@ -3,7 +3,7 @@
 
 int main(int argc, char **argv)
 {
-	printf("Hello from ESP!\n");
+    printf("Hello from ESP!\n");
 
-	return 0;
+    return 0;
 }
