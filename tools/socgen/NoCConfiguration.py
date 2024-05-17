@@ -68,7 +68,7 @@ class Tile():
        for p in display_points:
          if point == p:
            self.point_select.setvalue(point)
-           break;
+           break
          else:
            self.point_select.setvalue(str(display_points[0]))
        self.point_select.pack(side=LEFT)

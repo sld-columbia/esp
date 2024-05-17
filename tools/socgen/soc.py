@@ -8,6 +8,7 @@ from tkinter import messagebox
 import os.path
 import glob
 import sys
+import re
 
 import NoCConfiguration as ncfg
 
@@ -162,6 +163,8 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     cols = int(item[2])
+    # top is an empty string
+    self.noc.top = self.root
     line = fp.readline()
     item = line.split()
     self.noc.coh_noc_width.set(int(item[2]))
@@ -297,7 +300,7 @@ class SoC_Config():
     # DVFS (skip whether it has it or not; we know that already)
     line = fp.readline()
     line = fp.readline()
-    item = line.split();
+    item = line.split()
     vf_points = int(item[2])
     self.noc.vf_points = vf_points
     # Power annotation
@@ -319,7 +322,7 @@ class SoC_Config():
   def write_config(self, dsu_ip, dsu_eth):
     print("Writing backup configuration: \".esp_config.bak\"")
     fp = open('.esp_config.bak', 'w')
-    has_dvfs = False;
+    has_dvfs = False
     fp.write("CPU_ARCH = " + self.CPU_ARCH.get() + "\n")
     fp.write("NCPU_TILE = " + str(self.noc.get_cpu_num(self)) + "\n")
     if self.transfers.get() == 1:
@@ -479,7 +482,8 @@ class SoC_Config():
   def set_IP(self):
     self.IP_ADDR = str(int('0x' + self.dsu_ip[:2], 16)) + "." + str(int('0x' + self.dsu_ip[2:4], 16)) + "." + str(int('0x' + self.dsu_ip[4:6], 16)) + "." + str(int('0x' + self.dsu_ip[6:], 16))
 
-  def __init__(self, ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, temporary):
+
+  def __init__(self, ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, temporary, root):
     self.ARCH_BITS = ARCH_BITS
     self.TECH_TYPE = TECH_TYPE
     self.TECH = TECH
@@ -516,6 +520,7 @@ class SoC_Config():
     # Debug Link
     self.dsu_ip = ""
     self.dsu_eth = ""
+    self.root = root
 
     # Define whether SGMII has to be used or not: it is not used for ProFPGA boards
     if self.FPGA_BOARD.find("profpga") != -1:
