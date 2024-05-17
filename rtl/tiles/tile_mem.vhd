@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
@@ -59,8 +59,8 @@ entity tile_mem is
     ddr_cfg2           : out std_logic_vector(31 downto 0);
     mem_id             : out integer range 0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1;
     -- FPGA proxy memory link (this_has_ddr -> 0)
-    fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
-    fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);
+    fpga_data_in       : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
+    fpga_data_out      : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     fpga_oen           : out std_ulogic;
     fpga_valid_in      : in  std_ulogic;
     fpga_valid_out     : out std_ulogic;
@@ -79,40 +79,40 @@ entity tile_mem is
     noc4_mon_noc_vec   : in monitor_noc_type;
     noc5_mon_noc_vec   : in monitor_noc_type;
     noc6_mon_noc_vec   : in monitor_noc_type;
-    test1_output_port   : in noc_flit_type;
+    test1_output_port   : in coh_noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
-    test2_output_port   : in noc_flit_type;
+    test2_output_port   : in coh_noc_flit_type;
     test2_data_void_out : in std_ulogic;
     test2_stop_in       : in std_ulogic;
-    test3_output_port   : in noc_flit_type;
+    test3_output_port   : in coh_noc_flit_type;
     test3_data_void_out : in std_ulogic;
     test3_stop_in       : in std_ulogic;
-    test4_output_port   : in noc_flit_type;
+    test4_output_port   : in dma_noc_flit_type;
     test4_data_void_out : in std_ulogic;
     test4_stop_in       : in std_ulogic;
     test5_output_port   : in misc_noc_flit_type;
     test5_data_void_out : in std_ulogic;
     test5_stop_in       : in std_ulogic;
-    test6_output_port   : in noc_flit_type;
+    test6_output_port   : in dma_noc_flit_type;
     test6_data_void_out : in std_ulogic;
     test6_stop_in       : in std_ulogic;
-    test1_input_port    : out noc_flit_type;
+    test1_input_port    : out coh_noc_flit_type;
     test1_data_void_in  : out std_ulogic;
     test1_stop_out      : out std_ulogic;
-    test2_input_port    : out noc_flit_type;
+    test2_input_port    : out coh_noc_flit_type;
     test2_data_void_in  : out std_ulogic;
     test2_stop_out      : out std_ulogic;
-    test3_input_port    : out noc_flit_type;
+    test3_input_port    : out coh_noc_flit_type;
     test3_data_void_in  : out std_ulogic;
     test3_stop_out      : out std_ulogic;
-    test4_input_port    : out noc_flit_type;
+    test4_input_port    : out dma_noc_flit_type;
     test4_data_void_in  : out std_ulogic;
     test4_stop_out      : out std_ulogic;
     test5_input_port    : out misc_noc_flit_type;
     test5_data_void_in  : out std_ulogic;
     test5_stop_out      : out std_ulogic;
-    test6_input_port    : out noc_flit_type;
+    test6_input_port    : out dma_noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
     mon_mem            : out monitor_mem_type;
@@ -152,36 +152,36 @@ architecture rtl of tile_mem is
 
   -- Queues
   signal coherence_req_rdreq        : std_ulogic;
-  signal coherence_req_data_out     : noc_flit_type;
+  signal coherence_req_data_out     : coh_noc_flit_type;
   signal coherence_req_empty        : std_ulogic;
   signal coherence_fwd_wrreq        : std_ulogic;
-  signal coherence_fwd_data_in      : noc_flit_type;
+  signal coherence_fwd_data_in      : coh_noc_flit_type;
   signal coherence_fwd_full         : std_ulogic;
   signal coherence_rsp_snd_wrreq    : std_ulogic;
-  signal coherence_rsp_snd_data_in  : noc_flit_type;
+  signal coherence_rsp_snd_data_in  : coh_noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
   signal coherence_rsp_rcv_rdreq    : std_ulogic;
-  signal coherence_rsp_rcv_data_out : noc_flit_type;
+  signal coherence_rsp_rcv_data_out : coh_noc_flit_type;
   signal coherence_rsp_rcv_empty    : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
-  signal dma_rcv_data_out           : noc_flit_type;
+  signal dma_rcv_data_out           : dma_noc_flit_type;
   signal dma_rcv_empty              : std_ulogic;
   signal dma_snd_wrreq              : std_ulogic;
-  signal dma_snd_data_in            : noc_flit_type;
+  signal dma_snd_data_in            : dma_noc_flit_type;
   signal dma_snd_full               : std_ulogic;
   signal dma_snd_atleast_4slots     : std_ulogic;
   signal dma_snd_exactly_3slots     : std_ulogic;
   signal coherent_dma_rcv_rdreq     : std_ulogic;
-  signal coherent_dma_rcv_data_out  : noc_flit_type;
+  signal coherent_dma_rcv_data_out  : dma_noc_flit_type;
   signal coherent_dma_rcv_empty     : std_ulogic;
   signal coherent_dma_snd_wrreq     : std_ulogic;
-  signal coherent_dma_snd_data_in   : noc_flit_type;
+  signal coherent_dma_snd_data_in   : dma_noc_flit_type;
   signal coherent_dma_snd_full      : std_ulogic;
   signal coherent_dma_snd_atleast_4slots : std_ulogic;
   signal coherent_dma_snd_exactly_3slots : std_ulogic;
   -- These requests are delivered through NoC5 (32 bits always)
   -- however, the proxy that handles expects a flit size in
-  -- accordance with ARCH_BITS. Hence we need to pad and move
+  -- accordance with CFG_MEM_LINK_BITS. Hence we need to pad and move
   -- header info and preamble to the right bit position
   signal remote_ahbs_rcv_rdreq      : std_ulogic;
   signal remote_ahbs_rcv_data_out   : misc_noc_flit_type;
@@ -191,10 +191,10 @@ architecture rtl of tile_mem is
   signal remote_ahbs_snd_full       : std_ulogic;
   -- Extended remote_ahbs_* signals that
   signal remote_ahbm_rcv_rdreq      : std_ulogic;
-  signal remote_ahbm_rcv_data_out   : noc_flit_type;
+  signal remote_ahbm_rcv_data_out   : arch_noc_flit_type;
   signal remote_ahbm_rcv_empty      : std_ulogic;
   signal remote_ahbm_snd_wrreq      : std_ulogic;
-  signal remote_ahbm_snd_data_in    : noc_flit_type;
+  signal remote_ahbm_snd_data_in    : arch_noc_flit_type;
   signal remote_ahbm_snd_full       : std_ulogic;
   --
   signal apb_rcv_rdreq              : std_ulogic;
@@ -207,10 +207,10 @@ architecture rtl of tile_mem is
   -- LLC/FPGA-based memory link
   signal llc_ext_req_ready : std_ulogic;
   signal llc_ext_req_valid : std_ulogic;
-  signal llc_ext_req_data  : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal llc_ext_req_data  : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   signal llc_ext_rsp_ready : std_ulogic;
   signal llc_ext_rsp_valid : std_ulogic;
-  signal llc_ext_rsp_data  : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal llc_ext_rsp_data  : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
 
 
   -- Bus
@@ -321,15 +321,17 @@ begin
         clk_div  => pllclk,
         lock     => dco_clk_lock);
 
-    clk_delay_gf12_gen: if CFG_FABTECH = gf12 generate
+    --clk_delay_gf12_gen: if CFG_FABTECH = gf12 generate
+    clk_delay_asic_gen: if CFG_FABTECH = asic and this_has_ddr /= 0 generate
       DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
         port map (
           data_in  => dco_clk_div2_int,
           sel      => dco_clk_delay_sel,
           data_out => dco_clk_div2_90_int);
-    end generate clk_delay_gf12_gen;
+    end generate clk_delay_asic_gen;
 
-    noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
+    --noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
+    noc_clk_delay_gen: if this_has_ddr = 0 generate
       dco_clk_div2_90_int <= dco_clk_div2_int;
     end generate noc_clk_delay_gen;
 
@@ -525,14 +527,15 @@ begin
     -- Hendle CPU coherent requests and accelerator non-coherent DMA
     noc2ahbmst_1 : noc2ahbmst
       generic map (
-        tech        => CFG_FABTECH,
-        hindex      => 0,
-        axitran     => GLOB_CPU_AXI,
-        little_end  => GLOB_CPU_RISCV,
-        eth_dma     => 0,
-        narrow_noc  => 0,
-        cacheline   => CFG_DLINE,
-        l2_cache_en => CFG_L2_ENABLE)
+        tech                => CFG_FABTECH,
+        hindex              => 0,
+        axitran             => GLOB_CPU_AXI,
+        little_end          => GLOB_CPU_RISCV,
+        eth_dma             => 0,
+        narrow_noc          => 0,
+        cacheline           => CFG_DLINE,
+        l2_cache_en         => CFG_L2_ENABLE,
+        this_coh_flit_size  => COH_NOC_FLIT_SIZE)
       port map (
         rst                       => rst,
         clk                       => clk,
@@ -572,14 +575,15 @@ begin
     -- Handle JTAG or EDCL requests to memory as well as ETH DMA
     noc2ahbmst_2 : noc2ahbmst
       generic map (
-        tech        => CFG_FABTECH,
-        hindex      => 1,
-        axitran     => 0,
-        little_end  => 0,
-        eth_dma     => 1,               -- Exception for fixed 32-bits DMA
-        narrow_noc  => 0,
-        cacheline   => 1,
-        l2_cache_en => 0)
+        tech                => CFG_FABTECH,
+        hindex              => 1,
+        axitran             => 0,
+        little_end          => 0,
+        eth_dma             => 1,               -- Exception for fixed 32-bits DMA
+        narrow_noc          => 0,
+        cacheline           => 1,
+        l2_cache_en         => 0,
+        this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
         rst                       => rst,
         clk                       => clk,
@@ -614,14 +618,15 @@ begin
     -- Handle accelerators non-coherent DMA
     noc2ahbmst_1 : noc2ahbmst
       generic map (
-        tech        => CFG_FABTECH,
-        hindex      => 0,
-        axitran     => GLOB_CPU_AXI,
-        little_end  => GLOB_CPU_RISCV,
-        eth_dma     => 0,
-        narrow_noc  => 0,
-        cacheline   => CFG_DLINE,
-        l2_cache_en => CFG_L2_ENABLE)
+        tech                => CFG_FABTECH,
+        hindex              => 0,
+        axitran             => GLOB_CPU_AXI,
+        little_end          => GLOB_CPU_RISCV,
+        eth_dma             => 0,
+        narrow_noc          => 0,
+        cacheline           => CFG_DLINE,
+        l2_cache_en         => CFG_L2_ENABLE,
+        this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
         rst                       => rst,
         clk                       => clk,
@@ -774,14 +779,15 @@ begin
     -- Handle JTAG or EDCL requests to memory
     noc2ahbmst_2 : noc2ahbmst
       generic map (
-        tech        => CFG_FABTECH,
-        hindex      => 1,
-        axitran     => 0,
-        little_end  => 0,
-        eth_dma     => 0,
-        narrow_noc  => 0,
-        cacheline   => 1,
-        l2_cache_en => 0)
+        tech                => CFG_FABTECH,
+        hindex              => 1,
+        axitran             => 0,
+        little_end          => 0,
+        eth_dma             => 0,
+        narrow_noc          => 0,
+        cacheline           => 1,
+        l2_cache_en         => 0,
+        this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
         rst                       => rst,
         clk                       => clk,

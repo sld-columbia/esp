@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -------------------------------------------------------------------------------
@@ -36,14 +36,15 @@ use work.cachepackage.all;
 
 entity axislv2noc is
   generic (
-    tech             : integer;
-    nmst             : integer;
-    retarget_for_dma : integer range 0 to 1 := 0;
-    mem_axi_port     : integer range -1 to NAHBSLV - 1;
-    mem_num          : integer;
-    mem_info         : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
-    slv_y            : local_yx;
-    slv_x            : local_yx);
+    tech                : integer;
+    nmst                : integer;
+    retarget_for_dma    : integer range 0 to 1 := 0;
+    mem_axi_port        : integer range -1 to NAHBSLV - 1;
+    mem_num             : integer;
+    mem_info            : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
+    this_noc_flit_size  : integer;
+    slv_y               : local_yx;
+    slv_x               : local_yx);
   port (
     rst                        : in  std_ulogic;
     clk                        : in  std_ulogic;
@@ -53,11 +54,11 @@ entity axislv2noc is
     somi                       : out axi_somi_vector(0 to nmst - 1);
     -- tile->NoC1
     coherence_req_wrreq        : out std_ulogic;
-    coherence_req_data_in      : out noc_flit_type;
+    coherence_req_data_in      : out std_logic_vector(this_noc_flit_size - 1 downto 0);
     coherence_req_full         : in  std_ulogic;
     -- Noc3->tile
     coherence_rsp_rcv_rdreq    : out std_ulogic;
-    coherence_rsp_rcv_data_out : in  noc_flit_type;
+    coherence_rsp_rcv_data_out : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
     coherence_rsp_rcv_empty    : in  std_ulogic;
     -- tile->NoC5
     remote_ahbs_snd_wrreq      : out std_ulogic;
@@ -104,11 +105,11 @@ architecture rtl of axislv2noc is
     hsize_msb              : std_ulogic;  -- distinguish HSIZE_WORD from HSIZE_DWORD
     dst_is_mem             : std_ulogic;
     -- NoC flits
-    header                 : noc_flit_type;
+    header                 : std_logic_vector(this_noc_flit_size - 1 downto 0);
     header_narrow          : misc_noc_flit_type;
-    payload_address        : noc_flit_type;
+    payload_address        : std_logic_vector(this_noc_flit_size - 1 downto 0);
     payload_address_narrow : misc_noc_flit_type;
-    payload_length         : noc_flit_type;
+    payload_length         : std_logic_vector(this_noc_flit_size - 1 downto 0);
     payload_length_narrow  : misc_noc_flit_type;
   end record transaction_type;
 
@@ -142,6 +143,7 @@ architecture rtl of axislv2noc is
     payload_length_narrow  => (others => '0')
     );
 
+  constant this_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - this_noc_flit_size downto 0) := (others => '0');
 
   signal transaction, transaction_reg : transaction_type;
   signal current_state, next_state    : axi_fsm;
@@ -311,7 +313,7 @@ begin  -- rtl
     end if;
 
     -- Set address
-    tran.payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
+    tran.payload_address(this_noc_flit_size-1 downto this_noc_flit_size-PREAMBLE_WIDTH) := PREAMBLE_BODY;
     tran.payload_address(GLOB_PHYS_ADDR_BITS - 1 downto 0) := tran.addr;
 
     tran.payload_address_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
@@ -319,9 +321,9 @@ begin  -- rtl
 
     -- Set length
     if tran.write = '1' then
-      tran.payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
+      tran.payload_length(this_noc_flit_size-1 downto this_noc_flit_size-PREAMBLE_WIDTH) := PREAMBLE_BODY;
     else
-      tran.payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+      tran.payload_length(this_noc_flit_size-1 downto this_noc_flit_size-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     end if;
     tran.payload_length(8 downto 0) := tran.len;
     -- (read transaction only)
@@ -333,7 +335,7 @@ begin  -- rtl
     tran.reserved(3)          := tran.hsize_msb;
     tran.reserved(2 downto 0) := tran.prot;
 
-    tran.header := create_header(NOC_FLIT_SIZE, local_y, local_x, tran.mem_y, tran.mem_x, tran.msg_type, tran.reserved);
+    tran.header := create_header(this_noc_flit_size, local_y, local_x, tran.mem_y, tran.mem_x, tran.msg_type, tran.reserved);
     tran.header_narrow := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, tran.mem_y, tran.mem_x, tran.msg_type, tran.reserved)(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
     -- Write signal
@@ -350,7 +352,7 @@ begin  -- rtl
                           remote_ahbs_rcv_data_out, remote_ahbs_rcv_empty,
                           remote_ahbs_rcv_data_out_hold)
     variable wdata                   : std_logic_vector(AHBDW - 1 downto 0);
-    variable payload_data            : noc_flit_type;
+    variable payload_data            : std_logic_vector(this_noc_flit_size - 1 downto 0);
     variable payload_data_narrow_lsb : misc_noc_flit_type;
     variable payload_data_narrow_msb : misc_noc_flit_type;
     variable rsp_preamble            : noc_preamble_type;
@@ -369,12 +371,12 @@ begin  -- rtl
 
     -- Response data flit (AXI Read)
     if transaction_reg.dst_is_mem = '1' then
-      rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+      rsp_preamble := get_preamble(this_noc_flit_size, this_noc_flit_pad & coherence_rsp_rcv_data_out);
       for i in 0 to nmst - 1 loop
         somi(i).r.data <= (coherence_rsp_rcv_data_out(AHBDW - 1 downto 0));
       end loop;
     else
-      rsp_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_ahbs_rcv_data_out);
+      rsp_preamble := get_preamble(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & remote_ahbs_rcv_data_out);
       for i in 0 to nmst - 1 loop
         somi(i).r.data <= (others => '0');
         if transaction_reg.size = HSIZE_DWORD then
@@ -487,11 +489,11 @@ begin  -- rtl
     payload_data_narrow_msb := (others => '0');
     payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
     if (mosi(transaction_reg.xindex).w.last = '1') then
-      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH)                      := PREAMBLE_TAIL;
+      payload_data(this_noc_flit_size-1 downto this_noc_flit_size - PREAMBLE_WIDTH)                      := PREAMBLE_TAIL;
       payload_data_narrow_msb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
       last                                                                                     := '1';
     else
-      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH)                      := PREAMBLE_BODY;
+      payload_data(this_noc_flit_size-1 downto this_noc_flit_size - PREAMBLE_WIDTH)                      := PREAMBLE_BODY;
       payload_data_narrow_msb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
       last                                                                                     := '0';
     end if;

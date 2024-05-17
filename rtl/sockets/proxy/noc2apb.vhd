@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -- Note: both APB read and write operations would require a setup state.
@@ -84,9 +84,9 @@ begin  -- rtl
       apbi_reg <= apb_slv_in_none;
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_request = '1' then
-        request_y <= get_origin_y(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_rcv_data_out);
-        request_x <= get_origin_x(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_rcv_data_out);
-        request_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_rcv_data_out);
+        request_y <= get_origin_y(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & apb_rcv_data_out);
+        request_x <= get_origin_x(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & apb_rcv_data_out);
+        request_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & apb_rcv_data_out);
       end if;
       if sample_psel = '1' then
         psel_reg <= psel;
@@ -146,7 +146,7 @@ begin  -- rtl
     apb_rcv_rdreq <= '0';
 
     -- Get message type (valid during rcv_header state)
-    msg_type_v := get_msg_type(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_rcv_data_out);
+    msg_type_v := get_msg_type(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & apb_rcv_data_out);
     -- Select slave (valid during rcv_address state)
     addr_v := apb_rcv_data_out(31 downto 0);
     waddr <= addr_v;

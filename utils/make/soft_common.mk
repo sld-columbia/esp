@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -98,7 +98,7 @@ $(BAREMETAL_APPS-baremetal): $(BAREMETAL_BIN) soft-build $(ESP_CFG_BUILD)/socmap
 	if [ `ls -1 $$BAREMETAL_APPS_PATH/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
 		mkdir -p $$BUILD_PATH; \
-		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) BUILD_PATH=$$BUILD_PATH $(MAKE) -C  $$BAREMETAL_APPS_PATH; \
+		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) BUILD_PATH=$$BUILD_PATH CACHELINE_WIDTH=$(CONFIG_CACHE_LINE_SIZE) $(MAKE) -C  $$BAREMETAL_APPS_PATH; \
 		if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp $$BUILD_PATH/*.bin $(BAREMETAL_BIN)/$(@:-baremetal=).bin; \
 		fi; \
@@ -131,7 +131,10 @@ baremetal-distclean:
 	@DRIVERS=$(DRV_BARE) CPU_ARCH=$(CPU_ARCH) BUILD_PATH=$(BUILD_DRIVERS)/dvi/baremetal $(MAKE) --quiet -C $(DRV_BARE)/dvi clean
 	@$(MAKE) --quiet acc-baremetal-clean
 
-
+# This target creates txt files needed by the testbench of ASIC designs using the IO Link interface
+# It is a dependence of the simulation targets for each simulator
+iolink-txt-files: soft
+	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt.py $(CPU_ARCH)
 
 .PHONY: soft-build soft-build-clean soft-build-distclean
 .PHONY: soft soft-clean soft-distclean

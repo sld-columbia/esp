@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ############################################################
@@ -53,6 +53,11 @@ if {$TECH eq "gf12"} {
     set CLOCK_PERIOD 1.0
     set SIM_CLOCK_PERIOD 1.0
     set_attr default_input_delay      0.1
+}
+if {$TECH eq "sky130"} {
+    set CLOCK_PERIOD 1000.0
+    set SIM_CLOCK_PERIOD 1000.0
+    set_attr default_input_delay      100.0
 }
 set_attr clock_period $CLOCK_PERIOD
 

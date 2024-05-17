@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -100,14 +100,16 @@ endif
 			echo $(SPACES)"$(VLOG) -work work $$rtl"; \
 			$(VLOG) -work work $$rtl || exit; \
 		done;
+ifneq ("$(wildcard $(ESP_ROOT)/rtl/peripherals/bsg/.git)", "")
 	@echo $(SPACES)"### Compile BSG Verilog source files ###";
 	@$(MAKE) bsg-sim-compile
+endif
 	@cd modelsim; \
 	echo $(SPACES)"vmake > vsim.mk"; \
 	vmake 2> /dev/null > vsim.mk; \
 	cd ../;
 
-sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft
+sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft iolink-txt-files
 	@for dat in $(DAT_SRCS); do \
 		cp $$dat modelsim; \
 	done;

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 from collections import defaultdict
@@ -287,6 +287,7 @@ class soc_config:
     self.has_svga = soc.svga_en.get()
     self.has_eth = soc.eth_en.get()
     self.has_iolink = soc.iolink_en.get()
+    self.iolink_width = soc.iolink_width.get()
     self.has_sgmii = soc.HAS_SGMII
     self.has_jtag = soc.jtag_en.get()
     if self.coherence:
@@ -408,7 +409,7 @@ class soc_config:
 
 
 def print_header(fp, package):
-  fp.write("-- Copyright (c) 2011-2023 Columbia University, System Level Design Group\n")
+  fp.write("-- Copyright (c) 2011-2024 Columbia University, System Level Design Group\n")
   fp.write("-- SPDX-License-Identifier: Apache-2.0\n\n")
 
 def print_libs(fp, std_only):
@@ -445,12 +446,15 @@ def print_global_constants(fp, soc):
   fp.write("  ------ Global architecture parameters\n")
 
   fp.write("  ------ General\n")
-  fp.write("  constant ARCH_BITS : integer := " + str(soc.DMA_WIDTH) + ";\n")
-  # Keep cache-line size constant to 128 bits for now. We don't want huge line buffers
-  fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(128/soc.DMA_WIDTH))) + ";\n")
-  fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log2(soc.DMA_WIDTH/8))) +";\n")
+  fp.write("  constant ARCH_BITS : integer := " + str(soc.ARCH_BITS) + ";\n")
+  fp.write("  constant COH_NOC_WIDTH : integer := " + str(soc.noc.coh_noc_width.get()) + ";\n")
+  fp.write("  constant DMA_NOC_WIDTH : integer := " + str(soc.noc.dma_noc_width.get()) + ";\n")
+  fp.write("  constant MAX_NOC_WIDTH : integer := " + str(soc.noc.coh_noc_width.get() if soc.noc.coh_noc_width.get() > soc.noc.dma_noc_width.get() else soc.noc.dma_noc_width.get()) + ";\n")
+  fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(soc.cache_line_size.get()/soc.ARCH_BITS))) + ";\n")
+  fp.write("  constant GLOB_DMA_WORD_OFFSET_BITS : integer := " + str(int(math.log2(soc.cache_line_size.get()/32))) + ";\n")
+  fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log2(soc.ARCH_BITS/8))) +";\n")
   fp.write("  constant GLOB_OFFSET_BITS : integer := GLOB_WORD_OFFSET_BITS + GLOB_BYTE_OFFSET_BITS;\n")
-  fp.write("  constant GLOB_ADDR_INCR : integer := " + str(int(soc.DMA_WIDTH/8)) +";\n")
+  fp.write("  constant GLOB_ADDR_INCR : integer := " + str(int(soc.ARCH_BITS/8)) +";\n")
   # TODO: Keep physical address to 32 bits for now to reduce tag size. This will increase to support more memory
   fp.write("  constant GLOB_PHYS_ADDR_BITS : integer := " + str(32) +";\n")
   fp.write("  constant GLOB_MAXIOSLV : integer := " + str(NAPBS) + ";\n\n")
@@ -459,6 +463,7 @@ def print_global_constants(fp, soc):
   fp.write("  ------ CPU\n")
   fp.write("  type cpu_arch_type is (leon3, ariane, ibex);\n")
   fp.write("  constant GLOB_CPU_ARCH : cpu_arch_type := " + soc.CPU_ARCH.get() + ";\n")
+  fp.write("  constant CPU_STR : string := \"" + soc.CPU_ARCH.get() + "\";\n")
   if soc.CPU_ARCH.get() == "ariane":
     fp.write("  constant GLOB_CPU_AXI : integer range 0 to 1 := 1;\n")
   else:
@@ -501,12 +506,13 @@ def print_constants(fp, soc, esp_config):
     fp.write("  constant CFG_L2_ENABLE   : integer := 0;\n")
     fp.write("  constant CFG_L2_DISABLE  : integer := 1;\n")
     fp.write("  constant CFG_LLC_ENABLE  : integer := 0;\n")
-  fp.write("  constant CFG_L2_SETS     : integer := " + str(soc.l2_sets.get()      ) +  ";\n")
-  fp.write("  constant CFG_L2_WAYS     : integer := " + str(soc.l2_ways.get()      ) +  ";\n")
-  fp.write("  constant CFG_LLC_SETS    : integer := " + str(soc.llc_sets.get()     ) +  ";\n")
-  fp.write("  constant CFG_LLC_WAYS    : integer := " + str(soc.llc_ways.get()     ) +  ";\n")
-  fp.write("  constant CFG_ACC_L2_SETS : integer := " + str(soc.acc_l2_sets.get()  ) +  ";\n")
-  fp.write("  constant CFG_ACC_L2_WAYS : integer := " + str(soc.acc_l2_ways.get()  ) +  ";\n\n")
+  fp.write("  constant CFG_CACHE_LINE_SIZE  : integer := " + str(soc.cache_line_size.get()  ) +  ";\n")
+  fp.write("  constant CFG_L2_SETS          : integer := " + str(soc.l2_sets.get()          ) +  ";\n")
+  fp.write("  constant CFG_L2_WAYS          : integer := " + str(soc.l2_ways.get()          ) +  ";\n")
+  fp.write("  constant CFG_LLC_SETS         : integer := " + str(soc.llc_sets.get()         ) +  ";\n")
+  fp.write("  constant CFG_LLC_WAYS         : integer := " + str(soc.llc_ways.get()         ) +  ";\n")
+  fp.write("  constant CFG_ACC_L2_SETS      : integer := " + str(soc.acc_l2_sets.get()      ) +  ";\n")
+  fp.write("  constant CFG_ACC_L2_WAYS      : integer := " + str(soc.acc_l2_ways.get()      ) +  ";\n\n")
 
   #
   fp.write("  ------ Caches interrupt line\n")
@@ -536,8 +542,13 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_ETH_FIFO : integer := 8;\n")
   fp.write("  constant CFG_GRETH_FT : integer := 0;\n")
   fp.write("  constant CFG_GRETH_EDCLFT : integer := 0;\n\n")
+
   fp.write("  ------ Custom IO Link\n")
-  fp.write("  constant CFG_IOLINK_EN : integer := " + str(soc.iolink_en.get()) + ";\n\n")
+  fp.write("  constant CFG_IOLINK_EN : integer := " + str(soc.iolink_en.get()) + ";\n")
+  fp.write("  constant CFG_IOLINK_BITS : integer := " + str(soc.iolink_width.get()) + ";\n\n")
+
+  fp.write("  ------ Custom Memory Link to FPGA for DDR access\n")
+  fp.write("  constant CFG_MEM_LINK_BITS : integer := " + str(soc.ARCH_BITS) + ";\n\n")
 
   #
   fp.write("  ------ SVGA\n")
@@ -563,10 +574,6 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_YLEN : integer := " + str(soc.noc.rows) + ";\n")
   fp.write("  constant CFG_TILES_NUM : integer := CFG_XLEN * CFG_YLEN;\n\n")
 
-  #
-  fp.write("  ------ Custom I/O link\n")
-  fp.write("  constant CFG_IOLINK_BITS : integer := " + str(IOLINK_BITS) + ";\n")
-  
   #
   fp.write("  ------ Monitors (requires proFPGA MMI64)\n")
   fp.write("  constant CFG_MON_DDR_EN : integer := " + str(soc.noc.monitor_ddr.get()) + ";\n")
@@ -620,10 +627,16 @@ def print_constants(fp, soc, esp_config):
   fp.write("  ------ GRLIB debugging\n")
   fp.write("  constant CFG_DUART : integer := 1;\n\n")
 
+def print_slm(fp, soc, esp_config):
+  abits = int(math.log(esp_config.slm_kbytes,2) + 8 - soc.ARCH_BITS/64)
+  fp.write('slm_sram_be_%dabits_64dbits ' %abits + str(2**abits) + ' 64' + ' 1w:0r 0w:1r')
+
 def print_mapping(fp, soc, esp_config):
 
   if soc.ESP_EMU_TECH != "none":
     fp.write("  constant CFG_FABTECH : integer := " + soc.ESP_EMU_TECH  + ";\n\n")
+  elif soc.TECH_TYPE == "asic" and soc.TECH != "inferred":
+    fp.write("  constant CFG_FABTECH : integer := asic;\n\n")
   else:
     fp.write("  constant CFG_FABTECH : integer := " + soc.TECH  + ";\n\n")
   fp.write("\n")
@@ -2277,11 +2290,11 @@ def print_cache_config(fp, soc, esp_config):
   fp.write("\n")
   addr_bits = 32
   byte_bits = 2
-  word_bits = 2
+  word_bits = int(math.log2(soc.cache_line_size.get()/soc.ARCH_BITS))
   if soc.CPU_ARCH.get() == "ariane":
     addr_bits = 32
     byte_bits = 3
-    word_bits = 1
+    word_bits = int(math.log2(soc.cache_line_size.get()/soc.ARCH_BITS))
     fp.write("`define LLSC\n")
   if soc.CPU_ARCH.get() == "leon3":
     fp.write("`define BIG_ENDIAN\n")
@@ -2295,6 +2308,7 @@ def print_cache_config(fp, soc, esp_config):
   fp.write("`define L2_SETS      " + str(soc.l2_sets.get()) + "\n")
   fp.write("`define LLC_WAYS     " + str(soc.llc_ways.get()) + "\n")
   fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get())) + "\n")
+  fp.write("`define DMA_NOC_WIDTH    " + str(int(soc.noc.dma_noc_width.get())) + "\n")
   fp.write("\n")
   fp.write("`endif // __CACHES_CFG_SVH__\n")
 
@@ -2563,6 +2577,14 @@ def create_socmap(esp_config, soc):
 
   print("Created configuration into 'socmap.vhd'")
 
+  if int(esp_config.nslm) > 0:
+    print("Created SLM config file into 'slm_memgen.txt'")
+    fp = open('slm_memgen.txt' , 'w')
+
+    print_slm(fp, soc, esp_config)
+
+    fp.close()
+
   # ESPLink header
   fp = open('esplink.h', 'w')
 
@@ -2629,3 +2651,4 @@ def create_socmap(esp_config, soc):
     fp.close()
 
     print("Created floorplanning constraints for profgpa-xcvu440 into 'mem_tile_floorplanning.xdc'")
+

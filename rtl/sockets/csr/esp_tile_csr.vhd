@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 library ieee;
 use ieee.std_logic_1164.all;
@@ -63,16 +63,17 @@ architecture rtl of esp_tile_csr is
     constant MON_ACC_MEM_HI_INDEX           : integer := 15;
     constant MON_ACC_TOT_LO_INDEX           : integer := 16;
     constant MON_ACC_TOT_HI_INDEX           : integer := 17;
+    constant MON_ACC_INVOCATIONS_INDEX      : integer := 18;
 
-    constant MON_DVFS_BASE_INDEX            : integer := 18;
+    constant MON_DVFS_BASE_INDEX            : integer := 19;
     constant VF_OP_POINTS                   : integer := 4;
 
     constant NOCS_NUM                       : integer := 6;
     constant NOC_QUEUES                     : integer := 5;
-    constant MON_NOC_TILE_INJECT_BASE_INDEX : integer := MON_DVFS_BASE_INDEX + VF_OP_POINTS; --22
-    constant MON_NOC_QUEUES_FULL_BASE_INDEX : integer := MON_NOC_TILE_INJECT_BASE_INDEX + NOCS_NUM; --28
+    constant MON_NOC_TILE_INJECT_BASE_INDEX : integer := MON_DVFS_BASE_INDEX + VF_OP_POINTS; --23
+    constant MON_NOC_QUEUES_FULL_BASE_INDEX : integer := MON_NOC_TILE_INJECT_BASE_INDEX + NOCS_NUM; --29
 
-    constant MONITOR_REG_COUNT : integer := MON_NOC_QUEUES_FULL_BASE_INDEX + NOCS_NUM * NOC_QUEUES; --58
+    constant MONITOR_REG_COUNT : integer := MON_NOC_QUEUES_FULL_BASE_INDEX + NOCS_NUM * NOC_QUEUES; --59
     constant REGISTER_WIDTH : integer := 32;
 
     signal burst                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
@@ -304,6 +305,7 @@ architecture rtl of esp_tile_csr is
     variable accelerator_mem_count : std_logic_vector(2*REGISTER_WIDTH-1 downto 0);
     variable accelerator_tot_count : std_logic_vector(2*REGISTER_WIDTH-1 downto 0);
     variable accelerator_tlb_count : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+    variable started : std_logic;
   begin
     if rstn = '0' then
       for R in 0 to MONITOR_REG_COUNT-1 loop
@@ -313,6 +315,7 @@ architecture rtl of esp_tile_csr is
       accelerator_tlb_count := (others => '0');
       accelerator_mem_count := (others => '0');
       accelerator_tot_count := (others => '0');
+      started := '0';
     elsif clk'event and clk = '1' then
       --DDR
       if mon_ddr.word_transfer = '1' then
@@ -361,6 +364,10 @@ architecture rtl of esp_tile_csr is
 
       --ACC
       if mon_acc.done = '0' then
+        if mon_acc.go = '1' and started = '0' then
+          count(MON_ACC_INVOCATIONS_INDEX) <= count(MON_ACC_INVOCATIONS_INDEX) + 1;
+          started := '1';
+        end if;
         if mon_acc.go = '1' and mon_acc.run = '0' then
           accelerator_tlb_count := accelerator_tlb_count + 1;
           count(MON_ACC_TLB_INDEX) <= accelerator_tlb_count;
@@ -375,6 +382,8 @@ architecture rtl of esp_tile_csr is
           count(MON_ACC_MEM_LO_INDEX) <= accelerator_mem_count(REGISTER_WIDTH-1 downto 0);
           count(MON_ACC_MEM_HI_INDEX) <= accelerator_mem_count(2*REGISTER_WIDTH-1 downto REGISTER_WIDTH);
         end if;
+      else
+        started := '0';
       end if;
 
       --DVFS

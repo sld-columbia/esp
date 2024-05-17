@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ###############################################################################
@@ -25,10 +25,11 @@ from mmi64_gen import *
 from power_gen import *
 
 def print_usage():
-  print("Usage                    : ./esp_creator.py <dma_width> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
+  print("Usage                    : ./esp_creator.py <arch_bits> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
   print("")
   print("")
-  print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
+  print("      <arch_bits>        : Word size for CPU architecture (32 for Leon3/Ibex, 64 for Ariane)")
+  print("      <tech_type>        : Technology type (fpga or asic)")
   print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
   print("      <linux_mac>        : MAC Address for Linux network interface")
   print("      <leon3_stack>      : Stack Pointer for LEON3")
@@ -78,6 +79,7 @@ class CacheFrame(Frame):
     l2_ways_choices = [2, 4, 8]
     llc_ways_choices = [4, 8, 16]
     cache_choices = ["ESP RTL", "SPANDEX HLS", "ESP HLS"]
+    cache_line_choices = ["128", "256", "512"]
 
     Label(cache_config_frame, text = "Caches: ").grid(row=1, column=1)
     Checkbutton(cache_config_frame, text="", variable=soc.cache_en,
@@ -96,6 +98,8 @@ class CacheFrame(Frame):
     OptionMenu(cache_config_frame, soc.acc_l2_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=7, column=2)
     Label(cache_config_frame, text = "ACC L2 WAYS: ").grid(row=8, column=1)
     OptionMenu(cache_config_frame, soc.acc_l2_ways, *l2_ways_choices, command=main_frame.update_noc_config).grid(row=8, column=2)
+    Label(cache_config_frame, text = "Cache Line Size: ").grid(row=9, column=1)
+    OptionMenu(cache_config_frame, soc.cache_line_size, *cache_line_choices, command=main_frame.update_noc_config).grid(row=9, column=2)
 
 class PeripheralFrame(Frame):
 
@@ -116,7 +120,8 @@ class PeripheralFrame(Frame):
     Label(periph_config_frame, text = "UART ", fg="darkgreen").grid(row=1, column=1)
 
     # JTAG
-    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    #if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
       Label(periph_config_frame, text = "JTAG (test) :").grid(row=2, column=1)
       Checkbutton(periph_config_frame, text="", variable=soc.jtag_en,
                   onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=2, column=2)
@@ -128,28 +133,39 @@ class PeripheralFrame(Frame):
     #   eth_text = "Ethernet (use SGMII): "
     # else:
     #   eth_text = "Ethernet (no SGMII): "
-    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    #if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
         Label(periph_config_frame, text = "Ethernet :").grid(row=3, column=1)
         Checkbutton(periph_config_frame, text="", variable=soc.eth_en,
                     onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=3, column=2)
     else:
         Label(periph_config_frame, text = "Ethernet", fg="darkgreen").grid(row=3, column=1)
 
+    iolink_width_choices = [8, 16, 32]
+    mem_link_width_choices = [ARCH_BITS]
 
-    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    #if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
         Label(periph_config_frame, text = "Custom IO Link:").grid(row=4, column=1)
         Checkbutton(periph_config_frame, text="", variable=soc.iolink_en,
                 onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=4, column=2)
+        Label(periph_config_frame, text = "IO Link Width: ").grid(row=5, column=1)
+        OptionMenu(periph_config_frame, soc.iolink_width, *iolink_width_choices, command=main_frame.update_noc_config).grid(row=5, column=2)
     else:
         Label(periph_config_frame, text = "No Custom IO Link", fg="red").grid(row=4, column=1)
 
+    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+        Label(periph_config_frame, text = "FPGA Memory Link", fg="darkgreen").grid(row=6, column=1)
+    else:
+        Label(periph_config_frame, text = "No FPGA Memory Link", fg="red").grid(row=5, column=1)
+
     # SVGA
     if soc.FPGA_BOARD.find("profpga") != -1 and (soc.TECH == "virtex7" or soc.TECH == "virtexu"):
-      Label(periph_config_frame, text = "SVGA: ").grid(row=5, column=1)
+      Label(periph_config_frame, text = "SVGA: ").grid(row=6, column=1)
       Checkbutton(periph_config_frame, text="", variable=soc.svga_en,
-                  onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=5, column=2)
+                  onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=6, column=2)
     else:
-      Label(periph_config_frame, text = "No SVGA", fg="red").grid(row=5, column=1)
+      Label(periph_config_frame, text = "No SVGA", fg="red").grid(row=7, column=1)
 
     #
     # Debug Link
@@ -312,10 +328,10 @@ class EspCreator(Frame):
 
   def update_noc_config(self, *args):
     if soc.CPU_ARCH.get() == "ariane":
-      self.soc.DMA_WIDTH = 64
+      self.soc.ARCH_BITS = 64
     else:
-      self.soc.DMA_WIDTH = 32
-    self.soc.IPs = Components(self.soc.TECH, self.soc.DMA_WIDTH, soc.CPU_ARCH.get())
+      self.soc.ARCH_BITS = 32
+    self.soc.IPs = Components(self.soc.TECH, self.noc.dma_noc_width.get(), soc.CPU_ARCH.get())
     self.soc.update_list_of_ips()
     self.soc.changed()
     self.bottom_frame_noccfg.changed()
@@ -344,21 +360,22 @@ class EspCreator(Frame):
   def generate_mmi64_regs(self):
       create_mmi64_regs(soc)
 
-if len(sys.argv) != 8:
+if len(sys.argv) != 9:
     print_usage()
     sys.exit(1)
 
-DMA_WIDTH = int(sys.argv[1])
-TECH = sys.argv[2]
-LINUX_MAC = sys.argv[3]
-LEON3_STACK = sys.argv[4]
-FPGA_BOARD = sys.argv[5]
-EMU_TECH = sys.argv[6]
-EMU_FREQ = sys.argv[7]
+ARCH_BITS = int(sys.argv[1])
+TECH_TYPE = sys.argv[2]
+TECH = sys.argv[3]
+LINUX_MAC = sys.argv[4]
+LEON3_STACK = sys.argv[5]
+FPGA_BOARD = sys.argv[6]
+EMU_TECH = sys.argv[7]
+EMU_FREQ = sys.argv[8]
 
 root = Tk()
 root.title("ESP SoC Generator")
-soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, True, root)
+soc = SoC_Config(ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, True, root)
 
 root.geometry("1024x768")
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()

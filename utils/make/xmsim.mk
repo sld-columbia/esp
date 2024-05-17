@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -109,7 +109,7 @@ xcelium/xmsim.in:
 	@echo set pack_assert_off { std_logic_arith numeric_std } >> $@
 	@echo set intovf_severity_level {ignore} >> $@
 
-xmsim-compile: socketgen check_all_srcs soft xcelium/xmready xcelium/xmsim.in
+xmsim-compile: socketgen check_all_srcs soft xcelium/xmready xcelium/xmsim.in iolink-txt-files
 	$(QUIET_MAKE) \
 	cd xcelium; \
 	rm -f prom.srec ram.srec; \

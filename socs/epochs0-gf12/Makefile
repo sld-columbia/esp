@@ -19,6 +19,7 @@ USE_OPENSBI ?= 1
 OVR_TECHLIB ?=
 ifneq ("$(OVR_TECHLIB)", "")
 TECHLIB = $(OVR_TECHLIB)
+TECH_TYPE = fpga
 endif
 
 ### Chip-specific configuration ####

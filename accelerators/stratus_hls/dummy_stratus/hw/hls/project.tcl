@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ############################################################
@@ -54,6 +54,11 @@ if {$TECH eq "gf12"} {
     set SIM_CLOCK_PERIOD 1000.0
     set_attr default_input_delay      100.0
 }
+if {$TECH eq "sky130"} {
+    set CLOCK_PERIOD 1000.0
+    set SIM_CLOCK_PERIOD 1000.0
+    set_attr default_input_delay      100.0
+}
 set_attr clock_period $CLOCK_PERIOD
 
 
@@ -73,7 +78,7 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 ######################################################################
 set DEFAULT_ARGV ""
 
-foreach dma [list 64] {
+foreach dma [list 64 128 256 512] {
     define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma
 
     define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma

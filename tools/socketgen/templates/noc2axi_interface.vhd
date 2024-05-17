@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -66,37 +66,37 @@ use std.textio.all;
 
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
-    coherence_req_data_in      : out noc_flit_type;
+    coherence_req_data_in      : out coh_noc_flit_type;
     coherence_req_full         : in  std_ulogic;
     -- NoC plane coherence forward
     coherence_fwd_rdreq        : out std_ulogic;
-    coherence_fwd_data_out     : in  noc_flit_type;
+    coherence_fwd_data_out     : in  coh_noc_flit_type;
     coherence_fwd_empty        : in  std_ulogic;
     -- Noc plane coherence response
     coherence_rsp_rcv_rdreq    : out std_ulogic;
-    coherence_rsp_rcv_data_out : in  noc_flit_type;
+    coherence_rsp_rcv_data_out : in  coh_noc_flit_type;
     coherence_rsp_rcv_empty    : in  std_ulogic;
     coherence_rsp_snd_wrreq    : out std_ulogic;
-    coherence_rsp_snd_data_in  : out noc_flit_type;
+    coherence_rsp_snd_data_in  : out coh_noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
     coherence_fwd_snd_wrreq    : out std_ulogic;
-    coherence_fwd_snd_data_in  : out noc_flit_type;
+    coherence_fwd_snd_data_in  : out coh_noc_flit_type;
     coherence_fwd_snd_full     : in  std_ulogic;
     -- NoC plane MEM2DEV
     dma_rcv_rdreq     : out std_ulogic;
-    dma_rcv_data_out  : in  noc_flit_type;
+    dma_rcv_data_out  : in  dma_noc_flit_type;
     dma_rcv_empty     : in  std_ulogic;
     -- NoC plane DEV2MEM
     dma_snd_wrreq     : out std_ulogic;
-    dma_snd_data_in   : out noc_flit_type;
+    dma_snd_data_in   : out dma_noc_flit_type;
     dma_snd_full      : in  std_ulogic;
     -- NoC plane LLC-coherent MEM2DEV
     coherent_dma_rcv_rdreq     : out std_ulogic;
-    coherent_dma_rcv_data_out  : in  noc_flit_type;
+    coherent_dma_rcv_data_out  : in  dma_noc_flit_type;
     coherent_dma_rcv_empty     : in  std_ulogic;
     -- NoC plane LLC-coherent DEV2MEM
     coherent_dma_snd_wrreq     : out std_ulogic;
-    coherent_dma_snd_data_in   : out noc_flit_type;
+    coherent_dma_snd_data_in   : out dma_noc_flit_type;
     coherent_dma_snd_full      : in  std_ulogic;
     -- Noc plane miscellaneous (tile -> NoC)
     interrupt_wrreq   : out std_ulogic;
@@ -150,11 +150,11 @@ end;
 
   -- NoC plane MEM2DEV
   signal dma_rcv_rdreq_int    : std_ulogic;
-  signal dma_rcv_data_out_int : noc_flit_type;
+  signal dma_rcv_data_out_int : dma_noc_flit_type;
   signal dma_rcv_empty_int    : std_ulogic;
   -- NoC plane DEV2MEM
   signal dma_snd_wrreq_int    : std_ulogic;
-  signal dma_snd_data_in_int  : noc_flit_type;
+  signal dma_snd_data_in_int  : dma_noc_flit_type;
   signal dma_snd_full_int     : std_ulogic;
 
 begin
@@ -184,14 +184,15 @@ begin
 
   axi2noc_1: axislv2noc
     generic map (
-      tech             => tech,
-      nmst             => 1,
-      retarget_for_dma => 1,
-      mem_axi_port     => 0,
-      mem_num          => CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE,
-      mem_info         => nofb_mem_info,
-      slv_y            => io_y,
-      slv_x            => io_x)
+      tech                  => tech,
+      nmst                  => 1,
+      retarget_for_dma      => 1,
+      mem_axi_port          => 0,
+      mem_num               => CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE,
+      mem_info              => nofb_mem_info,
+      this_noc_flit_size    => DMA_NOC_FLIT_SIZE,
+      slv_y                 => io_y,
+      slv_x                 => io_x)
     port map (
       rst                        => rst,
       clk                        => clk,

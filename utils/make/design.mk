@@ -1,8 +1,8 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ### Supported technology libraries ###
-ASICLIBS = gf12 inferred
+#ASICLIBS = inferred gf12 sky130
 FPGALIBS = virtex7 virtexu virtexup
 
 
@@ -21,7 +21,7 @@ ifeq ("$(PROFPGA)","")
 $(error proFPGA path not specified)
 endif
 
-PROFPGA_REQUIRED_VER = proFPGA-2019A-SP4
+PROFPGA_REQUIRED_VER = proFPGA-2021A
 PROFPGA_CURRENT_VER = $(shell basename $(PROFPGA))
 ifneq ("$(PROFPGA_REQUIRED_VER)", "$(PROFPGA_CURRENT_VER)")
 $(error proFPGA tools version must be "$(PROFPGA_REQUIRED_VER)")
@@ -31,13 +31,15 @@ endif
 
 
 ### Create FPGA part name ###
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifeq ($(TECH_TYPE),asic)
+DEVICE = ASIC-$(TECHLIB)
+else ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 include $(ESP_ROOT)/constraints/$(BOARD)/Makefile.inc
 DEVICE = $(PART)-$(PACKAGE)-$(SPEED)
 TECH_TYPE = fpga
-else ifneq ($(filter $(TECHLIB),$(ASICLIBS)),)
-DEVICE = ASIC-$(TECHLIB)
-TECH_TYPE = asic
+#else ifneq ($(filter $(TECHLIB),$(ASICLIBS)),)
+#DEVICE = ASIC-$(TECHLIB)
+#TECH_TYPE = asic
 else
 $(error technology library not supported)
 endif
@@ -128,7 +130,12 @@ endif
 # Testbench
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(SIMTOP).vhd
 
-TOP_VLOG_RTL_SRCS +=
+ifeq ($(TECH_TYPE),asic)
+ifneq ($(TECHLIB),inferred)
+TOP_VLOG_RTL_SRCS += $(DESIGN_PATH)/cache_def_mem_asic.sv
+endif
+endif
+
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 TOP_VLOG_SIM_SRCS += $(XILINX_VIVADO)/data/verilog/src/glbl.v
 endif

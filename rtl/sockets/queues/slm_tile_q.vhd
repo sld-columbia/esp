@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -23,29 +23,29 @@ entity slm_tile_q is
     clk                             : in  std_ulogic;
     -- NoC6->tile
     dma_rcv_rdreq                   : in  std_ulogic;
-    dma_rcv_data_out                : out noc_flit_type;
+    dma_rcv_data_out                : out dma_noc_flit_type;
     dma_rcv_empty                   : out std_ulogic;
     cpu_dma_rcv_rdreq               : in  std_ulogic;
-    cpu_dma_rcv_data_out            : out noc_flit_type;
+    cpu_dma_rcv_data_out            : out dma_noc_flit_type;
     cpu_dma_rcv_empty               : out std_ulogic;
     -- tile->NoC6
     coherent_dma_snd_wrreq          : in  std_ulogic;
-    coherent_dma_snd_data_in        : in  noc_flit_type;
+    coherent_dma_snd_data_in        : in  dma_noc_flit_type;
     coherent_dma_snd_full           : out std_ulogic;
     coherent_dma_snd_atleast_4slots : out std_ulogic;
     coherent_dma_snd_exactly_3slots : out std_ulogic;
     -- tile->NoC4
     dma_snd_wrreq                   : in  std_ulogic;
-    dma_snd_data_in                 : in  noc_flit_type;
+    dma_snd_data_in                 : in  dma_noc_flit_type;
     dma_snd_full                    : out std_ulogic;
     dma_snd_atleast_4slots          : out std_ulogic;
     dma_snd_exactly_3slots          : out std_ulogic;
     cpu_dma_snd_wrreq               : in  std_ulogic;
-    cpu_dma_snd_data_in             : in  noc_flit_type;
+    cpu_dma_snd_data_in             : in  dma_noc_flit_type;
     cpu_dma_snd_full                : out std_ulogic;
     -- NoC4->tile
     coherent_dma_rcv_rdreq          : in  std_ulogic;
-    coherent_dma_rcv_data_out       : out noc_flit_type;
+    coherent_dma_rcv_data_out       : out dma_noc_flit_type;
     coherent_dma_rcv_empty          : out std_ulogic;
     -- NoC5->tile
     remote_ahbs_rcv_rdreq           : in  std_ulogic;
@@ -65,31 +65,31 @@ entity slm_tile_q is
     apb_snd_full                    : out std_ulogic;
 
     -- Cachable data plane 1 -> request messages
-    noc1_out_data : in  noc_flit_type;
+    noc1_out_data : in  coh_noc_flit_type;
     noc1_out_void : in  std_ulogic;
     noc1_out_stop : out std_ulogic;
-    noc1_in_data  : out noc_flit_type;
+    noc1_in_data  : out coh_noc_flit_type;
     noc1_in_void  : out std_ulogic;
     noc1_in_stop  : in  std_ulogic;
     -- Cachable data plane 2 -> forwarded messages
-    noc2_out_data : in  noc_flit_type;
+    noc2_out_data : in  coh_noc_flit_type;
     noc2_out_void : in  std_ulogic;
     noc2_out_stop : out std_ulogic;
-    noc2_in_data  : out noc_flit_type;
+    noc2_in_data  : out coh_noc_flit_type;
     noc2_in_void  : out std_ulogic;
     noc2_in_stop  : in  std_ulogic;
     -- Cachable data plane 3 -> response messages
-    noc3_out_data : in  noc_flit_type;
+    noc3_out_data : in  coh_noc_flit_type;
     noc3_out_void : in  std_ulogic;
     noc3_out_stop : out std_ulogic;
-    noc3_in_data  : out noc_flit_type;
+    noc3_in_data  : out coh_noc_flit_type;
     noc3_in_void  : out std_ulogic;
     noc3_in_stop  : in  std_ulogic;
     -- Non cachable data data plane 4 -> DMA response
-    noc4_out_data : in  noc_flit_type;
+    noc4_out_data : in  dma_noc_flit_type;
     noc4_out_void : in  std_ulogic;
     noc4_out_stop : out std_ulogic;
-    noc4_in_data  : out noc_flit_type;
+    noc4_in_data  : out dma_noc_flit_type;
     noc4_in_void  : out std_ulogic;
     noc4_in_stop  : in  std_ulogic;
     -- Configuration plane 5 -> RD/WR registers
@@ -100,10 +100,10 @@ entity slm_tile_q is
     noc5_in_void  : out std_ulogic;
     noc5_in_stop  : in  std_ulogic;
     -- Non cachable data data plane 6 -> DMA requests
-    noc6_out_data : in  noc_flit_type;
+    noc6_out_data : in  dma_noc_flit_type;
     noc6_out_void : in  std_ulogic;
     noc6_out_stop : out std_ulogic;
-    noc6_in_data  : out noc_flit_type;
+    noc6_in_data  : out dma_noc_flit_type;
     noc6_in_void  : out std_ulogic;
     noc6_in_stop  : in  std_ulogic);
 
@@ -115,25 +115,25 @@ architecture rtl of slm_tile_q is
 
   -- NoC6->tile
   signal dma_rcv_wrreq             : std_ulogic;
-  signal dma_rcv_data_in           : noc_flit_type;
+  signal dma_rcv_data_in           : dma_noc_flit_type;
   signal dma_rcv_full              : std_ulogic;
   signal cpu_dma_rcv_wrreq         : std_ulogic;
-  signal cpu_dma_rcv_data_in       : noc_flit_type;
+  signal cpu_dma_rcv_data_in       : dma_noc_flit_type;
   signal cpu_dma_rcv_full          : std_ulogic;
   -- tile->NoC6
   signal coherent_dma_snd_rdreq    : std_ulogic;
-  signal coherent_dma_snd_data_out : noc_flit_type;
+  signal coherent_dma_snd_data_out : dma_noc_flit_type;
   signal coherent_dma_snd_empty    : std_ulogic;
   -- tile->NoC4
   signal dma_snd_rdreq             : std_ulogic;
-  signal dma_snd_data_out          : noc_flit_type;
+  signal dma_snd_data_out          : dma_noc_flit_type;
   signal dma_snd_empty             : std_ulogic;
   signal cpu_dma_snd_rdreq         : std_ulogic;
-  signal cpu_dma_snd_data_out      : noc_flit_type;
+  signal cpu_dma_snd_data_out      : dma_noc_flit_type;
   signal cpu_dma_snd_empty         : std_ulogic;
   -- NoC4->tile
   signal coherent_dma_rcv_wrreq    : std_ulogic;
-  signal coherent_dma_rcv_data_in  : noc_flit_type;
+  signal coherent_dma_rcv_data_in  : dma_noc_flit_type;
   signal coherent_dma_rcv_full     : std_ulogic;
   -- NoC5->tile
   signal remote_ahbs_rcv_wrreq     : std_ulogic;
@@ -191,8 +191,8 @@ begin  -- rtl
   noc3_out_stop <= '0';
 
   -- From noc6: DMA requests from accelerators and CPUs
-  noc6_reserved_field <= get_reserved_field(NOC_FLIT_SIZE, noc6_out_data);
-  noc6_preamble <= get_preamble(NOC_FLIT_SIZE, noc6_out_data);
+  noc6_reserved_field <= get_reserved_field(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & noc6_out_data);
+  noc6_preamble <= get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & noc6_out_data);
 
   process (clk, rst)
   begin  -- process
@@ -258,7 +258,7 @@ begin  -- rtl
   fifo_13 : fifo0
     generic map (
       depth => 18,                      --Header, address, [data]
-      width => NOC_FLIT_SIZE)
+      width => DMA_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
@@ -272,7 +272,7 @@ begin  -- rtl
   fifo_13cpu : fifo0
     generic map (
       depth => 18,                      --Header, address, [data]
-      width => NOC_FLIT_SIZE)
+      width => DMA_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
@@ -290,7 +290,7 @@ begin  -- rtl
   fifo_13c : fifo0
     generic map (
       depth => 8,                       --Header, address, [data]
-      width => NOC_FLIT_SIZE)
+      width => DMA_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
@@ -345,7 +345,7 @@ begin  -- rtl
         end if;
 
       when packet_dma_snd =>
-        to_noc4_preamble := get_preamble(NOC_FLIT_SIZE, dma_snd_data_out);
+        to_noc4_preamble := get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_snd_data_out);
         if (noc4_in_stop = '0' and dma_snd_empty = '0') then
           noc4_in_data  <= dma_snd_data_out;
           noc4_in_void  <= '0';
@@ -356,7 +356,7 @@ begin  -- rtl
         end if;
 
       when packet_cpu_dma_snd =>
-        to_noc4_preamble := get_preamble(NOC_FLIT_SIZE, cpu_dma_snd_data_out);
+        to_noc4_preamble := get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & cpu_dma_snd_data_out);
         if (noc4_in_stop = '0' and cpu_dma_snd_empty = '0') then
           noc4_in_data      <= cpu_dma_snd_data_out;
           noc4_in_void      <= '0';
@@ -374,7 +374,7 @@ begin  -- rtl
   fifo_14 : fifo2
     generic map (
       depth => 18,                      --Header, address, [data]
-      width => NOC_FLIT_SIZE)
+      width => DMA_NOC_FLIT_SIZE)
     port map (
       clk            => clk,
       rst            => fifo_rst,
@@ -390,7 +390,7 @@ begin  -- rtl
   fifo_14cpu : fifo0
     generic map (
       depth => 5,                      --Header, [data]
-      width => NOC_FLIT_SIZE)
+      width => DMA_NOC_FLIT_SIZE)
     port map (
       clk            => clk,
       rst            => fifo_rst,
@@ -408,7 +408,7 @@ begin  -- rtl
   fifo_14c : fifo2
     generic map (
       depth => 8,                       --Header, address, [data]
-      width => NOC_FLIT_SIZE)
+      width => DMA_NOC_FLIT_SIZE)
     port map (
       clk            => clk,
       rst            => fifo_rst,
@@ -423,8 +423,8 @@ begin  -- rtl
 
   -- From noc5: AHB master requests (debug link)
   -- From noc5: APB requests
-  noc5_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, noc_flit_pad & noc5_out_data);
-  noc5_preamble <= get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & noc5_out_data);
+  noc5_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & noc5_out_data);
+  noc5_preamble <= get_preamble(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & noc5_out_data);
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
@@ -547,7 +547,7 @@ begin  -- rtl
                       end if;
                     end if;
 
-      when packet_remote_ahbs_snd  => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_ahbs_snd_data_out);
+      when packet_remote_ahbs_snd  => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & remote_ahbs_snd_data_out);
                              if (noc5_in_stop = '0' and remote_ahbs_snd_empty = '0') then
                                noc5_in_data <= remote_ahbs_snd_data_out;
                                noc5_in_void <= remote_ahbs_snd_empty;
@@ -557,7 +557,7 @@ begin  -- rtl
                                end if;
                              end if;
 
-      when packet_apb_snd  => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_snd_data_out);
+      when packet_apb_snd  => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & apb_snd_data_out);
                              if (noc5_in_stop = '0' and apb_snd_empty = '0') then
                                noc5_in_data <= apb_snd_data_out;
                                noc5_in_void <= apb_snd_empty;

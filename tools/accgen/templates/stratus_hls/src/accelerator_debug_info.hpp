@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2023 Columbia University, System Level Design Group
+// Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef __<ACCELERATOR_NAME>_DEBUG_INFO_HPP__

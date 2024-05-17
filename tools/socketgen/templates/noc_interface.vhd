@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -64,37 +64,37 @@ use std.textio.all;
 
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
-    coherence_req_data_in      : out noc_flit_type;
+    coherence_req_data_in      : out coh_noc_flit_type;
     coherence_req_full         : in  std_ulogic;
     -- NoC plane coherence forward
     coherence_fwd_rdreq        : out std_ulogic;
-    coherence_fwd_data_out     : in  noc_flit_type;
+    coherence_fwd_data_out     : in  coh_noc_flit_type;
     coherence_fwd_empty        : in  std_ulogic;
     -- Noc plane coherence response
     coherence_rsp_rcv_rdreq    : out std_ulogic;
-    coherence_rsp_rcv_data_out : in  noc_flit_type;
+    coherence_rsp_rcv_data_out : in  coh_noc_flit_type;
     coherence_rsp_rcv_empty    : in  std_ulogic;
     coherence_rsp_snd_wrreq    : out std_ulogic;
-    coherence_rsp_snd_data_in  : out noc_flit_type;
+    coherence_rsp_snd_data_in  : out coh_noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
     coherence_fwd_snd_wrreq    : out std_ulogic;
-    coherence_fwd_snd_data_in  : out noc_flit_type;
+    coherence_fwd_snd_data_in  : out coh_noc_flit_type;
     coherence_fwd_snd_full     : in  std_ulogic;
     -- NoC plane MEM2DEV
     dma_rcv_rdreq     : out std_ulogic;
-    dma_rcv_data_out  : in  noc_flit_type;
+    dma_rcv_data_out  : in  dma_noc_flit_type;
     dma_rcv_empty     : in  std_ulogic;
     -- NoC plane DEV2MEM
     dma_snd_wrreq     : out std_ulogic;
-    dma_snd_data_in   : out noc_flit_type;
+    dma_snd_data_in   : out dma_noc_flit_type;
     dma_snd_full      : in  std_ulogic;
     -- NoC plane LLC-coherent MEM2DEV
     coherent_dma_rcv_rdreq     : out std_ulogic;
-    coherent_dma_rcv_data_out  : in  noc_flit_type;
+    coherent_dma_rcv_data_out  : in  dma_noc_flit_type;
     coherent_dma_rcv_empty     : in  std_ulogic;
     -- NoC plane LLC-coherent DEV2MEM
     coherent_dma_snd_wrreq     : out std_ulogic;
-    coherent_dma_snd_data_in   : out noc_flit_type;
+    coherent_dma_snd_data_in   : out dma_noc_flit_type;
     coherent_dma_snd_full      : in  std_ulogic;
     -- Noc plane miscellaneous (tile -> NoC)
     interrupt_wrreq   : out std_ulogic;
@@ -183,16 +183,16 @@ end;
   signal dma_address          : addr_t;
   signal dma_ready            : std_ulogic;
   signal dma_rcv_rdreq_int    : std_ulogic;
-  signal dma_rcv_data_out_int : noc_flit_type;
+  signal dma_rcv_data_out_int : dma_noc_flit_type;
   signal dma_rcv_empty_int    : std_ulogic;
   signal dma_snd_wrreq_int    : std_ulogic;
-  signal dma_snd_data_in_int  : noc_flit_type;
+  signal dma_snd_data_in_int  : dma_noc_flit_type;
   signal dma_snd_full_int     : std_ulogic;
   signal dma_rcv_ready        : std_ulogic;
-  signal dma_rcv_data         : noc_flit_type;
+  signal dma_rcv_data         : dma_noc_flit_type;
   signal dma_rcv_valid        : std_ulogic;
   signal dma_snd_valid        : std_ulogic;
-  signal dma_snd_data         : noc_flit_type;
+  signal dma_snd_data         : dma_noc_flit_type;
   signal dma_snd_ready        : std_ulogic;
 
   -- Accelerator signals
@@ -210,10 +210,10 @@ end;
   signal dma_write_ctrl_data_size   : std_logic_vector(2 downto 0);
   signal dma_read_chnl_valid        : std_ulogic;
   signal dma_read_chnl_ready        : std_ulogic;
-  signal dma_read_chnl_data         : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal dma_read_chnl_data         : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
   signal dma_write_chnl_valid       : std_ulogic;
   signal dma_write_chnl_ready       : std_ulogic;
-  signal dma_write_chnl_data        : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal dma_write_chnl_data        : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
   signal acc_done                   : std_ulogic;
   signal flush                      : std_ulogic;
   signal acc_flush_done             : std_ulogic;
@@ -454,7 +454,7 @@ begin
       dma_snd_valid        <= '0';
     end if;
 
-    if coherence = ACC_COH_NONE then
+    if coherence /= ACC_COH_FULL then
       dma_rcv_rdreq        <= dma_rcv_rdreq_int;
       dma_snd_wrreq        <= dma_snd_wrreq_int;
     else

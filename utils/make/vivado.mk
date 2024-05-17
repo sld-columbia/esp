@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ### Constaints ###
@@ -56,7 +56,7 @@ ifneq ($(findstring profpga, $(BOARD)),)
 	done;
 	@for ver in $(VERILOG_PROFPGA); do \
 		rtl=$(PROFPGA)/hdl/$$ver; \
-		echo "read_verilog -library profpga $$rtl" >> $@; \
+		echo "read_verilog -library profpga -sv $$rtl" >> $@; \
 	done;
 endif
 	@for rtl in $(VHDL_PKGS); do \
@@ -119,8 +119,8 @@ endif
 		echo $(SPACES)"INFO including ZYNQ PS IP"; \
 		mkdir -p vivado/zynq; \
 		cp $(ESP_ROOT)/constraints/$(BOARD)/zynq.tcl ./vivado/zynq; \
-		echo "set argv [list $(NOC_WIDTH)]" >> $@; \
-		echo "set argv [list $(NOC_WIDTH)]" >> $@; \
+		echo "set argv [list $(ARCH_BITS)]" >> $@; \
+		echo "set argv [list $(ARCH_BITS)]" >> $@; \
 		echo "set argc 1" >> $@; \
 		echo "source ./zynq/zynq.tcl" >> $@; \
 		echo "unset argv" >> $@; \

@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 #-------------- MCS Generation ----------------------
 set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 8            [current_design]

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2023 Columbia University, System Level Design Group
+// Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #ifndef _<ACC_FULL_NAME>_H_
 #define _<ACC_FULL_NAME>_H_

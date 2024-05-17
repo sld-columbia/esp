@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ############################################################
@@ -11,6 +11,8 @@
 set TECH $::env(TECH)
 set ESP_ROOT $::env(ESP_ROOT)
 
+set TECH_TYPE $::env(TECH_TYPE)
+
 set TECH_PATH "$ESP_ROOT/tech/$TECH"
 
 
@@ -18,7 +20,8 @@ set TECH_PATH "$ESP_ROOT/tech/$TECH"
 # Setup technology and include behavioral models and/or libraries
 #
 set fpga_techs [list "virtex7" "zynq7000" "virtexu" "virtexup"]
-set asic_techs [list "cmos32soi" "gf12"]
+#set asic_techs [list "cmos32soi" "gf12" "sky130" "asic"]
+set asic_techs [list "asic"]
 
 if {[lsearch $fpga_techs $TECH] >= 0} {
     set VIVADO $::env(XILINX_VIVADO)
@@ -45,11 +48,14 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
     set TECH_IS_XILINX 1
 
 }
-if {[lsearch $asic_techs $TECH] >= 0} {
-    set_attr verilog_files "$ESP_ROOT/rtl/sim/$TECH/verilog/*v $ESP_ROOT/rtl/techmap/$TECH/mem/*v"
+if {[lsearch $asic_techs $TECH_TYPE] >= 0} {
+    set_attr verilog_files "$ESP_ROOT/rtl/sim/asic/verilog/*v $ESP_ROOT/rtl/techmap/asic/mem/*v"
     set LIB_PATH "$TECH_PATH/lib"
-    set LIB_NAME "$TECH.lib"
-    use_tech_lib "$LIB_PATH/$LIB_NAME"
+    set LIB_NAMES [glob -directory $LIB_PATH *{.lib,.lib_*}]
+    foreach LIB_NAME $LIB_NAMES {
+        use_tech_lib "$LIB_NAME"
+        puts "use_tech_lib = $LIB_NAME"
+    }
 
     set TECH_IS_XILINX 0
 

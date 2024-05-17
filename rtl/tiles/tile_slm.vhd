@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
@@ -69,40 +69,40 @@ entity tile_slm is
     noc4_mon_noc_vec   : in monitor_noc_type;
     noc5_mon_noc_vec   : in monitor_noc_type;
     noc6_mon_noc_vec   : in monitor_noc_type;
-    test1_output_port   : in noc_flit_type;
+    test1_output_port   : in coh_noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
-    test2_output_port   : in noc_flit_type;
+    test2_output_port   : in coh_noc_flit_type;
     test2_data_void_out : in std_ulogic;
     test2_stop_in       : in std_ulogic;
-    test3_output_port   : in noc_flit_type;
+    test3_output_port   : in coh_noc_flit_type;
     test3_data_void_out : in std_ulogic;
     test3_stop_in       : in std_ulogic;
-    test4_output_port   : in noc_flit_type;
+    test4_output_port   : in dma_noc_flit_type;
     test4_data_void_out : in std_ulogic;
     test4_stop_in       : in std_ulogic;
     test5_output_port   : in misc_noc_flit_type;
     test5_data_void_out : in std_ulogic;
     test5_stop_in       : in std_ulogic;
-    test6_output_port   : in noc_flit_type;
+    test6_output_port   : in dma_noc_flit_type;
     test6_data_void_out : in std_ulogic;
     test6_stop_in       : in std_ulogic;
-    test1_input_port    : out noc_flit_type;
+    test1_input_port    : out coh_noc_flit_type;
     test1_data_void_in  : out std_ulogic;
     test1_stop_out      : out std_ulogic;
-    test2_input_port    : out noc_flit_type;
+    test2_input_port    : out coh_noc_flit_type;
     test2_data_void_in  : out std_ulogic;
     test2_stop_out      : out std_ulogic;
-    test3_input_port    : out noc_flit_type;
+    test3_input_port    : out coh_noc_flit_type;
     test3_data_void_in  : out std_ulogic;
     test3_stop_out      : out std_ulogic;
-    test4_input_port    : out noc_flit_type;
+    test4_input_port    : out dma_noc_flit_type;
     test4_data_void_in  : out std_ulogic;
     test4_stop_out      : out std_ulogic;
     test5_input_port    : out misc_noc_flit_type;
     test5_data_void_in  : out std_ulogic;
     test5_stop_out      : out std_ulogic;
-    test6_input_port    : out noc_flit_type;
+    test6_input_port    : out dma_noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
     mon_mem            : out monitor_mem_type;
@@ -140,24 +140,24 @@ architecture rtl of tile_slm is
 
   -- Queues (despite their name, for this tile, all queues carry non-coherent requests)
   signal dma_rcv_rdreq              : std_ulogic;
-  signal dma_rcv_data_out           : noc_flit_type;
+  signal dma_rcv_data_out           : dma_noc_flit_type;
   signal dma_rcv_empty              : std_ulogic;
   signal dma_snd_wrreq              : std_ulogic;
-  signal dma_snd_data_in            : noc_flit_type;
+  signal dma_snd_data_in            : dma_noc_flit_type;
   signal dma_snd_full               : std_ulogic;
   signal dma_snd_atleast_4slots     : std_ulogic;
   signal dma_snd_exactly_3slots     : std_ulogic;
   signal cpu_dma_rcv_rdreq          : std_ulogic;
-  signal cpu_dma_rcv_data_out       : noc_flit_type;
+  signal cpu_dma_rcv_data_out       : dma_noc_flit_type;
   signal cpu_dma_rcv_empty          : std_ulogic;
   signal cpu_dma_snd_wrreq          : std_ulogic;
-  signal cpu_dma_snd_data_in        : noc_flit_type;
+  signal cpu_dma_snd_data_in        : dma_noc_flit_type;
   signal cpu_dma_snd_full           : std_ulogic;
   signal coherent_dma_rcv_rdreq     : std_ulogic;
-  signal coherent_dma_rcv_data_out  : noc_flit_type;
+  signal coherent_dma_rcv_data_out  : dma_noc_flit_type;
   signal coherent_dma_rcv_empty     : std_ulogic;
   signal coherent_dma_snd_wrreq     : std_ulogic;
-  signal coherent_dma_snd_data_in   : noc_flit_type;
+  signal coherent_dma_snd_data_in   : dma_noc_flit_type;
   signal coherent_dma_snd_full      : std_ulogic;
   signal coherent_dma_snd_atleast_4slots : std_ulogic;
   signal coherent_dma_snd_exactly_3slots : std_ulogic;
@@ -173,10 +173,10 @@ architecture rtl of tile_slm is
   signal remote_ahbs_snd_full       : std_ulogic;
   -- Extended remote_ahbs_* signals that
   signal remote_ahbm_rcv_rdreq      : std_ulogic;
-  signal remote_ahbm_rcv_data_out   : noc_flit_type;
+  signal remote_ahbm_rcv_data_out   : arch_noc_flit_type;
   signal remote_ahbm_rcv_empty      : std_ulogic;
   signal remote_ahbm_snd_wrreq      : std_ulogic;
-  signal remote_ahbm_snd_data_in    : noc_flit_type;
+  signal remote_ahbm_snd_data_in    : arch_noc_flit_type;
   signal remote_ahbm_snd_full       : std_ulogic;
   signal apb_rcv_rdreq              : std_ulogic;
   signal apb_rcv_data_out           : misc_noc_flit_type;
@@ -281,35 +281,38 @@ begin
         clk_div  => pllclk,
         lock     => dco_clk_lock);
 
-    clk_delay_gf12_gen: if CFG_FABTECH = gf12 generate
-      DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
-        port map (
-          data_in  => dco_clk_div2_int,
-          sel      => dco_clk_delay_sel(3 downto 0),
-          data_out => dco_clk_div2_90_int);
-
-      delay_ddr_gen : if this_has_ddr /= 0 generate
-        DELAY_CELL_GF12_C14_2: DELAY_CELL_GF12_C14
+    --clk_delay_gf12_gen: if CFG_FABTECH = gf12 generate
+    clk_delay_asic_gen: if CFG_FABTECH = asic generate
+      delay_ddr_gen : if  this_has_ddr /= 0 generate
+        DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
           port map (
             data_in  => dco_clk_div2_int,
-            sel      => dco_clk_delay_sel(7 downto 4),
-            data_out => dco_clk_div2_int_delay);
+            sel      => dco_clk_delay_sel(3 downto 0),
+            data_out => dco_clk_div2_90_int);
 
-        DELAY_CELL_GF12_C14_3: DELAY_CELL_GF12_C14
-          port map (
-            data_in  => dco_clk_int,
-            sel      => dco_clk_delay_sel(11 downto 8),
-            data_out => dco_clk_int_delay);
-      end generate delay_ddr_gen;
+        --delay_ddr_gen : if this_has_ddr /= 0 generate
+          DELAY_CELL_GF12_C14_2: DELAY_CELL_GF12_C14
+            port map (
+              data_in  => dco_clk_div2_int,
+              sel      => dco_clk_delay_sel(7 downto 4),
+              data_out => dco_clk_div2_int_delay);
+
+          DELAY_CELL_GF12_C14_3: DELAY_CELL_GF12_C14
+            port map (
+              data_in  => dco_clk_int,
+              sel      => dco_clk_delay_sel(11 downto 8),
+              data_out => dco_clk_int_delay);
+        end generate delay_ddr_gen;
 
       no_delay_ddr_gen : if this_has_ddr = 0 generate
         dco_clk_div2_int_delay <= dco_clk_div2_int;
         dco_clk_int_delay <= dco_clk_int;
       end generate no_delay_ddr_gen;
 
-    end generate clk_delay_gf12_gen;
+    end generate clk_delay_asic_gen;
 
-    noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
+    --noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
+    noc_clk_delay_gen: if CFG_FABTECH /= asic generate
       dco_clk_div2_90_int <= dco_clk_div2_int;
     end generate noc_clk_delay_gen;
 
@@ -326,6 +329,7 @@ begin
   no_dco_gen: if this_has_dco = 0 generate
     pllclk              <= '0';
     dco_clk_int         <= refclk;
+    dco_clk_int_delay   <= dco_clk_int;
     dco_clk_lock        <= '1';
     dco_clk_div2_int    <= '0';
     dco_clk_div2_90_int <= '0';
@@ -492,14 +496,15 @@ begin
   -- Handle CPU requests accelerator DMA
   noc2ahbmst_1 : noc2ahbmst
     generic map (
-      tech        => CFG_FABTECH,
-      hindex      => 0,
-      axitran     => GLOB_CPU_AXI,
-      little_end  => GLOB_CPU_RISCV,
-      eth_dma     => 0,
-      narrow_noc  => 0,
-      cacheline   => 1,
-      l2_cache_en => 0)
+      tech                  => CFG_FABTECH,
+      hindex                => 0,
+      axitran               => GLOB_CPU_AXI,
+      little_end            => GLOB_CPU_RISCV,
+      eth_dma               => 0,
+      narrow_noc            => 0,
+      cacheline             => 1,
+      l2_cache_en           => 0,
+      this_coh_flit_size    => DMA_NOC_FLIT_SIZE)
     port map (
       rst                       => rst,
       clk                       => clk,
@@ -528,14 +533,15 @@ begin
   -- Handle JTAG or EDCL requests to memory as well as Ethernet coherent DMA
   noc2ahbmst_2 : noc2ahbmst
     generic map (
-      tech        => CFG_FABTECH,
-      hindex      => 1,
-      axitran     => 0,
-      little_end  => 0,
-      eth_dma     => 1,               -- Exception for fixed 32-bits DMA
-      narrow_noc  => 0,
-      cacheline   => 1,
-      l2_cache_en => 0)
+      tech                  => CFG_FABTECH,
+      hindex                => 1,
+      axitran               => 0,
+      little_end            => 0,
+      eth_dma               => 1,               -- Exception for fixed 32-bits DMA
+      narrow_noc            => 0,
+      cacheline             => 1,
+      l2_cache_en           => 0,
+      this_coh_flit_size    => ARCH_NOC_FLIT_SIZE)
     port map (
       rst                       => rst,
       clk                       => clk,

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ###############################################################################
@@ -22,11 +22,16 @@ def get_immediate_subdirectories(a_dir):
         if os.path.isdir(os.path.join(a_dir, name))]
 
 def print_usage():
-  print("Usage                    : ./socketgen.py <dma_width> <cpu_arch> <rtl_path> <template_path> <out_path>")
+  print(sys.argv)
+  print("Usage                    : ./socketgen.py <arch_bits> <cpu_arch> <cache_line_size> <noc_width> <rtl_path> <template_path> <out_path>")
   print("")
-  print("      <dma_width>        : Bit-width for the DMA channel (32, 64)")
+  print("      <arch_bits>        : Bit-width for the DMA channel (32, 64)")
   print("")
   print("      <cpu_arch>         : Target processor (ariane, ibex, leon3)")
+  print("")
+  print("      <cache_line_size>  : Cache line size in bits (128, 256, 512, 1024)")
+  print("")
+  print("      <noc_width>         : NoC width. Must be >= arch_bits and <= cache_line size. (32, 64, 128, 256, 512, 1024)")
   print("")
   print("      <rtl_path>         : Path to accelerators' RTL for the target technology")
   print("")
@@ -54,7 +59,8 @@ class Parameter():
 class Implementation():
   def __init__(self):
     self.name = ""
-    self.dma_width = 0
+    self.arch_bits = 0
+    self.cache_line_size = 0
     self.datatype = ""
 
   def __str__(self):
@@ -119,10 +125,11 @@ bits_per_line = 128
 words_per_line = 4
 phys_addr_bits = 32
 word_offset_bits = 2
+dma_word_offset_bits = 2
 byte_offset_bits = 2
 offset_bits = 4
 little_endian = 1
-
+invack_cnt_bits = 4
 
 #
 ### VHDL writer ###
@@ -153,7 +160,7 @@ def gen_device_id(accelerator_list, axi_accelerator_list, template_dir, out_dir)
         f.write(tline)
 
 
-def write_axi_acc_interface(f, acc, dma_width):
+def write_axi_acc_interface(f, acc, noc_width):
   for clk in acc.clocks:
     f.write("  " + clk + " : in std_logic;\n")
   for rst in acc.resets:
@@ -181,8 +188,8 @@ def write_axi_acc_interface(f, acc, dma_width):
   if acc.user_width != "0":
     f.write("  " + acc.axi_prefix + "awuser : out std_logic_vector(" + str(acc.user_width) + " - 1 downto 0);\n")
   f.write("  " + acc.axi_prefix + "awready : in std_logic;\n")
-  f.write("  " + acc.axi_prefix + "wdata : out std_logic_vector (" + str(dma_width) + " - 1 downto 0);\n")
-  f.write("  " + acc.axi_prefix + "wstrb : out std_logic_vector (" + str(dma_width) + "/8 - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "wdata : out std_logic_vector (" + str(noc_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "wstrb : out std_logic_vector (" + str(noc_width) + "/8 - 1 downto 0);\n")
   f.write("  " + acc.axi_prefix + "wlast : out std_logic;\n")
   f.write("  " + acc.axi_prefix + "wvalid : out std_logic;\n")
   if acc.user_width != "0":
@@ -204,7 +211,7 @@ def write_axi_acc_interface(f, acc, dma_width):
   f.write("  " + acc.axi_prefix + "arready : in std_logic;\n")
   f.write("  " + acc.axi_prefix + "rready : out std_logic;\n")
   f.write("  " + acc.axi_prefix + "rid : in std_logic_vector (" + str(acc.id_width) + " - 1 downto 0);\n")
-  f.write("  " + acc.axi_prefix + "rdata : in std_logic_vector (" + str(dma_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "rdata : in std_logic_vector (" + str(noc_width) + " - 1 downto 0);\n")
   f.write("  " + acc.axi_prefix + "rresp : in std_logic_vector (1 downto 0);\n")
   f.write("  " + acc.axi_prefix + "rlast : in std_logic;\n")
   f.write("  " + acc.axi_prefix + "rvalid : in std_logic;\n")
@@ -234,7 +241,7 @@ def bind_apb3(f, prefix):
   f.write("      " + prefix + "pslverr => open, -- TODO: handle APB3 error\n");
 
 
-def bind_axi(f, acc, dma_width):
+def bind_axi(f, acc, noc_width):
   f.write("      " + acc.axi_prefix + "awid => mosi(0).aw.id(" + str(acc.id_width) + " - 1 downto 0),\n")
   f.write("      " + acc.axi_prefix + "awaddr => mosi(0).aw.addr(" + str(acc.addr_width) + " - 1 downto 0),\n")
   f.write("      " + acc.axi_prefix + "awlen => mosi(0).aw.len,\n")
@@ -288,7 +295,7 @@ def bind_axi(f, acc, dma_width):
     f.write("      " + acc.axi_prefix + "buser => somi(0).b.user")
 
 
-def tie_unused_axi(f, acc, dma_width):
+def tie_unused_axi(f, acc, noc_width):
   f.write("  pad_id_gen : if XID_WIDTH > " + str(acc.id_width) + " generate\n")
   f.write("    mosi(0).aw.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
   f.write("    mosi(0).ar.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
@@ -304,21 +311,21 @@ def tie_unused_axi(f, acc, dma_width):
   f.write("  end generate;\n")
 
 
-def write_axi_acc_port_map(f, acc, dma_width):
+def write_axi_acc_port_map(f, acc, noc_width):
   f.write("    port map(\n")
   for clk in acc.clocks:
     f.write("      " + clk + " => clk,\n")
   for rst in acc.resets:
     f.write("      " + rst + " => rst,\n")
   bind_apb3(f, acc.apb_prefix)
-  bind_axi(f, acc, dma_width)
+  bind_axi(f, acc, noc_width)
   if acc.interrupt != "":
     f.write(",\n")
     f.write("      " + acc.interrupt + " => acc_done\n")
   f.write("    );\n")
 
 
-def write_acc_interface(f, acc, dma_width, datatype, rst, is_vivadohls_if, is_catapulthls_cxx_if, is_catapulthls_sysc_if):
+def write_acc_interface(f, acc, noc_width, datatype, rst, is_vivadohls_if, is_catapulthls_cxx_if, is_catapulthls_sysc_if):
 
   if is_catapulthls_cxx_if:
     conf_info_size = 0
@@ -342,11 +349,11 @@ def write_acc_interface(f, acc, dma_width, datatype, rst, is_vivadohls_if, is_ca
     f.write("      dma_write_ctrl_rsc_vld     : out std_ulogic;\n")
     f.write("      dma_write_ctrl_rsc_rdy     : in  std_ulogic;\n")
     f.write("\n")
-    f.write("      dma_read_chnl_rsc_dat      : in  std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
+    f.write("      dma_read_chnl_rsc_dat      : in  std_logic_vector(" + str(noc_width - 1) + " downto 0);\n")
     f.write("      dma_read_chnl_rsc_vld      : in  std_ulogic;\n")
     f.write("      dma_read_chnl_rsc_rdy      : out std_ulogic;\n")
     f.write("\n")
-    f.write("      dma_write_chnl_rsc_dat     : out std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
+    f.write("      dma_write_chnl_rsc_dat     : out std_logic_vector(" + str(noc_width - 1) + " downto 0);\n")
     f.write("      dma_write_chnl_rsc_vld     : out std_ulogic;\n")
     f.write("      dma_write_chnl_rsc_rdy     : in  std_ulogic;\n")
     f.write("\n")
@@ -374,11 +381,11 @@ def write_acc_interface(f, acc, dma_width, datatype, rst, is_vivadohls_if, is_ca
     f.write("      dma_write_ctrl_val         : out std_ulogic;\n")
     f.write("      dma_write_ctrl_rdy         : in  std_ulogic;\n")
     f.write("\n")
-    f.write("      dma_read_chnl_msg          : in  std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
+    f.write("      dma_read_chnl_msg          : in  std_logic_vector(" + str(noc_width - 1) + " downto 0);\n")
     f.write("      dma_read_chnl_val          : in  std_ulogic;\n")
     f.write("      dma_read_chnl_rdy          : out std_ulogic;\n")
     f.write("\n")
-    f.write("      dma_write_chnl_msg         : out std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
+    f.write("      dma_write_chnl_msg         : out std_logic_vector(" + str(noc_width - 1) + " downto 0);\n")
     f.write("      dma_write_chnl_val         : out std_ulogic;\n")
     f.write("      dma_write_chnl_rdy         : in  std_ulogic;\n")
     f.write("\n")
@@ -398,19 +405,19 @@ def write_acc_interface(f, acc, dma_width, datatype, rst, is_vivadohls_if, is_ca
     f.write("      ap_idle                    : out std_ulogic;\n")
     f.write("      ap_ready                   : out std_ulogic;\n")
     if datatype == 'float' or  datatype == 'float_out':
-      f.write("      out_word_din             : out std_logic_vector (" + str(dma_width - 1) + " downto 0);\n")
+      f.write("      out_word_din             : out std_logic_vector (" + str(noc_width - 1) + " downto 0);\n")
       f.write("      out_word_full_n          : in  std_logic;\n")
       f.write("      out_word_write           : out std_logic;\n")
     else:
-      f.write("      out_word_V_din             : out std_logic_vector (" + str(dma_width - 1) + " downto 0);\n")
+      f.write("      out_word_V_din             : out std_logic_vector (" + str(noc_width - 1) + " downto 0);\n")
       f.write("      out_word_V_full_n          : in  std_logic;\n")
       f.write("      out_word_V_write           : out std_logic;\n")
     if datatype == 'float' or  datatype == 'float_in':
-      f.write("      in1_word_dout            : in  std_logic_vector (" + str(dma_width - 1) + " downto 0);\n")
+      f.write("      in1_word_dout            : in  std_logic_vector (" + str(noc_width - 1) + " downto 0);\n")
       f.write("      in1_word_empty_n         : in  std_logic;\n")
       f.write("      in1_word_read            : out std_logic;\n")
     else:
-      f.write("      in1_word_V_dout            : in  std_logic_vector (" + str(dma_width - 1) + " downto 0);\n")
+      f.write("      in1_word_V_dout            : in  std_logic_vector (" + str(noc_width - 1) + " downto 0);\n")
       f.write("      in1_word_V_empty_n         : in  std_logic;\n")
       f.write("      in1_word_V_read            : out std_logic;\n")
     f.write("      load_ctrl                  : out std_logic_vector (" + str(95) + " downto 0);\n")
@@ -442,10 +449,10 @@ def write_acc_interface(f, acc, dma_width, datatype, rst, is_vivadohls_if, is_ca
     f.write("      dma_write_ctrl_data_size   : out std_logic_vector(" + str(2) + " downto 0);\n")
     f.write("      dma_read_chnl_valid        : in  std_ulogic;\n")
     f.write("      dma_read_chnl_ready        : out std_ulogic;\n")
-    f.write("      dma_read_chnl_data         : in  std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
+    f.write("      dma_read_chnl_data         : in  std_logic_vector(" + str(noc_width - 1) + " downto 0);\n")
     f.write("      dma_write_chnl_valid       : out std_ulogic;\n")
     f.write("      dma_write_chnl_ready       : in  std_ulogic;\n")
-    f.write("      dma_write_chnl_data        : out std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
+    f.write("      dma_write_chnl_data        : out std_logic_vector(" + str(noc_width - 1) + " downto 0);\n")
     f.write("      acc_done                   : out std_ulogic\n")
 
 def write_ap_acc_signals(f):
@@ -467,7 +474,7 @@ def write_ap_acc_signals(f):
   f.write("signal dma_write_ctrl_data : std_logic_vector(95 downto 0);\n")
   f.write("\n")
 
-def write_acc_port_map(f, acc, dma_width, datatype, rst, is_noc_interface, is_vivadohls_if, is_catapulthls_cxx_if, is_catapulthls_sysc_if):
+def write_acc_port_map(f, acc, noc_width, datatype, rst, is_noc_interface, is_vivadohls_if, is_catapulthls_cxx_if, is_catapulthls_sysc_if):
 
   if is_vivadohls_if:
     f.write("    port map(\n")
@@ -708,8 +715,8 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_req_in_data_coh_msg      : in std_logic_vector(2 downto 0);\n")
     f.write("      llc_dma_req_in_data_hprot        : in std_logic_vector(1 downto 0);\n")
     f.write("      llc_dma_req_in_data_addr         : in std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
-    f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
-    f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_req_in_data_line         : in std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      llc_dma_req_in_data_req_id       : in std_logic_vector(5 downto 0);\n")
     f.write("      llc_rsp_in_valid             : in std_ulogic;\n")
@@ -736,7 +743,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_rsp_out_data_coh_msg     : out std_logic_vector(1 downto 0);\n")
     f.write("      llc_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      llc_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
-    f.write("      llc_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + "  downto 0);\n")
     f.write("      llc_rsp_out_data_req_id      : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
@@ -744,10 +751,10 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_rsp_out_data_coh_msg     : out std_logic_vector(1 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
-    f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_req_id      : out std_logic_vector(5 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
-    f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_fwd_out_valid            : out std_ulogic;\n")
     f.write("      llc_fwd_out_data_coh_msg     : out std_logic_vector(2 downto 0);\n")
     f.write("      llc_fwd_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
@@ -779,8 +786,8 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_req_in_data_coh_msg      : in std_logic_vector(4 downto 0);\n")
     f.write("      llc_dma_req_in_data_hprot        : in std_logic_vector(1 downto 0);\n")
     f.write("      llc_dma_req_in_data_addr         : in std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
-    f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
-    f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_req_in_data_line         : in std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      llc_dma_req_in_data_req_id       : in std_logic_vector(5 downto 0);\n")
     f.write("      llc_dma_req_in_data_word_mask    : in std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
@@ -810,7 +817,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      llc_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      llc_rsp_out_data_word_mask   : out std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
-    f.write("      llc_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      llc_rsp_out_data_req_id      : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
@@ -818,10 +825,10 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_rsp_out_data_coh_msg     : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
-    f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_req_id      : out std_logic_vector(5 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
-    f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_word_mask   : out std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
     f.write("      llc_fwd_out_valid            : out std_ulogic;\n")
     f.write("      llc_fwd_out_data_coh_msg     : out std_logic_vector(4 downto 0);\n")
@@ -848,7 +855,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_cpu_req_data_hsize     : in  std_logic_vector(2 downto 0);\n")
     f.write("      l2_cpu_req_data_hprot     : in  std_logic_vector(1 downto 0);\n")
     f.write("      l2_cpu_req_data_addr      : in  std_logic_vector(" + str(phys_addr_bits - 1) + " downto 0);\n")
-    f.write("      l2_cpu_req_data_word      : in  std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
+    f.write("      l2_cpu_req_data_word      : in  std_logic_vector(" + str(arch_bits - 1) + " downto 0);\n")
     f.write("      l2_cpu_req_data_amo       : in  std_logic_vector(5 downto 0);\n")
     f.write("      l2_cpu_req_data_aq        : in  std_ulogic;\n")
     f.write("      l2_cpu_req_data_rl        : in  std_ulogic;\n")
@@ -867,7 +874,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_rsp_in_data_addr       : in  std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      l2_rsp_in_data_line       : in  std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      l2_rsp_in_data_word_mask  : in std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
-    f.write("      l2_rsp_in_data_invack_cnt : in  std_logic_vector(3 downto 0);\n")
+    f.write("      l2_rsp_in_data_invack_cnt : in  std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      l2_flush_valid            : in  std_ulogic;\n")
     f.write("      l2_flush_data             : in  std_ulogic;\n")
     f.write("      l2_rd_rsp_ready           : in  std_ulogic;\n")
@@ -886,7 +893,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_rd_rsp_valid           : out std_ulogic;\n")
     f.write("      l2_rd_rsp_data_line       : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      l2_inval_valid            : out std_ulogic;\n")
-    f.write("      l2_inval_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_inval_data_addr        : out std_logic_vector(" + str(phys_addr_bits - 1) + " downto 0);\n")
     f.write("      l2_inval_data_hprot       : out std_logic_vector(1 downto 0);\n")
     f.write("      l2_bresp_valid            : out std_ulogic;\n")
     f.write("      l2_bresp_data             : out std_logic_vector(1 downto 0);\n")
@@ -923,7 +930,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_cpu_req_data_hsize     : in  std_logic_vector(2 downto 0);\n")
     f.write("      l2_cpu_req_data_hprot     : in  std_logic_vector(1 downto 0);\n")
     f.write("      l2_cpu_req_data_addr      : in  std_logic_vector(" + str(phys_addr_bits - 1) + " downto 0);\n")
-    f.write("      l2_cpu_req_data_word      : in  std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
+    f.write("      l2_cpu_req_data_word      : in  std_logic_vector(" + str(arch_bits - 1) + " downto 0);\n")
     f.write("      l2_cpu_req_data_amo       : in  std_logic_vector(5 downto 0);\n")
     f.write("      l2_fwd_in_valid           : in  std_ulogic;\n")
     f.write("      l2_fwd_in_data_coh_msg    : in  std_logic_vector(2 downto 0);\n")
@@ -933,7 +940,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_rsp_in_data_coh_msg    : in  std_logic_vector(1 downto 0);\n")
     f.write("      l2_rsp_in_data_addr       : in  std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      l2_rsp_in_data_line       : in  std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
-    f.write("      l2_rsp_in_data_invack_cnt : in  std_logic_vector(3 downto 0);\n")
+    f.write("      l2_rsp_in_data_invack_cnt : in  std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      l2_flush_valid            : in  std_ulogic;\n")
     f.write("      l2_flush_data             : in  std_ulogic;\n")
     f.write("      l2_rd_rsp_ready           : in  std_ulogic;\n")
@@ -950,7 +957,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_rd_rsp_valid           : out std_ulogic;\n")
     f.write("      l2_rd_rsp_data_line       : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      l2_inval_valid            : out std_ulogic;\n")
-    f.write("      l2_inval_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_inval_data_addr        : out std_logic_vector(" + str(phys_addr_bits - 1) + " downto 0);\n")
     f.write("      l2_inval_data_hprot       : out std_logic_vector(1 downto 0);\n")
     f.write("      l2_bresp_valid            : out std_ulogic;\n")
     f.write("      l2_bresp_data             : out std_logic_vector(1 downto 0);\n")
@@ -1249,7 +1256,7 @@ def write_cache_port_map(f, cac, is_llc):
 
 
 # Component declaration matching HLS-generated verilog
-def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir):
+def gen_tech_dep(accelerator_list, cache_list, noc_width, template_dir, out_dir):
   f = open(out_dir + '/allacc.vhd', 'w')
   with open(template_dir + '/allacc.vhd', 'r') as ftemplate:
     for tline in ftemplate:
@@ -1262,19 +1269,19 @@ def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
           if acc.hls_tool == 'stratus_hls' or acc.hls_tool == 'rtl':
             f.write("  component " + acc.name + "_" + impl.name + "\n")
             f.write("    port (\n")
-            write_acc_interface(f, acc, dma_width, impl.datatype, "rst", False, False, False)
+            write_acc_interface(f, acc, noc_width, impl.datatype, "rst", False, False, False)
           elif acc.hls_tool == 'catapult_hls_cxx':
             f.write("  component " + acc.name + "_" + impl.name + "\n")
             f.write("    port (\n")
-            write_acc_interface(f, acc, dma_width, impl.datatype, "rst", False, True, False)
+            write_acc_interface(f, acc, noc_width, impl.datatype, "rst", False, True, False)
           elif acc.hls_tool == 'catapult_hls_sysc':
             f.write("  component " + acc.name + "_" + impl.name + "\n")
             f.write("    port (\n")
-            write_acc_interface(f, acc, dma_width, impl.datatype, "rst", False, False, True)
+            write_acc_interface(f, acc, noc_width, impl.datatype, "rst", False, False, True)
           else:
             f.write("  component " + acc.name + "_" + impl.name + "_top\n")
             f.write("    port (\n")
-            write_acc_interface(f, acc, dma_width, impl.datatype, "ap_rst", True, False, False)
+            write_acc_interface(f, acc, noc_width, impl.datatype, "ap_rst", True, False, False)
           f.write("    );\n")
           f.write("  end component;\n\n")
           f.write("\n")
@@ -1283,7 +1290,9 @@ def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
   f = open(out_dir + '/allcaches.vhd', 'w')
   with open(template_dir + '/allcaches.vhd', 'r') as ftemplate:
     for tline in ftemplate:
-      if tline.find("-- <<caches-components>>") < 0:
+      if tline.find("-- <<invack_cnt_width>>") >= 0:
+        f.write("  constant INVACK_CNT_WIDTH      : integer := " + str(invack_cnt_bits) + ";\n")
+      elif tline.find("-- <<caches-components>>") < 0:
         f.write(tline)
         continue
       for cac in cache_list:
@@ -1301,7 +1310,7 @@ def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
 
 
 # Component declaration independent from technology and implementation
-def gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, dma_width, template_dir, out_dir):
+def gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, noc_width, template_dir, out_dir):
   f = open(out_dir + '/genacc.vhd', 'w')
   with open(template_dir + '/genacc.vhd', 'r') as ftemplate:
     for tline in ftemplate:
@@ -1316,7 +1325,7 @@ def gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, dma_width
         f.write("    );\n")
         f.write("\n")
         f.write("    port (\n")
-        write_acc_interface(f, acc, dma_width, "", "acc_rst", False, False, False)
+        write_acc_interface(f, acc, noc_width, "", "acc_rst", False, False, False)
         f.write("    );\n")
         f.write("  end component;\n\n")
         f.write("\n")
@@ -1324,7 +1333,7 @@ def gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, dma_width
         f.write("\n")
         f.write("  component " + acc.name + "_wrapper\n")
         f.write("    port (\n")
-        write_axi_acc_interface(f, acc, dma_width)
+        write_axi_acc_interface(f, acc, noc_width)
         f.write("    );\n")
         f.write("  end component;\n\n")
         f.write("\n")
@@ -1355,7 +1364,7 @@ def gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, dma_width
 
 
 # Mapping from generic components to technology and implementation dependent ones
-def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, out_dir):
+def gen_tech_indep_impl(accelerator_list, cache_list, noc_width, template_dir, out_dir):
   f = open(out_dir + '/accelerators.vhd', 'w')
   with open(template_dir + '/accelerators.vhd', 'r') as ftemplate:
     for tline in ftemplate:
@@ -1375,7 +1384,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           f.write("    );\n")
           f.write("\n")
           f.write("    port (\n")
-          write_acc_interface(f, acc, dma_width, "", "acc_rst", False, False, False)
+          write_acc_interface(f, acc, noc_width, "", "acc_rst", False, False, False)
           f.write("    );\n")
           f.write("\n")
           f.write("end entity " + acc.name + "_rtl;\n\n")
@@ -1396,7 +1405,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
             f.write("\n")
             f.write("  impl_" + impl.name + "_gen: if hls_conf = HLSCFG_" + acc.name.upper() + "_" + impl.name.upper() + " generate\n")
             f.write("    " + acc.name + "_" + impl.name + "_i: " + acc.name + "_" + impl.name + "\n")
-            write_acc_port_map(f, acc, dma_width, impl.datatype, "rst", False, False, True, False)
+            write_acc_port_map(f, acc, noc_width, impl.datatype, "rst", False, False, True, False)
             f.write("\n\n")
             f.write("  -- CONF_DONE FSM\n")
             f.write("\n")
@@ -1449,7 +1458,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           f.write("    );\n")
           f.write("\n")
           f.write("    port (\n")
-          write_acc_interface(f, acc, dma_width, "", "acc_rst", False, False, False)
+          write_acc_interface(f, acc, noc_width, "", "acc_rst", False, False, False)
           f.write("    );\n")
           f.write("\n")
           f.write("end entity " + acc.name + "_rtl;\n\n")
@@ -1470,7 +1479,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
             f.write("\n")
             f.write("  impl_" + impl.name + "_gen: if hls_conf = HLSCFG_" + acc.name.upper() + "_" + impl.name.upper() + " generate\n")
             f.write("    " + acc.name + "_" + impl.name + "_i: " + acc.name + "_" + impl.name + "\n")
-            write_acc_port_map(f, acc, dma_width, impl.datatype, "rst", False, False, False, True)
+            write_acc_port_map(f, acc, noc_width, impl.datatype, "rst", False, False, False, True)
             f.write("\n\n")
             f.write("  -- CONF_DONE FSM\n")
             f.write("\n")
@@ -1524,7 +1533,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           f.write("    );\n")
           f.write("\n")
           f.write("    port (\n")
-          write_acc_interface(f, acc, dma_width, "", "acc_rst", False, False, False)
+          write_acc_interface(f, acc, noc_width, "", "acc_rst", False, False, False)
           f.write("    );\n")
           f.write("\n")
           f.write("end entity " + acc.name + "_rtl;\n\n")
@@ -1538,10 +1547,10 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
             f.write("  impl_" + impl.name + "_gen: if hls_conf = HLSCFG_" + acc.name.upper() + "_" + impl.name.upper() + " generate\n")
             if acc.hls_tool == 'stratus_hls' or acc.hls_tool == 'rtl':
               f.write("    " + acc.name + "_" + impl.name + "_i: " + acc.name + "_" + impl.name + "\n")
-              write_acc_port_map(f, acc, dma_width, impl.datatype, "rst", False, False, False, False)
+              write_acc_port_map(f, acc, noc_width, impl.datatype, "rst", False, False, False, False)
             else:
               f.write("    " + acc.name + "_" + impl.name + "_top_i: " + acc.name + "_" + impl.name + "_top\n")
-              write_acc_port_map(f, acc, dma_width, impl.datatype, "rst", False, True, False, False)
+              write_acc_port_map(f, acc, noc_width, impl.datatype, "rst", False, True, False, False)
             f.write("  end generate impl_" +  impl.name + "_gen;\n\n")
           f.write("end mapping;\n\n")
   f.close()
@@ -1642,7 +1651,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
 
 
 # Component declaration of NoC wrappers
-def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_dir, out_dir):
+def gen_interfaces(accelerator_list, axi_accelerator_list, noc_width, template_dir, out_dir):
   f = open(out_dir + '/sldacc.vhd', 'w')
   with open(template_dir + '/sldacc.vhd', 'r') as ftemplate:
     for tline in ftemplate:
@@ -1693,31 +1702,31 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      apbo              : out apb_slv_out_type;\n")
         f.write("      pready            : out std_ulogic;\n")
         f.write("      coherence_req_wrreq        : out std_ulogic;\n")
-        f.write("      coherence_req_data_in      : out noc_flit_type;\n")
+        f.write("      coherence_req_data_in      : out coh_noc_flit_type;\n")
         f.write("      coherence_req_full         : in  std_ulogic;\n")
         f.write("      coherence_fwd_rdreq        : out std_ulogic;\n")
-        f.write("      coherence_fwd_data_out     : in  noc_flit_type;\n")
+        f.write("      coherence_fwd_data_out     : in  coh_noc_flit_type;\n")
         f.write("      coherence_fwd_empty        : in  std_ulogic;\n")
         f.write("      coherence_rsp_rcv_rdreq    : out std_ulogic;\n")
-        f.write("      coherence_rsp_rcv_data_out : in  noc_flit_type;\n")
+        f.write("      coherence_rsp_rcv_data_out : in  coh_noc_flit_type;\n")
         f.write("      coherence_rsp_rcv_empty    : in  std_ulogic;\n")
         f.write("      coherence_rsp_snd_wrreq    : out std_ulogic;\n")
-        f.write("      coherence_rsp_snd_data_in  : out noc_flit_type;\n")
+        f.write("      coherence_rsp_snd_data_in  : out coh_noc_flit_type;\n")
         f.write("      coherence_rsp_snd_full     : in  std_ulogic;\n")
         f.write("      coherence_fwd_snd_wrreq    : out std_ulogic;\n")
-        f.write("      coherence_fwd_snd_data_in  : out noc_flit_type;\n")
+        f.write("      coherence_fwd_snd_data_in  : out coh_noc_flit_type;\n")
         f.write("      coherence_fwd_snd_full     : in  std_ulogic;\n")
         f.write("      dma_rcv_rdreq     : out std_ulogic;\n")
-        f.write("      dma_rcv_data_out  : in  noc_flit_type;\n")
+        f.write("      dma_rcv_data_out  : in  dma_noc_flit_type;\n")
         f.write("      dma_rcv_empty     : in  std_ulogic;\n")
         f.write("      dma_snd_wrreq     : out std_ulogic;\n")
-        f.write("      dma_snd_data_in   : out noc_flit_type;\n")
+        f.write("      dma_snd_data_in   : out dma_noc_flit_type;\n")
         f.write("      dma_snd_full      : in  std_ulogic;\n")
         f.write("      coherent_dma_rcv_rdreq     : out std_ulogic;\n")
-        f.write("      coherent_dma_rcv_data_out  : in  noc_flit_type;\n")
+        f.write("      coherent_dma_rcv_data_out  : in  dma_noc_flit_type;\n")
         f.write("      coherent_dma_rcv_empty     : in  std_ulogic;\n")
         f.write("      coherent_dma_snd_wrreq     : out std_ulogic;\n")
-        f.write("      coherent_dma_snd_data_in   : out noc_flit_type;\n")
+        f.write("      coherent_dma_snd_data_in   : out dma_noc_flit_type;\n")
         f.write("      coherent_dma_snd_full      : in  std_ulogic;\n")
         f.write("      interrupt_wrreq   : out std_ulogic;\n")
         f.write("      interrupt_data_in : out misc_noc_flit_type;\n")
@@ -1736,7 +1745,7 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
   ftemplate.close()
 
 
-def gen_noc_interface(acc, dma_width, template_dir, out_dir, is_axi):
+def gen_noc_interface(acc, noc_width, template_dir, out_dir, is_axi):
   f = open(out_dir + "/noc_" + acc.name + ".vhd", 'w')
 
   if not is_axi:
@@ -1772,18 +1781,18 @@ def gen_noc_interface(acc, dma_width, template_dir, out_dir, is_axi):
           if param.readonly:
             f.write("    " + acc.name.upper() + "_" + param.name.upper() + "_REG" + (31 - len(acc.name) - len(param.name))*" " + "=> X\"" + format(param.value, '08x') + "\",\n")
       elif tline.find("-- <<axi_unused>>") >= 0:
-        tie_unused_axi(f, acc, dma_width)
+        tie_unused_axi(f, acc, noc_width)
       elif tline.find("-- <<accelerator_instance>>") >= 0:
         f.write("  " + acc.name + "_rlt_i: " + acc.name)
         if is_axi:
           f.write("_wrapper\n")
-          write_axi_acc_port_map(f, acc, dma_width)
+          write_axi_acc_port_map(f, acc, noc_width)
         else:
           f.write("_rtl\n")
           f.write("    generic map (\n")
           f.write("      hls_conf => hls_conf\n")
           f.write("    )\n")
-          write_acc_port_map(f, acc, dma_width, "", "acc_rst", True, False, False, False)
+          write_acc_port_map(f, acc, noc_width, "", "acc_rst", True, False, False, False)
       else:
         f.write(tline)
 
@@ -1883,17 +1892,19 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
 ### Main script ###
 #
 
-if len(sys.argv) != 7:
+if len(sys.argv) != 9:
     print_usage()
     sys.exit(1)
 
-dma_width = int(sys.argv[1])
+arch_bits = int(sys.argv[1])
 cpu_arch = sys.argv[2]
-acc_rtl_dir = sys.argv[3] + "/acc"
-caches_rtl_dir = sys.argv[3] + "/sccs"
-axi_acc_dir = sys.argv[4]
-template_dir = sys.argv[5]
-out_dir = sys.argv[6]
+cache_line_size = int(sys.argv[3])
+noc_width = int(sys.argv[4])
+acc_rtl_dir = sys.argv[5] + "/acc"
+caches_rtl_dir = sys.argv[5] + "/sccs"
+axi_acc_dir = sys.argv[6]
+template_dir = sys.argv[7]
+out_dir = sys.argv[8]
 if cpu_arch == "leon3":
   little_endian = 0
 else:
@@ -1930,6 +1941,12 @@ if (not os.path.exists(tmp_l2_dir) or not os.path.exists(tmp_llc_dir)):
   print("             Please check the \"Use RTL\" option in the \"Cache Configuration\" tab when configuring ESP.")
 
 for acc in axi_accelerators:
+  f = open(axi_acc_dir + "/" + acc + "/" + acc + ".dma_widths")
+  buf = f.read()
+  if not str(noc_width) in buf:
+    print("    INFO: System DMA_WIDTH is " + str(noc_width) + "; skipping " + acc)
+    continue
+
   accd = AxiAccelerator()
   accd.name = acc
 
@@ -1994,8 +2011,8 @@ for acc in accelerators:
     datatype = ""
     for item in dp_info:
       if re.match(r'dma[1-9]+', item, re.M|re.I):
-        dp_dma_width = int(item.replace("dma", ""))
-        if dp_dma_width != dma_width:
+        dp_noc_width = int(item.replace("dma", ""))
+        if dp_noc_width != noc_width:
           skip = True
           break;
       if re.fullmatch(r'fl32in', item):
@@ -2006,12 +2023,12 @@ for acc in accelerators:
         datatype = "float"
 
     if skip:
-      print("    INFO: System DMA_WIDTH is " + str(dma_width) + "; skipping " + acc + "_" + dp)
+      print("    INFO: System DMA_WIDTH is " + str(noc_width) + "; skipping " + acc + "_" + dp)
       continue
     print("    INFO: Found implementation " + dp + " for " + acc)
     impl = Implementation()
     impl.name = dp
-    impl.dma_width = dma_width
+    impl.noc_width = noc_width
     impl.datatype = datatype
     accd.hlscfg.append(impl)
 
@@ -2085,11 +2102,18 @@ for acc in accelerators:
 
 # Compute relevan bitwidths for cache interfaces
 # based on DMA_WIDTH and a fixed 128-bits cache line
-bits_per_line = 128
-words_per_line = int(bits_per_line/dma_width)
+bits_per_line = cache_line_size
+words_per_line = int(bits_per_line/arch_bits)
+dma_words_per_line = int(bits_per_line/32)
 word_offset_bits = int(math.log2(words_per_line))
-byte_offset_bits = int(math.log2(dma_width/8))
+dma_word_offset_bits = int(math.log2(dma_words_per_line))
+byte_offset_bits = int(math.log2(arch_bits/8))
 offset_bits = word_offset_bits + byte_offset_bits
+nl2_max_log2 = 4
+if dma_word_offset_bits + 1 < nl2_max_log2:
+  invack_cnt_bits = nl2_max_log2
+else:
+  invack_cnt_bits = dma_word_offset_bits + 1
 
 for cac in caches:
   cacd = Component()
@@ -2109,12 +2133,12 @@ for cac in caches:
 # Generate RTL
 print("    INFO: Generating RTL to " + out_dir)
 gen_device_id(accelerator_list, axi_accelerator_list, template_dir, out_dir)
-gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
-gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, dma_width, template_dir, out_dir)
-gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, out_dir)
-gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_dir, out_dir)
+gen_tech_dep(accelerator_list, cache_list, noc_width, template_dir, out_dir)
+gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, noc_width, template_dir, out_dir)
+gen_tech_indep_impl(accelerator_list, cache_list, noc_width, template_dir, out_dir)
+gen_interfaces(accelerator_list, axi_accelerator_list, noc_width, template_dir, out_dir)
 for acc in accelerator_list:
-  gen_noc_interface(acc, dma_width, template_dir, out_dir, False)
+  gen_noc_interface(acc, noc_width, template_dir, out_dir, False)
 for acc in axi_accelerator_list:
-  gen_noc_interface(acc, dma_width, template_dir, out_dir, True)
+  gen_noc_interface(acc, noc_width, template_dir, out_dir, True)
 gen_tile_acc(accelerator_list, axi_accelerator_list, template_dir, out_dir)

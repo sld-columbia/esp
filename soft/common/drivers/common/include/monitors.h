@@ -47,14 +47,15 @@
 #define MON_ACC_MEM_HI_INDEX			15
 #define MON_ACC_TOT_LO_INDEX			16
 #define MON_ACC_TOT_HI_INDEX			17
+#define MON_ACC_INVOCATIONS	     		18
 
-#define MON_DVFS_BASE_INDEX				18
+#define MON_DVFS_BASE_INDEX				19
 #define VF_OP_POINTS					4
 
 #define NOCS_NUM						6
 #define NOC_QUEUES						5
-#define MON_NOC_TILE_INJECT_BASE_INDEX	(MON_DVFS_BASE_INDEX + VF_OP_POINTS) //22
-#define MON_NOC_QUEUES_FULL_BASE_INDEX	(MON_NOC_TILE_INJECT_BASE_INDEX + NOCS_NUM) //28
+#define MON_NOC_TILE_INJECT_BASE_INDEX	(MON_DVFS_BASE_INDEX + VF_OP_POINTS) //23
+#define MON_NOC_QUEUES_FULL_BASE_INDEX	(MON_NOC_TILE_INJECT_BASE_INDEX + NOCS_NUM) //29
 
 typedef struct esp_mem_reqs {
 	unsigned int coh_reqs;
@@ -78,6 +79,7 @@ typedef struct acc_stats_t {
 	unsigned int acc_mem_hi;
 	unsigned int acc_tot_lo;
 	unsigned int acc_tot_hi;
+	unsigned int acc_invocations;
 } esp_acc_stats_t;
 
 typedef struct esp_monitor_vals {
