@@ -13,8 +13,8 @@ use work.nocpackage.all;
 entity sync_noc_set is
   generic (
     PORTS     : std_logic_vector(4 downto 0);
---    local_x   : std_logic_vector(2 downto 0);
---    local_y   : std_logic_vector(2 downto 0);
+--    local_x   : std_logic_vector(YX_WIDTH-1 downto 0);
+--    local_y   : std_logic_vector(YX_WIDTH-1 downto 0);
     HAS_SYNC  : integer range 0 to 1 := 0);
   port (
     clk           : in  std_logic;
@@ -22,8 +22,8 @@ entity sync_noc_set is
     rst           : in  std_logic;
     rst_tile      : in  std_logic;
 --    CONST_PORTS   : in  std_logic_vector(4 downto 0);
-    CONST_local_x : in  std_logic_vector(2 downto 0);
-    CONST_local_y : in  std_logic_vector(2 downto 0);
+    CONST_local_x : in  std_logic_vector(YX_WIDTH-1 downto 0);
+    CONST_local_y : in  std_logic_vector(YX_WIDTH-1 downto 0);
     noc1_data_n_in     : in  coh_noc_flit_type;
     noc1_data_s_in     : in  coh_noc_flit_type;
     noc1_data_w_in     : in  coh_noc_flit_type;
@@ -126,8 +126,8 @@ architecture mesh of sync_noc_set is
   component sync_noc_xy
     generic (
       PORTS     : std_logic_vector(4 downto 0);
---      local_x   : std_logic_vector(2 downto 0);
---      local_y   : std_logic_vector(2 downto 0);
+--      local_x   : std_logic_vector(YX_WIDTH-1 downto 0);
+--      local_y   : std_logic_vector(YX_WIDTH-1 downto 0);
       has_sync  : integer range 0 to 1;
       this_noc_flit_size : integer range 32 to 1026;
       DEST_SIZE : integer:= 6);
@@ -137,8 +137,8 @@ architecture mesh of sync_noc_set is
       rst           : in  std_logic;
       rst_tile      : in  std_logic;
 --      CONST_PORTS   : in  std_logic_vector(4 downto 0);
-      CONST_local_x : in  std_logic_vector(2 downto 0);
-      CONST_local_y : in  std_logic_vector(2 downto 0);
+      CONST_local_x : in  std_logic_vector(YX_WIDTH-1 downto 0);
+      CONST_local_y : in  std_logic_vector(YX_WIDTH-1 downto 0);
       data_n_in     : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
       data_s_in     : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
       data_w_in     : in  std_logic_vector(this_noc_flit_size - 1 downto 0);

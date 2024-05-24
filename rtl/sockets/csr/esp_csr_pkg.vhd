@@ -7,10 +7,11 @@ use ieee.std_logic_1164.all;
 use work.esp_global.all;
 use work.amba.all;
 use work.monitor_pkg.all;
+use work.nocpackage.all;
 
 package esp_csr_pkg is
 
-  constant ESP_CSR_8_LSB : integer := 79 + CFG_NCPU_TILE * 2 * 3;
+  constant ESP_CSR_8_LSB : integer := 79 + CFG_NCPU_TILE * 2 * YX_WIDTH;
   constant ESP_CSR_WIDTH : integer := 98 + ESP_CSR_8_LSB;
 
   constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
@@ -43,7 +44,7 @@ package esp_csr_pkg is
 
   constant ESP_CSR_CPU_LOC_OVR_ADDR : integer range 0 to 31 := 7;
   constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 78;
-  constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 78 + CFG_NCPU_TILE * 2 * 3;
+  constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 78 + CFG_NCPU_TILE * 2 * YX_WIDTH;
 
   constant ESP_CSR_DDR_CFG0_ADDR : integer range 0 to 31 := 8;
   constant ESP_CSR_DDR_CFG0_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := ESP_CSR_8_LSB;

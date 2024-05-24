@@ -9,8 +9,8 @@ module lookahead_router_wrapper
    input  logic clk,
    input  logic rst,
    // Coordinates
-   input  logic[2:0] CONST_localx,
-   input  logic[2:0] CONST_localy,
+   input  logic[noc::xWidth-1:0] CONST_localx,
+   input  logic[noc::yWidth-1:0] CONST_localy,
    // Input ports
    input  logic [Width-1:0] data_n_in,
    input  logic [Width-1:0] data_s_in,
