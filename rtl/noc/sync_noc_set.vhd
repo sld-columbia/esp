@@ -19,8 +19,8 @@ entity sync_noc_set is
     clk_tile      : in  std_logic;
     rst           : in  std_logic;
     rst_tile      : in  std_logic;
-    CONST_local_x : in  std_logic_vector(2 downto 0);
-    CONST_local_y : in  std_logic_vector(2 downto 0);
+    CONST_local_x : in  std_logic_vector(YX_WIDTH-1 downto 0);
+    CONST_local_y : in  std_logic_vector(YX_WIDTH-1 downto 0);
     noc1_data_n_in     : in  coh_noc_flit_type;
     noc1_data_s_in     : in  coh_noc_flit_type;
     noc1_data_w_in     : in  coh_noc_flit_type;
@@ -131,8 +131,8 @@ architecture mesh of sync_noc_set is
       clk_tile      : in  std_logic;
       rst           : in  std_logic;
       rst_tile      : in  std_logic;
-      CONST_local_x : in  std_logic_vector(2 downto 0);
-      CONST_local_y : in  std_logic_vector(2 downto 0);
+      CONST_local_x : in  std_logic_vector(YX_WIDTH-1 downto 0);
+      CONST_local_y : in  std_logic_vector(YX_WIDTH-1 downto 0);
       data_n_in     : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
       data_s_in     : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
       data_w_in     : in  std_logic_vector(this_noc_flit_size - 1 downto 0);

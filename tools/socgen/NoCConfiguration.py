@@ -433,7 +433,7 @@ class NoCFrame(Pmw.ScrolledFrame):
        (tot_acc <= NACC_MAX) and \
        (tot_io == 1 ) and \
        (tot_tiles <= NTILE_MAX) and \
-       (self.noc.cols <= 8 and self.noc.rows <= 8) and \
+       (self.noc.cols <= 16 and self.noc.rows <= 16) and \
        (tot_full_coherent <= NFULL_COHERENT_MAX) and \
        (tot_llc_coherent <= NLLC_COHERENT_MAX) and \
        (not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3))) and \
@@ -473,8 +473,8 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "INFO: to enable accelerator private caches, DMA NoC width must match CPU architecture size (64 bits for Ariane, 32 for Leon3 and Ibex)\n"
       self.done.config(state=NORMAL)
     else:
-      if (self.noc.cols > 8 or self.noc.rows > 8): 
-        string += "ERROR: Maximum number of rows and columns is 8.\n"
+      if (self.noc.cols > 16 or self.noc.rows > 16):
+        string += "Maximum number of rows and columns is 16.\n"
       if (tot_cpu == 0):
         string += "ERROR: At least one CPU is required.\n"
       if (tot_cpu > 1 and not self.soc.cache_en.get()):

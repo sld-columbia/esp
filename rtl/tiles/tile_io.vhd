@@ -1126,8 +1126,8 @@ begin
   -- socmap, which is based on the ESP configuration file.
   override_cpu_loc <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB);
   cpu_loc_ovr_gen: for i in 0 to CFG_NCPU_TILE - 1 generate
-    cpu_loc_x(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0 + 2 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0);
-    cpu_loc_y(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3 + 2 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3);
+    cpu_loc_x(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0 + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0);
+    cpu_loc_y(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH);
   end generate cpu_loc_ovr_gen;
 
   intreq2noc_1 : intreq2noc

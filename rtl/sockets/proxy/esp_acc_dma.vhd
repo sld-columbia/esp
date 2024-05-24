@@ -192,7 +192,7 @@ architecture rtl of esp_acc_dma is
   signal coherence : integer range 0 to ACC_COH_FULL;
 
   -- P2P
-  signal p2p_src_index_r      : integer range 0 to 3;
+  signal p2p_src_index_r      : integer range 0 to 2;
   signal p2p_src_index_inc    : std_ulogic;
   signal p2p_dst_y            : local_yx;
   signal p2p_dst_x            : local_yx;
@@ -550,8 +550,8 @@ begin  -- rtl
       end loop;  -- i
     end if;
 
-    p2p_src_y := bankreg(P2P_REG)(9 + 6 * p2p_src_index_r downto 7 + 6 * p2p_src_index_r);
-    p2p_src_x := bankreg(P2P_REG)(6 + 6 * p2p_src_index_r downto 4 + 6 * p2p_src_index_r);
+    p2p_src_y := bankreg(P2P_REG)(P2P_BIT_SRCS_YX + 2 * YX_WIDTH - 1 + 2 * YX_WIDTH * p2p_src_index_r downto P2P_BIT_SRCS_YX + YX_WIDTH + 2 * YX_WIDTH * p2p_src_index_r);
+    p2p_src_x := bankreg(P2P_REG)(P2P_BIT_SRCS_YX + YX_WIDTH - 1 + 2 * YX_WIDTH * p2p_src_index_r downto P2P_BIT_SRCS_YX + 2 * YX_WIDTH * p2p_src_index_r);
 
     if msg_type = REQ_P2P then
       p2p_header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
@@ -644,7 +644,7 @@ begin  -- rtl
         if p2p_src_index_r = conv_integer(bankreg(P2P_REG)(P2P_BIT_NSRCS + P2P_WIDTH_NSRCS - 1 downto P2P_BIT_NSRCS)) then
           p2p_src_index_r <= 0;
         else
-          p2p_src_index_r <= p2p_src_index_r + 1;
+          p2p_src_index_r <= p2p_src_index_r + 1 mod 3;
         end if;
       end if;
     end if;
@@ -1304,7 +1304,7 @@ begin  -- rtl
           elsif sample(i) = '1' and rdonly_reg_mask(i) = '0' then
             bankreg(i) <= bankin(i);
           elsif i = YX_REG then
-            bankreg(i) <=  "0000000000000" & local_y & "0000000000000" & local_x;
+            bankreg(i) <=  "000000000000" & local_y & "000000000000" & local_x;
           end if;
         end if;
       end process;

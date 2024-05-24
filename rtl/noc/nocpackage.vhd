@@ -47,7 +47,7 @@ package nocpackage is
   constant HEADER_ROUTE_N : natural := 0;
 
   constant PREAMBLE_WIDTH      : natural := 2;
-  constant YX_WIDTH            : natural := 3;
+  constant YX_WIDTH            : natural := 4;
   constant MSG_TYPE_WIDTH      : natural := 5;
   constant RESERVED_WIDTH      : natural := 8;
   constant NEXT_ROUTING_WIDTH  : natural := 5;
@@ -193,7 +193,7 @@ package nocpackage is
   -- FIFOs depth
   constant ROUTER_DEPTH : integer := 4;
 
-  type yx_vec is array (natural range <>) of std_logic_vector(2 downto 0);
+  type yx_vec is array (natural range <>) of std_logic_vector(YX_WIDTH - 1 downto 0);
   type routing_vec is array (natural range <>) of std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
 
   type tile_mem_info is record
@@ -311,8 +311,8 @@ package nocpackage is
       clk_tile           : in  std_logic;
       rst                : in  std_logic;
       rst_tile           : in  std_logic;
-      CONST_local_x      : in  std_logic_vector(2 downto 0);
-      CONST_local_y      : in  std_logic_vector(2 downto 0);
+      CONST_local_x      : in  std_logic_vector(YX_WIDTH-1 downto 0);
+      CONST_local_y      : in  std_logic_vector(YX_WIDTH-1 downto 0);
       noc1_data_n_in     : in  coh_noc_flit_type;
       noc1_data_s_in     : in  coh_noc_flit_type;
       noc1_data_w_in     : in  coh_noc_flit_type;
@@ -608,7 +608,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_origin_y
     ret := (others => '0');
-    ret := flit(flit_sz - PREAMBLE_WIDTH - YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - YX_WIDTH);
+    ret := flit(flit_sz - PREAMBLE_WIDTH - 1 downto flit_sz - PREAMBLE_WIDTH - YX_WIDTH);
     return ret;
   end get_origin_y;
 
@@ -619,7 +619,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_origin_x
     ret := (others => '0');
-    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH);
+    ret := flit(flit_sz - PREAMBLE_WIDTH - YX_WIDTH - 1 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH);
     return ret;
   end get_origin_x;
 
@@ -630,7 +630,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_destination_y
     ret := (others => '0');
-    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH);
+    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH);
     return ret;
   end get_destination_y;
 
@@ -641,7 +641,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_destination_x
     ret := (others => '0');
-    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH);
+    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH - 1 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH);
     return ret;
   end get_destination_x;
 
@@ -984,11 +984,11 @@ function create_header_mcast (
     -- initialize all local ports set
     ports := (others => '1');
     -- nord ports removed in top tiles
-    if local_y = "000" then
+    if local_y = "0000" then
       ports(0) := '0';
     end if;
     -- west ports removed in left edge tiles
-    if local_x = "000" then
+    if local_x = "0000" then
       ports(2) := '0';
     end if;
     if is_fpga(TECH) /= 0 then

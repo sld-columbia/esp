@@ -13,7 +13,7 @@ from thirdparty import *
 # <mklinuximg>/include/ambapp.h
 # <esp>/rtl/include/grlib/amba/amba.vhd
 # <esp>/soft/leon3/include/esp_probe.h
-NAPBS = 128
+NAPBS = 512
 NAHBS = 16
 # Physical interrupt lines
 IRQ_LINES = 32
@@ -33,7 +33,7 @@ NLLC_COHERENT_MAX = 64
 # The NoC routers are using 3 bits for both Y and X coordinates.
 # The 34-bits header can host up to 5 bits if necessary.
 # <esp>/rtl/[include|src]/sld/noc/*.vhd
-NTILE_MAX = 64
+NTILE_MAX = 256
 # The number of accelerators depends on how many I/O devices can be addressed.
 # This can be changed by updating the constant NAPBS as explained above, as well
 # as the corresponding constant in
@@ -50,8 +50,8 @@ NTILE_MAX = 64
 # 14 - Ethernet MAC controller
 # 15 - Ethernet SGMII PHY controller
 # 16-19 - LLC cache controller (must change with NMEM_MAX)
-# 20-83 - Distributed monitors (equal to the number of tiles NTILE_MAX)
-# 84-(NAPBS-1) - Accelerators
+# 20-275 - Distributed monitors (equal to the number of tiles NTILE_MAX)
+# 276-(NAPBS-1) - Accelerators
 NACC_MAX = NAPBS - 2 * NCPU_MAX - NMEM_MAX - NTILE_MAX - 8
 
 # Default device mapping
@@ -1609,14 +1609,14 @@ def print_tiles(fp, esp_config):
   for i in range(0, esp_config.ntiles):
     if i > 0:
        fp.write(",\n")
-    fp.write("    " + str(i) + " => \"" + uint_to_bin(esp_config.tiles[i].col, 3) + "\"")
+    fp.write("    " + str(i) + " => \"" + uint_to_bin(esp_config.tiles[i].col, 4) + "\"")
   fp.write("  );\n")
 
   fp.write("  constant tile_y : yx_vec(0 to " + str(esp_config.ntiles - 1) + ") := (\n")
   for i in range(0, esp_config.ntiles):
     if i > 0:
       fp.write(",\n")
-    fp.write("    " + str(i) + " => \"" + uint_to_bin(esp_config.tiles[i].row, 3) + "\"")
+    fp.write("    " + str(i) + " => \"" + uint_to_bin(esp_config.tiles[i].row, 4) + "\"")
   fp.write("  );\n\n")
 
   #
