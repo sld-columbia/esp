@@ -99,6 +99,7 @@ void iowrite32(struct esp_device *dev, unsigned offset, unsigned payload);
 void esp_flush(int coherence);
 void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsrcs);
 
+
 #define esp_get_y(_dev) (YX_MASK_YX & (ioread32(_dev, YX_REG) >> YX_SHIFT_Y))
 #define esp_get_x(_dev) (YX_MASK_YX & (ioread32(_dev, YX_REG) >> YX_SHIFT_X))
 #define esp_p2p_reset(_dev) iowrite32(_dev, P2P_REG, 0)

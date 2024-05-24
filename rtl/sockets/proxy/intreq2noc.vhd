@@ -164,14 +164,14 @@ begin  -- rtl
       variable header_v    : misc_noc_flit_type;
       variable payload_1_v : misc_noc_flit_type;
       variable payload_2_v : misc_noc_flit_type;
-      variable reserved    : reserved_field_type;
+      variable reserved    : reserved_field_misc_type;
       variable target_y    : local_yx;
       variable target_x    : local_yx;
     begin  -- process make_packet
       msg_type := IRQ_MSG;
 
       if GLOB_CPU_ARCH = ariane or GLOB_CPU_ARCH = ibex then
-        reserved := "0000" & irqi(cpuid).irl;
+        reserved := "00" & irqi(cpuid).irl;
       else
         reserved := (others => '0');
       end if;
@@ -185,7 +185,7 @@ begin  -- rtl
       end if;
 
       header_v := (others                                                                       => '0');
-      header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, target_y, target_x, msg_type, reserved);
+      header_v := create_header_misc(MISC_NOC_FLIT_SIZE, local_y, local_x, target_y, target_x, msg_type, reserved);
       if GLOB_CPU_ARCH = ariane or GLOB_CPU_ARCH = ibex then
         header_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
       end if;

@@ -133,7 +133,7 @@ begin  -- rtl
     msg_type := IRQ_MSG;
 
     header_v := (others                                                         => '0');
-    header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, irq_y, irq_x, msg_type, (others => '0'))(MISC_NOC_FLIT_SIZE - 1 downto 0);
+    header_v := create_header_misc(MISC_NOC_FLIT_SIZE, local_y, local_x, irq_y, irq_x, msg_type, (others => '0'))(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
     payload_1_v                                                      := (others => '0');
     payload_1_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
@@ -327,7 +327,7 @@ begin  -- rtl
             irq_rcv_next     <= irq_rcv_req_1;
           else
             -- reserved field is 4 bits; reused for RISC-V -> {clint.ipi, clint.timer_irq, plic.irq}
-            irqi_noc.irl <= get_reserved_field(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & remote_irq_data_out)(3 downto 0);
+            irqi_noc.irl <= get_reserved_field_misc(remote_irq_data_out)(3 downto 0);
             sample_irq_1 <= '1';
             irq_rcv_next <= idle;
           end if;

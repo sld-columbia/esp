@@ -10,8 +10,8 @@ package noc;
   parameter int unsigned PortQueueDepth = 4;
 
   // Coordinates
-  parameter int unsigned xMax = 8;
-  parameter int unsigned yMax = 8;
+  parameter int unsigned xMax = 16;
+  parameter int unsigned yMax = 16;
 
   // Message Type
   parameter int unsigned messageTypeWidth = 5;

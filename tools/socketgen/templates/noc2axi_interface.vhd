@@ -128,7 +128,7 @@ end;
   type irq_fsm is (idle, pending, wait_for_clear_irq);
   signal irq_state, irq_next : irq_fsm;
   signal irq_header_i, irq_header : misc_noc_flit_type;
-  signal irq_info : std_logic_vector(RESERVED_WIDTH - 1 downto 0);
+  signal irq_info : std_logic_vector(RESERVED_WIDTH_MISC - 1 downto 0);
 
   -- Other signals
   signal acc_go : std_ulogic;
@@ -160,7 +160,7 @@ begin
     1 => apb_iobar(paddr, pmask),
     2 => apb_iobar(paddr_ext, pmask_ext));
 
-  irq_info <= conv_std_logic_vector(pirq, RESERVED_WIDTH);
+  irq_info <= conv_std_logic_vector(pirq, RESERVED_WIDTH_MISC);
 
   apbi_paddr <= apbi.paddr and X"0FFFFFFF";
 
@@ -251,7 +251,7 @@ begin
   apbo.pindex <= pindex;
 
   -- IRQ packet
-  irq_header_i <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);
+  irq_header_i <= create_header_misc(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);
   irq_header(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_1FLIT;
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
     irq_header_i(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);

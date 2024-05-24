@@ -78,10 +78,12 @@ architecture rtl of ahbslv2noc is
                     request_length);
   signal ahbs_state, ahbs_next : ahbs_fsm;
 
-  signal header : misc_noc_flit_type;
+  signal header : std_logic_vector(this_noc_flit_size-1 downto 0);
+  signal header_narrow : misc_noc_flit_type;
   signal payload_address : misc_noc_flit_type;
   signal dst_is_mem : std_ulogic;
-  signal header_reg : misc_noc_flit_type;
+  signal header_reg : std_logic_vector(this_noc_flit_size-1 downto 0);
+  signal header_narrow_reg : misc_noc_flit_type;
   signal payload_address_reg : misc_noc_flit_type;
   signal payload_length_reg : misc_noc_flit_type;
   signal dst_is_mem_reg : std_ulogic;
@@ -124,7 +126,8 @@ begin  -- rtl
 
   make_packet: process (ahbsi, dma_selected, local_y, local_x)
     variable msg_type : noc_msg_type;
-    variable header_v : misc_noc_flit_type;
+    variable header_v : std_logic_vector(this_noc_flit_size-1 downto 0);
+    variable header_narrow_v : misc_noc_flit_type;
     variable reserved : reserved_field_type;
     variable mem_x, mem_y : local_yx;
     variable snd_to_mem : std_ulogic;
@@ -220,9 +223,11 @@ begin  -- rtl
     reserved := (others => '0');
     reserved(3 downto 0) := ahbsi.hprot;
     header_v := (others => '0');
-    header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, reserved)(MISC_NOC_FLIT_SIZE - 1 downto 0);
+    header_narrow_v := (others => '0');
+    header_v := create_header(this_noc_flit_size, local_y, local_x, mem_y, mem_x, msg_type, reserved);
+    header_narrow_v := create_header_misc(MISC_NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, reserved(RESERVED_WIDTH_MISC-1 downto 0));
     header <= header_v;
-
+    header_narrow <= header_narrow_v;
   end process make_packet;
 
   -- Set length flit
@@ -233,6 +238,7 @@ begin  -- rtl
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
       header_reg <= (others => '0');
+      header_narrow_reg <= (others => '0');
       payload_address_reg <= (others => '0');
       dst_is_mem_reg <= '0';
       hwrite_reg <= '0';
@@ -241,6 +247,7 @@ begin  -- rtl
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_reg <= header;
+        header_narrow_reg <= header_narrow;
         payload_address_reg <= payload_address;
         dst_is_mem_reg <= dst_is_mem;
         hwrite_reg <= ahbsi.hwrite;
@@ -260,8 +267,8 @@ begin  -- rtl
                           coherence_rsp_rcv_data_out, coherence_rsp_rcv_empty,
                           remote_ahbs_snd_full,
                           remote_ahbs_rcv_data_out, remote_ahbs_rcv_empty,
-                          header_reg, payload_address_reg, payload_length_reg,
-                          hwrite_reg, hsel_reg)
+                          header_reg, header_narrow_reg, payload_address_reg,
+                          payload_length_reg, hwrite_reg, hsel_reg)
     variable payload_data : misc_noc_flit_type;
     variable sequential : std_ulogic;
     variable selected : std_ulogic;
@@ -348,16 +355,13 @@ begin  -- rtl
           end if;
         elsif dst_is_mem_reg = '1' then
           if coherence_req_full = '0' then
-            coherence_req_data_in(this_noc_flit_size - 1 downto this_noc_flit_size - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH) <=
-              header_reg(MISC_NOC_FLIT_SIZE - 1 downto NEXT_ROUTING_WIDTH);
-            coherence_req_data_in(NEXT_ROUTING_WIDTH - 1 downto 0) <=
-              header_reg(NEXT_ROUTING_WIDTH - 1 downto 0);
+            coherence_req_data_in <= header_reg;
             coherence_req_wrreq <= '1';
             ahbs_next <= request_address;
           end if;
         else
           if remote_ahbs_snd_full = '0' then
-            remote_ahbs_snd_data_in <= header_reg;
+            remote_ahbs_snd_data_in <= header_narrow_reg;
             remote_ahbs_snd_wrreq <= '1';
             ahbs_next <= request_address;
           end if;

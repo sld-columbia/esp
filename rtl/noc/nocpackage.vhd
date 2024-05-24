@@ -47,9 +47,10 @@ package nocpackage is
   constant HEADER_ROUTE_N : natural := 0;
 
   constant PREAMBLE_WIDTH      : natural := 2;
-  constant YX_WIDTH            : natural := 3;
+  constant YX_WIDTH            : natural := 4;
   constant MSG_TYPE_WIDTH      : natural := 5;
   constant RESERVED_WIDTH      : natural := 8;
+  constant RESERVED_WIDTH_MISC : natural := 6;
   constant NEXT_ROUTING_WIDTH  : natural := 5;
   constant COH_NOC_FLIT_SIZE       : natural := PREAMBLE_WIDTH + COH_NOC_WIDTH;
   constant DMA_NOC_FLIT_SIZE       : natural := PREAMBLE_WIDTH + DMA_NOC_WIDTH;
@@ -66,6 +67,7 @@ package nocpackage is
   subtype misc_noc_flit_type is std_logic_vector(33 downto 0);
   subtype max_noc_flit_type is std_logic_vector(MAX_NOC_FLIT_SIZE downto 0);
   subtype reserved_field_type is std_logic_vector(RESERVED_WIDTH-1 downto 0);
+  subtype reserved_field_misc_type is std_logic_vector(RESERVED_WIDTH_MISC-1 downto 0);
   subtype ports_vec is std_logic_vector(4 downto 0);
 
   type coh_noc_flit_vector is array (natural range <>) of coh_noc_flit_type;
@@ -193,7 +195,7 @@ package nocpackage is
   -- FIFOs depth
   constant ROUTER_DEPTH : integer := 4;
 
-  type yx_vec is array (natural range <>) of std_logic_vector(2 downto 0);
+  type yx_vec is array (natural range <>) of std_logic_vector(YX_WIDTH - 1 downto 0);
   type routing_vec is array (natural range <>) of std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
 
   type tile_mem_info is record
@@ -311,8 +313,8 @@ package nocpackage is
       clk_tile           : in  std_logic;
       rst                : in  std_logic;
       rst_tile           : in  std_logic;
-      CONST_local_x      : in  std_logic_vector(2 downto 0);
-      CONST_local_y      : in  std_logic_vector(2 downto 0);
+      CONST_local_x      : in  std_logic_vector(YX_WIDTH-1 downto 0);
+      CONST_local_y      : in  std_logic_vector(YX_WIDTH-1 downto 0);
       noc1_data_n_in     : in  coh_noc_flit_type;
       noc1_data_s_in     : in  coh_noc_flit_type;
       noc1_data_w_in     : in  coh_noc_flit_type;
@@ -483,7 +485,7 @@ package nocpackage is
 
   function get_reserved_field_misc (
     flit : misc_noc_flit_type)
-    return reserved_field_type;
+    return reserved_field_misc_type;
 
   function get_unused_msb_field_misc (
     flit : misc_noc_flit_type)
@@ -505,6 +507,16 @@ package nocpackage is
     remote_x         : local_yx;
     msg_type         : noc_msg_type;
     reserved         : reserved_field_type)
+    return std_logic_vector;
+
+  function create_header_misc (
+    constant flit_sz : integer;
+    local_y          : local_yx;
+    local_x          : local_yx;
+    remote_y         : local_yx;
+    remote_x         : local_yx;
+    msg_type         : noc_msg_type;
+    reserved         : reserved_field_misc_type)
     return std_logic_vector;
 
   function create_header_mcast (
@@ -608,7 +620,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_origin_y
     ret := (others => '0');
-    ret := flit(flit_sz - PREAMBLE_WIDTH - YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - YX_WIDTH);
+    ret := flit(flit_sz - PREAMBLE_WIDTH - 1 downto flit_sz - PREAMBLE_WIDTH - YX_WIDTH);
     return ret;
   end get_origin_y;
 
@@ -619,7 +631,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_origin_x
     ret := (others => '0');
-    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH);
+    ret := flit(flit_sz - PREAMBLE_WIDTH - YX_WIDTH - 1 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH);
     return ret;
   end get_origin_x;
 
@@ -630,7 +642,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_destination_y
     ret := (others => '0');
-    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH);
+    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH);
     return ret;
   end get_destination_y;
 
@@ -641,7 +653,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_destination_x
     ret := (others => '0');
-    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH);
+    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH - 1 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH);
     return ret;
   end get_destination_x;
 
@@ -694,7 +706,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_origin_y
     ret := (others => '0');
-    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - YX_WIDTH + 2 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - YX_WIDTH);
+    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - YX_WIDTH);
     return ret;
   end get_origin_y_misc;
 
@@ -704,7 +716,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_origin_x
     ret := (others => '0');
-    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH + 2 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH);
+    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - YX_WIDTH - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH);
     return ret;
   end get_origin_x_misc;
 
@@ -714,7 +726,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_destination_y
     ret := (others => '0');
-    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH + 2 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH);
+    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH);
     return ret;
   end get_destination_y_misc;
 
@@ -724,7 +736,7 @@ package body nocpackage is
     variable ret : local_yx;
   begin  -- get_destination_x
     ret := (others => '0');
-    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH + 2 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH);
+    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH);
     return ret;
   end get_destination_x_misc;
 
@@ -750,11 +762,11 @@ package body nocpackage is
 
   function get_reserved_field_misc (
     flit : misc_noc_flit_type)
-    return reserved_field_type is
-    variable ret : reserved_field_type;
+    return reserved_field_misc_type is
+    variable ret : reserved_field_misc_type;
   begin
     ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-                MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH);
+                MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH_MISC);
     return ret;
   end get_reserved_field_misc;
 
@@ -921,6 +933,59 @@ function create_header_mcast (
     return header;
   end create_header_mcast;
 
+  function create_header_misc (
+    constant flit_sz : integer;
+    local_y          : local_yx;
+    local_x          : local_yx;
+    remote_y         : local_yx;
+    remote_x         : local_yx;
+    msg_type         : noc_msg_type;
+    reserved         : reserved_field_misc_type)
+    return std_logic_vector is
+    variable header                            : std_logic_vector(flit_sz - 1 downto 0);
+    variable go_left, go_right, go_up, go_down : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
+  begin  -- create_header
+    header := (others => '0');
+    header(flit_sz - 1 downto
+           flit_sz - PREAMBLE_WIDTH) := PREAMBLE_HEADER;
+    header(flit_sz - PREAMBLE_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - YX_WIDTH) := local_y;
+    header(flit_sz - PREAMBLE_WIDTH - YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH) := local_x;
+    header(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH) := remote_y;
+    header(flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := remote_x;
+    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
+    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH_MISC) := reserved;
+
+    if local_x < remote_x then
+      go_right := "01000";
+    else
+      go_right := "10111";
+    end if;
+
+    if local_x > remote_x then
+      go_left := "00100";
+    else
+      go_left := "11011";
+    end if;
+
+    if local_y < remote_y then
+      header(NEXT_ROUTING_WIDTH - 1 downto 0) := "01110" and go_left and go_right;
+    else
+      header(NEXT_ROUTING_WIDTH - 1 downto 0) := "01101" and go_left and go_right;
+    end if;
+
+    if local_y = remote_y and local_x = remote_x then
+      header(NEXT_ROUTING_WIDTH - 1 downto 0) := "10000";
+    end if;
+
+    return header;
+  end create_header_misc;
+
   function narrow_to_large_flit (
     narrow_flit : misc_noc_flit_type)
     return arch_noc_flit_type is
@@ -931,8 +996,10 @@ function create_header_mcast (
     preamble := get_preamble(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & narrow_flit);
 
     if preamble = PREAMBLE_HEADER or preamble = PREAMBLE_1FLIT then
-      ret(ARCH_NOC_FLIT_SIZE - 1 downto ARCH_NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH) :=
-        narrow_flit(MISC_NOC_FLIT_SIZE - 1 downto NEXT_ROUTING_WIDTH);
+      ret(ARCH_NOC_FLIT_SIZE - 1 downto ARCH_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) :=
+        narrow_flit(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH);
+      ret(ARCH_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH -  1 downto ARCH_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH) :=
+        "00" & narrow_flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH -  1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH_MISC);
       ret(NEXT_ROUTING_WIDTH - 1 downto 0) := narrow_flit(NEXT_ROUTING_WIDTH - 1 downto 0);
     else
       ret(ARCH_NOC_FLIT_SIZE - 1 downto ARCH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) :=
@@ -954,8 +1021,10 @@ function create_header_mcast (
     preamble := get_preamble(ARCH_NOC_FLIT_SIZE, arch_noc_flit_pad & large_flit);
 
     if preamble = PREAMBLE_HEADER or preamble = PREAMBLE_1FLIT then
-      ret(MISC_NOC_FLIT_SIZE - 1 downto NEXT_ROUTING_WIDTH) :=
-        large_flit(ARCH_NOC_FLIT_SIZE - 1 downto ARCH_NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH);
+      ret(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) :=
+        large_flit(ARCH_NOC_FLIT_SIZE - 1 downto ARCH_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH);
+      ret(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH -  1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH_MISC) :=
+        large_flit(ARCH_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH + RESERVED_WIDTH_MISC - 1 downto ARCH_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH);
       ret(NEXT_ROUTING_WIDTH - 1 downto 0) := large_flit(NEXT_ROUTING_WIDTH - 1 downto 0);
     else
       ret(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) :=
@@ -984,11 +1053,11 @@ function create_header_mcast (
     -- initialize all local ports set
     ports := (others => '1');
     -- nord ports removed in top tiles
-    if local_y = "000" then
+    if local_y = "0000" then
       ports(0) := '0';
     end if;
     -- west ports removed in left edge tiles
-    if local_x = "000" then
+    if local_x = "0000" then
       ports(2) := '0';
     end if;
     if is_fpga(TECH) /= 0 then

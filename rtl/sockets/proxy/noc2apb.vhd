@@ -104,7 +104,7 @@ begin  -- rtl
       end if;
     end if;
   end process;
-  header <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, request_y, request_x, RSP_REG_RD, (others => '0'))(MISC_NOC_FLIT_SIZE - 1 downto 0);
+  header <= create_header_misc(MISC_NOC_FLIT_SIZE, local_y, local_x, request_y, request_x, RSP_REG_RD, (others => '0'))(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
   -- This wrapper makes requests and waits for reply, but does not react to
   -- messages from remote masters, such as JTAG.

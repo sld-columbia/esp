@@ -32,6 +32,7 @@ use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 
 use work.stdlib.all;
+use work.nocpackage.all;
 
 entity router is
   generic(
@@ -45,8 +46,8 @@ entity router is
     clk : in std_logic;
     rst : in std_logic;
 
-    CONST_localx : in std_logic_vector(2 downto 0);
-    CONST_localy : in std_logic_vector(2 downto 0);
+    CONST_localx : in std_logic_vector(YX_WIDTH-1 downto 0);
+    CONST_localy : in std_logic_vector(YX_WIDTH-1 downto 0);
 
     data_n_in : in std_logic_vector(width-1 downto 0);
     data_s_in : in std_logic_vector(width-1 downto 0);
@@ -82,8 +83,8 @@ architecture behavior of router is
       clk : in std_logic;
       rst : in std_logic;
 
-      CONST_localx : in std_logic_vector(2 downto 0);
-      CONST_localy : in std_logic_vector(2 downto 0);
+      CONST_localx : in std_logic_vector(YX_WIDTH-1 downto 0);
+      CONST_localy : in std_logic_vector(YX_WIDTH-1 downto 0);
 
       data_n_in : in std_logic_vector(width-1 downto 0);
       data_s_in : in std_logic_vector(width-1 downto 0);

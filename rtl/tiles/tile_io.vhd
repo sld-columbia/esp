@@ -798,8 +798,8 @@ begin
               noc_apbi_wirq.pwrite = '1' and noc_apbi_wirq.paddr(11 downto 0) = x"004" and
               noc_apbi_wirq.paddr(31 downto 16) = x"0c20" and irq_pwdata_hit = '1') then
 
-            header_reg := create_header(MISC_NOC_FLIT_SIZE, this_local_y, this_local_x, dest_y, dest_x,
-                                        INTERRUPT, X"00");
+            header_reg := create_header_misc(MISC_NOC_FLIT_SIZE, this_local_y, this_local_x, dest_y, dest_x,
+                                        INTERRUPT, (others => '0'));
             header_reg(MISC_NOC_FLIT_SIZE - 1 downto
                        MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
 
@@ -1126,8 +1126,8 @@ begin
   -- socmap, which is based on the ESP configuration file.
   override_cpu_loc <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB);
   cpu_loc_ovr_gen: for i in 0 to CFG_NCPU_TILE - 1 generate
-    cpu_loc_x(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0 + 2 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0);
-    cpu_loc_y(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3 + 2 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3);
+    cpu_loc_x(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0 + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0);
+    cpu_loc_y(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH);
   end generate cpu_loc_ovr_gen;
 
   intreq2noc_1 : intreq2noc

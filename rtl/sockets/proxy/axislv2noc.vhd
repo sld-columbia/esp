@@ -336,7 +336,7 @@ begin  -- rtl
     tran.reserved(2 downto 0) := tran.prot;
 
     tran.header := create_header(this_noc_flit_size, local_y, local_x, tran.mem_y, tran.mem_x, tran.msg_type, tran.reserved);
-    tran.header_narrow := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, tran.mem_y, tran.mem_x, tran.msg_type, tran.reserved)(MISC_NOC_FLIT_SIZE - 1 downto 0);
+    tran.header_narrow := create_header_misc(MISC_NOC_FLIT_SIZE, local_y, local_x, tran.mem_y, tran.mem_x, tran.msg_type, tran.reserved(RESERVED_WIDTH_MISC-1 downto 0))(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
     -- Write signal
     transaction <= tran;

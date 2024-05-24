@@ -60,8 +60,10 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 #define P2P_MASK_DST_IS_P2P BIT(3)
 #define P2P_MASK_SRCS_YX 0x7
 #define P2P_MASK_MCAST_NDESTS 0xF
-#define P2P_SHIFT_SRCS_Y(_n) (7 + _n * 6)
-#define P2P_SHIFT_SRCS_X(_n) (4 + _n * 6)
+#define P2P_BIT_SRCS_YX 4
+#define YX_WIDTH 4
+#define P2P_SHIFT_SRCS_Y(_n) (P2P_BIT_SRCS_YX + YX_WIDTH + _n * 2 * YX_WIDTH)
+#define P2P_SHIFT_SRCS_X(_n) (P2P_BIT_SRCS_YX + _n * 2 * YX_WIDTH)
 #define P2P_SHIFT_MCAST_NDESTS 28
 
 /* bank(11)       : RESERVED */
@@ -69,6 +71,7 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 #define YX_SHIFT_X 0
 #define YX_SHIFT_Y 16
 #define YX_MASK_YX 0x7
+#define YX_MASK_YX 0xF
 
 /* bank(12)       : SRC_OFFSET (offset in bytes from beginning of physical buffer) */
 #define SRC_OFFSET_REG 0x30
