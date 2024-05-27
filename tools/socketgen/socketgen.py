@@ -316,7 +316,7 @@ def write_axi_acc_port_map(f, acc, noc_width):
   for clk in acc.clocks:
     f.write("      " + clk + " => clk,\n")
   for rst in acc.resets:
-    f.write("      " + rst + " => acc_rstn,\n")
+    f.write("      " + rst + " => rst,\n")
   bind_apb3(f, acc.apb_prefix)
   bind_axi(f, acc, noc_width)
   if acc.interrupt != "":
