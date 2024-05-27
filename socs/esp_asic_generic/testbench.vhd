@@ -220,18 +220,18 @@ begin
 
   -- clock and reset
   reset        <= '0'              after 2500 ns;
- 
-  main_clk_p <= not main_clk_p after 6.4 ns;
-  main_clk_n <= not main_clk_n after 6.4 ns;
+
+  main_clk_p <= not main_clk_p after 5 ns;
+  main_clk_n <= not main_clk_n after 5 ns;
 
   jtag_clk_p <= not jtag_clk_p after 25 ns;
   jtag_clk_n <= not jtag_clk_n after 25 ns;
 
-  clk_ref_p <= not clk_ref_p after 1.25 ns;
-  clk_ref_n <= not clk_ref_n after 1.25 ns;
+  clk_ref_p <= not clk_ref_p after 2.5 ns;
+  clk_ref_n <= not clk_ref_n after 2.5 ns;
 
-  sys_clk_p <= not sys_clk_p after 1.25 ns;
-  sys_clk_n <= not sys_clk_n after 1.25 ns;
+  sys_clk_p <= not sys_clk_p after 2.5 ns;
+  sys_clk_n <= not sys_clk_n after 2.5 ns;
 
   clk_emu_p <= not clk_emu_p after 10 ns;
   clk_emu_n <= not clk_emu_n after 10 ns;

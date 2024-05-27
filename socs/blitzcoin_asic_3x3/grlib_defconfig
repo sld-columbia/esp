@@ -1,0 +1,250 @@
+#
+# Automatically generated make config: don't edit
+#
+CONFIG_LEON3FT_PRESENT=y
+CONFIG_HAS_SHARED_GRFPU=y
+
+#
+# Synthesis      
+#
+# CONFIG_SYN_NO_ASYNC is not set
+# CONFIG_SYN_SCAN is not set
+
+#
+# Processor            
+#
+CONFIG_LEON3=y
+# CONFIG_LEON3_MIN is not set
+# CONFIG_LEON3_GP is not set
+# CONFIG_LEON3_HP is not set
+CONFIG_LEON3_CUSTOM=y
+
+#
+# Integer unit                                           
+#
+CONFIG_IU_NWINDOWS=8
+CONFIG_IU_V8MULDIV=y
+# CONFIG_IU_MUL_LATENCY_2 is not set
+# CONFIG_IU_MUL_LATENCY_4 is not set
+CONFIG_IU_MUL_LATENCY_5=y
+# CONFIG_IU_MUL_MAC is not set
+CONFIG_IU_MUL_INFERRED=y
+# CONFIG_IU_MUL_MODGEN is not set
+# CONFIG_IU_MUL_TECHSPEC is not set
+# CONFIG_IU_MUL_DW is not set
+CONFIG_IU_BP=y
+CONFIG_IU_SVT=y
+# CONFIG_NOTAG is not set
+CONFIG_IU_LDELAY=1
+CONFIG_IU_WATCHPOINTS=2
+CONFIG_PWD=y
+CONFIG_IU_RSTADDR=00000
+# CONFIG_NP_ASI is not set
+# CONFIG_WRPSR is not set
+# CONFIG_ALTWIN is not set
+# CONFIG_REX is not set
+
+#
+# Floating-point unit
+#
+CONFIG_FPU_ENABLE=y
+# CONFIG_FPU_GRFPU is not set
+# CONFIG_FPU_GRFPULITE is not set
+CONFIG_FPU_SLD=y
+
+#
+# Cache system
+#
+CONFIG_ICACHE_ENABLE=y
+# CONFIG_ICACHE_ASSO1 is not set
+CONFIG_ICACHE_ASSO2=y
+# CONFIG_ICACHE_ASSO3 is not set
+# CONFIG_ICACHE_ASSO4 is not set
+# CONFIG_ICACHE_SZ1 is not set
+# CONFIG_ICACHE_SZ2 is not set
+# CONFIG_ICACHE_SZ4 is not set
+CONFIG_ICACHE_SZ8=y
+# CONFIG_ICACHE_SZ16 is not set
+# CONFIG_ICACHE_SZ32 is not set
+# CONFIG_ICACHE_SZ64 is not set
+# CONFIG_ICACHE_SZ128 is not set
+# CONFIG_ICACHE_SZ256 is not set
+CONFIG_ICACHE_LZ16=y
+# CONFIG_ICACHE_LZ32 is not set
+# CONFIG_ICACHE_ALGORND is not set
+# CONFIG_ICACHE_ALGODIR is not set
+# CONFIG_ICACHE_ALGOLRR is not set
+CONFIG_ICACHE_ALGOLRU=y
+# CONFIG_ICACHE_LOCK is not set
+CONFIG_DCACHE_ENABLE=y
+# CONFIG_DCACHE_ASSO1 is not set
+# CONFIG_DCACHE_ASSO2 is not set
+# CONFIG_DCACHE_ASSO3 is not set
+CONFIG_DCACHE_ASSO4=y
+# CONFIG_DCACHE_SZ1 is not set
+# CONFIG_DCACHE_SZ2 is not set
+CONFIG_DCACHE_SZ4=y
+# CONFIG_DCACHE_SZ8 is not set
+# CONFIG_DCACHE_SZ16 is not set
+# CONFIG_DCACHE_SZ32 is not set
+# CONFIG_DCACHE_SZ64 is not set
+# CONFIG_DCACHE_SZ128 is not set
+# CONFIG_DCACHE_SZ256 is not set
+CONFIG_DCACHE_LZ16=y
+# CONFIG_DCACHE_LZ32 is not set
+# CONFIG_DCACHE_ALGORND is not set
+# CONFIG_DCACHE_ALGODIR is not set
+# CONFIG_DCACHE_ALGOLRR is not set
+CONFIG_DCACHE_ALGOLRU=y
+# CONFIG_DCACHE_LOCK is not set
+CONFIG_DCACHE_SNOOP=y
+CONFIG_DCACHE_SNOOP_SEPTAG=y
+# CONFIG_DCACHE_SNOOP_SP is not set
+CONFIG_CACHE_FIXED=0
+
+#
+# MMU
+#
+CONFIG_MMU_ENABLE=y
+# CONFIG_MMU_COMBINED is not set
+CONFIG_MMU_SPLIT=y
+CONFIG_MMU_REPARRAY=y
+# CONFIG_MMU_REPINCREMENT is not set
+# CONFIG_MMU_I2 is not set
+# CONFIG_MMU_I4 is not set
+CONFIG_MMU_I8=y
+# CONFIG_MMU_I16 is not set
+# CONFIG_MMU_I32 is not set
+# CONFIG_MMU_I64 is not set
+# CONFIG_MMU_D2 is not set
+# CONFIG_MMU_D4 is not set
+CONFIG_MMU_D8=y
+# CONFIG_MMU_D16 is not set
+# CONFIG_MMU_D32 is not set
+# CONFIG_MMU_D64 is not set
+CONFIG_MMU_FASTWB=y
+CONFIG_MMU_PAGE_4K=y
+# CONFIG_MMU_PAGE_8K is not set
+# CONFIG_MMU_PAGE_16K is not set
+# CONFIG_MMU_PAGE_32K is not set
+# CONFIG_MMU_PAGE_PROG is not set
+
+#
+# Debug Support Unit        
+#
+CONFIG_DSU_ENABLE=y
+# CONFIG_DSU_ITRACE is not set
+# CONFIG_DSU_ATRACE is not set
+# CONFIG_STAT_ENABLE is not set
+
+#
+# Fault-tolerance  
+#
+# CONFIG_LEON3FT_EN is not set
+
+#
+# VHDL debug settings       
+#
+# CONFIG_IU_DISAS is not set
+CONFIG_DEBUG_PC32=y
+
+#
+# AMBA configuration
+#
+CONFIG_AHB_DEFMST=0
+CONFIG_AHB_RROBIN=y
+# CONFIG_AHB_SPLIT is not set
+CONFIG_AHB_FPNPEN=y
+CONFIG_AHB_IOADDR=FFF
+# CONFIG_AHB_MON is not set
+# CONFIG_AHB_DTRACE is not set
+
+#
+# Debug Link           
+#
+# CONFIG_DSU_JTAG is not set
+CONFIG_DSU_ETH=y
+# CONFIG_DSU_ETHSZ1 is not set
+# CONFIG_DSU_ETHSZ2 is not set
+# CONFIG_DSU_ETHSZ4 is not set
+# CONFIG_DSU_ETHSZ8 is not set
+CONFIG_DSU_ETHSZ16=y
+CONFIG_DSU_IPMSB=C0A8
+CONFIG_DSU_IPLSB=0113
+CONFIG_DSU_ETHMSB=A6A7A0
+CONFIG_DSU_ETHLSB=F81440
+# CONFIG_DSU_ETH_PROG is not set
+
+#
+# Peripherals             
+#
+
+#
+# Memory controller             
+#
+
+#
+# Leon2 memory controller        
+#
+CONFIG_MCTRL_LEON2=y
+CONFIG_MCTRL_8BIT=y
+CONFIG_MCTRL_16BIT=y
+# CONFIG_MCTRL_5CS is not set
+# CONFIG_MCTRL_SDRAM is not set
+
+#
+# MIG 7-Series memory controller   
+#
+CONFIG_MIG_7SERIES_MODEL=y
+# CONFIG_AHBSTAT_ENABLE is not set
+
+#
+# On-chip RAM/ROM                 
+#
+# CONFIG_AHBROM_ENABLE is not set
+# CONFIG_AHBRAM_ENABLE is not set
+
+#
+# Ethernet             
+#
+CONFIG_GRETH_ENABLE=y
+# CONFIG_GRETH_GIGA is not set
+# CONFIG_GRETH_FIFO4 is not set
+CONFIG_GRETH_FIFO8=y
+# CONFIG_GRETH_FIFO16 is not set
+# CONFIG_GRETH_FIFO32 is not set
+# CONFIG_GRETH_FIFO64 is not set
+# CONFIG_GRETH_FT is not set
+
+#
+# UARTs, timers and irq control         
+#
+CONFIG_UART1_ENABLE=y
+CONFIG_UA1_IRQ=2
+# CONFIG_UA1_FIFO1 is not set
+# CONFIG_UA1_FIFO2 is not set
+# CONFIG_UA1_FIFO4 is not set
+# CONFIG_UA1_FIFO8 is not set
+# CONFIG_UA1_FIFO16 is not set
+CONFIG_UA1_FIFO32=y
+CONFIG_IRQ3_ENABLE=y
+# CONFIG_IRQ3_SEC is not set
+CONFIG_GPT_ENABLE=y
+CONFIG_GPT_NTIM=2
+CONFIG_GPT_SW=8
+CONFIG_GPT_TW=32
+CONFIG_GPT_IRQ=8
+CONFIG_GPT_SEPIRQ=y
+# CONFIG_GPT_WDOGEN is not set
+
+#
+# Keybord and VGA interface
+#
+# CONFIG_KBD_ENABLE is not set
+# CONFIG_VGA_ENABLE is not set
+# CONFIG_SVGA_ENABLE is not set
+
+#
+# VHDL Debugging        
+#
+CONFIG_DEBUG_UART=y
