@@ -257,6 +257,7 @@ begin
      mon_dvfs => mon_dvfs_int,
      tile_config => tile_config,
      srst => open,
+     tp_acc_rst => open,
      apbi => apbi,
      apbo => apbo(0)
    );

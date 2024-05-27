@@ -354,7 +354,7 @@ begin
       this_extra_clk_buf => 0)
     port map (
       raw_rstn            => raw_rstn,
-      tile_rst            => rst,
+      tile_rst            => tile_rst,
       refclk              => ext_clk,
       pllbypass           => ext_clk_sel_default,  --ext_clk_sel,
       pllclk              => clk_div,

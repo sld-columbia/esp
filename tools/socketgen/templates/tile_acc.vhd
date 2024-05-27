@@ -179,6 +179,8 @@ architecture rtl of tile_acc is
   signal this_local_y : local_yx;
   signal this_local_x : local_yx;
 
+  signal tp_acc_rst : std_ulogic;
+
   constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := (
     0 => '1',                           -- CSRs
     1 => '1',                           -- ESP accelerator w/ DVFS controller
@@ -375,6 +377,7 @@ begin
       mon_dvfs => mon_dvfs_int,
       tile_config => tile_config,
       srst => open,
+      tp_acc_rst => tp_acc_rst,
       apbi => apbi,
       apbo => apbo(0)
     );

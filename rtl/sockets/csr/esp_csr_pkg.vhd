@@ -36,6 +36,9 @@ package esp_csr_pkg is
   -- Soft reset
   constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 5;  -- reserved address
 
+  -- Force reset of third-party accelerators
+  constant ESP_CSR_TP_ACC_RST : integer range 0 to 31 := 6;
+
   component esp_tile_csr
     generic (
       pindex  : integer range 0 to NAPBSLV - 1;
@@ -53,6 +56,7 @@ package esp_csr_pkg is
       mon_dvfs    : in monitor_dvfs_type;
       tile_config : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
       srst        : out std_ulogic;
+      tp_acc_rst  : out std_ulogic;
       apbi        : in apb_slv_in_type;
       apbo        : out apb_slv_out_type);
   end component;
