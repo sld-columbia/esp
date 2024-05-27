@@ -113,7 +113,8 @@ use std.textio.all;
     mon_dvfs          : out monitor_dvfs_type;
     -- Coherence
 	acc_activity	  : out std_ulogic;	
-    coherence         : in integer range 0 to 3);
+    coherence         : in integer range 0 to 3;
+    tp_acc_rst        : in  std_ulogic);
 
 end;
 
@@ -158,6 +159,8 @@ end;
   signal dma_snd_data_in_int  : dma_noc_flit_type;
   signal dma_snd_full_int     : std_ulogic;
 
+  signal acc_rstn             : std_ulogic;
+
 begin
 
   pconfig <= (
@@ -178,6 +181,8 @@ begin
   coherence_rsp_snd_data_in <= (others => '0');
   coherence_fwd_snd_wrreq <= '0';
   coherence_fwd_snd_data_in <= (others => '0');
+
+  acc_rstn <= rst and not tp_acc_rst;
 
   -- <<accelerator_instance>>
 
@@ -384,7 +389,7 @@ begin
   mon_cache     <= monitor_cache_none;
 
   mon_dvfs_feedthru.transient <= '0';
-  
-  acc_activity <= '0';
+
+  acc_activity <= acc_run;
 
 end rtl;

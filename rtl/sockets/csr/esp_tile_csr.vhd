@@ -33,6 +33,7 @@ entity esp_tile_csr is
     mon_dvfs    : in  monitor_dvfs_type;
     tile_config : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
     srst        : out std_ulogic;
+    tp_acc_rst  : out std_ulogic;
     apbi        : in  apb_slv_in_type;
     apbo        : out apb_slv_out_type
     );
@@ -179,12 +180,14 @@ architecture rtl of esp_tile_csr is
       burst <= (others => '0');
       config_r     <= DEFAULT_CONFIG;
       srst         <= '0';
+      tp_acc_rst    <= '0';
     elsif clk'event and clk = '1' then
       -- Monitors
       if burst_sample = '1' then
         burst <= wdata;
       end if;
       -- Config write
+      tp_acc_rst <= '0';
       if apbi.paddr(8 downto 7) = "11" and (apbi.psel(pindex) and apbi.penable and apbi.pwrite) = '1' then
         case csr_addr is
           when ESP_CSR_VALID_ADDR =>
@@ -199,6 +202,8 @@ architecture rtl of esp_tile_csr is
             config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB) <= apbi.pwdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0);
           when ESP_CSR_SRST_ADDR =>
             srst <= wdata(0);
+          when ESP_CSR_TP_ACC_RST =>
+            tp_acc_rst <= wdata(0);
 
           when others => null;
         end case;

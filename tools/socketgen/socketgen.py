@@ -316,7 +316,7 @@ def write_axi_acc_port_map(f, acc, noc_width):
   for clk in acc.clocks:
     f.write("      " + clk + " => clk,\n")
   for rst in acc.resets:
-    f.write("      " + rst + " => rst,\n")
+    f.write("      " + rst + " => acc_rstn,\n")
   bind_apb3(f, acc.apb_prefix)
   bind_axi(f, acc, noc_width)
   if acc.interrupt != "":
@@ -1742,7 +1742,8 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, noc_width, template_d
         f.write("      mon_acc           : out monitor_acc_type;\n")
         f.write("      mon_cache         : out monitor_cache_type;\n")
         f.write("      mon_dvfs          : out monitor_dvfs_type;\n")
-        f.write("      coherence         : in integer range 0 to 3);\n")
+        f.write("      coherence         : in integer range 0 to 3;\n")
+        f.write("      tp_acc_rst        : in std_ulogic);\n")
         f.write("  end component;\n\n")
         f.write("\n")
   f.close()
@@ -1888,7 +1889,8 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        acc_activity      => acc_activity,\n")
 
           f.write("        -- Coherence\n")
-          f.write("        coherence         => coherence\n")
+          f.write("        coherence         => coherence,\n")
+          f.write("        tp_acc_rst        => tp_acc_rst\n")
           f.write("      );\n")
           f.write("  end generate " + acc.name + "_gen;\n\n")
       else:

@@ -730,7 +730,7 @@ begin
           this_has_l2   => tile_has_l2(i),
           this_has_token_pm => tile_has_tdvfs(i),
           ROUTER_PORTS  => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 1,
+          this_has_dco => 0,
           HAS_SYNC     => 0)
         port map (
           rst                => reset,
