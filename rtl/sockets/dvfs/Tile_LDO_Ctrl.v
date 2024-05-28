@@ -1,139 +1,137 @@
+// Copyright (c) 2011-2024 Columbia University, System Level Design Group
+
+/* PID_Ctrl module RTL adapted from OpenCores PID controller
+Link: https://opencores.org/projects/pid_controller
+Author: Zhu Xu
+License: LGPL
+*/
+
 module Tile_LDO_Ctrl
-          (clk,
-           DCO_clk,
-           reset_tile,
-           reset_noc,
-           freq_target,
-           LDO_setup_0,
-           LDO_setup_1,
-           LDO_setup_2,
-           LDO_setup_3,
-           LDO_setup_4,
-           LDO_debug_0,
-           LDO0,
-           LDO1,
-           LDO2,
-           LDO3,
-           LDO4,
-           LDO5,
-           LDO6,
-           LDO7);
+        (clk,
+          DCO_clk,
+          reset_tile,
+          reset_noc,
+          freq_target,
+          LDO_setup_0,
+          LDO_setup_1,
+          LDO_setup_2,
+          LDO_setup_3,
+          LDO_setup_4,
+          LDO_debug_0,
+          LDO0,
+          LDO1,
+          LDO2,
+          LDO3,
+          LDO4,
+          LDO5,
+          LDO6,
+          LDO7);
 
-  input   clk;                // NOC Clock
-  input   DCO_clk;            // Tile DCO Clock
-  input   reset_tile;         // Reset for ~100 cycles at startup (reset on zero)
-  input   reset_noc;          // Identical module reset behavior to reset_tile
-  input   [7:0] freq_target;  // From Token FSM, MSB reserved for TDC clk div
+input   clk;                // NOC Clock
+input   DCO_clk;            // Tile DCO Clock
+input   reset_tile;         // Reset for ~100 cycles at startup (reset on zero)
+input   reset_noc;          // Identical module reset behavior to reset_tile
+input   [7:0] freq_target;  // From Token FSM, MSB reserved for TDC clk div
 
-  // Runtime Programmable Settings 
-  input   [31:0] LDO_setup_0;
-  input   [31:0] LDO_setup_1;
-  input   [31:0] LDO_setup_2;
-  input   [31:0] LDO_setup_3;
-  input   [31:0] LDO_setup_4;
+// Runtime Programmable Settings 
+input   [31:0] LDO_setup_0;
+input   [31:0] LDO_setup_1;
+input   [31:0] LDO_setup_2;
+input   [31:0] LDO_setup_3;
+input   [31:0] LDO_setup_4;
 
-  wire   reset;
-  wire   [63:0] p_reg;       // Proportional constant (#*2^66 = 64'd --> 64'sh)
-  wire   [63:0] i_reg;       // Integral constant (#*2^66 = 64'd --> 64'sh)
-  wire   [7:0] Bypass;       // 1 = LDO Switch Bypass, 0 = LDO Auto Ctrl 
-  wire   [7:0] Bypass_state; // 1 = Switch Open, 0 = Switch Closed
-  wire   [3:0] TDC_div;      // Dual range TDC divide ref_clk_2 = clk / (2*TDC_div)
-  wire   [3:0] N;            // ref_clk_1 = clk / (2*N)
-  wire   Shift;              // Shift up 1 LSB
-  wire   Shift_max;          // Shift up 2 LSBs (Shift must = 1)
-  wire   clk_enable;         // 1 = Clock Enabled
-  wire   Ctrl_sw;            // 1 = Matlab PI Controller, 0 = OpenCores PID Controller
-  wire   Ctrl_bypass;        // 1 = Direct Freq. Control, 0 = PI/PID Control
+wire   reset;
+wire   [63:0] p_reg;       // Proportional constant (#*2^66 = 64'd --> 64'sh)
+wire   [63:0] i_reg;       // Integral constant (#*2^66 = 64'd --> 64'sh)
+wire   [7:0] Bypass;       // 1 = LDO Switch Bypass, 0 = LDO Auto Ctrl 
+wire   [7:0] Bypass_state; // 1 = Switch Open, 0 = Switch Closed
+wire   [3:0] TDC_div;      // Dual range TDC divide ref_clk_2 = clk / (2*TDC_div)
+wire   [3:0] N;            // ref_clk_1 = clk / (2*N)
+wire   Shift;              // Shift up 1 LSB
+wire   Shift_max;          // Shift up 2 LSBs (Shift must = 1)
+wire   clk_enable;         // 1 = Clock Enabled
+wire   Ctrl_bypass;        // 1 = Direct Freq. Control, 0 = PI/PID Control
 
-  assign reset             = (reset_noc && reset_tile);
-  assign p_reg [63:32]     = LDO_setup_0;
-  assign p_reg [31:0]      = LDO_setup_1;
-  assign i_reg [63:32]     = LDO_setup_2;
-  assign i_reg [31:0]      = LDO_setup_3;
-  assign Ctrl_bypass       = LDO_setup_4[29];
-  assign fast_en           = LDO_setup_4[28];
-  assign Ctrl_sw           = LDO_setup_4[27];
-  assign Bypass[7:0]       = LDO_setup_4[26:19];
-  assign Bypass_state[7:0] = LDO_setup_4[18:11];
-  assign TDC_div[3:0]      = LDO_setup_4[10:7];
-  assign N[3:0]            = LDO_setup_4[6:3];
-  assign Shift             = LDO_setup_4[2];
-  assign Shift_max         = LDO_setup_4[1];
-  assign clk_enable        = LDO_setup_4[0];
+assign reset             = (reset_noc && reset_tile);
+assign p_reg [63:32]     = LDO_setup_0;
+assign p_reg [31:0]      = LDO_setup_1;
+assign i_reg [63:32]     = LDO_setup_2;
+assign i_reg [31:0]      = LDO_setup_3;
+assign Ctrl_bypass       = LDO_setup_4[29];
+assign fast_en           = LDO_setup_4[28];
+assign Bypass[7:0]       = LDO_setup_4[26:19];
+assign Bypass_state[7:0] = LDO_setup_4[18:11];
+assign TDC_div[3:0]      = LDO_setup_4[10:7];
+assign N[3:0]            = LDO_setup_4[6:3];
+assign Shift             = LDO_setup_4[2];
+assign Shift_max         = LDO_setup_4[1];
+assign clk_enable        = LDO_setup_4[0];
 
-  // Output for Debug 
-  output [31:0] LDO_debug_0;
+// Output for Debug 
+output [31:0] LDO_debug_0;
 
-  // LDO Switch Control Signals
-  output  LDO0;
-  output  LDO1;
-  output  LDO2;
-  output  LDO3;
-  output  LDO4;
-  output  LDO5;
-  output  LDO6;
-  output  LDO7;
+// LDO Switch Control Signals
+output  LDO0;
+output  LDO1;
+output  LDO2;
+output  LDO3;
+output  LDO4;
+output  LDO5;
+output  LDO6;
+output  LDO7;
 
-  reg    [7:0] freq_target_reg;
-  reg    [7:0] TDC_out_sync;
-  reg    [7:0] LDO_reg;
-  reg    OF; // Overflow
-  reg    UF; // Underflow
-  reg    fast_prop;
+reg    [7:0] freq_target_reg;
+reg    [7:0] TDC_out_sync;
+reg    [7:0] LDO_reg;
+reg    OF; // Overflow
+reg    UF; // Underflow
+reg    fast_prop;
 
-  wire   ce_out0;
-  wire   ce_out1;
-  wire   ce_out2;
-  wire   ref_clk_sync_1;
-  wire   ref_clk_sync_2;
-  wire   [7:0] LDO;
-  wire   ref_clk_1;
-  wire   ref_clk_2;
-  wire   TDC_range;
-  wire   [7:0] TDC_out_1;
-  wire   [7:0] TDC_out_2;
-  wire   [7:0] TDC_out_sync_1;
-  wire   [7:0] TDC_out_sync_2;
-  wire   [31:0]o_un;
-  wire   valid;
+wire   ce_out1;
+wire   ce_out2;
+wire   ref_clk_sync_1;
+wire   ref_clk_sync_2;
+wire   ref_clk_1;
+wire   ref_clk_2;
+wire   TDC_range;
+wire   [7:0] TDC_out_1;
+wire   [7:0] TDC_out_2;
+wire   [7:0] TDC_out_sync_1;
+wire   [7:0] TDC_out_sync_2;
+wire   [31:0]o_un;
+wire   valid;
 
-  assign LDO_debug_0[7:0] = TDC_out_sync[7:0];
-  assign LDO_debug_0[15:8]  = LDO_reg[7:0];
-  assign LDO_debug_0[23:16] = {LDO7, LDO6, LDO5, LDO4, LDO3, LDO2, LDO1, LDO0};
-  assign LDO_debug_0[26:24] = {OF, UF, valid};
-  assign LDO_debug_0[27] = TDC_range;
-  assign LDO_debug_0[30:28] = {ce_out0, ce_out1, ce_out2};
-  assign LDO_debug_0[31] = fast_prop;
+assign LDO_debug_0[7:0] = TDC_out_sync[7:0];
+assign LDO_debug_0[15:8]  = LDO_reg[7:0];
+assign LDO_debug_0[23:16] = {LDO7, LDO6, LDO5, LDO4, LDO3, LDO2, LDO1, LDO0};
+assign LDO_debug_0[26:24] = {OF, UF, valid};
+assign LDO_debug_0[27] = TDC_range;
+assign LDO_debug_0[30:28] = {1'b0, ce_out1, ce_out2};
+assign LDO_debug_0[31] = fast_prop;
 
-  assign LDO0 = reset ? (Bypass[0] ? (Ctrl_bypass ? freq_target[0] : ~LDO_reg[0]) : (Bypass_state[0] ? 1'b1 : 1'b0)) : 1'b0;
-  assign LDO1 = reset ? (Bypass[1] ? (Ctrl_bypass ? freq_target[1] : ~LDO_reg[1]) : (Bypass_state[1] ? 1'b1 : 1'b0)) : 1'b0;
-  assign LDO2 = reset ? (Bypass[2] ? (Ctrl_bypass ? freq_target[2] : ~LDO_reg[2]) : (Bypass_state[2] ? 1'b1 : 1'b0)) : 1'b0;
-  assign LDO3 = reset ? (Bypass[3] ? (Ctrl_bypass ? freq_target[3] : ~LDO_reg[3]) : (Bypass_state[3] ? 1'b1 : 1'b0)) : 1'b0;
-  assign LDO4 = reset ? (Bypass[4] ? (Ctrl_bypass ? freq_target[4] : ~LDO_reg[4]) : (Bypass_state[4] ? 1'b1 : 1'b0)) : 1'b0;
-  assign LDO5 = reset ? (Bypass[5] ? (Ctrl_bypass ? freq_target[5] : ~LDO_reg[5]) : (Bypass_state[5] ? 1'b1 : 1'b0)) : 1'b0;
-  assign LDO6 = reset ? (Bypass[6] ? (Ctrl_bypass ? freq_target[6] : ~LDO_reg[6]) : (Bypass_state[6] ? 1'b1 : 1'b0)) : 1'b0;
-  assign LDO7 = reset ? (Bypass[7] ? (Ctrl_bypass ? freq_target[7] : ~LDO_reg[7]) : (Bypass_state[7] ? 1'b1 : 1'b0)) : 1'b0;
+assign LDO0 = reset ? (Bypass[0] ? (Ctrl_bypass ? freq_target[0] : ~LDO_reg[0]) : (Bypass_state[0] ? 1'b1 : 1'b0)) : 1'b0;
+assign LDO1 = reset ? (Bypass[1] ? (Ctrl_bypass ? freq_target[1] : ~LDO_reg[1]) : (Bypass_state[1] ? 1'b1 : 1'b0)) : 1'b0;
+assign LDO2 = reset ? (Bypass[2] ? (Ctrl_bypass ? freq_target[2] : ~LDO_reg[2]) : (Bypass_state[2] ? 1'b1 : 1'b0)) : 1'b0;
+assign LDO3 = reset ? (Bypass[3] ? (Ctrl_bypass ? freq_target[3] : ~LDO_reg[3]) : (Bypass_state[3] ? 1'b1 : 1'b0)) : 1'b0;
+assign LDO4 = reset ? (Bypass[4] ? (Ctrl_bypass ? freq_target[4] : ~LDO_reg[4]) : (Bypass_state[4] ? 1'b1 : 1'b0)) : 1'b0;
+assign LDO5 = reset ? (Bypass[5] ? (Ctrl_bypass ? freq_target[5] : ~LDO_reg[5]) : (Bypass_state[5] ? 1'b1 : 1'b0)) : 1'b0;
+assign LDO6 = reset ? (Bypass[6] ? (Ctrl_bypass ? freq_target[6] : ~LDO_reg[6]) : (Bypass_state[6] ? 1'b1 : 1'b0)) : 1'b0;
+assign LDO7 = reset ? (Bypass[7] ? (Ctrl_bypass ? freq_target[7] : ~LDO_reg[7]) : (Bypass_state[7] ? 1'b1 : 1'b0)) : 1'b0;
 
-  // always @(posedge reset) begin
-  //   OF <= 1'b0;
-  //   UF <= 1'b0;
-  //   fast_prop <= 1'b0;
-  // end
-  
-  assign TDC_range = freq_target_reg[7];
+assign TDC_range = freq_target_reg[7];
 
-  // Set TDC_out_sync
-  always @(posedge clk) begin
-    if (TDC_range) begin
+// Set TDC_out_sync
+always @(posedge clk) begin
+  if (TDC_range) begin
     TDC_out_sync <= TDC_out_sync_2;
-    end
-    else begin
-        TDC_out_sync <= TDC_out_sync_1;
   end
+  else begin
+    TDC_out_sync <= TDC_out_sync_1;
   end
+end
 
-  // Set freq_target_reg
-  always @(posedge clk) begin
+// Set freq_target_reg
+always @(posedge clk) begin
   if (freq_target > freq_target_reg && fast_en) begin
     fast_prop <= 1'b1; 
     freq_target_reg <= freq_target;
@@ -145,25 +143,12 @@ module Tile_LDO_Ctrl
   else begin
     freq_target_reg <= freq_target;
   end
-  end
+end
 
-  // Set LDO_reg
-  always @(posedge clk) begin
-    if (!Ctrl_sw) // Use Matlab Ctrl
-       begin // Fast LSB Propogation
-    if (fast_prop && fast_en && LDO!=8'b11111111) begin
-      LDO_reg <= LDO + 1'b1; 
-    end
-    else if (!fast_prop && fast_en && LDO!=8'b0) begin
-      LDO_reg <= LDO - 1'b1;  
-    end
-    else begin 
-        LDO_reg <= LDO;
-    end 
-       end
-    else begin // Use OpenCores Ctrl
-    if (Shift && !Shift_max) begin 
-        if (o_un[31:16] >= 1'b1 && o_un[31:28] == 4'b0) begin
+// Set LDO_reg
+always @(posedge clk) begin
+  if (Shift && !Shift_max) begin 
+    if (o_un[31:16] >= 1'b1 && o_un[31:28] == 4'b0) begin
       LDO_reg <= 8'b11111111;
       OF <= 1'b1; // Overflow
     end
@@ -181,12 +166,12 @@ module Tile_LDO_Ctrl
       else begin 
           LDO_reg <= o_un[15:8];
       end 
-      UF <= 1'b0;
-      OF <= 1'b0;
+    UF <= 1'b0;
+    OF <= 1'b0;
     end     
-    end
-    else if (Shift_max) begin 
-        if (o_un[31:24] >= 1'b1 && o_un[31:28] == 4'b0) begin
+  end
+  else if (Shift_max) begin 
+    if (o_un[31:24] >= 1'b1 && o_un[31:28] == 4'b0) begin
       LDO_reg <= 8'b11111111;
       OF <= 1'b1;
     end
@@ -202,14 +187,14 @@ module Tile_LDO_Ctrl
         LDO_reg <= o_un[23:16] - 1'b1;  
       end
       else begin 
-          LDO_reg <= o_un[23:16];
+        LDO_reg <= o_un[23:16];
       end 
       UF <= 1'b0;
       OF <= 1'b0;
     end     
-    end
-    else begin
-        if (o_un[31:8] >= 1'b1 && o_un[31:28] == 4'b0) begin
+  end
+  else begin
+    if (o_un[31:8] >= 1'b1 && o_un[31:28] == 4'b0) begin
       LDO_reg <= 8'b11111111;
       OF <= 1'b1;
     end
@@ -230,9 +215,8 @@ module Tile_LDO_Ctrl
       UF <= 1'b0;
       OF <= 1'b0;
     end
-    end
   end
-  end
+end
 
 // OpenCores Ctrl inputs
 wire [15:0]kp;
@@ -247,118 +231,101 @@ assign kd = p_reg [31:16];
 assign sp = {9'b0,freq_target_reg[6:0]};
 assign pv = {8'b0,TDC_out_sync};
 
-  PID_Ctrl  PID_Ctrl_0(
-           clk,
-           ~reset,
-           clk_cyc,
-           kp,
-           ki,
-           kd,
-           sp,
-           pv,
-           o_un,
-           valid
-           );
+PID_Ctrl  PID_Ctrl_0(
+          clk,
+          ~reset,
+          clk_cyc,
+          kp,
+          ki,
+          kd,
+          sp,
+          pv,
+          o_un,
+          valid
+          );
 
-  even_clk_div div_6 (
-           .clk(clk),
-           .reset(~reset),
-           .N(4'b0011),
-           .clk_out(clk_cyc)
-           );
-
-
-  LDO_controller u_LDO_controller (
-           .clk(clk),
-           .reset(~reset),
-           .clk_enable(clk_enable),
-           .ref_rsvd({1'b0,freq_target_reg[6:0]}),
-           .fb(TDC_out_sync),
-           .Bypass(Bypass),
-           .Bypass_state(Bypass_state),
-           .Shift(Shift),
-           .Shift_max(Shift_max),
-           .prop(p_reg),
-           .integ(i_reg),
-           .ce_out(ce_out0),
-           .Out(LDO)
-      );
-
-  even_clk_div u_clk_div_for_ref_clk_1 (
+even_clk_div div_6 (
           .clk(clk),
           .reset(~reset),
-          .N(N),
-          .clk_out(ref_clk_1)
+          .N(4'b0011),
+          .clk_out(clk_cyc)
           );
 
-  sync_1bit TDC_input_sync_1 (
-           .clk_src(DCO_clk), 
-           .clk_dest(DCO_clk), 
-           .data_src(ref_clk_1), 
-           .data_dest(ref_clk_sync_1)
-          );
+even_clk_div u_clk_div_for_ref_clk_1 (
+        .clk(clk),
+        .reset(~reset),
+        .N(N),
+        .clk_out(ref_clk_1)
+        );
 
-  TDC u_TDC_1 (
-           .clk(DCO_clk),
-           .reset(~reset),
-           .clk_enable(clk_enable),
-           .In1(ref_clk_sync_1),
-           .ce_out(ce_out1),
-           .Out1(TDC_out_1)
-          );
+sync_1bit TDC_input_sync_1 (
+          .clk_src(DCO_clk), 
+          .clk_dest(DCO_clk), 
+          .data_src(ref_clk_1), 
+          .data_dest(ref_clk_sync_1)
+        );
 
-  sync_8bit TDC_output_sync_1 (
-           .clk_src(DCO_clk), 
-           .clk_dest(clk), 
-           .data_src(TDC_out_1), 
-           .data_dest(TDC_out_sync_1)
-          );
-
-  even_clk_div u_clk_div_for_ref_clk_2 (
-          .clk(clk),
+TDC u_TDC_1 (
+          .clk(DCO_clk),
           .reset(~reset),
-          .N(TDC_div),
-          .clk_out(ref_clk_2)
-          );
+          .clk_enable(clk_enable),
+          .In1(ref_clk_sync_1),
+          .ce_out(ce_out1),
+          .Out1(TDC_out_1)
+        );
 
-  sync_1bit TDC_input_sync_2 (
-           .clk_src(DCO_clk), 
-           .clk_dest(DCO_clk), 
-           .data_src(ref_clk_2), 
-           .data_dest(ref_clk_sync_2)
-          );
+sync_8bit TDC_output_sync_1 (
+          .clk_src(DCO_clk), 
+          .clk_dest(clk), 
+          .data_src(TDC_out_1), 
+          .data_dest(TDC_out_sync_1)
+        );
 
-  TDC u_TDC_2 (
-           .clk(DCO_clk),
-           .reset(~reset),
-           .clk_enable(clk_enable),
-           .In1(ref_clk_sync_2),
-           .ce_out(ce_out2),
-           .Out1(TDC_out_2)
-          );
+even_clk_div u_clk_div_for_ref_clk_2 (
+        .clk(clk),
+        .reset(~reset),
+        .N(TDC_div),
+        .clk_out(ref_clk_2)
+        );
 
-  sync_8bit TDC_output_sync_2 (
-           .clk_src(DCO_clk), 
-           .clk_dest(clk), 
-           .data_src(TDC_out_2), 
-           .data_dest(TDC_out_sync_2)
-          );
+sync_1bit TDC_input_sync_2 (
+          .clk_src(DCO_clk), 
+          .clk_dest(DCO_clk), 
+          .data_src(ref_clk_2), 
+          .data_dest(ref_clk_sync_2)
+        );
+
+TDC u_TDC_2 (
+          .clk(DCO_clk),
+          .reset(~reset),
+          .clk_enable(clk_enable),
+          .In1(ref_clk_sync_2),
+          .ce_out(ce_out2),
+          .Out1(TDC_out_2)
+        );
+
+sync_8bit TDC_output_sync_2 (
+          .clk_src(DCO_clk), 
+          .clk_dest(clk), 
+          .data_src(TDC_out_2), 
+          .data_dest(TDC_out_sync_2)
+        );
 endmodule // Tile_LDO_Ctrl
 
 //Verilog HDL for "OpenCores_PID_Ctrl", "PID_Ctrl" "functional"
 
 module  PID_Ctrl (
-  input i_clk,    // clock
-  input i_rst,    // reset when high
-  input i_cyc,      // write enable (clk/6)
-  input [15:0]kp_in,  // proportional value
-  input [15:0]ki_in,  // integral value
-  input [15:0]kd_in,  // derivative value
-  input [15:0]sp_in, // setpoint (target)
-  input [15:0]pv_in, // process variable (feedback)
-  output  [31:0]o_un,   // u(n) output
-  output  o_valid   // u(n) valid
-  );
+input i_clk,        // clock
+input i_rst,        // reset when high
+input i_cyc,        // write enable (clk/6)
+input [15:0]kp_in,  // proportional value
+input [15:0]ki_in,  // integral value
+input [15:0]kd_in,  // derivative value
+input [15:0]sp_in,  // setpoint (target)
+input [15:0]pv_in,  // process variable (feedback)
+output  [31:0]o_un, // u(n) output
+output  o_valid     // u(n) valid
+);
 
 // input registers
 reg [15:0]kp,ki,kd,sp,pv;
@@ -432,7 +399,6 @@ assign  mr= mr_index==1?kpd:
 assign  md= md_index==2?err[1]:
     md_index==1?err[0]:sum[15:0];
 
-
 wire  of_addition[0:1];
 assign  of_addition[0]=(p[15]&&a[15]&&(!sum[15]))||((!p[15])&&(!a[15])&&sum[15]);
 assign  of_addition[1]=(p[31]&&a[31]&&(!sum[31]))||((!p[31])&&(!a[31])&&sum[31]);
@@ -460,7 +426,7 @@ always@(posedge i_clk or posedge i_rst)
   else begin
     case(state_1)
     10'b0000000001: begin
-       if(wack)begin
+      if(wack)begin
         state_1<=10'b0000001000;
         wla<=1;
         wlb<=1; 
@@ -1896,8 +1862,6 @@ operator_B  operator_B_stage_1_13(P0[26],G0[26],P0[25],G0[25],P1[13],G1[13]);
 operator_B  operator_B_stage_1_14(P0[28],G0[28],P0[27],G0[27],P1[14],G1[14]);
 operator_B  operator_B_stage_1_15(P0[30],G0[30],P0[29],G0[29],P1[15],G1[15]);
 
-
-
 //stage 2
 wire  [15:0]G2;
 wire  [15:2]P2;
@@ -2244,380 +2208,168 @@ assign  zmd=zero?0:nmd;
 
 assign  pp=double?{~zmd[15],zmd[14:0],negation}:{~zmd[15],zmd[15:0]};
 endmodule
-
-module LDO_controller
-          (clk,
-           reset,
-           clk_enable,
-           ref_rsvd,
-           fb,
-           Bypass,
-           Bypass_state,
-           Shift,
-           Shift_max,
-           prop,
-           integ,
-           ce_out,
-           Out);
- 
- 
-  input   clk;
-  input   reset;
-  input   clk_enable;
-  input   signed [7:0] ref_rsvd;
-  input   signed [7:0] fb;
-  input   [7:0] Bypass;
-  input   [7:0] Bypass_state;
-  input   Shift;
-  input   Shift_max;
-  input   signed [63:0] prop;
-  input   signed [63:0] integ;
-  output  ce_out;
-  output  [7:0] Out;
- 
-  wire signed [63:0] PI_Subsystem_boundary_DTC_out1;  // sfix64_En30
-  wire signed [63:0] PI_Subsystem_boundary_DTC1_out1;  // sfix64_En30
-  wire signed [63:0] PID_out_D;  // sfix64_En30
-  wire [7:0] Saturation_boundary_DTC_out1;  // uint8
-  wire [7:0] PID_out_raw;  // uint8
- 
-  assign PI_Subsystem_boundary_DTC_out1 = {{26{ref_rsvd[7]}}, {ref_rsvd, 30'b000000000000000000000000000000}};
- 
-  assign PI_Subsystem_boundary_DTC1_out1 = {{26{fb[7]}}, {fb, 30'b000000000000000000000000000000}};
- 
-  PI_Subsystem u_PI_Subsystem (.clk(clk),
-                               .reset(reset),
-                               .enb_1_25000_0(clk_enable),
-                               .In1(PI_Subsystem_boundary_DTC_out1),  // sfix64_En30
-                               .In2(PI_Subsystem_boundary_DTC1_out1),  // sfix64_En30
-                               .prop(prop),
-                               .integ(integ),
-                               .PID_out_D(PID_out_D)  // sfix64_En30
-                               );
- 
-  assign Saturation_boundary_DTC_out1 = ((PID_out_D[63] == 1'b0) && (PID_out_D[62:38] != 25'b0000000000000000000000000) ? 8'b11111111 :
-              (PID_out_D[63] == 1'b1 ? 8'b00000000 :
-              PID_out_D[37:30] + (PID_out_D[63] & (|PID_out_D[29:0]))));
- 
-  assign PID_out_raw = (Saturation_boundary_DTC_out1 > 8'b00111111 ? 8'b00111111 :
-              Saturation_boundary_DTC_out1);
-
-  assign Out[7] = ~(Bypass[7] ? (Shift ? (Shift_max ? ~PID_out_raw[5] : ~PID_out_raw[6]) : ~PID_out_raw[7]) : (Bypass_state[7] ? 1'b1 : 1'b0));
-  assign Out[6] = ~(Bypass[6] ? (Shift ? (Shift_max ? ~PID_out_raw[4] : ~PID_out_raw[5]) : ~PID_out_raw[6]) : (Bypass_state[6] ? 1'b1 : 1'b0));
-  assign Out[5] = ~(Bypass[5] ? (Shift ? (Shift_max ? ~PID_out_raw[3] : ~PID_out_raw[4]) : ~PID_out_raw[5]) : (Bypass_state[5] ? 1'b1 : 1'b0));
-  assign Out[4] = ~(Bypass[4] ? (Shift ? (Shift_max ? ~PID_out_raw[2] : ~PID_out_raw[3]) : ~PID_out_raw[4]) : (Bypass_state[4] ? 1'b1 : 1'b0));
-  assign Out[3] = ~(Bypass[3] ? (Shift ? (Shift_max ? ~PID_out_raw[1] : ~PID_out_raw[2]) : ~PID_out_raw[3]) : (Bypass_state[3] ? 1'b1 : 1'b0));
-  assign Out[2] = ~(Bypass[2] ? (Shift ? (Shift_max ? ~PID_out_raw[0] : ~PID_out_raw[1]) : ~PID_out_raw[2]) : (Bypass_state[2] ? 1'b1 : 1'b0));
-  assign Out[1] = ~(Bypass[1] ? (Shift ? (Shift_max ? ~PID_out_raw[1] : ~PID_out_raw[0]) : ~PID_out_raw[1]) : (Bypass_state[1] ? 1'b1 : 1'b0));
-  assign Out[0] = ~(Bypass[0] ? (Shift ? (Shift_max ? ~PID_out_raw[0] : ~PID_out_raw[1]) : ~PID_out_raw[0]) : (Bypass_state[0] ? 1'b1 : 1'b0));
-
-  assign ce_out = clk_enable;
- 
-endmodule  // LDO_controller
-
- 
-module PI_Subsystem
-          (clk,
-           reset,
-           enb_1_25000_0,
-           In1,
-           In2,
-           prop,
-           integ,
-           PID_out_D);
- 
- 
-  input   clk;
-  input   reset;
-  input   enb_1_25000_0;
-  input   signed [63:0] In1;  // sfix64_En30
-  input   signed [63:0] In2;  // sfix64_En30
-  input   signed [63:0] prop; // proportional constant
-  input   signed [63:0] integ; // integrator constant
-  output  signed [63:0] PID_out_D;  // sfix64_En30
- 
- 
-  wire signed [64:0] Sum_sub_cast;  // sfix65_En30
-  wire signed [64:0] Sum_sub_cast_1;  // sfix65_En30
-  wire signed [64:0] Sum_sub_temp;  // sfix65_En30
-  wire signed [7:0] error;  // int8
-  wire signed [63:0] PID_out;  // sfix64_En30
-  wire signed [63:0] prop_sub;
-  wire signed [63:0] integ_sub;
- 
-
-  assign Sum_sub_cast = {In1[63], In1};
-  assign Sum_sub_cast_1 = {In2[63], In2};
-  assign Sum_sub_temp = Sum_sub_cast - Sum_sub_cast_1;
-  assign error = Sum_sub_temp[37:30];
-  assign prop_sub = prop[63:0];
-  assign integ_sub = integ[63:0]; 
- 
-  Discrete_PI_Controller u_Discrete_PI_Controller (.clk(clk),
-                                                     .reset(reset),
-                                                     .enb_1_25000_0(enb_1_25000_0),
-                                                     .p(prop_sub),
-                                                     .i(integ_sub),
-                                                     .u(error),  // int8
-                                                     .y(PID_out)  // sfix64_En30
-                                                     );
- 
-  assign PID_out_D = PID_out;
- 
-endmodule  // PI_Subsystem
-
- 
-module Discrete_PI_Controller
-          (clk,
-           reset,
-           enb_1_25000_0,
-           p,
-           i,
-           u,
-           y);
- 
-  input   clk;
-  input   reset;
-  input   enb_1_25000_0;
-  input   signed [7:0] u;  // int8
-  input   signed [63:0] p; // proportional constant
-  input   signed [63:0] i; // integrator constant
-  output  signed [63:0] y;  // sfix64_En30
- 
-  wire signed [71:0] Proportional_Gain_mul_temp;  // sfix72_En66
-  wire signed [63:0] Parallel_P_Gain_out1;  // sfix64_En34
-  wire signed [71:0] Integral_Gain_mul_temp;  // sfix72_En53
-  wire signed [63:0] I_Gain_out1;  // sfix64_En20
-  wire signed [63:0] Integrator_indtc;  // sfix64
-  wire signed [127:0] gain_mul_temp;  // sfix128_En56
-  wire signed [63:0] Integrator_u_gain;  // sfix64
-  wire signed [63:0] Integrator_u_dtc;  // sfix64_En30
-  reg signed [63:0] Integrator_x_reg;  // sfix64_En30
-  wire signed [64:0] adder_add_cast;  // sfix65_En30
-  wire signed [64:0] adder_add_cast_1;  // sfix65_En30
-  wire signed [64:0] adder_add_temp;  // sfix65_En30
-  wire signed [63:0] Integrator_u_add;  // sfix64_En30
-  wire signed [63:0] Sum_add_cast;  // sfix64_En30
-  wire signed [64:0] Sum_add_cast_1;  // sfix65_En30
-  wire signed [64:0] Sum_add_cast_2;  // sfix65_En30
-  wire signed [64:0] Sum_add_temp;  // sfix65_En30
-  wire signed [63:0] Sum_out1;  // sfix64_En30
-  wire signed [63:0] Saturation_out1;  // sfix64_En30
- 
-  assign Proportional_Gain_mul_temp = p * u;
-  assign Parallel_P_Gain_out1 = {{24{Proportional_Gain_mul_temp[71]}}, Proportional_Gain_mul_temp[71:32]};
- 
-  assign Integral_Gain_mul_temp = i * u;
-  assign I_Gain_out1 = {{25{Integral_Gain_mul_temp[71]}}, Integral_Gain_mul_temp[71:33]};
- 
-  assign Integrator_indtc = I_Gain_out1;
- 
-  assign gain_mul_temp = 64'sh001A36E2EB1C432D * Integrator_indtc;
-  assign Integrator_u_gain = ((gain_mul_temp[127] == 1'b0) && (gain_mul_temp[126:119] != 8'b00000000) ? 64'sh7FFFFFFFFFFFFFFF :
-              ((gain_mul_temp[127] == 1'b1) && (gain_mul_temp[126:119] != 8'b11111111) ? 64'sh8000000000000000 :
-              $signed(gain_mul_temp[119:56])));
- 
-  assign Integrator_u_dtc = Integrator_u_gain;
- 
-  assign adder_add_cast = {Integrator_x_reg[63], Integrator_x_reg};
-  assign adder_add_cast_1 = {Integrator_u_dtc[63], Integrator_u_dtc};
-  assign adder_add_temp = adder_add_cast + adder_add_cast_1;
-  assign Integrator_u_add = ((adder_add_temp[64] == 1'b0) && (adder_add_temp[63] != 1'b0) ? 64'sh7FFFFFFFFFFFFFFF :
-              ((adder_add_temp[64] == 1'b1) && (adder_add_temp[63] != 1'b1) ? 64'sh8000000000000000 :
-              $signed(adder_add_temp[63:0])));
- 
-  always @(posedge clk or posedge reset)
-    begin : Integrator_reg_process
-      if (reset == 1'b1) begin
-        Integrator_x_reg <= 64'sh0000000000000000;
-      end
-      else begin
-        if (enb_1_25000_0) begin
-          Integrator_x_reg <= Integrator_u_add;
-        end
-      end
-    end
- 
-  assign Sum_add_cast = {{4{Parallel_P_Gain_out1[63]}}, Parallel_P_Gain_out1[63:4]};
-  assign Sum_add_cast_1 = {Sum_add_cast[63], Sum_add_cast};
-  assign Sum_add_cast_2 = {Integrator_x_reg[63], Integrator_x_reg};
-  assign Sum_add_temp = Sum_add_cast_1 + Sum_add_cast_2;
-  assign Sum_out1 = ((Sum_add_temp[64] == 1'b0) && (Sum_add_temp[63] != 1'b0) ? 64'sh7FFFFFFFFFFFFFFF :
-              ((Sum_add_temp[64] == 1'b1) && (Sum_add_temp[63] != 1'b1) ? 64'sh8000000000000000 :
-              $signed(Sum_add_temp[63:0])));
- 
-  assign Saturation_out1 = (Sum_out1 > 64'sh0000000FF0000000 ? 64'sh0000000FF0000000 :
-              (Sum_out1 < 64'sh0000000000000000 ? 64'sh0000000000000000 :
-              Sum_out1)); 
- 
-  assign y = Saturation_out1;
- 
-endmodule  // Discrete_PI_Controller
  
 
 module even_clk_div (clk,reset, N, clk_out);
-
-  input clk;
-  input reset;
-  input [3:0] N; // clk_out = clk/(N*2)
-  output clk_out;
-   
-  reg [3:0] r_reg;
-  wire [3:0] r_nxt;
-  reg clk_track;
-   
-  always @(posedge clk or posedge reset)  
-    begin
-      if (reset)
-         begin
-            r_reg <= 0;
-      clk_track <= 1'b0;
-         end
-     
-      else if (r_nxt == N)
-         begin
-           r_reg <= 0;
-           clk_track <= ~clk_track;
-         end
-     
-      else 
-          r_reg <= r_nxt;
-    end
-   
-   assign r_nxt = r_reg+1;    
-
-   assign clk_out = clk_track;
-
+input clk;
+input reset;
+input [3:0] N; // clk_out = clk/(N*2)
+output clk_out;
+  
+reg [3:0] r_reg;
+wire [3:0] r_nxt;
+reg clk_track;
+  
+always @(posedge clk or posedge reset)  
+  begin
+    if (reset)
+        begin
+          r_reg <= 0;
+    clk_track <= 1'b0;
+        end
+    
+    else if (r_nxt == N)
+        begin
+          r_reg <= 0;
+          clk_track <= ~clk_track;
+        end
+    
+    else 
+        r_reg <= r_nxt;
+  end
+  
+  assign r_nxt = r_reg+1;    
+  assign clk_out = clk_track;
 endmodule //even_clk_div
 
+
 module sync_1bit (clk_src, clk_dest, data_src, data_dest);
-  input clk_src, clk_dest;
-  input data_src;
-  output reg data_dest;
+input clk_src, clk_dest;
+input data_src;
+output reg data_dest;
 
-  reg data_glitchfree;
-  reg data_meta;
+reg data_glitchfree;
+reg data_meta;
 
-  always @(posedge clk_src) 
-    data_glitchfree <= data_src;
+always @(posedge clk_src) 
+  data_glitchfree <= data_src;
 
-  always @(posedge clk_dest) 
-    begin
-      data_meta <= data_glitchfree;
-      data_dest <= data_meta; 
-    end
+always @(posedge clk_dest) 
+  begin
+    data_meta <= data_glitchfree;
+    data_dest <= data_meta; 
+  end
 endmodule // sync_1bit
 
 
 module TDC
-          (clk,
-           reset,
-           clk_enable,
-           In1,
-           ce_out,
-           Out1);
+        (clk,
+          reset,
+          clk_enable,
+          In1,
+          ce_out,
+          Out1);
 
-  input   clk;
-  input   reset;
-  input   clk_enable;
-  input   In1;  // sfix64
-  output  ce_out;
-  output  [7:0] Out1;  // ufix10
+input   clk;
+input   reset;
+input   clk_enable;
+input   In1;  // sfix64
+output  ce_out;
+output  [7:0] Out1;  // ufix10
 
-  wire enb;
-  wire CLK_IN_is_not0;
-  wire Logical_Operator_out1;
-  reg  Delay_out1;
-  wire Logical_Operator1_out1;
-  wire Logical_Operator2_out1;
-  wire switch_compare_1;
-  wire Logical_Operator3_out1;
-  reg [7:0] HDL_Counter_out1;  // ufix10
-  reg [7:0] Cycle_Count;  // ufix10
-  wire [7:0] Switch_out1;  // ufix10
+wire enb;
+wire CLK_IN_is_not0;
+wire Logical_Operator_out1;
+reg  Delay_out1;
+wire Logical_Operator1_out1;
+wire Logical_Operator2_out1;
+wire switch_compare_1;
+wire Logical_Operator3_out1;
+reg [7:0] HDL_Counter_out1;  // ufix10
+reg [7:0] Cycle_Count;  // ufix10
+wire [7:0] Switch_out1;  // ufix10
 
-  assign CLK_IN_is_not0 = In1 != 1'b0;
+assign CLK_IN_is_not0 = In1 != 1'b0;
 
-  assign Logical_Operator_out1 =  ~ CLK_IN_is_not0;
+assign Logical_Operator_out1 =  ~ CLK_IN_is_not0;
 
-  assign enb = clk_enable;
+assign enb = clk_enable;
 
-  always @(posedge clk or posedge reset)
-    begin : Delay_process
-      if (reset == 1'b1) begin
-        Delay_out1 <= 1'b0;
+always @(posedge clk or posedge reset)
+  begin : Delay_process
+    if (reset == 1'b1) begin
+      Delay_out1 <= 1'b0;
+    end
+    else begin
+      if (enb) begin
+        Delay_out1 <= Logical_Operator_out1;
       end
-      else begin
-        if (enb) begin
-          Delay_out1 <= Logical_Operator_out1;
+    end
+  end
+
+assign Logical_Operator1_out1 =  ~ Delay_out1;
+
+assign Logical_Operator2_out1 =  ~ (Logical_Operator_out1 & Logical_Operator1_out1);
+
+assign switch_compare_1 = Logical_Operator2_out1 > 1'b0;
+
+assign Logical_Operator3_out1 =  ~ Logical_Operator2_out1;
+
+// Free running, Unsigned Counter
+//  initial value   = 0
+//  step value      = 1
+always @(posedge clk or posedge reset)
+  begin : HDL_Counter_process
+    if (reset == 1'b1) begin
+      HDL_Counter_out1 <= 10'b0000000000;
+    end
+    else begin
+      if (enb) begin
+        if (Logical_Operator3_out1 == 1'b1) begin
+          HDL_Counter_out1 <= 10'b0000000000;
+        end
+        else begin
+          HDL_Counter_out1 <= HDL_Counter_out1 + 10'b0000000001;
         end
       end
     end
+  end
 
-  assign Logical_Operator1_out1 =  ~ Delay_out1;
+assign Switch_out1 = (switch_compare_1 == 1'b0 ? HDL_Counter_out1+1 :
+            Cycle_Count);
 
-  assign Logical_Operator2_out1 =  ~ (Logical_Operator_out1 & Logical_Operator1_out1);
-
-  assign switch_compare_1 = Logical_Operator2_out1 > 1'b0;
-
-  assign Logical_Operator3_out1 =  ~ Logical_Operator2_out1;
-
-  // Free running, Unsigned Counter
-  //  initial value   = 0
-  //  step value      = 1
-  always @(posedge clk or posedge reset)
-    begin : HDL_Counter_process
-      if (reset == 1'b1) begin
-        HDL_Counter_out1 <= 10'b0000000000;
-      end
-      else begin
-        if (enb) begin
-          if (Logical_Operator3_out1 == 1'b1) begin
-            HDL_Counter_out1 <= 10'b0000000000;
-          end
-          else begin
-            HDL_Counter_out1 <= HDL_Counter_out1 + 10'b0000000001;
-          end
-        end
+always @(posedge clk or posedge reset)
+  begin : Memory_process
+    if (reset == 1'b1) begin
+      Cycle_Count <= 10'b0000000000;
+    end
+    else begin
+      if (enb) begin
+        Cycle_Count <= Switch_out1;
       end
     end
+  end
 
-  assign Switch_out1 = (switch_compare_1 == 1'b0 ? HDL_Counter_out1+1 :
-              Cycle_Count);
+assign Out1 = Cycle_Count;
 
-  always @(posedge clk or posedge reset)
-    begin : Memory_process
-      if (reset == 1'b1) begin
-        Cycle_Count <= 10'b0000000000;
-      end
-      else begin
-        if (enb) begin
-          Cycle_Count <= Switch_out1;
-        end
-      end
-    end
-
-  assign Out1 = Cycle_Count;
-
-  assign ce_out = clk_enable;
-
+assign ce_out = clk_enable;
 endmodule  // TDC
 
 
 module sync_8bit (clk_src, clk_dest, data_src, data_dest);
-  input clk_src, clk_dest;
-  input [7:0] data_src;
-  output reg [7:0] data_dest;
+input clk_src, clk_dest;
+input [7:0] data_src;
+output reg [7:0] data_dest;
 
-  reg [7:0] data_glitchfree;
-  reg [7:0] data_meta;
+reg [7:0] data_glitchfree;
+reg [7:0] data_meta;
 
-  always @(posedge clk_src) 
-    data_glitchfree <= data_src;
+always @(posedge clk_src) 
+  data_glitchfree <= data_src;
 
-  always @(posedge clk_dest) 
-    begin
-      data_meta <= data_glitchfree;
-      data_dest <= data_meta; 
-    end
+always @(posedge clk_dest) 
+  begin
+    data_meta <= data_glitchfree;
+    data_dest <= data_meta; 
+  end
 endmodule // sync_8bit
