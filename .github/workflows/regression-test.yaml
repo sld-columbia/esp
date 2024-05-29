@@ -1,0 +1,86 @@
+name: Regression Test
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+      - master
+
+jobs:
+  code-format-check:
+    name: Code Format Check
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+    container:
+      image: columbiasld/esp:ubuntu18-small
+      credentials:
+        username: ${{ env.DOCKER_USERNAME }}
+        password: ${{ env.DOCKER_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Install vsg
+        run: |
+          pip3 install vsg
+          echo 'export PATH="$PATH:/home/espuser/.local/bin/"' >> ~/.bashrc
+
+      - name: Install clang-format-10
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-10
+
+      - name: Install autopep8
+        run: |
+          pip3 install autopep8
+
+      - name: Install Verible
+        run: |
+          wget https://github.com/chipsalliance/verible/releases/download/v0.0-3545-ge4028f19/verible-v0.0-3545-ge4028f19-linux-static-x86_64.tar.gz
+          tar -xvf verible-v0.0-3545-ge4028f19-linux-static-x86_64.tar.gz
+          rm verible-v0.0-3545-ge4028f19-linux-static-x86_64.tar.gz
+          mv verible-v0.0-3545-ge4028f19/ verible 
+          export PATH=$PATH:/home/espuser/verible/bin
+          echo 'export PATH="$PATH:/home/espuser/verible/bin"' >> ~/.bashrc
+
+      - name: Source .bashrc
+        run: |
+          . ~/.bashrc
+
+      - name: Set directory ownership
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+
+      - name: Configure Git
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
+
+      - name: Run code formatting check
+        run: |
+          cd $GITHUB_WORKSPACE/utils/scripts/actions-pipeline/code-format
+          chmod +x format_modified.sh
+          if ! ./format_modified.sh -g -ca; then
+              echo "Code format check failed." 
+              echo "Fix the formatting issues by running the following script: /utils/scripts/code-format/format_modified.sh"
+              exit 1 
+          fi
+  regression:
+    name: Regression Test
+    runs-on: self-hosted
+    steps:
+      - name: Discover modified accelerators
+        run: |
+          cd $HOME/esp/utils/scripts/actions-pipeline
+          ./get_modified_accelerators.sh
+      - name: Run HLS
+        run: |
+          cd $HOME/esp/utils/scripts/actions-pipeline
+          ./run_sims.sh
+      - name: Generate bitstream and program FPGA
+        run: |
+          cd $HOME/esp/utils/scripts/actions-pipeline
+          ./run_esp-config.sh
