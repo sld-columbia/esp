@@ -1,0 +1,22 @@
+#!/bin/bash
+
+FORMAT_SCRIPT="$HOME/esp/utils/scripts/actions-pipeline/code-format/format_modified.sh"
+
+# Check if the formatting script exists
+if [ ! -f "$FORMAT_SCRIPT" ]; then
+    echo "Error: Formatting script not found!"
+    exit 1
+fi
+
+cd "$(dirname "$FORMAT_SCRIPT")" || exit
+
+chmod +x "$(basename "$FORMAT_SCRIPT")"
+
+if ! ./$(basename "$FORMAT_SCRIPT") -g -ca; then
+    echo "Code format check failed."
+    echo "Fix the formatting issues by running the following script: $FORMAT_SCRIPT"
+    exit 1
+fi
+
+# If the format check passes, allow the push to proceed
+exit 0
