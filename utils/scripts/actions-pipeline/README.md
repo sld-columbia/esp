@@ -32,6 +32,14 @@ Options:
     -t, --type {c, cpp, vhdl, v, py}  Specify the type of files to format.
 ```
 
+### Git Blame
+After processing the Pull Request, it's important to consider what commits we want to exclude from the Git Blame. In particular, it should be any commits that have modified/linted tracked files in bulk.
+To make this process easier, I have committed all the linting changes in 4 different commits in the `all-linted-files` branch. 
+These commit ids can be added to a file which can be excluded from the blame. [This tutorial](https://www.stefanjudis.com/today-i-learned/how-to-exclude-commits-from-git-blame/) is helpful in the process of excluding from the Git Blame.
+
+<img width="1171" alt="image" src="https://github.com/marianabuhazi/esp/assets/76821632/0618808b-f471-4647-ab60-7710094ee302">
+
+
 ### Regression Testing
 
 #### Get Modified Accelerators
