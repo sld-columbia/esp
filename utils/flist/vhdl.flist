@@ -84,6 +84,7 @@ sockets/proxy/apb2noc.vhd
 sockets/proxy/ext2ahbm.vhd
 sockets/proxy/iolink2ahbm.vhd
 sockets/proxy/ahbm2iolink.vhd
+sockets/proxy/ahbslv2iolink.vhd
 sockets/proxy/esp_acc_tlb.vhd
 sockets/proxy/noc2ahbmst.vhd
 sockets/proxy/fixen_64to32.vhd

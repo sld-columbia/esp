@@ -528,7 +528,8 @@ def print_constants(fp, soc, esp_config):
 
   #
   fp.write("  ------ Ethernet\n")
-  fp.write("  constant CFG_ETH_EN : integer := " + str(soc.eth_en.get()) + ";\n\n")
+  #fp.write("  constant CFG_ETH_EN : integer := " + str(soc.eth_en.get()) + ";\n\n")
+  fp.write("  constant CFG_ETH_EN : integer := 0;\n\n")
   fp.write("  ------ Gaisler Ethernet core\n")
   fp.write("  constant CFG_GRETH : integer := 1;\n")
   fp.write("  constant CFG_GRETH1G : integer := 0;\n")
