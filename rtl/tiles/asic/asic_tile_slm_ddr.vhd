@@ -43,8 +43,8 @@ entity asic_tile_slm_ddr is
     HAS_SYNC     : integer range 0 to 1 := 1);
   port (
     rst                : in  std_ulogic;
-    sys_clk            : in  std_ulogic;  -- NoC clock
-    sys_clk_lock       : in  std_ulogic;  -- sys_clk_lock
+    noc_clk            : in  std_ulogic;  -- NoC clock
+    noc_clk_lock       : in  std_ulogic;  -- noc_clk_lock
     ext_clk            : in  std_ulogic;  -- backup tile clock
     clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
     -- LPDDR
@@ -212,13 +212,11 @@ architecture rtl of asic_tile_slm_ddr is
   signal this_slmddr_haddr  : integer range 0 to 4095;
   signal this_slmddr_hmask  : integer range 0 to 4095;
 
-  constant ext_clk_sel_default : std_ulogic := '0';
-
   -- Tile clock and reset (only for I/O tile)
   signal raw_rstn        : std_ulogic;
   signal noc_rstn        : std_ulogic;
-  signal dco_rstn        : std_ulogic;
-  signal dco_clk         : std_ulogic;
+  signal tile_rstn       : std_ulogic;
+  signal tile_clk        : std_ulogic;
   signal dco_clk_div2    : std_ulogic;
   signal dco_clk_div2_90 : std_ulogic;
   signal tile_rst     : std_ulogic;
@@ -322,7 +320,7 @@ begin
 
   rst_noc : rstgen
     generic map (acthigh => 1, syncin => 0)
-    port map (rst, sys_clk, sys_clk_lock, noc_rstn, raw_rstn);
+    port map (rst, noc_clk, noc_clk_lock, noc_rstn, raw_rstn);
 
   rst_jtag : rstgen
     generic map (acthigh => 1, syncin => 0)
@@ -377,9 +375,9 @@ begin
       ahbsi           => ddr_ahbsi,
       calib_done      => lpddr_o_calib_done,
       ui_clk          => dco_clk_div2_90,
-      ui_rstn         => dco_rstn,
+      ui_rstn         => tile_rstn,
       phy_clk_1x      => dco_clk_div2,
-      phy_clk_2x      => dco_clk,
+      phy_clk_2x      => tile_clk,
       phy_rstn        => phy_rstn);
 
   -----------------------------------------------------------------------------
@@ -389,9 +387,9 @@ begin
     generic map (
       test_if_en => CFG_JTAG_EN)
     port map (
-      rst                 => test_rstn,
-      refclk              => dco_clk_div2_90,
-      tile_rst            => dco_rstn,
+      rstn                => test_rstn,
+      clk                 => dco_clk_div2_90,
+      tile_rstn           => tile_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -477,12 +475,10 @@ begin
     port map (
       raw_rstn            => raw_rstn,  -- DCO raw reset
       tile_rst            => tile_rst,       -- tile main synchronouse reset
-      clk                 => dco_clk_div2_90,      -- tile main clock
-      refclk              => ext_clk,   -- external backup clock
-      pllbypass           => ext_clk_sel_default,  -- ext_clk_sel,
-      pllclk              => clk_div,   -- test clock output to PCB
-      dco_clk             => dco_clk,   -- DDR PHY 2x clock
-      dco_rstn            => dco_rstn,
+      ext_clk             => ext_clk,   -- external backup clock
+      clk_div             => clk_div,   -- test clock output to PCB
+      tile_clk_out        => tile_clk,   -- DDR PHY 2x clock
+      tile_rstn_out       => tile_rstn,
       dco_clk_div2        => dco_clk_div2,         -- DDR PHY 1x clock
       dco_clk_div2_90     => dco_clk_div2_90,      -- user clock
       dco_freq_sel        => dco_freq_sel,
@@ -546,11 +542,10 @@ begin
     port map (
       raw_rstn                => raw_rstn,
       noc_rstn                => noc_rstn,
-      dco_rstn                => dco_rstn,
-      sys_clk                 => sys_clk,
-      dco_clk                 => dco_clk,
+      tile_rstn               => tile_rstn,
+      noc_clk                 => noc_clk,
+      tile_clk                => tile_clk,
       acc_clk                 => open,
-      refclk                  => dco_clk,
       -- CSRs
       tile_config             => tile_config,
       -- DCO config

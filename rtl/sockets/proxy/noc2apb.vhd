@@ -30,7 +30,6 @@ entity noc2apb is
     apbi     : out apb_slv_in_type;
     apbo     : in  apb_slv_out_vector;
     pready   : in  std_ulogic;          -- exteded support for APB3 slaves
-    dvfs_transient      : in  std_ulogic;
     -- Packets to local APB slave (tile->NoC5)
     apb_snd_wrreq       : out std_ulogic;
     apb_snd_data_in     : out misc_noc_flit_type;
@@ -118,7 +117,7 @@ begin  -- rtl
   apb_roundtrip: process (apb_state, apbo, apb_rcv_empty, apb_rcv_data_out,
                           apb_snd_full, request_y, request_x, request_msg_type,
                           header, psel_reg, tail_reg, waddr_reg, prdata_reg,
-                          apbi_reg, dvfs_transient, pready, psel_sig)
+                          apbi_reg, pready, psel_sig)
     variable msg_type_v : noc_msg_type;
     variable addr_v : std_logic_vector(31 downto 0);
     variable data_v : std_logic_vector(31 downto 0);
@@ -179,7 +178,7 @@ begin  -- rtl
     tail <= tail_v;
 
     case apb_state is
-      when rcv_header => if apb_rcv_empty = '0' and dvfs_transient = '0' then
+      when rcv_header => if apb_rcv_empty = '0' then
                            -- Pop from queue
                            apb_rcv_rdreq <= '1';
                            -- Remember request and prepare header for reply
@@ -188,7 +187,7 @@ begin  -- rtl
                            apb_next <= rcv_address;
                          end if;
 
-      when rcv_address => if apb_rcv_empty = '0' and dvfs_transient = '0' then
+      when rcv_address => if apb_rcv_empty = '0' then
                             sample_psel <= '1';
                             if request_msg_type = REQ_REG_RD then
                               if apb_snd_full = '0' then
@@ -220,7 +219,7 @@ begin  -- rtl
                           end if;
 
 
-      when rcv_data => if apb_rcv_empty = '0' and dvfs_transient = '0' then
+      when rcv_data => if apb_rcv_empty = '0' then
                          -- Pop from queue
                          apb_rcv_rdreq <= '1';
                          -- Write to device
@@ -243,7 +242,7 @@ begin  -- rtl
                                end if;
 
       when snd_data => -- Send data to queue
-                       if apb_snd_full = '0' and dvfs_transient = '0' then
+                       if apb_snd_full = '0' then
                          -- Reply
                          apb_snd_wrreq <= '1';
                          apb_snd_data_in <= tail_v;
@@ -254,7 +253,7 @@ begin  -- rtl
                          apb_next <= snd_data_delay;
                        end if;
 
-      when snd_data_delay => if apb_snd_full = '0' and dvfs_transient = '0' then
+      when snd_data_delay => if apb_snd_full = '0' then
                                apb_snd_wrreq <= '1';
                                -- Use sampled tail. APB out is not guaranteed to
                                -- be stable

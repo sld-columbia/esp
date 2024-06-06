@@ -347,9 +347,6 @@ constant CPU_FREQ : integer := 78125;  -- cpu frequency in KHz
   signal sys_clk        : std_logic_vector(0 to MAX_NMEM_TILES - 1);
   signal esp_clk        : std_ulogic;
   signal chip_refclk    : std_ulogic;
-  signal chip_pllbypass : std_logic_vector(CFG_TILES_NUM-1 downto 0);
-  signal chip_pllclk    : std_ulogic;
-
 
   attribute keep of clkm        : signal is true;
   attribute keep of clkm_1      : signal is true;
@@ -1009,7 +1006,6 @@ begin
   sys_clk(1)     <= clkm_1;
   sys_clk(2)     <= clkm_2;
   sys_clk(3)     <= clkm_3; 
-  chip_pllbypass <= (others => '0');
 
   set_upper_ahbsi : for i in CFG_NMEM_TILE to MAX_NMEM_TILES-1 generate
         ddr_ahbsi(i) <= ahbs_in_none; 
@@ -1022,7 +1018,6 @@ begin
       rst         => chip_rst,
       sys_clk     => sys_clk(0 to MEM_ID_RANGE_MSB),
       refclk      => chip_refclk,
-      pllbypass   => chip_pllbypass,
       uart_rxd    => uart_rxd_int,
       uart_txd    => uart_txd_int,
       uart_ctsn   => uart_ctsn_int,

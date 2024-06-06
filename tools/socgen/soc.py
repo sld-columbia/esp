@@ -283,38 +283,19 @@ class SoC_Config():
         tokens = line.split(' ')
         if len(tokens) > 1:
           tile.ip_type.set(tokens[4])
-          tile.clk_region.set(int(tokens[5]))
-          tile.has_pll.set(int(tokens[6]))
-          tile.has_clkbuf.set(int(tokens[7]))
           if tokens[3] == "cpu" and self.cache_en.get() == 1:
             tile.has_l2.set(1)
           if tokens[3] == "slm":
-            tile.has_ddr.set(tokens[8])
+            tile.has_ddr.set(tokens[5])
           if tokens[3] == "acc":
-            tile.point.set(tokens[8])
-            tile.has_l2.set(tokens[9])
-            tile.has_tdvfs.set(tokens[10])
-            tile.vendor = tokens[11]
+            tile.point.set(tokens[5])
+            tile.has_l2.set(tokens[6])
+            tile.has_tdvfs.set(tokens[7])
+            tile.vendor = tokens[8]
     # DVFS (skip whether it has it or not; we know that already)
     line = fp.readline()
     line = fp.readline()
     item = line.split();
-    vf_points = int(item[2])
-    self.noc.vf_points = vf_points
-    # Power annotation
-    for y in range(0, self.noc.rows):
-      for x in range(0, self.noc.cols):
-        line = fp.readline().replace("\n","")
-        tile = self.noc.topology[y][x]
-        if len(line) == 0:
-          return
-        tokens = line.split(' ')
-        tile.create_characterization(self, self.noc.vf_points)
-        if tile.ip_type.get() == tokens[2]:
-          for vf in range(self.noc.vf_points):
-            tile.energy_values.vf_points[vf].voltage = float(tokens[3 + vf * 3])
-            tile.energy_values.vf_points[vf].frequency = float(tokens[3 + vf * 3 + 1])
-            tile.energy_values.vf_points[vf].energy = float(tokens[3 + vf * 3 + 2])
     return 0
 
   def write_config(self, dsu_ip, dsu_eth):
@@ -431,16 +412,6 @@ class SoC_Config():
           fp.write("empty")
         # Selected accelerator or tile type repeated
         fp.write(" " + selection)
-        # Clock region info
-        try:
-          clk_region = tile.clk_region.get()
-          fp.write(" " + str(clk_region))
-          if clk_region != 0:
-            has_dvfs = True;
-        except:
-          fp.write(" " + str(0))
-        fp.write(" " + str(tile.has_pll.get()))
-        fp.write(" " + str(tile.has_clkbuf.get()))
         # SLM tile configuration
         if is_slm:
           fp.write(" " + str(tile.has_ddr.get()))
@@ -449,6 +420,8 @@ class SoC_Config():
           fp.write(" " + str(tile.point.get()))
           fp.write(" " + str(tile.has_l2.get()))
           fp.write(" " + str(tile.has_tdvfs.get()))
+          if tile.has_tdvfs.get():
+            has_dvfs = True
           fp.write(" " + str(tile.vendor))
         fp.write("\n")
         i += 1
@@ -456,21 +429,6 @@ class SoC_Config():
       fp.write("CONFIG_HAS_DVFS = y\n")
     else:
       fp.write("#CONFIG_HAS_DVFS is not set\n")
-    fp.write("CONFIG_VF_POINTS = " + str(self.noc.vf_points) + "\n")
-    for y in range(self.noc.rows):
-      for x in range(self.noc.cols):
-        tile = self.noc.topology[y][x]
-        selection = tile.ip_type.get()
-        fp.write("POWER_" + str(y) + "_" + str(x) + " = ")
-        fp.write(selection + " ")
-        if self.IPs.ACCELERATORS.count(selection) == 0:
-          for vf in range(self.noc.vf_points):
-            fp.write(str(0) + " " + str(0) + " " + str(0) + " ")
-          fp.write("\n")
-        else:
-          for vf in range(self.noc.vf_points):
-            fp.write(str(tile.energy_values.vf_points[vf].voltage) + " " + str(tile.energy_values.vf_points[vf].frequency) + " " + str(tile.energy_values.vf_points[vf].energy) + " ")
-          fp.write("\n")
 
   def check_cfg(self, line, token, end):
     line = line[line.find(token)+len(token):]

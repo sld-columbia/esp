@@ -38,7 +38,6 @@ entity token_pm is
     noc_rstn           : in  std_ulogic;
     tile_rstn          : in  std_ulogic;
     noc_clk            : in  std_ulogic;
-    refclk             : in  std_ulogic;
     tile_clk           : in  std_ulogic;
 	acc_activity       : in  std_ulogic;
     -- runtime configuration for LDO ctrl and token FSM
@@ -137,7 +136,7 @@ begin
   acc_clk <= acc_clk_int;
 
   no_clk_mux : if (is_asic = true) generate
-    acc_clk_int <= refclk;
+    acc_clk_int <= tile_clk;
   end generate;
 
   clk_mux : if (is_asic = false) generate
@@ -145,7 +144,7 @@ begin
     clkdiv1234_i : clkdiv1234
       port map (
         rstn     => tile_rstn,
-        clkin    => refclk,
+        clkin    => tile_clk,
         clk_div1 => acc_clk_div1,
         clk_div2 => acc_clk_div2,
         clk_div3 => acc_clk_div3,
@@ -167,7 +166,7 @@ begin
         wr_full_o  => open,
         -- read port
         rst_rd_n_i => tile_rstn,
-        clk_rd_i   => refclk,
+        clk_rd_i   => tile_clk,
         rd_i       => '1',
         q_o        => freq_sel_sync,
         rd_empty_o => open);

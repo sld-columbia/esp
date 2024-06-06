@@ -26,10 +26,11 @@ package tiles_asic_pkg is
       this_has_dco : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
-      sys_clk            : in  std_ulogic;
-      sys_clk_lock       : in  std_ulogic;
+      noc_clk            : in  std_ulogic;
+      noc_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
+      cpuerr             : out std_ulogic;
       tdi                : in  std_logic;
       tdo                : out std_logic;
       tms                : in  std_logic;
@@ -122,8 +123,8 @@ package tiles_asic_pkg is
       this_has_dco : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
-      sys_clk            : in  std_ulogic;
-      sys_clk_lock       : in  std_ulogic;
+      noc_clk            : in  std_ulogic;
+      noc_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tdi                : in  std_logic;
@@ -213,8 +214,8 @@ package tiles_asic_pkg is
       this_has_dco : integer range 0 to 1 := 0);
     port (
       rst                : in    std_ulogic;
-      sys_clk            : in    std_ulogic;
-      sys_clk_lock       : in  std_ulogic;
+      noc_clk            : in    std_ulogic;
+      noc_clk_lock       : in  std_ulogic;
       ext_clk            : in    std_ulogic;
       clk_div            : out   std_ulogic;
       fpga_data_in       : in    std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
@@ -313,10 +314,10 @@ package tiles_asic_pkg is
       this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_ulogic;
-      sys_rstn_out       : out std_ulogic;
-      sys_clk_out        : out std_ulogic;
-      sys_clk            : in  std_ulogic;
-      sys_clk_lock_out   : out std_ulogic;
+      noc_rstn_out       : out std_ulogic;
+      noc_clk_out        : out std_ulogic;
+      noc_clk            : in  std_ulogic;
+      noc_clk_lock_out   : out std_ulogic;
       ext_clk_noc        : in  std_ulogic;
       clk_div_noc        : out std_ulogic;
       ext_clk            : in  std_ulogic;
@@ -437,8 +438,8 @@ package tiles_asic_pkg is
       this_has_dco : integer range 0 to 1);
     port (
       rst                : in  std_logic;
-      sys_clk            : in  std_ulogic;
-      sys_clk_lock       : in  std_ulogic;
+      noc_clk            : in  std_ulogic;
+      noc_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tdi                : in  std_logic;
@@ -528,8 +529,8 @@ package tiles_asic_pkg is
       this_has_dco : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
-      sys_clk            : in  std_ulogic;
-      sys_clk_lock       : in  std_ulogic;
+      noc_clk            : in  std_ulogic;
+      noc_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tdi                : in  std_logic;
@@ -619,8 +620,8 @@ package tiles_asic_pkg is
       HAS_SYNC     : integer range 0 to 1 := 1);
     port (
       rst                : in  std_ulogic;
-      sys_clk            : in  std_ulogic;
-      sys_clk_lock       : in  std_ulogic;
+      noc_clk            : in  std_ulogic;
+      noc_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       lpddr_o_calib_done : out std_ulogic;

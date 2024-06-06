@@ -268,9 +268,9 @@ package jtag_pkg is
     generic (
       test_if_en : integer range 0 to 1);
     port (
-      rst                 : in  std_ulogic;
-      refclk              : in  std_ulogic;
-      tile_rst            : in  std_ulogic;
+      rstn                : in  std_ulogic;
+      clk                 : in  std_ulogic;
+      tile_rstn           : in  std_ulogic;
       tdi                 : in  std_ulogic;
       tdo                 : out std_ulogic;
       tms                 : in  std_ulogic;

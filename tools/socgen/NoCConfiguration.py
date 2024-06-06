@@ -31,7 +31,6 @@ def isInt(s):
 
 class Characterization():
   ip = ""
-  vf_points = []
 
 class VFPoint():
   voltage = 0
@@ -76,36 +75,9 @@ class Tile():
        self.label.config(bg='white')
        if self.ip_type.get() != "empty":
          self.ip_type.set("empty")
-    self.clk_reg_selection.config(to=soc.noc.get_clk_regions_max())
-
-
 
     try:
-      if soc.IPs.PROCESSORS.count(selection) or soc.IPs.ACCELERATORS.count(selection):
-         self.clk_reg_selection.config(state='readonly')
-         if self.clk_region.get() != 0:
-           self.pll_selection.config(state=NORMAL)
-         else:
-           self.pll_selection.config(state=DISABLED)
-           if self.has_pll.get() == 1 :
-             self.has_pll.set(0)
-         if self.has_pll.get() == 1:
-           self.clkbuf_selection.config(state=NORMAL)
-         else:
-           self.clkbuf_selection.config(state=DISABLED)
-           if self.has_clkbuf.get() == 1 :
-             self.has_clkbuf.set(0)
-      else:
-         self.clk_reg_selection.config(state=DISABLED)
-         self.pll_selection.config(state=DISABLED)
-         self.clkbuf_selection.config(state=DISABLED)
-         if self.clk_region.get() > 0 :
-           self.clk_region.set(0)
-         if self.has_pll.get() == 1 :
-           self.has_pll.set(0)
-         if self.has_clkbuf.get() == 1 :
-           self.has_clkbuf.set(0)
-      if soc.IPs.ACCELERATORS.count(selection) and soc.cache_en.get() == 1 and soc.noc.noc_width.get() == soc.ARCH_BITS:
+      if soc.IPs.ACCELERATORS.count(selection) and soc.cache_en.get() == 1 and soc.noc.dma_noc_width.get() == soc.ARCH_BITS:
         self.has_l2_selection.config(state=NORMAL)
       else:
         if soc.IPs.PROCESSORS.count(selection) and soc.cache_en.get() == 1:
@@ -113,7 +85,7 @@ class Tile():
         else:
           self.has_l2.set(0)
         self.has_l2_selection.config(state=DISABLED)
-      if soc.IPs.ACCELERATORS.count(selection):
+      if soc.IPs.ACCELERATORS.count(selection) and (soc.TECH == "asic" or soc.TECH == "inferred"):
         self.has_tdvfs_selection.config(state=NORMAL)
       else:
         self.has_tdvfs_selection.config(state=DISABLED)
@@ -127,11 +99,6 @@ class Tile():
     except:
       pass
 
-    self.load_characterization(soc, soc.noc.vf_points)
-
-  def get_clk_region(self):
-    return self.clk_region.get()
-
   def center(self, toplevel):
     toplevel.update_idletasks()
     w = toplevel.winfo_screenwidth()
@@ -141,109 +108,23 @@ class Tile():
     y = h/2 - size[1]/2
     toplevel.geometry("%dx%d+%d+%d" % (size + (x, y)))
 
-  def create_characterization(self, soc, num_points):
-    self.energy_values = Characterization()
-    self.energy_values.ip = self.ip_type.get()
-    self.energy_values.vf_points = [VFPoint() for x in range(num_points)]
-
-  def load_characterization(self, soc, num_points):
-    ESP_ROOT = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + "/../../")
-    selection = self.ip_type.get()
-    if self.energy_values == None or len(self.energy_values.vf_points) == 0:
-       self.create_characterization(soc, num_points)
-    if self.energy_values.ip != selection and soc.IPs.ACCELERATORS.count(selection):
-      e = xml.etree.ElementTree.parse(ESP_ROOT + "/tools/socgen/power.xml").getroot()
-      self.energy_values.ip = selection
-      for atype in e.findall('accelerator'):
-        if atype.get('name') == self.ip_type.get():
-          xml_vf_points = atype.findall('vf_point')
-          end_point = num_points
-          if len(xml_vf_points) < end_point:
-            end_point = len(xml_vf_points)
-          for x in range(end_point):
-            self.energy_values.vf_points[x].voltage = float(xml_vf_points[x].get('voltage'))
-            self.energy_values.vf_points[x].frequency = float(xml_vf_points[x].get('frequency'))
-            self.energy_values.vf_points[x].energy = float(xml_vf_points[x].get('energy'))
-        else:
-          end_point = num_points
-          for x in range(end_point):
-            self.energy_values.vf_points[x].voltage = 0.0
-            self.energy_values.vf_points[x].frequency = 0.0
-            self.energy_values.vf_points[x].energy = 0.0
-    else:
-      new_vf_points = [VFPoint() for x in range(num_points)]
-      end_point = num_points
-      if len(self.energy_values.vf_points) < end_point:
-        end_point = len(self.energy_values.vf_points)
-      for x in range(end_point):
-        new_vf_points[x] = self.energy_values.vf_points[x]
-      self.energy_values.vf_points = new_vf_points
-
-  def power_window(self, event, soc, nocframe):
-    selection = self.ip_type.get()
-    if soc.IPs.ACCELERATORS.count(selection) == 0 or self.clk_region.get() == 0:
-      return
-    try:
-      int(nocframe.vf_points_entry.get())
-    except:
-      return
-    self.toplevel = Toplevel()
-    label1 = Label(self.toplevel, text="Power Information for \"" + selection + "\"", height=0, width=50, font="TkDefaultFont 11 bold")
-    label1.pack()
-    entry = [Frame(self.toplevel) for x in range(int(nocframe.vf_points_entry.get()))]
-    for x in range(len(entry)):
-      entry[x].pack(side=LEFT)
-      Label(entry[x], text="Voltage ("+str(x)+") (V)", height=0, width=20).pack(side=TOP)
-      entry[x].e1 = Entry(entry[x], width=10)
-      entry[x].e1.pack(side=TOP)
-      Label(entry[x], text="Frequency ("+str(x)+") (MHz)", height=0, width=20).pack(side=TOP)
-      entry[x].e2 = Entry(entry[x], width=10)
-      entry[x].e2.pack(side=TOP)
-      Label(entry[x], text="Tot Energy ("+str(x)+") (pJ)", height=0, width=20).pack(side=TOP)
-      entry[x].e3 = Entry(entry[x], width=10)
-      entry[x].e3.pack(side=TOP)
-      entry[x].e1.delete(0, END)
-      entry[x].e2.delete(0, END)
-      entry[x].e3.delete(0, END)
-      entry[x].e1.insert(0, str(self.energy_values.vf_points[x].voltage))
-      entry[x].e2.insert(0, str(self.energy_values.vf_points[x].frequency))
-      entry[x].e3.insert(0, str(self.energy_values.vf_points[x].energy))
-      Label(entry[x], height=1).pack(side=TOP)
-    self.toplevel.entry = entry
-    self.center(self.toplevel)
-    self.toplevel.protocol("WM_DELETE_WINDOW", functools.partial(self.on_closing, toplevel=self.toplevel))
-
-  def on_closing(self, toplevel):
-    if messagebox.askyesno("Save", "Do you want to save the modifications?"):
-      for x in range(len(self.energy_values.vf_points)):
-        self.energy_values.vf_points[x].voltage = float(toplevel.entry[x].e1.get())
-        self.energy_values.vf_points[x].frequency = float(toplevel.entry[x].e2.get())
-        self.energy_values.vf_points[x].energy = float(toplevel.entry[x].e3.get())
-    toplevel.destroy()
-
   def __init__(self, top, x, y):
     self.row = x
     self.col = y
     self.ip_type = StringVar()
     self.point = StringVar()
     self.vendor = ""
-    self.clk_region = IntVar()
     self.has_l2 = IntVar()
     self.has_tdvfs = IntVar()
     self.has_ddr = IntVar()
-    self.has_pll = IntVar()
-    self.has_clkbuf = IntVar()
-    self.clk_reg_active = StringVar()
     self.label = Label(top)
-    self.energy_values = None
+
 
 class NoC():
 
   rows = 0
   cols = 0
   top = ""
-
-  vf_points = 4
 
   topology = []
 
@@ -259,58 +140,17 @@ class NoC():
           new_topology[y][x].has_l2.set(self.topology[y][x].has_l2.get())
           new_topology[y][x].has_tdvfs.set(self.topology[y][x].has_tdvfs.get())
           new_topology[y][x].has_ddr.set(self.topology[y][x].has_ddr.get())
-          new_topology[y][x].clk_region.set(self.topology[y][x].clk_region.get())
-          new_topology[y][x].has_pll.set(self.topology[y][x].has_pll.get())
-          new_topology[y][x].has_clkbuf.set(self.topology[y][x].has_clkbuf.get())
           new_topology[y][x].point.set(self.topology[y][x].point.get())
           new_topology[y][x].vendor = self.topology[y][x].vendor
-          new_topology[y][x].energy_values = self.topology[y][x].energy_values
     self.topology = new_topology
     self.rows = _R
     self.cols = _C
 
-  def get_clk_regions(self):
-    regions = []
-    for y in range(0, self.rows):
-      for x in range(0, self.cols):
-         tile = self.topology[y][x]
-         if tile.clk_region is not None and regions.count(tile.clk_region.get()) == 0:
-           regions.append(tile.clk_region.get())
-    return regions
-
-  def get_clk_regions_max(self):
-    region_max = 0
-    max_count = 0
-    for y in range(0, self.rows):
-      for x in range(0, self.cols):
-        tile = self.topology[y][x]
-        if tile.clk_region is not None and tile.clk_region.get() > region_max:
-          region_max = tile.clk_region.get()
-    for y in range(0, self.rows):
-      for x in range(0, self.cols):
-        tile = self.topology[y][x]
-        if tile.clk_region is not None and tile.clk_region.get() == region_max:
-          max_count = max_count + 1
-    if max_count > 1:
-      region_max = region_max + 1
-    return region_max
-
-  def get_clkbuf_num(self, soc):
-    tot_clkbuf = 0
-    for y in range(0, self.rows):
-      for x in range(0, self.cols):
-         tile = self.topology[y][x]
-         selection = tile.ip_type.get()
-         if soc.IPs.ACCELERATORS.count(selection) and tile.has_clkbuf.get() == 1:
-            tot_clkbuf += 1
-    return tot_clkbuf
-
   def has_dvfs(self):
-    regions = []
     for y in range(0, self.rows):
       for x in range(0, self.cols):
          tile = self.topology[y][x]
-         if tile.clk_region is not None and tile.clk_region.get() != 0:
+         if tile.has_tdvfs.get():
            return True
     return False
 
@@ -466,20 +306,6 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.has_ddr_selection.grid(row=1, column=3)
     Separator(config_frame, orient="horizontal").grid(row=2, column=1, columnspan=3, ipadx=140, pady=3)
 
-    tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
-    Label(config_frame, text="Clk Reg: ", justify=LEFT, anchor="w").grid(sticky = W, row=3, column=1)
-    tile.clk_reg_selection = Spinbox(config_frame, state='readonly', from_=0, to=len(self.soc.noc.get_clk_regions()), wrap=True, textvariable=tile.clk_region,width=3, justify=RIGHT);
-    tile.clk_reg_selection.grid(sticky = E, row=3, column=1)
-    tile.pll_selection = Checkbutton(config_frame, text="Has PLL", variable=tile.has_pll, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.pll_selection.grid(row=3, column=2)
-    tile.clkbuf_selection = Checkbutton(config_frame, text="CLK BUF", variable=tile.has_clkbuf, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.clkbuf_selection.grid(row=3, column=3)
-    try:
-      int(self.vf_points_entry.get())
-      tile.load_characterization(self.soc, int(self.vf_points_entry.get()))
-    except:
-      pass
-
   def __init__(self, soc, bottom_frame):
     self.soc = soc
     self.noc = self.soc.noc
@@ -524,28 +350,14 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.TOT_SLMDDR = Label(self.noc_config_frame, anchor=W, width=25)
     self.TOT_MISC = Label(self.noc_config_frame, anchor=W, width=20)
     self.TOT_ACC = Label(self.noc_config_frame, anchor=W, width=20)
-    self.TOT_IVR = Label(self.noc_config_frame, anchor=W, width=20)
-    self.TOT_CLKBUF = Label(self.noc_config_frame, anchor=W, width=20)
     self.TOT_CPU.pack(side=TOP, fill=BOTH)
     self.TOT_MEM.pack(side=TOP, fill=BOTH)
     self.TOT_SLM.pack(side=TOP, fill=BOTH)
     self.TOT_SLMDDR.pack(side=TOP, fill=BOTH)
     self.TOT_MISC.pack(side=TOP, fill=BOTH)
     self.TOT_ACC.pack(side=TOP, fill=BOTH)
-    Label(self.noc_config_frame, height=1).pack()
-    self.TOT_IVR.pack(side=TOP, fill=BOTH)
-    Label(self.noc_config_frame, height=1).pack()
-    self.TOT_CLKBUF.pack(side=TOP, fill=BOTH)
 
     Label(self.noc_config_frame, height=1).pack()
-
-    self.vf_frame = Frame(self.noc_config_frame)
-    self.vf_frame.pack(side=TOP, fill=BOTH)
-    Label(self.vf_frame, anchor=W, width=10, text=" VF points: ").pack(side=LEFT)
-    self.vf_points_entry = Entry(self.vf_frame, width=3)
-    self.vf_points_entry.pack(side=LEFT)
-    self.vf_points_entry.delete(0, END)
-    self.vf_points_entry.insert(0, "4")
 
     #frame for the tiles
     Pmw.ScrolledFrame.__init__(self, bottom_frame,
@@ -569,13 +381,11 @@ class NoCFrame(Pmw.ScrolledFrame):
       tot_full_coherent = 0
       tot_llc_coherent = 0
     tot_io = 0
-    tot_clkbuf = self.noc.get_clkbuf_num(self.soc)
     tot_mem = self.noc.get_mem_num(self.soc)
     tot_slm = self.noc.get_slm_num(self.soc)
     tot_slm_size = tot_slm * self.soc.slm_kbytes.get()
     tot_slmddr = self.noc.get_slmddr_num(self.soc)
     tot_acc = self.noc.get_acc_num(self.soc)
-    regions = self.noc.get_clk_regions()
     acc_impl_valid = self.noc.get_acc_impl_valid(self.soc)
     for y in range(0, self.noc.rows):
       for x in range(0, self.noc.cols):
@@ -590,14 +400,6 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.TOT_SLMDDR.config(text=" Num local memory tiles using off-chip DDR memory: " + str(tot_slmddr))
     self.TOT_MISC.config(text=" Num I/O tiles: " + str(tot_io))
     self.TOT_ACC.config(text=" Num accelerators: " + str(tot_acc))
-    self.TOT_IVR.config(text=" Num CLK regions: " + str(len(regions)))
-    self.TOT_CLKBUF.config(text=" Num CLKBUF: " + str(tot_clkbuf))
-    clkbuf_ok = True
-    if tot_clkbuf <= 9:
-      self.TOT_CLKBUF.config(fg="black")
-    else:
-      clkbuf_ok = False
-      self.TOT_CLKBUF.config(fg="red")
 
     if self.soc.noc.get_acc_num(self.soc) > 0:
       self.monitor_acc_selection.config(state=NORMAL)
@@ -607,41 +409,9 @@ class NoCFrame(Pmw.ScrolledFrame):
 
     if self.soc.noc.has_dvfs():
       self.monitor_dvfs_selection.config(state=NORMAL)
-      self.vf_points_entry.config(state=NORMAL)
     else:
       self.monitor_dvfs_selection.config(state=DISABLED)
-      self.vf_points_entry.config(state=DISABLED)
       self.noc.monitor_dvfs.set(0)
-
-    pll_string = ""
-    num_pll = [0 for x in range(self.noc.cols * self.noc.rows)]
-    num_components = [0 for x in range(self.noc.cols * self.noc.rows)]
-    for y in range(0, self.noc.rows):
-      for x in range(0, self.noc.cols):
-        tile = self.noc.topology[y][x]
-        selection = tile.ip_type.get()
-        if self.soc.IPs.EMPTY.count(selection) == 0:
-          num_components[tile.clk_region.get()] += 1
-        if tile.has_pll.get() == 1:
-          num_pll[tile.clk_region.get()] += 1
-    pll_ok = True
-    for x in range(len(regions)):
-      if num_pll[x] == 0 and x > 0 and num_components[x] > 0:
-        pll_ok = False
-        pll_string += "Region \"" + str(x) + "\" requires at least one PLL\n"
-      if num_pll[x] > 1 and x > 0:
-        pll_ok = False
-        pll_string += "Region \"" + str(x) + "\" cannot have more than one PLL\n"
-
-    clk_region_skip = 0
-    regions = self.noc.get_clk_regions()
-    regions = sorted(regions, key=int)
-    current_region = regions[0]
-    for r in regions:
-      if r > current_region + 1:
-        clk_region_skip = current_region + 1
-        break
-      current_region = r
 
     #update message box
     self.message.delete(0.0, END)
@@ -657,9 +427,6 @@ class NoCFrame(Pmw.ScrolledFrame):
        (tot_slm <= 1 or self.soc.slm_kbytes.get() >= 1024) and \
        (tot_acc <= NACC_MAX) and \
        (tot_io == 1 ) and \
-       (pll_ok) and \
-       (clkbuf_ok) and \
-       (clk_region_skip == 0) and \
        (tot_tiles <= NTILE_MAX) and \
        (self.noc.cols <= 8 and self.noc.rows <= 8) and \
        (tot_full_coherent <= NFULL_COHERENT_MAX) and \
@@ -730,11 +497,6 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Maximum number of supported LLC-coherent devices is " + str(NLLC_COHERENT_MAX) + ".\n"
       if (self.soc.cache_spandex.get() != 0 and self.soc.CPU_ARCH.get() != "ariane" and self.soc.cache_en.get() == 1):
         string += "Spandex currently supports only RISC-V Ariane processor core.\n"
-      if (tot_clkbuf > 9):
-        string += "The FPGA board supports no more than 9 CLKBUF's.\n"
-      string += pll_string
-      if (clk_region_skip > 0):
-        string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead.\n"
       if (self.soc.cache_en.get() == 1 and self.soc.cache_line_size.get() < self.noc.coh_noc_width.get()):
         string += "Cache line size must be greater than or equal to coherence NoC bitwidth.\n"
       if (self.soc.cache_en.get() == 1 and self.soc.cache_line_size.get() < self.noc.dma_noc_width.get()):
@@ -798,7 +560,6 @@ class NoCFrame(Pmw.ScrolledFrame):
       for x in range(0, int(self.COLS.get())):
         tile = self.noc.topology[y][x]
         tile.ip_type.trace('w', self.changed)
-        tile.clk_region.trace('w', self.changed)
     self.soc.IPs = Components(self.soc.TECH, self.noc.dma_noc_width.get(), self.soc.CPU_ARCH.get())
     self.soc.update_list_of_ips()
     self.changed()

@@ -28,13 +28,8 @@ CONGIG_DSU_ETH = A6A7A0F81440
 #CONFIG_MON_L2 is not set
 #CONFIG_MON_LLC is not set
 #CONFIG_MON_DVFS is not set
-TILE_0_0 = 0 misc IO 0 0 0
-TILE_0_1 = 1 cpu cpu 0 0 0
-TILE_1_0 = 2 acc NV_NVDLA 0 0 0  0 0 nvidia
-TILE_1_1 = 3 mem mem 0 0 0
+TILE_0_0 = 0 misc IO
+TILE_0_1 = 1 cpu cpu
+TILE_1_0 = 2 acc NV_NVDLA  0 0 nvidia
+TILE_1_1 = 3 mem mem
 #CONFIG_HAS_DVFS is not set
-CONFIG_VF_POINTS = 4
-POWER_0_0 = IO 0 0 0 0 0 0 0 0 0 0 0 0 
-POWER_0_1 = cpu 0 0 0 0 0 0 0 0 0 0 0 0 
-POWER_1_0 = NV_NVDLA 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 
-POWER_1_1 = mem 0 0 0 0 0 0 0 0 0 0 0 0 

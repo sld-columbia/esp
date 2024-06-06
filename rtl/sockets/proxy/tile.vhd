@@ -638,7 +638,6 @@ package tile is
       apbi             : out apb_slv_in_type;
       apbo             : in  apb_slv_out_vector;
       pready           : in  std_ulogic;
-      dvfs_transient   : in  std_ulogic;
       apb_snd_wrreq    : out std_ulogic;
       apb_snd_data_in  : out misc_noc_flit_type;
       apb_snd_full     : in  std_ulogic;
@@ -724,7 +723,6 @@ package tile is
   component esp_acc_dma
     generic (
       tech               : integer;
-      extra_clk_buf      : integer range 0 to 1;
       mem_num            : integer := 1;
       mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE);
       io_y               : local_yx;
@@ -736,15 +734,10 @@ package tile is
       rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1);
       exp_registers      : integer range 0 to 1;
       scatter_gather     : integer range 0 to 1;
-      tlb_entries        : integer;
-      has_dvfs           : integer := 1;
-      has_pll            : integer);
+      tlb_entries        : integer);
     port (
       rst                           : in  std_ulogic;
       clk                           : in  std_ulogic;
-      refclk                        : in  std_ulogic;
-      pllbypass                     : in  std_ulogic;
-      pllclk                        : out std_ulogic;
       local_y                       : in  local_yx;
       local_x                       : in  local_yx;
       paddr                         : in  integer;
@@ -775,7 +768,6 @@ package tile is
       acc_done                      : in  std_ulogic;
       flush                         : out std_ulogic;
       acc_flush_done                : in  std_ulogic;
-      mon_dvfs_in                   : in  monitor_dvfs_type;
       mon_dvfs                      : out monitor_dvfs_type;
       llc_coherent_dma_rcv_rdreq    : out std_ulogic;
       llc_coherent_dma_rcv_data_out : in  dma_noc_flit_type;
@@ -1047,11 +1039,10 @@ package tile is
     port (
       raw_rstn           : in  std_ulogic;
       noc_rstn           : in  std_ulogic;
-      dco_rstn           : in  std_ulogic;
-      sys_clk            : in  std_ulogic;  -- NoC clock
-      dco_clk            : in  std_ulogic;
+      tile_rstn          : in  std_ulogic;
+      noc_clk            : in  std_ulogic;
+      tile_clk           : in  std_ulogic;
       acc_clk            : out std_ulogic;
-      refclk             : in  std_ulogic;
       -- CSRs
       tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
       -- DCO config

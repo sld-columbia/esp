@@ -16,7 +16,6 @@ from tkinter import messagebox
 from soc import *
 from socmap_gen import *
 from mmi64_gen import *
-from power_gen import *
 
 def print_usage():
   print("Usage                    : ./esp_creator_batch.py <arch_bits> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
@@ -50,5 +49,4 @@ soc = SoC_Config(ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD,
 
 esp_config = soc_config(soc)
 create_socmap(esp_config, soc)
-create_power(soc)
 create_mmi64_regs(soc)

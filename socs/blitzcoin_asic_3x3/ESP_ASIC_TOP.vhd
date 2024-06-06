@@ -167,9 +167,9 @@ architecture rtl of ESP_ASIC_TOP is
   signal noc6_stop_out      : handshake_vec;
 
   -- Global NoC reset and clock
-  signal sys_clk  : std_ulogic;
-  signal sys_rstn : std_ulogic;
-  signal sys_clk_lock  : std_ulogic;
+  signal noc_clk  : std_ulogic;
+  signal noc_rstn : std_ulogic;
+  signal noc_clk_lock  : std_ulogic;
 
   -- I/O for PADS
   constant pad_fixed_cfg : std_logic_vector(19 - (ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB + 1) downto 0) := (others => '0');
@@ -537,9 +537,9 @@ begin
           HAS_SYNC     => 0)
         port map (
           rst                => reset,
-          sys_clk            => sys_clk,
-          sys_clk_lock       => '1',
-          ext_clk            => sys_clk,
+          noc_clk            => noc_clk,
+          noc_clk_lock       => '1',
+          ext_clk            => noc_clk,
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),
           tdo                => tdo_int(i),
@@ -633,9 +633,9 @@ begin
           HAS_SYNC     => 0)
         port map (
           rst                => reset,
-          sys_clk            => sys_clk,
-          sys_clk_lock       => '1',
-          ext_clk            => sys_clk,
+          noc_clk            => noc_clk,
+          noc_clk_lock       => '1',
+          ext_clk            => noc_clk,
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),
           tdo                => tdo_int(i),
@@ -734,9 +734,9 @@ begin
           HAS_SYNC     => 0)
         port map (
           rst                => reset,
-          sys_clk            => sys_clk,
-          sys_clk_lock       => '1',
-          ext_clk            => sys_clk,
+          noc_clk            => noc_clk,
+          noc_clk_lock       => '1',
+          ext_clk            => noc_clk,
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),
           tdo                => tdo_int(i),
@@ -828,13 +828,13 @@ begin
           HAS_SYNC     => 0)
         port map (
           rst                => reset,       -- from I/O PAD reset
-          sys_rstn_out       => sys_rstn,        -- NoC reset out (unused; connect other tiles directly to reset PAD)
-          sys_clk_out        => sys_clk,         -- NoC clock out
-          sys_clk            => sys_clk,         -- NoC clock in
-          sys_clk_lock_out   => sys_clk_lock,
+          noc_rstn_out       => noc_rstn,        -- NoC reset out (unused; connect other tiles directly to reset PAD)
+          noc_clk_out        => noc_clk,         -- NoC clock out
+          noc_clk            => noc_clk,         -- NoC clock in
+          noc_clk_lock_out   => noc_clk_lock,
           ext_clk_noc        => ext_clk_int,     -- backup NoC clock
           clk_div_noc        => clk_div_noc_int,
-          ext_clk            => sys_clk,  -- backup clock (fixed)
+          ext_clk            => noc_clk,  -- backup clock (fixed)
           clk_div            => clk_div_int(i),
           reset_o2           => reset_o2_int,
           etx_clk            => etx_clk_int,
@@ -952,9 +952,9 @@ begin
           HAS_SYNC     => 0)
         port map (
           rst                => reset,
-          sys_clk            => sys_clk,
-          sys_clk_lock       => '1',
-          ext_clk            => sys_clk,
+          noc_clk            => noc_clk,
+          noc_clk_lock       => '1',
+          ext_clk            => noc_clk,
           clk_div            => clk_div_int(i),
           fpga_data_in       => fpga_data_in((tile_mem_id(i) + 1) * (CFG_MEM_LINK_BITS) - 1 downto tile_mem_id(i) * (CFG_MEM_LINK_BITS)),
           fpga_data_out      => fpga_data_out((tile_mem_id(i) + 1) * (CFG_MEM_LINK_BITS) - 1 downto tile_mem_id(i) * (CFG_MEM_LINK_BITS)),
@@ -1052,9 +1052,9 @@ begin
           HAS_SYNC     => 0)
         port map (
           rst                => reset,
-          sys_clk            => sys_clk,
-          sys_clk_lock       => '1',
-          ext_clk            => sys_clk,
+          noc_clk            => noc_clk,
+          noc_clk_lock       => '1',
+          ext_clk            => noc_clk,
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),
           tdo                => tdo_int(i),

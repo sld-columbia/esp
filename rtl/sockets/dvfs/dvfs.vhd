@@ -169,7 +169,6 @@ component token_pm is
     noc_rstn           : in  std_ulogic;
     tile_rstn          : in  std_ulogic;
     noc_clk            : in  std_ulogic;
-    refclk             : in  std_ulogic;
     tile_clk           : in  std_ulogic;
 	acc_activity       : in  std_ulogic;
     -- runtime configuration for LDO ctrl and token FSM

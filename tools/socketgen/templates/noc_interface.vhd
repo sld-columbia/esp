@@ -39,16 +39,10 @@ use std.textio.all;
     cache_tile_id  : cache_attribute_array;
     cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-    has_l2         : integer := 1;
-    has_dvfs       : integer := 1;
-    has_pll        : integer;
-    extra_clk_buf  : integer);
+    has_l2         : integer := 1);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
-    refclk    : in  std_ulogic;
-    pllbypass : in  std_ulogic;
-    pllclk    : out std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
     tile_id   : in  integer range 0 to CFG_TILES_NUM - 1;
@@ -104,7 +98,6 @@ use std.textio.all;
     interrupt_ack_rdreq    : out std_ulogic;
     interrupt_ack_data_out : in  misc_noc_flit_type;
     interrupt_ack_empty    : in  std_ulogic;
-    mon_dvfs_in       : in  monitor_dvfs_type;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
@@ -219,7 +212,6 @@ end;
   signal flush                      : std_ulogic;
   signal acc_flush_done             : std_ulogic;
   -- Register control, interrupt and monitor signals
-  signal pllclk_int        : std_ulogic;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
   
   constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV - 1) := (
@@ -267,7 +259,6 @@ end;
   attribute keep of dma_write_chnl_data : signal is "true";
   attribute keep of acc_done : signal is "true";
   attribute keep of flush : signal is "true";
-  attribute keep of pllclk_int : signal is "true";
 
 begin
 
@@ -349,7 +340,6 @@ begin
   esp_acc_dma_1 : esp_acc_dma
     generic map (
       tech               => tech,
-      extra_clk_buf      => extra_clk_buf,
       mem_num            => mem_num,
       mem_info           => mem_info,
       io_y               => io_y,
@@ -361,15 +351,10 @@ begin
       rdonly_reg_mask    => rdonly_reg_mask,
       exp_registers      => exp_registers,
       scatter_gather     => scatter_gather,
-      tlb_entries        => tlb_entries,
-      has_dvfs           => has_dvfs,
-      has_pll            => has_pll)
+      tlb_entries        => tlb_entries)
     port map (
       rst                           => rst,
       clk                           => clk,
-      refclk                        => refclk,
-      pllbypass                     => pllbypass,
-      pllclk                        => pllclk_int,
       local_y                       => local_y,
       local_x                       => local_x,
       paddr                         => paddr,
@@ -400,7 +385,6 @@ begin
       acc_done                      => acc_done,
       flush                         => flush,
       acc_flush_done                => acc_flush_done,
-      mon_dvfs_in                   => mon_dvfs_in,
       mon_dvfs                      => mon_dvfs_feedthru,
       llc_coherent_dma_rcv_rdreq    => coherent_dma_rcv_rdreq,
       llc_coherent_dma_rcv_data_out => coherent_dma_rcv_data_out,
@@ -466,7 +450,7 @@ begin
 
   end process coherence_model_select;
 
-  mon_acc.clk   <= pllclk_int; pllclk <= pllclk_int;
+  mon_acc.clk   <= clk;
   mon_acc.go    <= bank(CMD_REG)(0);
   mon_acc.run   <= bank(STATUS_REG)(STATUS_BIT_RUN);
   mon_acc.done  <= bank(STATUS_REG)(STATUS_BIT_DONE);

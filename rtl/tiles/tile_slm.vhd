@@ -41,11 +41,9 @@ entity tile_slm is
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
-    clk                : in  std_ulogic;
-    refclk             : in  std_ulogic;
-    pllbypass          : in  std_ulogic;
-    pllclk             : out std_ulogic;
-    dco_clk            : out std_ulogic;
+    ext_clk            : in  std_ulogic;
+    clk_div            : out std_ulogic;
+    tile_clk_out       : out std_ulogic;
     -- DCO config
     dco_freq_sel       : in std_logic_vector(1 downto 0);
     dco_div_sel        : in std_logic_vector(2 downto 0);
@@ -57,7 +55,7 @@ entity tile_slm is
     -- DDR controller ports (this_has_ddr -> 1)
     dco_clk_div2       : out std_ulogic;
     dco_clk_div2_90    : out std_ulogic;
-    dco_rstn           : out std_ulogic;
+    tile_rstn_out          : out std_ulogic;
     phy_rstn           : out std_ulogic;
     ddr_ahbsi          : out ahb_slv_in_type;
     ddr_ahbso          : in  ahb_slv_out_type;
@@ -110,8 +108,9 @@ architecture rtl of tile_slm is
   signal rst : std_ulogic;
 
   -- DCO
+  signal tile_clk     : std_ulogic;
   signal dco_clk_lock : std_ulogic;
-  signal dco_clk_int  : std_ulogic;
+  signal dco_clk      : std_ulogic;
   signal dco_clk_int_delay      : std_ulogic;
   signal dco_clk_div2_int_delay : std_ulogic;
 
@@ -215,7 +214,7 @@ begin
   -- DCO Reset synchronizer
   rst_gen : if this_has_dco /= 0 generate
     rst_ddr : if this_has_ddr /= 0 generate
-      tile_rstn : rstgen
+      tile_rstn_out : rstgen
         generic map (acthigh => 1, syncin => 0)
         port map (tile_rst, dco_clk_div2_90_int, dco_clk_lock, rst, open);
 
@@ -226,9 +225,9 @@ begin
     end generate rst_ddr;
 
     rst_slm: if this_has_ddr = 0 generate 
-      tile_rstn : rstgen
+      tile_rstn_out : rstgen
         generic map (acthigh => 1, syncin => 0)
-        port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
+        port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
       phy_rstn <= rst;
     end generate rst_slm;
 
@@ -239,7 +238,7 @@ begin
     phy_rstn <= tile_rst;
   end generate no_rst_gen;
 
-  dco_rstn <= rst;
+  tile_rstn_out <= rst;
 
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
@@ -252,20 +251,19 @@ begin
                                         -- before tile_io.
       port map (
         rstn     => raw_rstn,
-        ext_clk  => refclk,
+        ext_clk  => ext_clk,
         en       => dco_en,
         clk_sel  => dco_clk_sel,
         cc_sel   => dco_cc_sel,
         fc_sel   => dco_fc_sel,
         div_sel  => dco_div_sel,
         freq_sel => dco_freq_sel,
-        clk      => dco_clk_int,
+        clk      => dco_clk,
         clk_div2 => dco_clk_div2_int,
         clk_div2_90 => open,
-        clk_div  => pllclk,
+        clk_div  => clk_div,
         lock     => dco_clk_lock);
 
-    --clk_delay_gf12_gen: if CFG_FABTECH = gf12 generate
     clk_delay_asic_gen: if CFG_FABTECH = asic generate
       delay_ddr_gen : if  this_has_ddr /= 0 generate
         DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
@@ -274,7 +272,6 @@ begin
             sel      => dco_clk_delay_sel(3 downto 0),
             data_out => dco_clk_div2_90_int);
 
-        --delay_ddr_gen : if this_has_ddr /= 0 generate
           DELAY_CELL_GF12_C14_2: DELAY_CELL_GF12_C14
             port map (
               data_in  => dco_clk_div2_int,
@@ -283,37 +280,41 @@ begin
 
           DELAY_CELL_GF12_C14_3: DELAY_CELL_GF12_C14
             port map (
-              data_in  => dco_clk_int,
+              data_in  => dco_clk,
               sel      => dco_clk_delay_sel(11 downto 8),
               data_out => dco_clk_int_delay);
+
+          tile_clk <= dco_clk_div2_90_int;
+
         end generate delay_ddr_gen;
 
       no_delay_ddr_gen : if this_has_ddr = 0 generate
         dco_clk_div2_int_delay <= dco_clk_div2_int;
-        dco_clk_int_delay <= dco_clk_int;
-      end generate no_delay_ddr_gen;
+        dco_clk_int_delay <= dco_clk;
+        tile_clk <= dco_clk_int_delay;
+    end generate no_delay_ddr_gen;
 
     end generate clk_delay_asic_gen;
 
-    --noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
     noc_clk_delay_gen: if CFG_FABTECH /= asic generate
       dco_clk_div2_90_int <= dco_clk_div2_int;
+      tile_clk <= dco_clk;
     end generate noc_clk_delay_gen;
 
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco = 0 generate
-    pllclk              <= '0';
-    dco_clk_int         <= refclk;
-    dco_clk_int_delay   <= dco_clk_int;
+    clk_div             <= ext_clk;
+    dco_clk_int_delay   <= ext_clk;
+    tile_clk            <= ext_clk;
     dco_clk_lock        <= '1';
     dco_clk_div2_int    <= '0';
     dco_clk_div2_90_int <= '0';
   end generate no_dco_gen;
 
-  dco_clk         <= dco_clk_int_delay;
   dco_clk_div2    <= dco_clk_div2_int_delay;
   dco_clk_div2_90 <= dco_clk_div2_90_int;
+  tile_clk_out    <= tile_clk;
 
   -----------------------------------------------------------------------------
   -- Tile parameters
@@ -340,7 +341,7 @@ begin
                  rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
                  nahbm   => maxahbm, nahbs => maxahbs,
                  cfgmask => 0)
-    port map (rst, clk, ahbmi, ahbmo, ahbsi, ahbso);
+    port map (rst, tile_clk, ahbmi, ahbmo, ahbsi, ahbso);
 
 
   -----------------------------------------------------------------------
@@ -377,7 +378,7 @@ begin
         kbytes => CFG_SLM_KBYTES)
       port map (
         rst    => rst,
-        clk    => clk,
+        clk    => tile_clk,
         haddr  => this_slm_haddr,
         hmask  => this_slm_hmask,
         ahbsi  => ahbsi,
@@ -400,7 +401,7 @@ begin
   -- DVFS monitor
   mon_dvfs_int.vf        <= "1000";         --run at highest frequency always
   mon_dvfs_int.transient <= '0';
-  mon_dvfs_int.clk       <= clk;
+  mon_dvfs_int.clk       <= tile_clk;
   mon_dvfs_int.acc_idle  <= '0';
   mon_dvfs_int.traffic   <= '0';
   mon_dvfs_int.burst     <= '0';
@@ -408,7 +409,7 @@ begin
   mon_dvfs <= mon_dvfs_int;
 
   -- Memory access monitor
-  mon_mem_int.clk              <= clk;
+  mon_mem_int.clk              <= tile_clk;
   mon_mem_int.coherent_req     <= '0';
   mon_mem_int.coherent_fwd     <= '0';
   mon_mem_int.coherent_rsp_rcv <= '0';
@@ -429,7 +430,7 @@ begin
     generic map(
       pindex      => 0)
     port map(
-      clk => clk,
+      clk => tile_clk,
       rstn => rst,
       pconfig => this_csr_pconfig,
       mon_ddr => monitor_ddr_none,
@@ -466,7 +467,7 @@ begin
       this_coh_flit_size    => DMA_NOC_FLIT_SIZE)
     port map (
       rst                       => rst,
-      clk                       => clk,
+      clk                       => tile_clk,
       local_y                   => this_local_y,
       local_x                   => this_local_x,
       ahbmi                     => ahbmi,
@@ -503,7 +504,7 @@ begin
       this_coh_flit_size    => ARCH_NOC_FLIT_SIZE)
     port map (
       rst                       => rst,
-      clk                       => clk,
+      clk                       => tile_clk,
       local_y                   => this_local_y,
       local_x                   => this_local_x,
       ahbmi                     => ahbmi,
@@ -550,13 +551,12 @@ begin
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
-      clk              => clk,
+      clk              => tile_clk,
       local_y          => this_local_y,
       local_x          => this_local_x,
       apbi             => apbi,
       apbo             => apbo,
       pready           => '1',
-      dvfs_transient   => '0',
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,
       apb_snd_full     => apb_snd_full,
@@ -573,7 +573,7 @@ begin
       tech => CFG_FABTECH)
     port map (
       rst                        => rst,
-      clk                        => clk,
+      clk                        => tile_clk,
       dma_rcv_rdreq              => dma_rcv_rdreq,
       dma_rcv_data_out           => dma_rcv_data_out,
       dma_rcv_empty              => dma_rcv_empty,
