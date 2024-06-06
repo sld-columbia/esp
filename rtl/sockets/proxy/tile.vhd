@@ -723,7 +723,6 @@ package tile is
   component esp_acc_dma
     generic (
       tech               : integer;
-      extra_clk_buf      : integer range 0 to 1;
       mem_num            : integer := 1;
       mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE);
       io_y               : local_yx;
@@ -735,15 +734,10 @@ package tile is
       rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1);
       exp_registers      : integer range 0 to 1;
       scatter_gather     : integer range 0 to 1;
-      tlb_entries        : integer;
-      has_dvfs           : integer := 1;
-      has_pll            : integer);
+      tlb_entries        : integer);
     port (
       rst                           : in  std_ulogic;
       clk                           : in  std_ulogic;
-      refclk                        : in  std_ulogic;
-      pllbypass                     : in  std_ulogic;
-      pllclk                        : out std_ulogic;
       local_y                       : in  local_yx;
       local_x                       : in  local_yx;
       paddr                         : in  integer;

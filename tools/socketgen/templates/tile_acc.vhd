@@ -97,8 +97,6 @@ end;
 
 architecture rtl of tile_acc is
 
-  signal clk_feedthru : std_ulogic;
-
   -- Tile synchronous reset
   signal rst          : std_ulogic;
 
@@ -272,7 +270,7 @@ begin
   no_dco_gen: if this_has_dco = 0 generate
     tile_clk     <= ext_clk;
     dco_clk_lock <= '1';
-    clk_div <= clk_feedthru;
+    clk_div <= tile_clk;
   end generate no_dco_gen;
 
   tile_clk_out <= tile_clk;
@@ -332,7 +330,7 @@ begin
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
-      clk              => clk_feedthru,
+      clk              => tile_clk,
       local_y          => this_local_y,
       local_x          => this_local_x,
       apbi             => apbi,
@@ -356,7 +354,7 @@ begin
     generic map(
       pindex  => 0)
     port map(
-      clk => clk_feedthru,
+      clk => tile_clk,
       rstn => rst,
       pconfig => this_csr_pconfig,
       mon_ddr => monitor_ddr_none,
@@ -378,7 +376,7 @@ begin
       tech => CFG_FABTECH)
     port map (
       rst                        => rst,
-      clk                        => clk_feedthru,
+      clk                        => tile_clk,
       coherence_req_wrreq        => coherence_req_wrreq,
       coherence_req_data_in      => coherence_req_data_in,
       coherence_req_full         => coherence_req_full,

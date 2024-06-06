@@ -1823,7 +1823,7 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        has_l2         => this_has_l2)\n")
           f.write("      port map (\n")
           f.write("        rst               => rst,\n")
-          f.write("        clk               => clk_feedthru,\n")
+          f.write("        clk               => tile_clk,\n")
           f.write("        local_y           => this_local_y,\n")
           f.write("        local_x           => this_local_x,\n")
           f.write("        tile_id           => tile_id,\n")
