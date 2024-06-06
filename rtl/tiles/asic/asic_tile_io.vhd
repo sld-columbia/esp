@@ -44,12 +44,12 @@ entity asic_tile_io is
                                                -- 2: NoC DCO only
   port (
     rst                : in    std_ulogic;  -- Global reset (active high)
-    sys_rstn_out       : out   std_ulogic;  -- NoC reset (active low)
-    sys_clk_out        : out   std_ulogic;  -- NoC clock
-    sys_clk_lock_out   : out   std_ulogic;  -- system clock lock
+    noc_rstn_out       : out   std_ulogic;  -- NoC reset (active low)
+    noc_clk_out        : out   std_ulogic;  -- NoC clock
+    noc_clk_lock_out   : out   std_ulogic;  -- system clock lock
     ext_clk_noc        : in    std_ulogic;
     clk_div_noc        : out   std_ulogic;
-    sys_clk            : in    std_ulogic;  -- NoC clock in (connect to sys_clk_out)
+    noc_clk            : in    std_ulogic;  -- NoC clock in (connect to noc_clk_out)
     ext_clk            : in    std_ulogic;  -- backup tile clock
     clk_div            : out   std_ulogic;  -- tile clock monitor for testing purposes
     -- Ethernet
@@ -169,19 +169,16 @@ end;
 
 architecture rtl of asic_tile_io is
 
-  constant ext_clk_sel_default : std_ulogic := '0';
-
   -- NoC clock and reset (reset propagates to all tiles)
   signal raw_rstn     : std_ulogic;
-  signal sys_rstn     : std_ulogic;
-  signal noc_rstn              : std_ulogic;
-  signal sys_clk_int  : std_ulogic;
-  signal sys_clk_lock : std_ulogic;
+  signal noc_rstn     : std_ulogic;
+  signal noc_clk_int  : std_ulogic;
+  signal noc_clk_lock : std_ulogic;
   signal tile_rst     : std_ulogic;
 
   -- Tile clock and reset (only for I/O tile)
-  signal dco_rstn     : std_ulogic;
-  signal dco_clk      : std_ulogic;
+  signal tile_rstn    : std_ulogic;
+  signal tile_clk      : std_ulogic;
 
   -- DCO config
   signal dco_en       : std_ulogic;
@@ -234,9 +231,9 @@ architecture rtl of asic_tile_io is
   attribute syn_keep                    : boolean;
   attribute syn_preserve                : boolean;
 
-  attribute keep of dco_clk         : signal is "true";
-  attribute syn_keep of dco_clk     : signal is true;
-  attribute syn_preserve of dco_clk : signal is true;
+  attribute keep of tile_clk         : signal is "true";
+  attribute syn_keep of tile_clk     : signal is true;
+  attribute syn_preserve of tile_clk : signal is true;
 
   -- Tile NoC interface
   signal test_rstn             : std_ulogic;
@@ -320,16 +317,12 @@ architecture rtl of asic_tile_io is
 
 begin
 
-  rst0 : rstgen                         -- reset generator
+  rst_noc : rstgen                         -- reset generator
     generic map (acthigh => 1, syncin => 0)
-    port map (rst, sys_clk, sys_clk_lock, sys_rstn, raw_rstn);
+    port map (rst, noc_clk, noc_clk_lock, noc_rstn, raw_rstn);
 
-  sys_rstn_out <= sys_rstn;
-  sys_clk_lock_out <= sys_clk_lock;
-
-  rst_noc : rstgen
-    generic map (acthigh => 1, syncin => 0)
-    port map (rst, sys_clk, sys_clk_lock, noc_rstn, open);
+  noc_rstn_out <= noc_rstn;
+  noc_clk_lock_out <= noc_clk_lock;
 
   rst_jtag : rstgen
     generic map (acthigh => 1, syncin => 0)
@@ -353,9 +346,9 @@ begin
     generic map (
       test_if_en => CFG_JTAG_EN)
     port map (
-      rst                 => test_rstn,
-      refclk              => dco_clk,
-      tile_rst            => dco_rstn,
+      rstn                => test_rstn,
+      clk                 => tile_clk,
+      tile_rstn           => tile_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -437,9 +430,9 @@ begin
   ---  ETHERNET ---------------------------------------------------------
   -----------------------------------------------------------------------
   -- Reset Ethernet if MDC scaler value changes
-  eth_rstn_gen: process (dco_clk) is
+  eth_rstn_gen: process (tile_clk) is
   begin  -- process eth_rstn_gen
-    if dco_clk'event and dco_clk = '1' then  -- rising clock edge
+    if tile_clk'event and tile_clk = '1' then  -- rising clock edge
       mdcscaler_reg <= mdcscaler;
     end if;
   end process eth_rstn_gen;
@@ -447,7 +440,7 @@ begin
     -- MDC scaler configuration
   mdcscaler              <= conv_integer(tile_config(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB));
   mdcscaler_not_changed <= '1' when mdcscaler_reg = mdcscaler else '0';
-  eth_rstn <= dco_rstn and mdcscaler_not_changed;
+  eth_rstn <= tile_rstn and mdcscaler_not_changed;
 
   onchip_ethernet : if CFG_ETH_EN = 1 generate
     
@@ -475,8 +468,8 @@ begin
         giga        => CFG_GRETH1G,
         edclsepahbg => 1)
       port map(
-        rst    => dco_rstn,
-        clk    => dco_clk,                -- Fixed I/O tile frequency
+        rst    => tile_rstn,
+        clk    => tile_clk,                -- Fixed I/O tile frequency
         mdcscaler => mdcscaler,
         ahbmi  => eth0_ahbmi,
         ahbmo  => eth0_ahbmo,
@@ -489,7 +482,7 @@ begin
     ethi.edclsepahb <= '1';
 
     -- Ethernet I/O
-    reset_o2             <= dco_rstn;
+    reset_o2             <= tile_rstn;
     ethi.tx_clk          <= etx_clk;
     ethi.rx_clk          <= erx_clk;
     ethi.rxd(3 downto 0) <= erxd;
@@ -555,14 +548,12 @@ begin
     port map (
       raw_rstn           => raw_rstn,
       tile_rst           => tile_rst,
-      clk                => dco_clk,    -- Local DCO clock
-      refclk_noc         => ext_clk_noc,  -- Backup NoC clock when DCO is enabled
-      pllclk_noc         => clk_div_noc,  -- NoC DCO clock out
-      refclk             => ext_clk,    -- Local backup ext clock
-      pllbypass          => ext_clk_sel_default,  --ext_clk_sel,
-      pllclk             => clk_div,    -- DCO clock monitor
-      dco_clk            => dco_clk,    -- Local DCO clock out (fixed @ TILE_FREQ)
-      dco_rstn           => dco_rstn,
+      ext_clk_noc        => ext_clk_noc,  -- Backup NoC clock when DCO is enabled
+      clk_div_noc        => clk_div_noc,  -- NoC DCO clock out
+      ext_clk            => ext_clk,    -- Local backup ext clock
+      clk_div            => clk_div,    -- DCO clock monitor
+      tile_clk_out       => tile_clk,    -- Local DCO clock out (fixed @ TILE_FREQ)
+      tile_rstn_out      => tile_rstn,
       -- DCO config
       dco_freq_sel       => dco_freq_sel,
       dco_div_sel        => dco_div_sel,
@@ -606,8 +597,8 @@ begin
       iolink_credit_in   => iolink_credit_in,
       iolink_credit_out  => iolink_credit_out_int,
       -- NOC
-      sys_clk_out        => sys_clk_out,  -- Global NoC clock out
-      sys_clk_lock       => sys_clk_lock,
+      noc_clk_out        => noc_clk_out,  -- Global NoC clock out
+      noc_clk_lock       => noc_clk_lock,
       test1_output_port   => test1_output_port_s,
       test1_data_void_out => test1_data_void_out_s,
       test1_stop_in       => test1_stop_out_s,
@@ -657,11 +648,10 @@ begin
     port map (
       raw_rstn                => raw_rstn,
       noc_rstn                => noc_rstn,
-      dco_rstn                => dco_rstn,
-      sys_clk                 => sys_clk,
-      dco_clk                 => dco_clk,
+      tile_rstn               => tile_rstn,
+      noc_clk                 => noc_clk,
+      tile_clk                => tile_clk,
       acc_clk                 => open,
-      refclk                  => dco_clk,
       -- CSRs
       tile_config             => tile_config,
       -- DCO config

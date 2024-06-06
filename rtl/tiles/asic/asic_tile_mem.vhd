@@ -42,8 +42,8 @@ entity asic_tile_mem is
     this_has_dco : integer range 0 to 1 := 1);
   port (
     rst                : in  std_ulogic;
-    sys_clk            : in  std_ulogic;  -- NoC clock
-    sys_clk_lock       : in  std_ulogic;  -- sys_clk_lock
+    noc_clk            : in  std_ulogic;  -- NoC clock
+    noc_clk_lock       : in  std_ulogic;  -- noc_clk_lock
     ext_clk            : in  std_ulogic;  -- backup tile clock
     clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
     -- FPGA proxy memory link
@@ -141,15 +141,12 @@ end;
 
 architecture rtl of asic_tile_mem is
 
-  constant ext_clk_sel_default : std_ulogic := '0';
-
   -- Tile clock and reset (only for I/O tile)
   signal raw_rstn     : std_ulogic;
   signal noc_rstn     : std_ulogic;
-  signal dco_rstn     : std_ulogic;
+  signal tile_rstn    : std_ulogic;
   signal tile_rst     : std_ulogic;
---  signal dco_clk_lock : std_ulogic;
-  signal dco_clk      : std_ulogic;
+  signal tile_clk     : std_ulogic;
 
   -- DCO config
   signal dco_en            : std_ulogic;
@@ -247,7 +244,7 @@ begin
 
   rst_noc : rstgen
     generic map (acthigh => 1, syncin => 0)
-    port map (rst, sys_clk, sys_clk_lock, noc_rstn, raw_rstn);
+    port map (rst, noc_clk, noc_clk_lock, noc_rstn, raw_rstn);
 
   rst_jtag : rstgen
     generic map (acthigh => 1, syncin => 0)
@@ -268,9 +265,9 @@ begin
     generic map (
       test_if_en => CFG_JTAG_EN)
     port map (
-      rst                 => test_rstn,
-      refclk              => dco_clk,
-      tile_rst            => dco_rstn,
+      rstn                => test_rstn,
+      clk                 => tile_clk,
+      tile_rstn           => tile_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -356,14 +353,12 @@ begin
     port map (
       raw_rstn            => raw_rstn,
       tile_rst            => tile_rst,
-      refclk              => ext_clk,
-      clk                 => dco_clk,
-      pllbypass           => ext_clk_sel_default,  --ext_clk_sel,
-      pllclk              => clk_div,
-      dco_clk             => dco_clk,
+      ext_clk             => ext_clk,
+      clk_div             => clk_div,
+      tile_clk_out        => tile_clk,
       dco_clk_div2        => open,
       dco_clk_div2_90     => open,
-      dco_rstn            => dco_rstn,
+      tile_rstn_out       => tile_rstn,
       phy_rstn            => open,
       dco_freq_sel        => dco_freq_sel,
       dco_div_sel         => dco_div_sel,
@@ -434,11 +429,10 @@ begin
     port map (
       raw_rstn                => raw_rstn,
       noc_rstn                => noc_rstn,
-      dco_rstn                => dco_rstn,
-      sys_clk                 => sys_clk,
-      dco_clk                 => dco_clk,
+      tile_rstn               => tile_rstn,
+      noc_clk                 => noc_clk,
+      tile_clk                => tile_clk,
       acc_clk                 => open,
-      refclk                  => dco_clk,
       -- CSRs
       tile_config             => open,
       -- DCO config

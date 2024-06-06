@@ -41,20 +41,15 @@ entity fpga_tile_empty is
     HAS_SYNC     : integer range 0 to 1 := 1;
     ROUTER_PORTS : ports_vec            := "11111");
   port (
-    raw_rstn           : in  std_ulogic;
     rst                : in  std_logic;
     clk                : in  std_logic;
-    refclk             : in  std_ulogic;
-    pllbypass          : in  std_ulogic;
-    pllclk             : out std_ulogic;
-    dco_clk            : out std_ulogic;
+    noc_clk            : in  std_logic;
     -- Test interface
     tdi                : in  std_logic;
     tdo                : out std_logic;
     tms                : in  std_logic;
     tclk               : in  std_logic;
     -- NOC
-    sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  coh_noc_flit_type;
     noc1_data_s_in     : in  coh_noc_flit_type;
     noc1_data_w_in     : in  coh_noc_flit_type;
@@ -143,7 +138,8 @@ architecture rtl of fpga_tile_empty is
   signal this_local_x : local_yx;
 
   -- DCO reset -> keeping the logic compliant with the asic flow
-  signal dco_rstn : std_ulogic;
+  signal tile_rstn : std_ulogic;
+  signal tile_clk  : std_ulogic;
 
   -- DCO
   signal dco_en       : std_ulogic;
@@ -247,9 +243,9 @@ begin
     generic map (
       test_if_en => 0)
     port map (
-      rst                 => rst,
-      refclk              => clk,
-      tile_rst            => dco_rstn,
+      rstn                => rst,
+      clk                 => tile_clk,
+      tile_rstn           => tile_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -332,14 +328,12 @@ begin
       SIMULATION   => SIMULATION,
       this_has_dco => 0)
     port map (
-      raw_rstn           => raw_rstn,
+      raw_rstn           => '0',
       tile_rst           => rst,
-      clk                => clk,
-      refclk             => refclk,
-      pllbypass          => pllbypass,
-      pllclk             => pllclk,
-      dco_clk            => dco_clk,
-      dco_rstn           => dco_rstn,
+      ext_clk            => clk,
+      clk_div            => open,
+      tile_clk_out       => tile_clk,
+      tile_rstn_out      => tile_rstn,
       dco_freq_sel        => dco_freq_sel,
       dco_div_sel         => dco_div_sel,
       dco_fc_sel          => dco_fc_sel,
@@ -393,13 +387,12 @@ begin
       ROUTER_PORTS      => ROUTER_PORTS,
       HAS_SYNC          => HAS_SYNC)
     port map (
-      raw_rstn                => raw_rstn,
+      raw_rstn                => '0',
       noc_rstn                => rst,
-      dco_rstn                => dco_rstn,
-      sys_clk                 => sys_clk_int,
-      dco_clk                 => clk,
+      tile_rstn               => tile_rstn,
+      noc_clk                 => noc_clk,
+      tile_clk                => tile_clk,
       acc_clk                 => open,
-      refclk                  => clk,
       -- CSRs
       tile_config             => open,
       -- DCO config

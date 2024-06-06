@@ -24,7 +24,6 @@ package tiles_pkg is
       rst                : in  std_logic;
       sys_clk            : in    std_logic_vector(0 to MEM_ID_RANGE_MSB);
       refclk             : in  std_logic;
-      pllbypass          : in  std_logic_vector(CFG_TILES_NUM - 1 downto 0);
       uart_rxd           : in  std_logic;
       uart_txd           : out std_logic;
       uart_ctsn          : in  std_logic;
@@ -54,18 +53,14 @@ package tiles_pkg is
   component tile_cpu is
     generic (
       SIMULATION         : boolean              := false;
-      this_has_dvfs      : integer range 0 to 1 := 0;
-      this_has_pll       : integer range 0 to 1 := 0;
-      this_has_dco       : integer range 0 to 1 := 0;
-      this_extra_clk_buf : integer range 0 to 1 := 0);
+      this_has_dco       : integer range 0 to 1 := 0);
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_ulogic;
-      refclk             : in  std_ulogic;
-      pllbypass          : in  std_ulogic;
-      pllclk             : out std_ulogic;
-      dco_clk            : out std_ulogic;
-      dco_rstn           : out std_ulogic;
+      ext_clk            : in  std_ulogic;
+      clk_div            : out std_ulogic;
+      tile_clk_out       : out std_ulogic;
+      tile_rstn_out          : out std_ulogic;
       -- DCO config
       dco_freq_sel       : in std_logic_vector(1 downto 0);
       dco_div_sel        : in std_logic_vector(2 downto 0);
@@ -113,7 +108,6 @@ package tiles_pkg is
       test6_stop_out      : out std_ulogic;
       mon_noc             : in  monitor_noc_vector(1 to 6);
       mon_cache           : out monitor_cache_type;
-      mon_dvfs_in         : in  monitor_dvfs_type;
       mon_dvfs            : out monitor_dvfs_type);
   end component tile_cpu;
 
@@ -123,18 +117,14 @@ package tiles_pkg is
       this_device        : devid_t              := 0;
       this_irq_type      : integer              := 0;
       this_has_l2        : integer range 0 to 1 := 0;
-      this_has_dvfs      : integer range 0 to 1 := 0;
-      this_has_pll       : integer range 0 to 1 := 0;
-      this_has_dco       : integer range 0 to 1 := 0;
-      this_extra_clk_buf : integer range 0 to 1 := 0);
+      this_has_dco       : integer range 0 to 1 := 0);
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_ulogic;
-      refclk             : in  std_ulogic;
-      pllbypass          : in  std_ulogic;
-      pllclk             : out std_ulogic;
-      dco_clk            : out std_ulogic;
-      dco_rstn           : out std_ulogic;
+      ext_clk            : in  std_ulogic;
+      clk_div            : out std_ulogic;
+      tile_clk_out       : out std_ulogic;
+      tile_rstn_out          : out std_ulogic;
       -- DCO config
       dco_freq_sel       : in std_logic_vector(1 downto 0);
       dco_div_sel        : in std_logic_vector(2 downto 0);
@@ -180,7 +170,6 @@ package tiles_pkg is
       test6_data_void_in  : out std_ulogic;
       test6_stop_out      : out std_ulogic;
       --Monitor signals
-      mon_dvfs_in         : in  monitor_dvfs_type;
       mon_noc             : in  monitor_noc_vector(1 to 6);
       mon_acc             : out monitor_acc_type;
       mon_cache           : out monitor_cache_type;
@@ -196,14 +185,14 @@ package tiles_pkg is
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_ulogic;
-      clk                : in  std_ulogic;
-      refclk_noc         : in  std_ulogic;
-      pllclk_noc         : out std_ulogic;
-      refclk             : in  std_ulogic;
-      pllbypass          : in  std_ulogic;
-      pllclk             : out std_ulogic;
-      dco_clk            : out std_ulogic;
-      dco_rstn           : out std_ulogic;
+      ext_clk_noc        : in  std_ulogic;
+      clk_div_noc        : out std_ulogic;
+      ext_clk            : in  std_ulogic;
+      clk_div            : out std_ulogic;
+      tile_clk_out       : out std_ulogic;
+      tile_rstn_out          : out std_ulogic;
+      noc_clk_out        : out std_ulogic;
+      noc_clk_lock       : out std_ulogic;
       -- DCO config
       dco_freq_sel       : in std_logic_vector(1 downto 0);
       dco_div_sel        : in std_logic_vector(2 downto 0);
@@ -245,8 +234,6 @@ package tiles_pkg is
       iolink_credit_in  : in  std_ulogic;
       iolink_credit_out : out std_ulogic;
       -- NOC
-      sys_clk_out        : out std_ulogic;
-      sys_clk_lock       : out std_ulogic;
       test1_output_port   : in coh_noc_flit_type;
       test1_data_void_out : in std_ulogic;
       test1_stop_in       : in std_ulogic;
@@ -295,11 +282,10 @@ package tiles_pkg is
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_ulogic;
-      refclk             : in  std_ulogic;
-      clk                : in  std_ulogic;
-      pllbypass          : in  std_ulogic;
-      pllclk             : out std_ulogic;
-      dco_clk            : out std_ulogic;
+      ext_clk            : in  std_ulogic;
+      clk_div            : out std_ulogic;
+      tile_clk_out       : out std_ulogic;
+      tile_rstn_out          : out std_ulogic;
       -- DCO config
       dco_freq_sel       : in std_logic_vector(1 downto 0);
       dco_div_sel        : in std_logic_vector(2 downto 0);
@@ -311,7 +297,6 @@ package tiles_pkg is
       -- DDR controller ports (this_has_ddr -> 1)
       dco_clk_div2       : out std_ulogic;
       dco_clk_div2_90    : out std_ulogic;
-      dco_rstn           : out std_ulogic;
       phy_rstn           : out std_ulogic;
       ddr_ahbsi          : out ahb_slv_in_type;
       ddr_ahbso          : in  ahb_slv_out_type;
@@ -375,12 +360,10 @@ package tiles_pkg is
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_logic;
-      clk                : in  std_logic;
-      refclk             : in  std_ulogic;
-      pllbypass          : in  std_ulogic;
-      pllclk             : out std_ulogic;
-      dco_clk            : out std_ulogic;
-      dco_rstn           : out std_ulogic;
+      ext_clk            : in  std_ulogic;
+      clk_div            : out std_ulogic;
+      tile_clk_out       : out std_ulogic;
+      tile_rstn_out          : out std_ulogic;
       -- DCO config
       dco_freq_sel       : in std_logic_vector(1 downto 0);
       dco_div_sel        : in std_logic_vector(2 downto 0);
@@ -437,11 +420,10 @@ package tiles_pkg is
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_ulogic;
-      clk                : in  std_ulogic;
-      refclk             : in  std_ulogic;
-      pllbypass          : in  std_ulogic;
-      pllclk             : out std_ulogic;
-      dco_clk            : out std_ulogic;
+      ext_clk            : in  std_ulogic;
+      clk_div            : out std_ulogic;
+      tile_clk_out       : out std_ulogic;
+      tile_rstn_out          : out std_ulogic;
       -- DCO config
       dco_freq_sel       : in std_logic_vector(1 downto 0);
       dco_div_sel        : in std_logic_vector(2 downto 0);
@@ -453,7 +435,6 @@ package tiles_pkg is
       -- DDR controller ports (this_has_ddr -> 1)
       dco_clk_div2       : out std_ulogic;
       dco_clk_div2_90    : out std_ulogic;
-      dco_rstn           : out std_ulogic;
       phy_rstn           : out std_ulogic;
       ddr_ahbsi          : out ahb_slv_in_type;
       ddr_ahbso          : in  ahb_slv_out_type;

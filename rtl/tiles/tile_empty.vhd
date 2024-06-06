@@ -41,12 +41,10 @@ entity tile_empty is
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_logic;
-    clk                : in  std_logic;
-    refclk             : in  std_ulogic;
-    pllbypass          : in  std_ulogic;
-    pllclk             : out std_ulogic;
-    dco_clk            : out std_ulogic;
-    dco_rstn           : out std_ulogic;
+    ext_clk            : in  std_ulogic;
+    clk_div            : out std_ulogic;
+    tile_clk_out       : out std_ulogic;
+    tile_rstn_out          : out std_ulogic;
     -- DCO config
     dco_freq_sel       : in std_logic_vector(1 downto 0);
     dco_div_sel        : in std_logic_vector(2 downto 0);
@@ -103,7 +101,8 @@ architecture rtl of tile_empty is
 
   -- DCO
   signal dco_clk_lock : std_ulogic;
-  signal dco_clk_int  : std_ulogic;
+  signal dco_clk      : std_ulogic;
+  signal tile_clk     : std_ulogic;
 
   -- Queues
   signal apb_rcv_rdreq    : std_ulogic;
@@ -140,19 +139,17 @@ architecture rtl of tile_empty is
 begin
 
   -- DCO Reset synchronizer
-  dco_clk <= dco_clk_int;
-
   rst_gen: if this_has_dco /= 0 generate
-    tile_rstn : rstgen
+    tile_rstn_out : rstgen
       generic map (acthigh => 1, syncin => 0)
-      port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
+      port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
   end generate rst_gen;
 
   no_rst_gen: if this_has_dco = 0 generate
     rst <= tile_rst;
   end generate no_rst_gen;
 
-  dco_rstn <= rst;
+  tile_rstn_out <= rst;
 
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
@@ -165,24 +162,27 @@ begin
                                         -- before tile_io.
       port map (
         rstn     => raw_rstn,
-        ext_clk  => refclk,
+        ext_clk  => ext_clk,
         en       => dco_en,
         clk_sel  => dco_clk_sel,
         cc_sel   => dco_cc_sel,
         fc_sel   => dco_fc_sel,
         div_sel  => dco_div_sel,
         freq_sel => dco_freq_sel,
-        clk      => dco_clk_int,
-        clk_div  => pllclk,
+        clk      => dco_clk,
+        clk_div  => clk_div,
         lock     => dco_clk_lock);
 
+    tile_clk <= dco_clk;
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco = 0 generate
-    pllclk       <= '0';
-    dco_clk_int  <= refclk;
+    clk_div       <= '0';
+    tile_clk  <= ext_clk;
     dco_clk_lock <= '1';
   end generate no_dco_gen;
+
+  tile_clk_out <= tile_clk;
 
   -----------------------------------------------------------------------------
   -- Tile parameters
@@ -217,13 +217,12 @@ begin
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
-      clk              => clk,
+      clk              => tile_clk,
       local_y          => this_local_y,
       local_x          => this_local_x,
       apbi             => apbi,
       apbo             => apbo,
       pready           => '1',
-      dvfs_transient   => '0',
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,
       apb_snd_full     => apb_snd_full,
@@ -233,7 +232,7 @@ begin
 
   --Monitors
   mon_dvfs_int.vf        <= (others => '0');
-  mon_dvfs_int.clk       <= clk;
+  mon_dvfs_int.clk       <= tile_clk;
   mon_dvfs_int.acc_idle  <= '0';
   mon_dvfs_int.traffic   <= '0';
   mon_dvfs_int.burst     <= '0';
@@ -245,7 +244,7 @@ begin
     generic map(
       pindex => 0)
    port map(
-     clk => clk,
+     clk => tile_clk,
      rstn => rst,
      pconfig => this_csr_pconfig,
      mon_ddr => monitor_ddr_none,
@@ -272,7 +271,7 @@ begin
       tech => CFG_FABTECH)
     port map (
       rst                        => rst,
-      clk                        => clk,
+      clk                        => tile_clk,
       apb_snd_wrreq              => apb_snd_wrreq,
       apb_snd_data_in            => apb_snd_data_in,
       apb_snd_full               => apb_snd_full,

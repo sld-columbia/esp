@@ -638,7 +638,6 @@ package tile is
       apbi             : out apb_slv_in_type;
       apbo             : in  apb_slv_out_vector;
       pready           : in  std_ulogic;
-      dvfs_transient   : in  std_ulogic;
       apb_snd_wrreq    : out std_ulogic;
       apb_snd_data_in  : out misc_noc_flit_type;
       apb_snd_full     : in  std_ulogic;
@@ -775,7 +774,6 @@ package tile is
       acc_done                      : in  std_ulogic;
       flush                         : out std_ulogic;
       acc_flush_done                : in  std_ulogic;
-      mon_dvfs_in                   : in  monitor_dvfs_type;
       mon_dvfs                      : out monitor_dvfs_type;
       llc_coherent_dma_rcv_rdreq    : out std_ulogic;
       llc_coherent_dma_rcv_data_out : in  dma_noc_flit_type;
@@ -1047,11 +1045,10 @@ package tile is
     port (
       raw_rstn           : in  std_ulogic;
       noc_rstn           : in  std_ulogic;
-      dco_rstn           : in  std_ulogic;
-      sys_clk            : in  std_ulogic;  -- NoC clock
-      dco_clk            : in  std_ulogic;
+      tile_rstn          : in  std_ulogic;
+      noc_clk            : in  std_ulogic;
+      tile_clk           : in  std_ulogic;
       acc_clk            : out std_ulogic;
-      refclk             : in  std_ulogic;
       -- CSRs
       tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
       -- DCO config

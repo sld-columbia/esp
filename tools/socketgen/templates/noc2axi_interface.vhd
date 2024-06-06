@@ -41,16 +41,10 @@ use std.textio.all;
     cache_tile_id  : cache_attribute_array;
     cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-    has_l2         : integer := 1;
-    has_dvfs       : integer := 1;
-    has_pll        : integer;
-    extra_clk_buf  : integer);
+    has_l2         : integer := 1);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
-    refclk    : in  std_ulogic;
-    pllbypass : in  std_ulogic;
-    pllclk    : out std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
     tile_id   : in  integer range 0 to CFG_TILES_NUM - 1;
@@ -106,7 +100,6 @@ use std.textio.all;
     interrupt_ack_rdreq    : out std_ulogic;
     interrupt_ack_data_out : in  misc_noc_flit_type;
     interrupt_ack_empty    : in  std_ulogic;
-    mon_dvfs_in       : in  monitor_dvfs_type;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
@@ -145,7 +138,6 @@ end;
   signal acc_current, acc_next : acc_state_t;
 
   -- DVFS (unused for now)
-  signal pllclk_int        : std_ulogic;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
 
   constant nofb_mem_info : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1);
@@ -374,17 +366,11 @@ begin
 
   end process;
 
-
-  mon_acc.clk   <= pllclk_int;
+  mon_acc.clk   <= clk;
   mon_acc.go    <= acc_go;
   mon_acc.run   <= acc_run;
   mon_acc.done  <= acc_done;
   mon_acc.burst <= mosi(0).w.valid or mosi(0).r.ready;
-
-  -- No DVFS on this tile for now
-  pllclk_int <= refclk;
-  pllclk <= pllclk_int;
-
   mon_dvfs      <= monitor_dvfs_none;
   mon_cache     <= monitor_cache_none;
 

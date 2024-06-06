@@ -40,39 +40,18 @@ entity fpga_tile_mem is
     ROUTER_PORTS : ports_vec            := "11111";
     HAS_SYNC     : integer range 0 to 1 := 1);
   port (
-    raw_rstn           : in  std_ulogic;
     rst                : in  std_ulogic;
-    refclk             : in  std_ulogic;
     clk                : in  std_ulogic;
-    pllbypass          : in  std_ulogic;
-    pllclk             : out std_ulogic;
-    dco_clk            : out std_ulogic;
+    noc_clk            : in  std_logic;
     -- DDR controller ports (this_has_ddr -> 1)
-    dco_clk_div2       : out std_ulogic;
-    dco_clk_div2_90    : out std_ulogic;
     ddr_ahbsi          : out ahb_slv_in_type;
     ddr_ahbso          : in  ahb_slv_out_type;
-    ddr_cfg0           : out std_logic_vector(31 downto 0);
-    ddr_cfg1           : out std_logic_vector(31 downto 0);
-    ddr_cfg2           : out std_logic_vector(31 downto 0);
-    mem_id             : out integer range 0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1;
-    -- FPGA proxy memory link
-    fpga_data_in       : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
-    fpga_data_out      : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
-    fpga_oen           : out std_ulogic;
-    fpga_valid_in      : in  std_ulogic;
-    fpga_valid_out     : out std_ulogic;
-    fpga_clk_in        : in  std_ulogic;
-    fpga_clk_out       : out std_ulogic;
-    fpga_credit_in     : in  std_ulogic;
-    fpga_credit_out    : out std_ulogic;
-    -- Test interface
+        -- Test interface
     tdi                : in  std_logic;
     tdo                : out std_logic;
     tms                : in  std_logic;
     tclk               : in  std_logic;
     -- NOC
-    sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  coh_noc_flit_type;
     noc1_data_s_in     : in  coh_noc_flit_type;
     noc1_data_w_in     : in  coh_noc_flit_type;
@@ -165,7 +144,8 @@ architecture rtl of fpga_tile_mem is
   signal this_local_x : local_yx;
 
   -- DCO reset -> keeping the logic compliant with the asic flow
-  signal dco_rstn : std_ulogic;
+  signal tile_clk   : std_ulogic;
+  signal tile_rstn  : std_ulogic;
 
   -- Tile parameters
   signal tile_config : std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
@@ -273,9 +253,9 @@ begin
     generic map (
       test_if_en => 0)
     port map (
-      rst                 => rst,
-      refclk              => clk,
-      tile_rst            => dco_rstn,
+      rstn                => rst,
+      clk                 => clk,
+      tile_rstn           => tile_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -359,16 +339,14 @@ begin
       this_has_dco => 0,
       this_has_ddr => 1)
     port map (
-      raw_rstn            => raw_rstn,
+      raw_rstn            => '0',
       tile_rst            => rst,
-      refclk              => refclk,
-      clk                 => clk,
-      pllbypass           => pllbypass,
-      pllclk              => pllclk,
-      dco_clk             => dco_clk,
-      dco_clk_div2        => dco_clk_div2,
-      dco_clk_div2_90     => dco_clk_div2_90,
-      dco_rstn            => dco_rstn,
+      ext_clk             => clk,
+      clk_div             => open,
+      tile_clk_out        => tile_clk,
+      dco_clk_div2        => open,
+      dco_clk_div2_90     => open,
+      tile_rstn_out       => tile_rstn,
       phy_rstn            => open,
       dco_freq_sel        => dco_freq_sel,
       dco_div_sel         => dco_div_sel,
@@ -379,15 +357,15 @@ begin
       dco_clk_delay_sel   => (others => '0'),
       ddr_ahbsi           => ddr_ahbsi,
       ddr_ahbso           => ddr_ahbso,
-      fpga_data_in        => fpga_data_in,
-      fpga_data_out       => fpga_data_out,
-      fpga_oen            => fpga_oen,
-      fpga_valid_in       => fpga_valid_in,
-      fpga_valid_out      => fpga_valid_out,
-      fpga_clk_in         => fpga_clk_in,
-      fpga_clk_out        => fpga_clk_out,
-      fpga_credit_in      => fpga_credit_in,
-      fpga_credit_out     => fpga_credit_out,
+      fpga_data_in        => (others => '0'),
+      fpga_data_out       => open,
+      fpga_oen            => open,
+      fpga_valid_in       => '0',
+      fpga_valid_out      => open,
+      fpga_clk_in         => '0',
+      fpga_clk_out        => open,
+      fpga_credit_in      => '0',
+      fpga_credit_out     => open,
       test1_output_port   => test1_output_port_s,
       test1_data_void_out => test1_data_void_out_s,
       test1_stop_in       => test1_stop_out_s,
@@ -437,13 +415,12 @@ begin
       ROUTER_PORTS      => ROUTER_PORTS,
       HAS_SYNC          => HAS_SYNC)
     port map (
-      raw_rstn                => raw_rstn,
+      raw_rstn                => '0',
       noc_rstn                => rst,
-      dco_rstn                => dco_rstn,
-      sys_clk                 => sys_clk_int,
-      dco_clk                 => clk,
+      tile_rstn               => tile_rstn,
+      noc_clk                 => noc_clk,
+      tile_clk                => tile_clk,
       acc_clk                 => open,
-      refclk                  => clk,
       -- CSRs
       tile_config             => open,
       -- DCO config

@@ -46,11 +46,10 @@ entity noc_domain_socket is
   port (
     raw_rstn           : in  std_ulogic;
     noc_rstn           : in  std_ulogic;
-    dco_rstn           : in  std_ulogic;
-    sys_clk            : in  std_ulogic;  -- NoC clock
-    dco_clk            : in  std_ulogic;
+    tile_rstn          : in  std_ulogic;
+    noc_clk            : in  std_ulogic;  -- NoC clock
+    tile_clk           : in  std_ulogic;
     acc_clk            : out std_ulogic;
-    refclk             : in  std_ulogic;
     -- CSRs
     tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
     -- DCO config
@@ -486,9 +485,9 @@ begin  -- architecture rtl
     noc5_tile_synchronizers : noc32_synchronizers
       port map (
         noc_rstn  => noc_rstn,  -- noc_rstn for asic, rst for fpga
-        tile_rstn => dco_rstn,  -- same
-        noc_clk   => sys_clk,   -- sys_clk for asic, sys_clk_int for fpga
-        tile_clk  => dco_clk,   -- dco_clk for asic, acc_clk for fpga
+        tile_rstn => tile_rstn,  -- same
+        noc_clk   => noc_clk,   -- noc_clk for asic, noc_clk_int for fpga
+        tile_clk  => tile_clk,   -- tile_clk for asic, acc_clk for fpga
 
         output_port   => noc5_output_port_tile_int,
         data_void_out => noc5_data_void_out_tile_int,
@@ -515,10 +514,10 @@ begin  -- architecture rtl
       PORTS    => ROUTER_PORTS,
       HAS_SYNC => HAS_SYNC)
     port map (
-      clk                => sys_clk,    -- sys_clk_int
-      clk_tile           => dco_clk,    -- acc_clk
+      clk                => noc_clk,    -- noc_clk_int
+      clk_tile           => tile_clk,    -- acc_clk
       rst                => noc_rstn,   -- rst
-      rst_tile           => dco_rstn,   -- dco_rstn
+      rst_tile           => tile_rstn,   -- tile_rstn
       CONST_local_x      => this_local_x,
       CONST_local_y      => this_local_y,
       noc1_data_n_in     => noc1_data_n_in,
@@ -620,10 +619,9 @@ begin  -- architecture rtl
         is_asic    => true)
       port map (
         noc_rstn           => noc_rstn,
-        tile_rstn          => dco_rstn,
-        noc_clk            => sys_clk,
-        refclk             => refclk,
-        tile_clk           => dco_clk,
+        tile_rstn          => tile_rstn,
+        noc_clk            => noc_clk,
+        tile_clk           => tile_clk,
         local_x            => this_local_x,
         local_y            => this_local_y,
         pm_config          => pm_config,
@@ -641,7 +639,7 @@ begin  -- architecture rtl
   end generate;
 
   no_token_pm_gen : if this_has_token_pm = 0 generate
-    acc_clk              <= refclk;     -- refclk
+    acc_clk              <= tile_clk;
     pm_status            <= (others => (others => '0'));
     noc5_input_port_pm   <= (others => '0');
     noc5_data_void_in_pm <= '1';
@@ -652,7 +650,7 @@ begin  -- architecture rtl
   noc5_mux_i : noc5_mux
     port map (
       rstn                    => noc_rstn,
-      clk                     => sys_clk,
+      clk                     => noc_clk,
       noc5_input_port         => noc5_input_port,
       noc5_data_void_in       => noc5_data_void_in_noc,
       noc5_stop_out           => noc5_stop_out_noc,
@@ -739,7 +737,7 @@ begin  -- architecture rtl
       has_token_pm => this_has_token_pm,
       has_ddr => has_ddr)
     port map(
-      clk         => sys_clk,           -- sys_clk_int
+      clk         => noc_clk,           -- noc_clk_int
       rstn        => noc_rstn,          -- rst
       pconfig     => this_csr_pconfig,
       tile_config => tile_config_int,
@@ -755,13 +753,12 @@ begin  -- architecture rtl
       local_apb_en => this_local_apb_en)
     port map (
       rst              => noc_rstn,     -- rst
-      clk              => sys_clk,      -- sys_clk_int
+      clk              => noc_clk,      -- noc_clk_int
       local_y          => this_local_y,
       local_x          => this_local_x,
       apbi             => apbi,
       apbo             => apbo,
       pready           => pready_noc,
-      dvfs_transient   => '0',
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => noc5_input_port_csr,
       apb_snd_full     => noc5_stop_out_csr,

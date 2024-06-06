@@ -48,7 +48,6 @@ use work.esp_acc_regmap.all;
 entity esp_acc_dma is
   generic (
     tech               : integer                              := virtex7;
-    extra_clk_buf      : integer range 0 to 1;
     mem_num            : integer                              := 1;
     mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE);
     io_y               : local_yx;
@@ -60,15 +59,10 @@ entity esp_acc_dma is
     rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1) := (others => '0');
     exp_registers      : integer range 0 to 1                 := 0;  -- Not implemented
     scatter_gather     : integer range 0 to 1                 := 1;
-    tlb_entries        : integer                              := 256;
-    has_dvfs           : integer                              := 1;
-    has_pll            : integer);
+    tlb_entries        : integer                              := 256);
   port (
     rst           : in  std_ulogic;
     clk           : in  std_ulogic;
-    refclk        : in  std_ulogic;
-    pllbypass     : in  std_ulogic;
-    pllclk        : out std_ulogic;
     local_y       : in  local_yx;
     local_x       : in  local_yx;
     paddr         : in  integer range 0 to 4095;
@@ -101,7 +95,6 @@ entity esp_acc_dma is
     acc_done      : in  std_ulogic;
     flush         : out std_ulogic;
     acc_flush_done: in  std_ulogic;
-    mon_dvfs_in   : in  monitor_dvfs_type;
     --Monitor signals
     mon_dvfs      : out monitor_dvfs_type;
 	--Direct output of tile status
@@ -191,7 +184,6 @@ architecture rtl of esp_acc_dma is
   signal bankin    : bank_type(0 to MAXREGNUM - 1);
   signal sample    : std_logic_vector(0 to MAXREGNUM - 1);
   signal readdata  : std_logic_vector(31 downto 0);
-  signal dvfs_apbo : apb_slv_out_type;
 
   -- Coherence
   signal coherence : integer range 0 to ACC_COH_FULL;
@@ -257,7 +249,6 @@ architecture rtl of esp_acc_dma is
   signal dma_tran_done        : std_ulogic;
   signal dma_tran_header_sent : std_ulogic;
   signal dma_tran_start       : std_ulogic;
-  signal dvfs_transient       : std_ulogic;  -- prevent DMA transaction while DVFS is switching
 
   -- TLB
   signal pending_dma_read, pending_dma_write : std_ulogic;
@@ -277,7 +268,6 @@ architecture rtl of esp_acc_dma is
   signal noc_delay : std_ulogic;
   signal burst : std_ulogic;
   signal acc_idle : std_ulogic;
-  signal mon_dvfs_ctrl : monitor_dvfs_type;
 
 
   -----------------------------------------------------------------------------
@@ -294,7 +284,6 @@ architecture rtl of esp_acc_dma is
    --attribute mark_debug of apbo    : signal is "true";
    --attribute mark_debug of sample    : signal is "true";
    --attribute mark_debug of readdata  : signal is "true";
-   --attribute mark_debug of dvfs_apbo : signal is "true";
    --attribute mark_debug of irq      : signal is "true";
    --attribute mark_debug of irqset   : signal is "true";
    --attribute mark_debug of irq_state: signal is "true";
@@ -315,7 +304,6 @@ architecture rtl of esp_acc_dma is
    --attribute mark_debug of dma_tran_done        : signal is "true";
    --attribute mark_debug of dma_tran_header_sent : signal is "true";
    --attribute mark_debug of dma_tran_start       : signal is "true";
-   --attribute mark_debug of dvfs_transient       : signal is "true";
    --attribute mark_debug of pending_dma_read : signal is "true";
    --attribute mark_debug of pending_dma_write : signal is "true";
    --attribute mark_debug of tlb_valid : signal is "true";
@@ -346,7 +334,6 @@ architecture rtl of esp_acc_dma is
    --attribute mark_debug of noc_delay : signal is "true";
    --attribute mark_debug of burst : signal is "true";
    --attribute mark_debug of acc_idle : signal is "true";
-   --attribute mark_debug of mon_dvfs_ctrl : signal is "true";
 
 begin  -- rtl
 
@@ -661,7 +648,7 @@ begin  -- rtl
                           pending_acc_done, dma_snd_full_int, dma_rcv_empty_int, dma_rcv_data_out_int,
                           header_r, payload_address_r, payload_length_r,
                           dma_tran_start, tlb_empty, pending_dma_write,
-                          pending_dma_read, coherent_dma_ready, dvfs_transient,
+                          pending_dma_read, coherent_dma_ready,
                           size_r, coherence,
                           p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full, acc_flush_done)
     variable payload_data : dma_noc_flit_type;
@@ -921,7 +908,7 @@ begin  -- rtl
 
       when wait_req_p2p =>
         burst <= '1';
-        if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
+        if p2p_req_rcv_empty = '0' then
           p2p_req_rcv_rdreq <= '1';
           sample_flits <= '1';
           dma_next <= send_header;
@@ -929,7 +916,7 @@ begin  -- rtl
 
       when send_header =>
         burst <= '1';
-        if dma_snd_full_int = '0' and dvfs_transient = '0' and msg /= RSP_P2P then
+        if dma_snd_full_int = '0' and msg /= RSP_P2P then
           dma_snd_data_in_int <= header_r;
           dma_snd_wrreq_int <= '1';
           dma_tran_header_sent <= '1';
@@ -939,7 +926,7 @@ begin  -- rtl
           else
             dma_next <= request_address;
           end if;
-        elsif p2p_rsp_snd_full = '0' and dvfs_transient = '0' and msg = RSP_P2P then
+        elsif p2p_rsp_snd_full = '0' and msg = RSP_P2P then
           p2p_rsp_snd_data_in <= header_r;
           p2p_rsp_snd_wrreq <= '1';
           dma_tran_header_sent <= '1';
@@ -948,7 +935,7 @@ begin  -- rtl
 
       when request_address =>
         burst <= '1';
-        if dma_snd_full_int = '0' and dvfs_transient = '0' then
+        if dma_snd_full_int = '0' then
           dma_snd_data_in_int <= payload_address_r;
           dma_snd_wrreq_int <= '1';
           if msg = DMA_TO_DEV or msg = REQ_DMA_READ or msg = DMA_FROM_DEV then
@@ -960,7 +947,7 @@ begin  -- rtl
 
       when request_length =>
         burst <= '1';
-        if dma_snd_full_int = '0' and dvfs_transient = '0' then
+        if dma_snd_full_int = '0' then
           dma_snd_data_in_int <= payload_length_r;
           dma_snd_wrreq_int <= '1';
           if msg = DMA_FROM_DEV then
@@ -979,9 +966,8 @@ begin  -- rtl
         else
           dma_snd_delay <= dma_snd_full_int;       -- for DVFS TRAFFIC policy
         end if;
-        if ((dvfs_transient = '0') and
-            ((msg = RSP_P2P and p2p_rsp_snd_full = '0') or
-             (msg /= RSP_P2P and dma_snd_full_int = '0'))) then
+        if ((msg = RSP_P2P and p2p_rsp_snd_full = '0') or
+            (msg /= RSP_P2P and dma_snd_full_int = '0')) then
           write_burst <= '1';
           bufdout_ready <= '1';
           if bufdout_valid = '1' then
@@ -1005,7 +991,7 @@ begin  -- rtl
       when reply_header =>
         burst <= '1';
         dma_rcv_delay <= dma_rcv_empty_int;       -- for DVFS TRAFFIC policy
-        if dma_rcv_empty_int = '0' and dvfs_transient = '0' then
+        if dma_rcv_empty_int = '0' then
           dma_rcv_rdreq_int <= '1';
           dma_next <= reply_data;
         end if;
@@ -1013,7 +999,7 @@ begin  -- rtl
       when reply_data =>
         burst <= '1';
         dma_rcv_delay <= dma_rcv_empty_int;       -- for DVFS TRAFFIC policy
-        if dma_rcv_empty_int = '0' and tlb_empty = '1' and dvfs_transient = '0' then
+        if dma_rcv_empty_int = '0' and tlb_empty = '1' then
           tlb_write <= '1';
           increment_word_count <= '1';
           increment_tlb_count <= '1';
@@ -1029,7 +1015,7 @@ begin  -- rtl
               dma_next <= idle;
             end if;
           end if;
-        elsif dma_rcv_empty_int = '0' and dvfs_transient = '0' then
+        elsif dma_rcv_empty_int = '0' then
           bufdin_valid <= '1';
           read_burst <= '1';
           if bufdin_ready = '1' then
@@ -1096,14 +1082,7 @@ begin  -- rtl
   pconfig(1) <=  apb_iobar(paddr, pmask);
   pconfig(2) <=  (others => '0');
 
-  process (apbi, readdata, dvfs_apbo)
-  begin  -- process
-    if apbi.paddr(7) = '1' then
-      apbo.prdata <= dvfs_apbo.prdata;
-    else
-      apbo.prdata <= readdata;
-    end if;
-  end process;
+  apbo.prdata <= readdata;
   apbo.pirq    <= (others => '0');      -- IRQ forwarded to the NoC directly
   apbo.pindex  <= pindex;
   apbo.pconfig <= pconfig;
@@ -1193,23 +1172,9 @@ begin  -- rtl
     end generate not_available;
   end generate unused_registers;
 
-  no_dvfs: if has_dvfs = 0 generate
-    pllclk <= refclk;
-    dvfs_apbo <= apb_none;
-    mon_dvfs.clk <= refclk;
-    mon_dvfs.vf <= "1000";
-    mon_dvfs.transient <= '0';
-    dvfs_transient <= '0';
-  end generate;
-
-  dvfs_no_master: if has_dvfs /= 0 and has_pll = 0 generate
-    pllclk <= refclk;
-    dvfs_apbo <= apb_none;
-    mon_dvfs.clk <= refclk;
-    mon_dvfs.vf <= mon_dvfs_in.vf;
-    mon_dvfs.transient <= mon_dvfs_in.transient;
-    dvfs_transient <= mon_dvfs_in.transient;
-  end generate dvfs_no_master;
+  mon_dvfs.clk <= clk;
+  mon_dvfs.vf <= "1000";
+  mon_dvfs.transient <= '0';
 
   noc_delay <= dma_snd_delay or dma_rcv_delay;
   acc_idle <= '1' when dma_state = idle and bankreg(CMD_REG)(CMD_BIT_START) = '0' else '0';
@@ -1217,36 +1182,10 @@ begin  -- rtl
   mon_dvfs.traffic <= noc_delay;
   mon_dvfs.burst <= burst;
 
-  with_dvfs: if has_dvfs /= 0 and has_pll /= 0 generate
-  dvfs_top_1: dvfs_top
-    generic map (
-      tech          => tech,
-      extra_clk_buf => extra_clk_buf,
-      pindex        => pindex)
-    port map (
-      rst       => rst,
-      clk       => clk,
-      paddr     => paddr,
-      pmask     => pmask,
-      refclk    => refclk,
-      pllbypass => pllbypass,
-      pllclk    => pllclk,
-      apbi      => apbi,
-      apbo      => dvfs_apbo,
-      acc_idle  => mon_dvfs_in.acc_idle,
-      traffic   => mon_dvfs_in.traffic,
-      burst     => mon_dvfs_in.burst,
-      mon_dvfs  => mon_dvfs_ctrl);
-  mon_dvfs.clk <= mon_dvfs_ctrl.clk;
-  mon_dvfs.vf  <= mon_dvfs_ctrl.vf;
-  mon_dvfs.transient <= mon_dvfs_ctrl.transient;
-  dvfs_transient <= mon_dvfs_ctrl.transient;
-  end generate;
-  
   -----------------------------------------------------------------------------
   -- Direct acc access
   -----------------------------------------------------------------------------
 
-	acc_activity<=bankreg(STATUS_REG)(STATUS_BIT_RUN);
+  acc_activity <= bankreg(STATUS_REG)(STATUS_BIT_RUN);
 
 end rtl;

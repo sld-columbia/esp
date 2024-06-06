@@ -42,8 +42,8 @@ entity asic_tile_acc is
     this_has_dco      : integer range 0 to 1 := 0);
   port (
     rst                : in  std_ulogic;
-    sys_clk            : in  std_ulogic;  -- NoC clock
-    sys_clk_lock       : in  std_ulogic;  -- sys_clk_lock
+    noc_clk            : in  std_ulogic;  -- NoC clock
+    noc_clk_lock       : in  std_ulogic;  -- noc_clk_lock
     ext_clk            : in  std_ulogic;  -- backup tile clock
     clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
     -- Test interface
@@ -132,17 +132,13 @@ end;
 
 architecture rtl of asic_tile_acc is
 
-  constant ext_clk_sel_default : std_ulogic := '0';
-
   -- Tile clock and reset (only for I/O tile)
   signal raw_rstn     : std_ulogic;
-  signal dco_clk      : std_ulogic;
-  signal dco_rstn     : std_ulogic;
+  signal tile_clk     : std_ulogic;
+  signal tile_rstn    : std_ulogic;
   signal tile_rst     : std_ulogic;
-  --  signal dco_clk_lock : std_ulogic;
 
   -- DCO config
-  signal dco_clk_int  : std_ulogic;
   signal dco_en       : std_ulogic;
   signal dco_clk_sel  : std_ulogic;
   signal dco_cc_sel   : std_logic_vector(5 downto 0);
@@ -241,7 +237,7 @@ begin
 
   rst_noc : rstgen                      -- reset generator
     generic map (acthigh => 1, syncin => 0)
-    port map (rst, sys_clk, sys_clk_lock, noc_rstn, raw_rstn);
+    port map (rst, noc_clk, noc_clk_lock, noc_rstn, raw_rstn);
 
   rst_jtag : rstgen                     -- reset generator
     generic map (acthigh => 1, syncin => 0)
@@ -262,9 +258,9 @@ begin
     generic map (
       test_if_en => CFG_JTAG_EN)
     port map (
-      rst                 => test_rstn,
-      refclk              => dco_clk,
-      tile_rst            => dco_rstn,
+      rstn                => test_rstn,
+      clk                 => tile_clk,
+      tile_rstn           => tile_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -348,18 +344,14 @@ begin
       this_device        => this_device,
       this_irq_type      => this_irq_type,
       this_has_l2        => this_has_l2,
-      this_has_dvfs      => 0,                     -- no DVFS controller
-      this_has_pll       => 0,
-      this_has_dco       => this_has_dco,                     -- use DCO
-      this_extra_clk_buf => 0)
+      this_has_dco       => this_has_dco)
     port map (
       raw_rstn            => raw_rstn,
       tile_rst            => tile_rst,
-      refclk              => ext_clk,
-      pllbypass           => ext_clk_sel_default,  --ext_clk_sel,
-      pllclk              => clk_div,
-      dco_clk             => dco_clk,
-      dco_rstn            => dco_rstn,
+      ext_clk             => ext_clk,
+      clk_div             => clk_div,
+      tile_clk_out        => tile_clk,
+      tile_rstn_out       => tile_rstn,
       dco_freq_sel        => LDOCTRL(7 downto 6),
       dco_div_sel         => dco_div_sel,
       dco_fc_sel          => LDOCTRL(5 downto 0),
@@ -402,7 +394,6 @@ begin
       test6_input_port    => test6_input_port_s,
       test6_data_void_in  => test6_data_void_in_s,
       test6_stop_out      => test6_stop_in_s,
-      mon_dvfs_in         => monitor_dvfs_none,
       mon_noc             => mon_noc,
       acc_activity		  => acc_activity,
       mon_acc             => open,
@@ -420,11 +411,10 @@ begin
     port map (
       raw_rstn                => raw_rstn,
       noc_rstn                => noc_rstn,
-      dco_rstn                => dco_rstn,
-      sys_clk                 => sys_clk,
-      dco_clk                 => dco_clk,
+      tile_rstn               => tile_rstn,
+      noc_clk                 => noc_clk,
+      tile_clk                => tile_clk,
       acc_clk                 => open,
-      refclk                  => dco_clk,
       -- CSRs
       tile_config             => open,
       -- DCO config

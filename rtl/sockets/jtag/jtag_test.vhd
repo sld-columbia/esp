@@ -35,9 +35,9 @@ entity jtag_test is
   generic (
     test_if_en : integer range 0 to 1 := 0);
   port (
-    rst                 : in std_ulogic;
-    refclk              : in std_ulogic;
-    tile_rst            : in std_ulogic;
+    rstn                : in std_ulogic;
+    clk                 : in std_ulogic;
+    tile_rstn           : in std_ulogic;
     tdi                 : in  std_ulogic;
     tdo                 : out std_ulogic;
     tms                 : in  std_ulogic;
@@ -304,9 +304,9 @@ begin
   test_if_gen : if test_if_en /= 0 generate
 
     -- jtag_fsm
-    CU_REG : process (tclk, rst)
+    CU_REG : process (tclk, rstn)
     begin
-      if rst = '0' then
+      if rstn = '0' then
         r <= JTAG_CTRL_RESET;
       elsif tclk'event and tclk = '1' then
         r <= rin;
@@ -767,7 +767,7 @@ begin
         generic map (DIM => COH_NOC_FLIT_SIZE+9,
                      en_mo => 1)
         port map (
-          rst       => rst,
+          rst       => rstn,
           clk       => tclk,
           clear     => sipo_clear_i(i),
           en_in     => sipo_en_i(i),
@@ -784,7 +784,7 @@ begin
       generic map (DIM => DMA_NOC_FLIT_SIZE+9,
                    en_mo => 1)
       port map (
-        rst       => rst,
+        rst       => rstn,
         clk       => tclk,
         clear     => sipo_clear_i(4),
         en_in     => sipo_en_i(4),
@@ -800,7 +800,7 @@ begin
       generic map (DIM => DMA_NOC_FLIT_SIZE+9,
                    en_mo => 1)
       port map (
-        rst       => rst,
+        rst       => rstn,
         clk       => tclk,
         clear     => sipo_clear_i(5),
         en_in     => sipo_en_i(5),
@@ -815,7 +815,7 @@ begin
       generic map (DIM => DMA_NOC_FLIT_SIZE+9,
                    en_mo => 1)
       port map (
-        rst       => rst,
+        rst       => rstn,
         clk       => tclk,
         clear     => sipo_clear_i(6),
         en_in     => sipo_en_i(6),
@@ -838,10 +838,10 @@ begin
         out6    => tdi_i(6));
 
 
-    --synchronise tms with refclk
-    process (refclk) is
+    --synchronise tms with clk
+    process (clk) is
     begin  -- process
-      if refclk'event and refclk = '1' then  -- rising clock edge
+      if clk'event and clk = '1' then  -- rising clock edge
         tms_int.async <= tms;
         tms_int.sync  <= tms_int.async;
       end if;
@@ -855,13 +855,13 @@ begin
         g_data_width => COH_NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
-        rst_wr_n_i => rst,
+        rst_wr_n_i => rstn,
         clk_wr_i   => tclk,
         we_i       => we_in(1),
         d_i        => coh_test_in(1),
         wr_full_o  => fwd_wr_full_o(1),
-        rst_rd_n_i => tile_rst,
-        clk_rd_i   => refclk,
+        rst_rd_n_i => tile_rstn,
+        clk_rd_i   => clk,
         rd_i       => rd_i(1),
         q_o        => coh_test_in_sync(1),
         rd_empty_o => fwd_rd_empty_o1);
@@ -880,13 +880,13 @@ begin
         g_data_width => COH_NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
-        rst_wr_n_i => rst,
+        rst_wr_n_i => rstn,
         clk_wr_i   => tclk,
         we_i       => we_in(2),
         d_i        => coh_test_in(2),
         wr_full_o  => fwd_wr_full_o(2),
-        rst_rd_n_i => tile_rst,
-        clk_rd_i   => refclk,
+        rst_rd_n_i => tile_rstn,
+        clk_rd_i   => clk,
         rd_i       => rd_i(2),
         q_o        => coh_test_in_sync(2),
         rd_empty_o => fwd_rd_empty_o2);
@@ -904,13 +904,13 @@ begin
         g_data_width => COH_NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
-        rst_wr_n_i => rst,
+        rst_wr_n_i => rstn,
         clk_wr_i   => tclk,
         we_i       => we_in(3),
         d_i        => coh_test_in(3),
         wr_full_o  => fwd_wr_full_o(3),
-        rst_rd_n_i => tile_rst,
-        clk_rd_i   => refclk,
+        rst_rd_n_i => tile_rstn,
+        clk_rd_i   => clk,
         rd_i       => rd_i(3),
         q_o        => coh_test_in_sync(3),
         rd_empty_o => fwd_rd_empty_o3);
@@ -927,13 +927,13 @@ begin
         g_data_width => DMA_NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
-        rst_wr_n_i => rst,
+        rst_wr_n_i => rstn,
         clk_wr_i   => tclk,
         we_i       => we_in(4),
         d_i        => dma_test_in(1),
         wr_full_o  => fwd_wr_full_o(4),
-        rst_rd_n_i => tile_rst,
-        clk_rd_i   => refclk,
+        rst_rd_n_i => tile_rstn,
+        clk_rd_i   => clk,
         rd_i       => rd_i(4),
         q_o        => dma_test_in_sync(1),
         rd_empty_o => fwd_rd_empty_o4);
@@ -950,13 +950,13 @@ begin
         g_data_width => MISC_NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
-        rst_wr_n_i => rst,
+        rst_wr_n_i => rstn,
         clk_wr_i   => tclk,
         we_i       => we_in(5),
         d_i        => misc_test_in(MISC_NOC_FLIT_SIZE-1 downto 0),
         wr_full_o  => fwd_wr_full_o(5),
-        rst_rd_n_i => tile_rst,
-        clk_rd_i   => refclk,
+        rst_rd_n_i => tile_rstn,
+        clk_rd_i   => clk,
         rd_i       => rd_i(5),
         q_o        => misc_test_in_sync(MISC_NOC_FLIT_SIZE-1 downto 0),
         rd_empty_o => fwd_rd_empty_o5);
@@ -974,13 +974,13 @@ begin
         g_data_width => DMA_NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
-        rst_wr_n_i => rst,
+        rst_wr_n_i => rstn,
         clk_wr_i   => tclk,
         we_i       => we_in(6),
         d_i        => dma_test_in(2),
         wr_full_o  => fwd_wr_full_o(6),
-        rst_rd_n_i => tile_rst,
-        clk_rd_i   => refclk,
+        rst_rd_n_i => tile_rstn,
+        clk_rd_i   => clk,
         rd_i       => rd_i(6),
         q_o        => dma_test_in_sync(2),
         rd_empty_o => fwd_rd_empty_o6);
@@ -1031,12 +1031,12 @@ begin
         g_data_width => MAX_NOC_FLIT_SIZE,
         g_size       => 4)
       port map (
-        rst_wr_n_i => tile_rst,
-        clk_wr_i   => refclk,
+        rst_wr_n_i => tile_rstn,
+        clk_wr_i   => clk,
         we_i       => we_in_out(1),
         d_i        => t1_out,
         wr_full_o  => test1_cpu_stop_out,
-        rst_rd_n_i => rst,
+        rst_rd_n_i => rstn,
         clk_rd_i   => tclk,
         rd_i       => rd_i_out(1),
         q_o        => test1_out,
@@ -1060,12 +1060,12 @@ begin
         g_data_width => MAX_NOC_FLIT_SIZE,
         g_size       => 4)
       port map (
-        rst_wr_n_i => tile_rst,
-        clk_wr_i   => refclk,
+        rst_wr_n_i => tile_rstn,
+        clk_wr_i   => clk,
         we_i       => we_in_out(2),
         d_i        => t2_out,
         wr_full_o  => test2_cpu_stop_out,
-        rst_rd_n_i => rst,
+        rst_rd_n_i => rstn,
         clk_rd_i   => tclk,
         rd_i       => rd_i_out(2),
         q_o        => test2_out,
@@ -1087,12 +1087,12 @@ begin
         g_data_width => MAX_NOC_FLIT_SIZE,
         g_size       => 4)
       port map (
-        rst_wr_n_i => tile_rst,
-        clk_wr_i   => refclk,
+        rst_wr_n_i => tile_rstn,
+        clk_wr_i   => clk,
         we_i       => we_in_out(3),
         d_i        => t3_out,
         wr_full_o  => test3_cpu_stop_out,
-        rst_rd_n_i => rst,
+        rst_rd_n_i => rstn,
         clk_rd_i   => tclk,
         rd_i       => rd_i_out(3),
         q_o        => test3_out,
@@ -1114,12 +1114,12 @@ begin
         g_data_width => MAX_NOC_FLIT_SIZE,
         g_size       => 4)
       port map (
-        rst_wr_n_i => tile_rst,
-        clk_wr_i   => refclk,
+        rst_wr_n_i => tile_rstn,
+        clk_wr_i   => clk,
         we_i       => we_in_out(4),
         d_i        => t4_out,
         wr_full_o  => test4_cpu_stop_out,
-        rst_rd_n_i => rst,
+        rst_rd_n_i => rstn,
         clk_rd_i   => tclk,
         rd_i       => rd_i_out(4),
         q_o        => test4_out,
@@ -1141,12 +1141,12 @@ begin
         g_data_width => MISC_NOC_FLIT_SIZE,
         g_size       => 4)
       port map (
-        rst_wr_n_i => tile_rst,
-        clk_wr_i   => refclk,
+        rst_wr_n_i => tile_rstn,
+        clk_wr_i   => clk,
         we_i       => we_in_out(5),
         d_i        => t5_out,
         wr_full_o  => test5_cpu_stop_out,
-        rst_rd_n_i => rst,
+        rst_rd_n_i => rstn,
         clk_rd_i   => tclk,
         rd_i       => rd_i_out(5),
         q_o        => test5_out,
@@ -1168,12 +1168,12 @@ begin
         g_data_width => MAX_NOC_FLIT_SIZE,
         g_size       => 4)
       port map (
-        rst_wr_n_i => tile_rst,
-        clk_wr_i   => refclk,
+        rst_wr_n_i => tile_rstn,
+        clk_wr_i   => clk,
         we_i       => we_in_out(6),
         d_i        => t6_out,
         wr_full_o  => test6_cpu_stop_out,
-        rst_rd_n_i => rst,
+        rst_rd_n_i => rstn,
         clk_rd_i   => tclk,
         rd_i       => rd_i_out(6),
         q_o        => test6_out,
@@ -1245,7 +1245,7 @@ begin
     piso_0 : piso_jtag
       generic map(sz => 8)
       port map(
-        rst      => rst,
+        rst      => rstn,
         clk      => tclk,
         clear    => r.piso_clear0,
         load     => r.piso_load0,
@@ -1259,7 +1259,7 @@ begin
     piso_1 : piso_jtag
       generic map(sz => MAX_NOC_FLIT_SIZE+8)
       port map(
-        rst      => rst,
+        rst      => rstn,
         clk      => tclk,
         clear    => r.piso_clear,
         load     => piso_load,

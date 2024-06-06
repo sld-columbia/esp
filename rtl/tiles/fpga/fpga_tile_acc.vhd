@@ -36,26 +36,19 @@ entity fpga_tile_acc is
     this_device        : devid_t              := 0;
     this_irq_type      : integer              := 0;
     this_has_l2        : integer range 0 to 1 := 0;
-    this_has_dvfs      : integer range 0 to 1 := 0;
-    this_has_pll       : integer range 0 to 1 := 0;
-    this_extra_clk_buf : integer range 0 to 1 := 0;
     this_has_token_pm  : integer range 0 to 1 := 0;
     ROUTER_PORTS       : ports_vec            := "11111";
     HAS_SYNC           : integer range 0 to 1 := 1);
   port (
-    raw_rstn           : in  std_ulogic;
     rst                : in  std_ulogic;
-    refclk             : in  std_ulogic;
-    pllbypass          : in  std_ulogic;
-    pllclk             : out std_ulogic;
-    dco_clk            : out std_ulogic;
+    clk                : in  std_ulogic;
+    noc_clk            : in  std_logic;
     -- Test interface
     tdi                : in  std_logic;
     tdo                : out std_logic;
     tms                : in  std_logic;
     tclk               : in  std_logic;
     -- NOC
-    sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  coh_noc_flit_type;
     noc1_data_s_in     : in  coh_noc_flit_type;
     noc1_data_w_in     : in  coh_noc_flit_type;
@@ -134,7 +127,6 @@ entity fpga_tile_acc is
     noc4_mon_noc_vec   : out monitor_noc_type;
     noc5_mon_noc_vec   : out monitor_noc_type;
     noc6_mon_noc_vec   : out monitor_noc_type;
-    mon_dvfs_in        : in  monitor_dvfs_type;
     mon_acc            : out monitor_acc_type;
     mon_cache          : out monitor_cache_type;
     mon_dvfs           : out monitor_dvfs_type
@@ -149,7 +141,8 @@ architecture rtl of fpga_tile_acc is
   signal acc_clk : std_ulogic;
 
   -- DCO reset -> keeping the logic compliant with the asic flow
-  signal dco_rstn : std_ulogic;
+  signal tile_rstn  : std_ulogic;
+  signal tile_clk   : std_ulogic;
 
   -- Tile parameters
   signal tile_config : std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
@@ -258,9 +251,9 @@ begin
     generic map (
       test_if_en => 0)
     port map (
-      rst                 => rst,
-      refclk              => acc_clk,
-      tile_rst            => dco_rstn,
+      rstn                => rst,
+      clk                 => acc_clk,
+      tile_rstn           => tile_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -344,18 +337,14 @@ begin
       this_device        => this_device,
       this_irq_type      => this_irq_type,
       this_has_l2        => this_has_l2,
-      this_has_dvfs      => this_has_dvfs,  -- no DVFS controller
-      this_has_pll       => this_has_pll,
-      this_has_dco       => 0,
-      this_extra_clk_buf => this_extra_clk_buf)
+      this_has_dco       => 0)
     port map (
-      raw_rstn            => raw_rstn,
+      raw_rstn            => '0',
       tile_rst            => rst,
-      refclk              => acc_clk,
-      pllbypass           => pllbypass,
-      pllclk              => pllclk,
-      dco_clk             => dco_clk,
-      dco_rstn            => dco_rstn,
+      ext_clk             => acc_clk,
+      clk_div             => open,
+      tile_clk_out        => tile_clk,
+      tile_rstn_out       => tile_rstn,
       dco_freq_sel        => dco_freq_sel,
       dco_div_sel         => dco_div_sel,
       dco_fc_sel          => dco_fc_sel,
@@ -399,7 +388,6 @@ begin
       test6_data_void_in  => test6_data_void_in_s,
       test6_stop_out      => test6_stop_in_s,
       mon_noc             => mon_noc,
-      mon_dvfs_in         => mon_dvfs_in,
       mon_acc             => mon_acc,
       mon_cache           => mon_cache,
       mon_dvfs            => mon_dvfs
@@ -413,13 +401,12 @@ begin
       ROUTER_PORTS      => ROUTER_PORTS,
       HAS_SYNC          => HAS_SYNC)
     port map (
-      raw_rstn                => raw_rstn,
+      raw_rstn                => '0',
       noc_rstn                => rst,
-      dco_rstn                => dco_rstn,
-      sys_clk                 => sys_clk_int,
-      dco_clk                 => acc_clk,
+      tile_rstn               => tile_rstn,
+      noc_clk                 => noc_clk,
+      tile_clk                => tile_clk,
       acc_clk                 => acc_clk,
-      refclk                  => refclk,
       -- CSRs
       tile_config             => open,
       -- DCO config
