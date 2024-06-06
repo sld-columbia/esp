@@ -61,8 +61,13 @@ endif
 
 # Memory wrappers
 ifeq ("$(TECH_TYPE)","asic")
+ifneq ("$(TECH)", "inferred")
 MEMGEN = $(ESP_ROOT)/tools/asicgen/asic_plmgen.py
 MEMTECH = $(ESP_ROOT)/rtl/techmap/asic/mem
+else
+MEMGEN = $(ESP_ROOT)/tools/plmgen/plmgen.py
+MEMTECH = $(ESP_ROOT)/rtl/techmap/$(TECH)/mem
+endif
 else
 MEMGEN = $(ESP_ROOT)/tools/plmgen/plmgen.py
 MEMTECH = $(ESP_ROOT)/rtl/techmap/$(TECH)/mem

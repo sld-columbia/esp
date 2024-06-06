@@ -15,6 +15,9 @@ set TECH_TYPE $::env(TECH_TYPE)
 
 set TECH_PATH "$ESP_ROOT/tech/$TECH"
 
+if {$TECH eq "inferred"} {
+	set TECH "virtex7"
+}
 
 #
 # Setup technology and include behavioral models and/or libraries
@@ -26,6 +29,7 @@ set asic_techs [list "asic"]
 if {[lsearch $fpga_techs $TECH] >= 0} {
     set VIVADO $::env(XILINX_VIVADO)
     set_attr verilog_files "$ESP_ROOT/rtl/techmap/$TECH/mem/*v"
+    set_attr verilog_files "$ESP_ROOT/rtl/sim/models/sram.sv"
     set_attr verilog_files "$VIVADO/data/verilog/src/glbl.v"
     set_attr verilog_files "$VIVADO/data/verilog/src/retarget/RAMB*.v"
     set_attr verilog_files "$VIVADO/data/verilog/src/unisims/RAMB*.v"
@@ -47,8 +51,7 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
 
     set TECH_IS_XILINX 1
 
-}
-if {[lsearch $asic_techs $TECH_TYPE] >= 0} {
+} elseif {[lsearch $asic_techs $TECH_TYPE] >= 0} {
     set_attr verilog_files "$ESP_ROOT/rtl/sim/asic/verilog/*v $ESP_ROOT/rtl/techmap/asic/mem/*v"
     set LIB_PATH "$TECH_PATH/lib"
     set LIB_NAMES [glob -directory $LIB_PATH *{.lib,.lib_*}]
