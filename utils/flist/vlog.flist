@@ -28,11 +28,6 @@ caches/esp-caches/l2/rtl/l2_input_decoder.sv
 caches/esp-caches/common/rtl/interface_controller.sv
 misc/esplink.sv
 sockets/adapters/apb2axil.sv
-sockets/dvfs/behav_dco.v
-sockets/dvfs/divider_unit.v
-sockets/dvfs/Tile_LDO_Ctrl.v
-sockets/dvfs/Token_FSM.v
-sockets/dvfs/token_pm_divider_hls.v
 noc/router/noc_pkg.sv
 noc/router/router_fifo.sv
 noc/router/router_arbiter.sv

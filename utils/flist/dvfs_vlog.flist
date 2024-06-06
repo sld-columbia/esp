@@ -1,0 +1,6 @@
+sockets/dvfs/behav_dco.v
+sockets/dvfs/divider_unit.v
+sockets/dvfs/Tile_LDO_Ctrl.v
+sockets/dvfs/Token_FSM.v
+sockets/dvfs/token_pm_divider_hls.v
+

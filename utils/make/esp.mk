@@ -83,6 +83,13 @@ $(ESP_CFG_BUILD)/plic_regmap.sv:
 
 endif
 
+token_pm_divider_hls:
+ifeq ($(CONFIG_HAS_DVFS),y)
+	@if test ! -e $(ESP_ROOT)/rtl/sockets/dvfs/$@.v; then \
+		make -C $(ESP_ROOT)/rtl/sockets/dvfs; \
+	fi;
+endif
+
 esp-config-distclean:
 	$(QUIET_CLEAN)$(RM) $(ESP_CFG_BUILD)
 
