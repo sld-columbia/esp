@@ -105,7 +105,7 @@ class Tile():
            self.has_pll.set(0)
          if self.has_clkbuf.get() == 1 :
            self.has_clkbuf.set(0)
-      if soc.IPs.ACCELERATORS.count(selection) and soc.cache_en.get() == 1 and soc.noc.noc_width.get() == soc.ARCH_BITS:
+      if soc.IPs.ACCELERATORS.count(selection) and soc.cache_en.get() == 1 and soc.noc.dma_noc_width.get() == soc.ARCH_BITS:
         self.has_l2_selection.config(state=NORMAL)
       else:
         if soc.IPs.PROCESSORS.count(selection) and soc.cache_en.get() == 1:
