@@ -188,12 +188,9 @@ class tile_info:
   llc = cache_info()
   dvfs = cache_info()
   acc = acc_info()
-  clk_region = 0
   has_l2 = 0
   has_tdvfs = 0
   design_point = 0
-  has_pll = 0
-  has_clkbuf = 0
 
   def __init__(self):
     return
@@ -248,7 +245,6 @@ class soc_config:
   llcs = []
   dvfs_ctrls = []
   tiles = []
-  regions = []
   contig_alloc_ddr = []
 
   def __init__(self, soc):
@@ -279,12 +275,6 @@ class soc_config:
     else:
       self.coherence = True
     self.has_dvfs = soc.noc.has_dvfs()
-    if self.has_dvfs:
-      self.regions = soc.noc.get_clk_regions()
-      self.ndomain = len(self.regions)
-    else:
-      self.regions = []
-      self.ndomain = 1
     self.has_svga = soc.svga_en.get()
     self.has_eth = soc.eth_en.get()
     self.has_iolink = soc.iolink_en.get()
@@ -332,10 +322,7 @@ class soc_config:
 
         self.tiles[t].row = x
         self.tiles[t].col = y
-        self.tiles[t].clk_region = soc.noc.topology[x][y].get_clk_region()
         self.tiles[t].design_point = soc.noc.topology[x][y].point.get()
-        self.tiles[t].has_pll = soc.noc.topology[x][y].has_pll.get()
-        self.tiles[t].has_clkbuf = soc.noc.topology[x][y].has_clkbuf.get()
         self.tiles[t].has_l2 = soc.noc.topology[x][y].has_l2.get()
         self.tiles[t].has_tdvfs = soc.noc.topology[x][y].has_tdvfs.get()
         self.tiles[t].has_ddr = soc.noc.topology[x][y].has_ddr.get()
@@ -351,14 +338,6 @@ class soc_config:
             self.l2s.append(l2)
             self.tiles[t].l2 = l2
             self.nl2 = self.nl2 + 1
-          if self.tiles[t].has_pll != 0:
-            dvfs_ctrl = cache_info()
-            dvfs_ctrl.id = cpu_dvfs_id
-            dvfs_ctrl.idx = DVFS_PINDEX[cpu_dvfs_id]
-            self.dvfs_ctrls.append(dvfs_ctrl)
-            self.tiles[t].dvfs = dvfs_ctrl
-            self.ndvfs = self.ndvfs + 1
-            cpu_dvfs_id = cpu_dvfs_id + 1
           cpu_id = cpu_id + 1
         if selection == "slm" and self.tiles[t].has_ddr == 0:
           self.tiles[t].type = "slm"
@@ -656,10 +635,6 @@ def print_mapping(fp, soc, esp_config):
   #
   fp.write("  -- Array of design-point or implementation IDs\n")
   fp.write("  type tile_hlscfg_array is array (0 to CFG_TILES_NUM - 1) of hlscfg_t;\n")
-
-  #
-  fp.write("  -- Array of attributes for clock regions\n")
-  fp.write("  type domain_type_array is array (0 to " + str(esp_config.ndomain - 1) + ") of integer;\n")
 
   #
   fp.write("  -- Array of device IDs\n")
@@ -1245,15 +1220,6 @@ def print_mapping(fp, soc, esp_config):
   fp.write("    others => 0);\n\n")
 
   #
-  fp.write("  -- Get DVFS controller pindex from tile ID\n")
-  fp.write("  constant cpu_dvfs_pindex : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
-  for i in range(0, esp_config.ntiles):
-    t = esp_config.tiles[i]
-    if t.type == "cpu" and t.has_pll != 0:
-      fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].dvfs.idx) + ",\n")
-  fp.write("    others => 0);\n\n")
-
-  #
   fp.write("  -- Get L2 cache ID from tile ID\n")
   fp.write("  constant tile_cache_id : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
   for i in range(0, esp_config.ntiles):
@@ -1549,69 +1515,6 @@ def print_mapping(fp, soc, esp_config):
   fp.write("    others => 0);\n\n")
 
   #
-  fp.write("  -- Get number of clock regions (1 if has_dvfs is false)\n")
-  fp.write("  constant domains_num : integer := " + str(esp_config.ndomain)+";\n\n")
-
-  #
-  fp.write("  -- Flag tiles that belong to a DVFS domain\n")
-  fp.write("  constant tile_has_dvfs : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
-  if esp_config.has_dvfs:
-    for i in range(0, esp_config.ntiles):
-      region = esp_config.tiles[i].clk_region
-      has_dvfs = 0
-      if region != 0:
-        has_dvfs = 1
-      fp.write("    " + str(i) + " => " + str(has_dvfs) + ",\n")
-  fp.write("    others => 0);\n\n")
-
-  #
-  fp.write("  -- Flag tiles that are master of a DVFS domain (have a local PLL)\n")
-  fp.write("  constant tile_has_pll : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
-  if esp_config.has_dvfs:
-    for i in range(0, esp_config.ntiles):
-      fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].has_pll) + ",\n")
-  fp.write("    others => 0);\n\n")
-
-  #
-  fp.write("  -- Get clock domain from tile ID\n")
-  fp.write("  constant tile_domain : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
-  if esp_config.has_dvfs:
-    for i in range(0, esp_config.ntiles):
-      fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].clk_region) + ",\n")
-  fp.write("    others => 0);\n\n")
-
-  #
-  fp.write("  -- Get tile ID of the DVFS domain masters for each clock region (these tiles control the corresponding domain)\n")
-  pll_tile = [0 for x in range(esp_config.ntiles)]
-  for i in range(0, esp_config.ntiles):
-    if esp_config.tiles[i].has_pll == 1:
-      pll_tile[esp_config.tiles[i].clk_region] = i
-
-  #
-  fp.write("  -- Get tile ID of the DVFS domain master from the tile clock region\n")
-  fp.write("  constant tile_domain_master : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
-  for i in range(0, esp_config.ntiles):
-    fp.write("    " + str(i) + " => " + str(pll_tile[esp_config.tiles[i].clk_region]) + ",\n")
-  fp.write("    others => 0);\n\n")
-
-  #
-  fp.write("  -- Get tile ID of the DVFS domain master from the clock region ID\n")
-  fp.write("  constant domain_master_tile : domain_type_array := (\n")
-  if esp_config.has_dvfs:
-    for i in range(0, esp_config.ndomain):
-      region = esp_config.regions[i]
-      if region != 0:
-        fp.write("    " + str(region) + " => " + str(pll_tile[region]) + ",\n")
-  fp.write("    others => 0);\n\n")
-
-  #
-  fp.write("  -- Flag domain master tiles w/ additional clock buffer (these are a limited resource on the FPGA)\n")
-  fp.write("  constant extra_clk_buf : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
-  for i in range(0, esp_config.ntiles):
-    fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].has_clkbuf) + ",\n")
-  fp.write("    others => 0);\n\n")
-
-  #
   fp.write("  ---- Get tile ID from I/O-bus index (index 4 is the local DVFS controller to each CPU tile)\n")
   fp.write("  constant apb_tile_id : apb_attribute_array := (\n")
   # 0 - BOOT ROM memory controller
@@ -1646,8 +1549,6 @@ def print_mapping(fp, soc, esp_config):
     # 5-8 - Processors' DVFS controller (must change with NCPU_MAX)
     # 9-12 - Processors' private cache controller (must change with NCPU_MAX)
     if t.type == "cpu":
-      if t.has_pll != 0:
-        fp.write("    " + str(t.dvfs.idx) + " => " + str(i) + ",\n")
       if esp_config.coherence:
         fp.write("    " + str(t.l2.idx) + " => " + str(i) + ",\n")
   fp.write("    others => 0);\n\n")

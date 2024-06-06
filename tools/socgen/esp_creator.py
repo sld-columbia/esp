@@ -22,7 +22,6 @@ from NoCConfiguration import *
 from soc import *
 from socmap_gen import *
 from mmi64_gen import *
-from power_gen import *
 
 def print_usage():
   print("Usage                    : ./esp_creator.py <arch_bits> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
@@ -340,22 +339,13 @@ class EspCreator(Frame):
     self.bottom_frame_noccfg.changed()
     self.generate_socmap()
     self.generate_mmi64_regs()
-    self.generate_power()
     if os.path.isfile(".esp_config.bak") == True:
       shutil.move(".esp_config.bak", ".esp_config")
 
   def generate_socmap(self):
-    try:
-      int(self.bottom_frame_noccfg.vf_points_entry.get())
-    except:
-      return
-    self.soc.noc.vf_points = int(self.bottom_frame_noccfg.vf_points_entry.get())
     self.soc.write_config(self.peripheral_frame.DSU_IP.get(), self.peripheral_frame.DSU_ETH.get())
     esp_config = soc_config(soc)
     create_socmap(esp_config, soc)
- 
-  def generate_power(self):
-      create_power(soc)
 
   def generate_mmi64_regs(self):
       create_mmi64_regs(soc)
@@ -383,11 +373,6 @@ root.geometry("%dx%d+0+0" % (w, h))
 app = EspCreator(root, soc)
 
 def on_closing():
-  try:
-    int(app.bottom_frame_noccfg.vf_points_entry.get())
-  except:
-    return
-  soc.noc.vf_points = int(app.bottom_frame_noccfg.vf_points_entry.get())
   if messagebox.askokcancel("Quit", "Do you want to quit?"):
     soc.write_config(app.peripheral_frame.DSU_IP.get(), app.peripheral_frame.DSU_ETH.get())
     root.destroy()

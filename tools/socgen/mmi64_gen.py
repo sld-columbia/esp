@@ -17,7 +17,7 @@ def create_mmi64_regs(soc):
   num_tiles = soc.noc.rows * soc.noc.cols
   num_cpu = soc.noc.get_cpu_num(soc)
 
-  vf_points = soc.noc.vf_points
+  vf_points = 4 
   directions = 5
   mem_mon_regs = 8
   acc_mon_regs = 5
@@ -108,8 +108,6 @@ def create_mmi64_regs(soc):
     for y in range(soc.noc.cols):
       t = y + x * soc.noc.cols
       tiles[t] = soc.noc.topology[x][y]
-      if tiles[t].has_pll.get() == 1:
-        pll_tile[tiles[t].clk_region.get()] = t
   for x in range(len(tiles)):
     if x > 0:
       fp.write(",\n")
@@ -127,12 +125,9 @@ def create_mmi64_regs(soc):
     fp.write(str(tile_type) + ", ")
     fp.write("{" + str(tiles[x].row) + ", " + str(tiles[x].col) + "}, ")
     fp.write("\"" + selection + "\", ")
-    fp.write(str(tiles[x].has_pll.get()) + ", ")
-    fp.write(str(tiles[x].clk_region.get()) + ", ")
-    if tiles[x].clk_region.get() > 0:
-      fp.write(str(pll_tile[tiles[x].clk_region.get()]))
-    else:
-      fp.write(str(0))
+    fp.write(str(0) + ", ")
+    fp.write(str(0) + ", ")
+    fp.write(str(0))
     fp.write(" }")
   fp.write("\n};\n\n")
 
