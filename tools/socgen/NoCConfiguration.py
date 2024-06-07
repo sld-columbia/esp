@@ -77,7 +77,7 @@ class Tile():
          self.ip_type.set("empty")
 
     try:
-      if soc.IPs.ACCELERATORS.count(selection) and soc.cache_en.get() == 1 and soc.noc.noc_width.get() == soc.ARCH_BITS:
+      if soc.IPs.ACCELERATORS.count(selection) and soc.cache_en.get() == 1 and soc.noc.dma_noc_width.get() == soc.ARCH_BITS:
         self.has_l2_selection.config(state=NORMAL)
       else:
         if soc.IPs.PROCESSORS.count(selection) and soc.cache_en.get() == 1:
@@ -85,7 +85,7 @@ class Tile():
         else:
           self.has_l2.set(0)
         self.has_l2_selection.config(state=DISABLED)
-      if soc.IPs.ACCELERATORS.count(selection):
+      if soc.IPs.ACCELERATORS.count(selection) and (soc.TECH == "asic" or soc.TECH == "inferred"):
         self.has_tdvfs_selection.config(state=NORMAL)
       else:
         self.has_tdvfs_selection.config(state=DISABLED)
