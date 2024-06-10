@@ -37,4 +37,4 @@ TILE_1_2 = 5 acc VITDODEC_STRATUS basic_dma64 0 1 sld
 TILE_2_0 = 6 acc FFT2_STRATUS basic_fx32_dma64 0 1 sld
 TILE_2_1 = 7 acc VITDODEC_STRATUS basic_dma64 0 1 sld
 TILE_2_2 = 8 acc FFT2_STRATUS basic_fx32_dma64 0 1 sld
-#CONFIG_HAS_DVFS is not set
+CONFIG_HAS_DVFS = y
