@@ -37,6 +37,11 @@ then
   mkdir "$TECH_DIR_PATH/mem_wrappers"
 fi
 
+if [ ! -d "$TECH_DIR_PATH/mem_wrappers/tb" ]
+then
+  mkdir "$TECH_DIR_PATH/mem_wrappers/tb"
+fi
+
 if [ ! -d "$TECH_DIR_PATH/pad_wrappers" ]
 then
   mkdir "$TECH_DIR_PATH/pad_wrappers"

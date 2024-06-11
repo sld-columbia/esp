@@ -37,7 +37,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_256x8
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
     D0   : in  std_logic_vector(7 downto 0);
     Q0   : out std_logic_vector(7 downto 0);
@@ -48,7 +48,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_256x16
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
     D0   : in  std_logic_vector(15 downto 0);
     Q0   : out std_logic_vector(15 downto 0);
@@ -59,7 +59,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_256x32
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
     D0   : in  std_logic_vector(31 downto 0);
     Q0   : out std_logic_vector(31 downto 0);
@@ -70,7 +70,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_256x64
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
     D0   : in  std_logic_vector(63 downto 0);
     Q0   : out std_logic_vector(63 downto 0);
@@ -81,7 +81,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_512x8
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
     D0   : in  std_logic_vector(7 downto 0);
     Q0   : out std_logic_vector(7 downto 0);
@@ -92,7 +92,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_512x16
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
     D0   : in  std_logic_vector(15 downto 0);
     Q0   : out std_logic_vector(15 downto 0);
@@ -103,7 +103,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_512x32
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
     D0   : in  std_logic_vector(31 downto 0);
     Q0   : out std_logic_vector(31 downto 0);
@@ -114,7 +114,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_512x64
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
     D0   : in  std_logic_vector(63 downto 0);
     Q0   : out std_logic_vector(63 downto 0);
@@ -125,7 +125,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_1024x8
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
     D0   : in  std_logic_vector(7 downto 0);
     Q0   : out std_logic_vector(7 downto 0);
@@ -136,7 +136,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_1024x16
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
     D0   : in  std_logic_vector(15 downto 0);
     Q0   : out std_logic_vector(15 downto 0);
@@ -147,7 +147,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_1024x32
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
     D0   : in  std_logic_vector(31 downto 0);
     Q0   : out std_logic_vector(31 downto 0);
@@ -158,7 +158,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_1024x64
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
     D0   : in  std_logic_vector(63 downto 0);
     Q0   : out std_logic_vector(63 downto 0);
@@ -169,7 +169,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_2048x8
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(10 downto 0);
     D0   : in  std_logic_vector(7 downto 0);
     Q0   : out std_logic_vector(7 downto 0);
@@ -180,7 +180,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_2048x16
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(10 downto 0);
     D0   : in  std_logic_vector(15 downto 0);
     Q0   : out std_logic_vector(15 downto 0);
@@ -191,7 +191,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_2048x32
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(10 downto 0);
     D0   : in  std_logic_vector(31 downto 0);
     Q0   : out std_logic_vector(31 downto 0);
@@ -202,7 +202,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_2048x64
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(10 downto 0);
     D0   : in  std_logic_vector(63 downto 0);
     Q0   : out std_logic_vector(63 downto 0);
@@ -213,7 +213,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_4096x8
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
     D0   : in  std_logic_vector(7 downto 0);
     Q0   : out std_logic_vector(7 downto 0);
@@ -224,7 +224,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_4096x16
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
     D0   : in  std_logic_vector(15 downto 0);
     Q0   : out std_logic_vector(15 downto 0);
@@ -235,7 +235,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_4096x32
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
     D0   : in  std_logic_vector(31 downto 0);
     Q0   : out std_logic_vector(31 downto 0);
@@ -246,7 +246,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_4096x64
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
     D0   : in  std_logic_vector(63 downto 0);
     Q0   : out std_logic_vector(63 downto 0);
@@ -257,7 +257,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_8192x8
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
     D0   : in  std_logic_vector(7 downto 0);
     Q0   : out std_logic_vector(7 downto 0);
@@ -268,7 +268,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_8192x16
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
     D0   : in  std_logic_vector(15 downto 0);
     Q0   : out std_logic_vector(15 downto 0);
@@ -279,7 +279,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_8192x32
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
     D0   : in  std_logic_vector(31 downto 0);
     Q0   : out std_logic_vector(31 downto 0);
@@ -290,7 +290,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_8192x64
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
     D0   : in  std_logic_vector(63 downto 0);
     Q0   : out std_logic_vector(63 downto 0);
@@ -301,7 +301,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_16384x8
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
     D0   : in  std_logic_vector(7 downto 0);
     Q0   : out std_logic_vector(7 downto 0);
@@ -312,7 +312,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_16384x16
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
     D0   : in  std_logic_vector(15 downto 0);
     Q0   : out std_logic_vector(15 downto 0);
@@ -323,7 +323,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_16384x32
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
     D0   : in  std_logic_vector(31 downto 0);
     Q0   : out std_logic_vector(31 downto 0);
@@ -334,7 +334,7 @@ architecture rtl of asic_syncram is
 
   component IO_SP_16384x64
   port (
-    CLK  : in  std_ulogic;
+    CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
     D0   : in  std_logic_vector(63 downto 0);
     Q0   : out std_logic_vector(63 downto 0);
@@ -382,7 +382,7 @@ begin
     d8 : if dbits = 8 generate
       s : IO_SP_256x8
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(7 downto 0),
           D0   => di(7 downto 0),
           Q0   => do(7 downto 0),
@@ -395,7 +395,7 @@ begin
     d16 : if dbits = 16 generate
       s : IO_SP_256x16
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(7 downto 0),
           D0   => di(15 downto 0),
           Q0   => do(15 downto 0),
@@ -408,7 +408,7 @@ begin
     d32 : if dbits = 32 generate
       s : IO_SP_256x32
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(7 downto 0),
           D0   => di(31 downto 0),
           Q0   => do(31 downto 0),
@@ -421,7 +421,7 @@ begin
     d64 : if dbits = 64 generate
       s : IO_SP_256x64
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(7 downto 0),
           D0   => di(63 downto 0),
           Q0   => do(63 downto 0),
@@ -436,7 +436,7 @@ begin
     d8 : if dbits = 8 generate
       s : IO_SP_512x8
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(8 downto 0),
           D0   => di(7 downto 0),
           Q0   => do(7 downto 0),
@@ -449,7 +449,7 @@ begin
     d16 : if dbits = 16 generate
       s : IO_SP_512x16
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(8 downto 0),
           D0   => di(15 downto 0),
           Q0   => do(15 downto 0),
@@ -462,7 +462,7 @@ begin
     d32 : if dbits = 32 generate
       s : IO_SP_512x32
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(8 downto 0),
           D0   => di(31 downto 0),
           Q0   => do(31 downto 0),
@@ -475,7 +475,7 @@ begin
     d64 : if dbits = 64 generate
       s : IO_SP_512x64
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(8 downto 0),
           D0   => di(63 downto 0),
           Q0   => do(63 downto 0),
@@ -490,7 +490,7 @@ begin
     d8 : if dbits = 8 generate
       s : IO_SP_1024x8
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(9 downto 0),
           D0   => di(7 downto 0),
           Q0   => do(7 downto 0),
@@ -503,7 +503,7 @@ begin
     d16 : if dbits = 16 generate
       s : IO_SP_1024x16
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(9 downto 0),
           D0   => di(15 downto 0),
           Q0   => do(15 downto 0),
@@ -516,7 +516,7 @@ begin
     d32 : if dbits = 32 generate
       s : IO_SP_1024x32
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(9 downto 0),
           D0   => di(31 downto 0),
           Q0   => do(31 downto 0),
@@ -529,7 +529,7 @@ begin
     d64 : if dbits = 64 generate
       s : IO_SP_1024x64
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(9 downto 0),
           D0   => di(63 downto 0),
           Q0   => do(63 downto 0),
@@ -544,7 +544,7 @@ begin
     d8 : if dbits = 8 generate
       s : IO_SP_2048x8
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(10 downto 0),
           D0   => di(7 downto 0),
           Q0   => do(7 downto 0),
@@ -557,7 +557,7 @@ begin
     d16 : if dbits = 16 generate
       s : IO_SP_2048x16
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(10 downto 0),
           D0   => di(15 downto 0),
           Q0   => do(15 downto 0),
@@ -570,7 +570,7 @@ begin
     d32 : if dbits = 32 generate
       s : IO_SP_2048x32
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(10 downto 0),
           D0   => di(31 downto 0),
           Q0   => do(31 downto 0),
@@ -583,7 +583,7 @@ begin
     d64 : if dbits = 64 generate
       s : IO_SP_2048x64
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(10 downto 0),
           D0   => di(63 downto 0),
           Q0   => do(63 downto 0),
@@ -598,7 +598,7 @@ begin
     d8 : if dbits = 8 generate
       s : IO_SP_4096x8
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(11 downto 0),
           D0   => di(7 downto 0),
           Q0   => do(7 downto 0),
@@ -611,7 +611,7 @@ begin
     d16 : if dbits = 16 generate
       s : IO_SP_4096x16
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(11 downto 0),
           D0   => di(15 downto 0),
           Q0   => do(15 downto 0),
@@ -624,7 +624,7 @@ begin
     d32 : if dbits = 32 generate
       s : IO_SP_4096x32
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(11 downto 0),
           D0   => di(31 downto 0),
           Q0   => do(31 downto 0),
@@ -637,7 +637,7 @@ begin
     d64 : if dbits = 64 generate
       s : IO_SP_4096x64
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(11 downto 0),
           D0   => di(63 downto 0),
           Q0   => do(63 downto 0),
@@ -652,7 +652,7 @@ begin
     d8 : if dbits = 8 generate
       s : IO_SP_8192x8
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(12 downto 0),
           D0   => di(7 downto 0),
           Q0   => do(7 downto 0),
@@ -665,7 +665,7 @@ begin
     d16 : if dbits = 16 generate
       s : IO_SP_8192x16
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(12 downto 0),
           D0   => di(15 downto 0),
           Q0   => do(15 downto 0),
@@ -678,7 +678,7 @@ begin
     d32 : if dbits = 32 generate
       s : IO_SP_8192x32
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(12 downto 0),
           D0   => di(31 downto 0),
           Q0   => do(31 downto 0),
@@ -691,7 +691,7 @@ begin
     d64 : if dbits = 64 generate
       s : IO_SP_8192x64
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(12 downto 0),
           D0   => di(63 downto 0),
           Q0   => do(63 downto 0),
@@ -749,7 +749,7 @@ begin
       b8: for b in 0 to 7 generate
         s : IO_SP_2048x8
           port map (
-            CLK  => clk,
+            CLK0 => clk,
             A0   => xa(10 downto 0),
             D0   => di(7 downto 0),
             Q0   => do_int(b),
@@ -762,7 +762,7 @@ begin
     d16 : if dbits = 16 generate
       s : IO_SP_16384x16
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(13 downto 0),
           D0   => di(15 downto 0),
           Q0   => do(15 downto 0),
@@ -775,7 +775,7 @@ begin
     d32 : if dbits = 32 generate
       s : IO_SP_16384x32
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(13 downto 0),
           D0   => di(31 downto 0),
           Q0   => do(31 downto 0),
@@ -788,7 +788,7 @@ begin
     d64 : if dbits = 64 generate
       s : IO_SP_16384x64
         port map (
-          CLK  => clk,
+          CLK0 => clk,
           A0   => xa(13 downto 0),
           D0   => di(63 downto 0),
           Q0   => do(63 downto 0),
