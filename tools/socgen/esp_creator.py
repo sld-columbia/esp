@@ -258,9 +258,9 @@ class AdvancedFrame(Frame):
       Radiobutton(advanced_config_frame, text="", variable=soc.clk_str, value = 2, command=main_frame.update_noc_config).grid(row=3, column=1)
     else:
       Label(advanced_config_frame, text = "Dual external clocks (NoC and Tile)", fg="darkgreen").pack(side = TOP)
-      Label(advanced_config_frame, text = "No multi DCO clocks (CS-GALS)", fg="red").pack(side = TOP)
-      Label(advanced_config_frame, text = "No single DCO clock ", fg="red").pack(side = TOP)
-      soc.clk_str.set(0)
+#      Label(advanced_config_frame, text = "No multi DCO clocks (CS-GALS)", fg="red").pack(side = TOP)
+#      Label(advanced_config_frame, text = "No single DCO clock ", fg="red").pack(side = TOP)
+#      soc.clk_str.set(0)
 
 class EspCreator(Frame):
 
