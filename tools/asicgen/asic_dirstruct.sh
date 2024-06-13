@@ -97,12 +97,12 @@ then
   cp ../../socs/esp_asic_generic/Makefile "$PROJ_DIR_PATH/"
 fi
 
-if [ ! -f "$PROJ_DIR_PATH/esp_asic_defconfig" ]
+if [ ! -f "$PROJ_DIR_PATH/esp_defconfig" ]
 then
   cp ../../socs/esp_asic_generic/esp_defconfig "$PROJ_DIR_PATH/"
 fi
 
-if [ ! -f "$PROJ_DIR_PATH/grlib_asic_defconfig" ]
+if [ ! -f "$PROJ_DIR_PATH/grlib_defconfig" ]
 then
   cp ../../socs/esp_asic_generic/grlib_defconfig "$PROJ_DIR_PATH/"
 fi

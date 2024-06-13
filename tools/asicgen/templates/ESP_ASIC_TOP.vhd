@@ -56,52 +56,52 @@ architecture rtl of ESP_ASIC_TOP is
   type handshake_vec is array (CFG_TILES_NUM-1 downto 0) of std_logic_vector(3 downto 0);
 
   -- NOC Signals
-  signal noc1_data_n_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_s_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_w_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_e_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_n_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_s_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_w_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_e_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc1_data_void_in  : handshake_vec;
   signal noc1_stop_in       : handshake_vec;
-  signal noc1_data_n_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_s_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_w_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_e_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_n_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_s_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_w_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_e_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc1_data_void_out : handshake_vec;
   signal noc1_stop_out      : handshake_vec;
-  signal noc2_data_n_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_s_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_w_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_e_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_n_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_s_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_w_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_e_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc2_data_void_in  : handshake_vec;
   signal noc2_stop_in       : handshake_vec;
-  signal noc2_data_n_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_s_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_w_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_e_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_n_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_s_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_w_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_e_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc2_data_void_out : handshake_vec;
   signal noc2_stop_out      : handshake_vec;
-  signal noc3_data_n_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_s_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_w_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_e_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_n_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_s_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_w_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_e_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc3_data_void_in  : handshake_vec;
   signal noc3_stop_in       : handshake_vec;
-  signal noc3_data_n_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_s_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_w_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_e_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_n_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_s_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_w_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_e_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc3_data_void_out : handshake_vec;
   signal noc3_stop_out      : handshake_vec;
-  signal noc4_data_n_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_s_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_w_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_e_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_n_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_s_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_w_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_e_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc4_data_void_in  : handshake_vec;
   signal noc4_stop_in       : handshake_vec;
-  signal noc4_data_n_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_s_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_w_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_e_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_n_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_s_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_w_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_e_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc4_data_void_out : handshake_vec;
   signal noc4_stop_out      : handshake_vec;
   signal noc5_data_n_in     : misc_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
@@ -116,16 +116,16 @@ architecture rtl of ESP_ASIC_TOP is
   signal noc5_data_e_out    : misc_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc5_data_void_out : handshake_vec;
   signal noc5_stop_out      : handshake_vec;
-  signal noc6_data_n_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_s_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_w_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_e_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_n_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_s_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_w_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_e_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc6_data_void_in  : handshake_vec;
   signal noc6_stop_in       : handshake_vec;
-  signal noc6_data_n_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_s_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_w_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_e_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_n_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_s_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_w_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_e_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc6_data_void_out : handshake_vec;
   signal noc6_stop_out      : handshake_vec;
 
@@ -157,8 +157,8 @@ architecture rtl of ESP_ASIC_TOP is
 
   -- FPGA proxy
   signal fpga_oen            : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-  signal fpga_data_in        : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
-  signal fpga_data_out       : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+  signal fpga_data_in        : std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
+  signal fpga_data_out       : std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
   signal fpga_valid_in_int   : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_valid_out_int  : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_clk_in_int     : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -167,8 +167,8 @@ architecture rtl of ESP_ASIC_TOP is
   signal fpga_credit_out_int : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
 
   -- Use these signals to generate pad configuration
-  signal fpga_oen_int        : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
-  signal fpga_data_pad_cfg   : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) * 20 - 1 downto 0);
+  signal fpga_oen_int        : std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
+  signal fpga_data_pad_cfg   : std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) * 20 - 1 downto 0);
   signal fpga_c_pad_cfg      : std_logic_vector(CFG_NMEM_TILE * 20 - 1 downto 0);
 
   -- I/O Link
@@ -859,8 +859,8 @@ begin
           sys_clk_lock       => '1',
           ext_clk            => sys_clk,
           clk_div            => clk_div_int(i),
-          fpga_data_in       => fpga_data_in((tile_mem_id(i) + 1) * (ARCH_BITS) - 1 downto tile_mem_id(i) * (ARCH_BITS)),
-          fpga_data_out      => fpga_data_out((tile_mem_id(i) + 1) * (ARCH_BITS) - 1 downto tile_mem_id(i) * (ARCH_BITS)),
+          fpga_data_in       => fpga_data_in((tile_mem_id(i) + 1) * (CFG_MEM_LINK_BITS) - 1 downto tile_mem_id(i) * (CFG_MEM_LINK_BITS)),
+          fpga_data_out      => fpga_data_out((tile_mem_id(i) + 1) * (CFG_MEM_LINK_BITS) - 1 downto tile_mem_id(i) * (CFG_MEM_LINK_BITS)),
           fpga_oen           => fpga_oen(tile_mem_id(i)),
           fpga_valid_in      => fpga_valid_in_int(tile_mem_id(i)),
           fpga_valid_out     => fpga_valid_out_int(tile_mem_id(i)),

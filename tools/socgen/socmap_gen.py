@@ -2326,7 +2326,7 @@ def print_asic_top_level(fp_t, fp, soc, esp_config):
     if line.strip() == "-- < FPGA proxy memory link >":
       if esp_config.nmem > 0: 
         fp.write("    -- FPGA proxy memory link\n")
-        fp.write("    fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * ARCH_BITS - 1 downto 0);\n")
+        fp.write("    fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * CFG_MEM_LINK_BITS - 1 downto 0);\n")
         fp.write("    fpga_valid_in   : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
         fp.write("    fpga_valid_out  : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
         fp.write("    fpga_clk_in     : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
@@ -2385,15 +2385,15 @@ def print_asic_top_level(fp_t, fp, soc, esp_config):
         fp.write("    -- JTAG - not used\n")
     elif line.strip() == "-- < Memory link pads >" :
       fp.write("  memory_link_gen : for j in 0 to CFG_NMEM_TILE - 1 generate\n")
-      fp.write("    memory_wires_gen : for i in 0 to ARCH_BITS - 1 generate\n")
-      fp.write("      fpga_oen_int(j * ARCH_BITS + i) <= fpga_oen(j);\n")
-      fp.write("      fpga_data_pad_cfg(j * ARCH_BITS * 20 + (i+1) * 20 -1 downto j * ARCH_BITS * 20 + i * 20) <= full_pad_cfg(mem_tile_id(j));\n")
+      fp.write("    memory_wires_gen : for i in 0 to CFG_MEM_LINK_BITS - 1 generate\n")
+      fp.write("      fpga_oen_int(j * CFG_MEM_LINK_BITS + i) <= fpga_oen(j);\n")
+      fp.write("      fpga_data_pad_cfg(j * CFG_MEM_LINK_BITS * 20 + (i+1) * 20 -1 downto j * CFG_MEM_LINK_BITS * 20 + i * 20) <= full_pad_cfg(mem_tile_id(j));\n")
       fp.write("    end generate memory_wires_gen;\n")
       fp.write("    fpga_c_pad_cfg((j + 1) * 20 - 1 downto j * 20) <= full_pad_cfg(mem_tile_id(j));\n")
       fp.write("  end generate memory_link_gen;\n")
       fp.write("\n")
       if esp_config.nmem > 1:
-        fp.write("  fpga_data_pad : iopadvvv generic map (tech => CFG_FABTECH, loc => fpga_data_pad_loc, level => cmos, voltage => x18v, width => (ARCH_BITS * CFG_NMEM_TILE), oepol => 1)\n")
+        fp.write("  fpga_data_pad : iopadvvv generic map (tech => CFG_FABTECH, loc => fpga_data_pad_loc, level => cmos, voltage => x18v, width => (CFG_MEM_LINK_BITS * CFG_NMEM_TILE), oepol => 1)\n")
         fp.write("    port map (fpga_data, fpga_data_out, fpga_oen_int, fpga_data_in, fpga_data_pad_cfg);\n")
         fp.write("  fpga_valid_in_pad : inpadv generic map (loc => fpga_valid_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => CFG_NMEM_TILE)\n")
         fp.write("    port map (fpga_valid_in, fpga_valid_in_int);\n")
@@ -2408,7 +2408,7 @@ def print_asic_top_level(fp_t, fp, soc, esp_config):
         fp.write("  fpga_credit_out_pad : outpadvvv generic map (loc => fpga_credit_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => CFG_NMEM_TILE)\n")
         fp.write("    port map (fpga_credit_out, fpga_credit_out_int, fpga_c_pad_cfg);\n")
       elif esp_config.nmem == 1:
-        fp.write("  fpga_data_pad : iopadv generic map (tech => CFG_FABTECH, loc => fpga_data_pad_loc, level => cmos, voltage => x18v, width => (ARCH_BITS * CFG_NMEM_TILE), oepol => 1)\n")
+        fp.write("  fpga_data_pad : iopadv generic map (tech => CFG_FABTECH, loc => fpga_data_pad_loc, level => cmos, voltage => x18v, width => (CFG_MEM_LINK_BITS * CFG_NMEM_TILE), oepol => 1)\n")
         fp.write("    port map (fpga_data, fpga_data_out, fpga_oen_int(0), fpga_data_in, fpga_data_pad_cfg(19 downto 0));\n")
         fp.write("  fpga_valid_in_pad : inpad generic map (loc => fpga_valid_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
         fp.write("    port map (fpga_valid_in(0), fpga_valid_in_int(0));\n")
@@ -2532,7 +2532,7 @@ def print_asic_chip_emu(fp_t, fp, soc, esp_config):
     if line.strip() == "-- < Component FPGA proxy memory link >":
       if esp_config.nmem > 0: 
         fp.write("      -- FPGA proxy memory link\n")
-        fp.write("      fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * ARCH_BITS - 1 downto 0);\n")
+        fp.write("      fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * CFG_MEM_LINK_BITS - 1 downto 0);\n")
         fp.write("      fpga_valid_in   : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
         fp.write("      fpga_valid_out  : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
         fp.write("      fpga_clk_in     : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
