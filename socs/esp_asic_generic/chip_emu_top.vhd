@@ -40,7 +40,7 @@ entity chip_emu_top is
     -- Backup external clocks for selected tiles and NoC (unused for emulation)
     ext_clk         : in    std_logic;
     -- FPGA proxy memory link
-    fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
+    fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * CFG_MEM_LINK_BITS - 1 downto 0);
     fpga_valid_in   : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_valid_out  : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_clk_in     : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -100,7 +100,7 @@ architecture rtl of chip_emu_top is
     port (
       reset           : in    std_logic;
       ext_clk         : in    std_logic;
-      fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
+      fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * CFG_MEM_LINK_BITS - 1 downto 0);
       fpga_valid_in   : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
       fpga_valid_out  : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
       fpga_clk_in     : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);

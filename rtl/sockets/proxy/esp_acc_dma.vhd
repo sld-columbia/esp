@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -------------------------------------------------------------------------------
@@ -88,7 +88,7 @@ entity esp_acc_dma is
     rd_size       : in  std_logic_vector(2 downto 0);
     rd_grant      : out std_ulogic;
     bufdin_ready  : in  std_ulogic;
-    bufdin_data   : out std_logic_vector(ARCH_BITS - 1 downto 0);
+    bufdin_data   : out std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
     bufdin_valid  : out std_ulogic;
     wr_request    : in  std_ulogic;
     wr_index      : in  std_logic_vector(31 downto 0);
@@ -96,7 +96,7 @@ entity esp_acc_dma is
     wr_size       : in  std_logic_vector(2 downto 0);
     wr_grant      : out std_ulogic;
     bufdout_ready : out std_ulogic;
-    bufdout_data  : in  std_logic_vector(ARCH_BITS - 1 downto 0);
+    bufdout_data  : in  std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
     bufdout_valid : in  std_ulogic;
     acc_done      : in  std_ulogic;
     flush         : out std_ulogic;
@@ -113,19 +113,19 @@ entity esp_acc_dma is
     coherent_dma_ready   : in  std_ulogic;
     -- NoC6->tile
     llc_coherent_dma_rcv_rdreq          : out std_ulogic;
-    llc_coherent_dma_rcv_data_out       : in  noc_flit_type;
+    llc_coherent_dma_rcv_data_out       : in  dma_noc_flit_type;
     llc_coherent_dma_rcv_empty          : in  std_ulogic;
     -- tile->NoC4
     llc_coherent_dma_snd_wrreq          : out std_ulogic;
-    llc_coherent_dma_snd_data_in        : out noc_flit_type;
+    llc_coherent_dma_snd_data_in        : out dma_noc_flit_type;
     llc_coherent_dma_snd_full           : in  std_ulogic;
     -- NoC4->tile
     dma_rcv_rdreq                       : out std_ulogic;
-    dma_rcv_data_out                    : in  noc_flit_type;
+    dma_rcv_data_out                    : in  dma_noc_flit_type;
     dma_rcv_empty                       : in  std_ulogic;
     -- tile->NoC6
     dma_snd_wrreq                       : out std_ulogic;
-    dma_snd_data_in                     : out noc_flit_type;
+    dma_snd_data_in                     : out dma_noc_flit_type;
     dma_snd_full                        : in  std_ulogic;
     -- tile->NoC5
     interrupt_wrreq                     : out std_ulogic;
@@ -136,58 +136,56 @@ end esp_acc_dma;
 
 architecture rtl of esp_acc_dma is
 
+
+  signal read_length : std_logic_vector(31 downto 0);
+
   -- plug & play info
   signal pconfig : apb_config_type;
   constant hprot : std_logic_vector(7 downto 0) := "00000011";
 
   constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
+  constant WORDS_PER_FLIT : integer := DMA_NOC_WIDTH / ARCH_BITS;
+  constant WPF_BITS : integer := ncpu_log(WORDS_PER_FLIT);
+
+  constant dma_words : integer := DMA_NOC_WIDTH / ARCH_BITS;
+  constant dma_word_bits : integer := ncpu_log(dma_words);
+  constant dma_word_pad : std_logic_vector(dma_word_bits - 1 downto 0) := (others => '0');
 
   -- Fix endianness
   function fix_endian (
-    din : std_logic_vector(ARCH_BITS - 1 downto 0);
+    din : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
     sz  : std_logic_vector(2 downto 0))
   return std_logic_vector is
-    variable dout : std_logic_vector(ARCH_BITS - 1 downto 0);
+    variable dout : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
   begin
     -- If architecture is little endian, then return data as is
-    if GLOB_CPU_AXI = 1 then
+    if GLOB_CPU_RISCV = 1 then
       dout := din;
     else
-      case sz is
+      for j in 0 to (DMA_NOC_WIDTH / ARCH_BITS) - 1 loop
+        case sz is
+          when HSIZE_WORD =>
+            for i in 0 to (ARCH_BITS / 32) - 1 loop
+              dout(32 * (i + 1) - 1 + ARCH_BITS * j downto 32 * i + ARCH_BITS * j) := din(ARCH_BITS - 32 * i - 1 + ARCH_BITS * j downto ARCH_BITS - 32 * (i + 1) + ARCH_BITS * j);
+            end loop;
 
-        when HSIZE_WORD =>
-          for i in 0 to (ARCH_BITS / 32) - 1 loop
-            dout(32 * (i + 1) - 1 downto 32 * i) := din(ARCH_BITS - 32 * i - 1 downto ARCH_BITS - 32 * (i + 1));
-          end loop;
+          when HSIZE_HWORD =>
+            for i in 0 to (ARCH_BITS / 16) - 1 loop
+              dout(16 * (i + 1) - 1 + ARCH_BITS * j downto 16 * i + ARCH_BITS * j) := din(ARCH_BITS - 16 * i - 1 + ARCH_BITS * j downto ARCH_BITS - 16 * (i + 1) + ARCH_BITS * j);
+            end loop;
 
-        when HSIZE_HWORD =>
-          for i in 0 to (ARCH_BITS / 16) - 1 loop
-            dout(16 * (i + 1) - 1 downto 16 * i) := din(ARCH_BITS - 16 * i - 1 downto ARCH_BITS - 16 * (i + 1));
-          end loop;
+          when HSIZE_BYTE =>
+            for i in 0 to (ARCH_BITS / 8) - 1 loop
+              dout(8 * (i + 1) - 1 + ARCH_BITS * j downto 8 * i + ARCH_BITS * j) := din(ARCH_BITS - 8 * i - 1 + ARCH_BITS * j downto ARCH_BITS - 8 * (i + 1) + ARCH_BITS * j);
+            end loop;
 
-        when HSIZE_BYTE =>
-          for i in 0 to (ARCH_BITS / 8) - 1 loop
-            dout(8 * (i + 1) - 1 downto 8 * i) := din(ARCH_BITS - 8 * i - 1 downto ARCH_BITS - 8 * (i + 1));
-          end loop;
-
-        when others =>
-          dout := din;
-
-      end case;
+          when others =>
+            dout(ARCH_BITS * (j + 1) - 1 downto ARCH_BITS * j) := din(ARCH_BITS * (j + 1) - 1 downto ARCH_BITS * j);
+        end case;
+      end loop;
     end if;
     return dout;
   end fix_endian;
-
-  -- Endiannes adapter for big endian 32 bits systems (support up to 64 bits words)
-  signal fixen_bypass            : std_ulogic;
-  signal fixen_bufdin_data       : std_logic_vector(ARCH_BITS - 1 downto 0);
-  signal fixen_bufdin_valid      : std_ulogic;
-  signal fixen_bufdin_ready      : std_ulogic;
-  signal fixen_bufdout_data      : std_logic_vector(ARCH_BITS - 1 downto 0);
-  signal fixen_bufdout_valid     : std_ulogic;
-  signal fixen_bufdout_ready     : std_ulogic;
-  signal fixen_bufdout_ready_act : std_ulogic;
-  signal fixen_out_msg_type      : noc_msg_type;
 
   -- Register bank
   signal bankreg   : bank_type(0 to MAXREGNUM - 1);
@@ -205,11 +203,15 @@ architecture rtl of esp_acc_dma is
   signal p2p_dst_y            : local_yx;
   signal p2p_dst_x            : local_yx;
   signal p2p_req_rcv_rdreq    : std_ulogic;
-  signal p2p_req_rcv_data_out : noc_flit_type;
+  signal p2p_req_rcv_data_out : dma_noc_flit_type;
   signal p2p_req_rcv_empty    : std_ulogic;
   signal p2p_rsp_snd_wrreq    : std_ulogic;
-  signal p2p_rsp_snd_data_in  : noc_flit_type;
+  signal p2p_rsp_snd_data_in  : dma_noc_flit_type;
   signal p2p_rsp_snd_full     : std_ulogic;
+  signal p2p_dst_arr_x        : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
+  signal p2p_dst_arr_y        : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
+  signal count_n_dest         : integer range 0 to MAX_MCAST_DESTS - 1;
+  signal p2p_mcast_ndests     : integer range 0 to MAX_MCAST_DESTS - 1;
 
   -- IRQ
   signal irq      : std_ulogic;
@@ -218,9 +220,9 @@ architecture rtl of esp_acc_dma is
   signal irq_state, irq_next : irq_fsm;
 
   -- NoC flit
-  signal header, header_r                    : noc_flit_type;
-  signal payload_address, payload_address_r  : noc_flit_type;
-  signal payload_length, payload_length_r    : noc_flit_type;
+  signal header, header_r, p2p_header_r      : dma_noc_flit_type;
+  signal payload_address, payload_address_r  : dma_noc_flit_type;
+  signal payload_length, payload_length_r    : dma_noc_flit_type;
   signal sample_flits                        : std_ulogic;
   signal sample_rd_size, sample_wr_size      : std_ulogic;
   signal size_r                              : std_logic_vector(2 downto 0);
@@ -231,28 +233,42 @@ architecture rtl of esp_acc_dma is
   type dma_fsm is (idle, request_header, request_address, request_length,
                    request_data, reply_header, reply_data, config,
                    send_header, rd_handshake, wr_handshake, wait_req_p2p,
-                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request);
+                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request, receive_p2p_length);
   signal acc_rst_next : std_ulogic;
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
   signal sample_status : std_ulogic;
+  -- flags for when producers creates smaller bursts than consumer requests
+  -- to skip the p2p request handshake on the next iteration
+  signal skip_wait_p2p_req, skip_wait_p2p_req_in : std_ulogic;
 
   -- Internal signals muxed to output queues depending on coherence configuration
   signal dma_rcv_rdreq_int    :  std_ulogic;
-  signal dma_rcv_data_out_int :  noc_flit_type;
+  signal dma_rcv_data_out_int :  dma_noc_flit_type;
+  signal tlb_wr_data :  std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
   signal dma_rcv_empty_int    :  std_ulogic;
   signal dma_snd_wrreq_int    :  std_ulogic;
-  signal dma_snd_data_in_int  :  noc_flit_type;
+  signal dma_snd_data_in_int  :  dma_noc_flit_type;
   signal dma_snd_full_int     :  std_ulogic;
 
   -- DMA word count
-  signal count                : std_logic_vector(31 downto 0);
-  signal increment_count      : std_ulogic;
-  signal clear_count          : std_ulogic;
-  signal dma_tran_done        : std_ulogic;
-  signal dma_tran_header_sent : std_ulogic;
-  signal dma_tran_start       : std_ulogic;
-  signal dvfs_transient       : std_ulogic;  -- prevent DMA transaction while DVFS is switching
+  signal burst_count            : std_logic_vector(31 downto 0);
+  signal tlb_count              : std_logic_vector(31 downto 0);
+  signal word_count             : std_logic_vector(31 downto 0);
+  signal increment_burst_count  : std_ulogic;
+  signal increment_tlb_count    : std_ulogic;
+  signal increment_word_count   : std_ulogic;
+  signal clear_burst_count      : std_ulogic;
+  signal clear_tlb_count        : std_ulogic;
+  signal clear_word_count       : std_ulogic;
+  signal set_word_count         : std_ulogic;
+  signal p2p_count              : std_logic_vector(31 downto 0);
+  signal increment_p2p_count    : std_ulogic;
+  signal clear_p2p_count        : std_ulogic;
+  signal dma_tran_done          : std_ulogic;
+  signal dma_tran_header_sent   : std_ulogic;
+  signal dma_tran_start         : std_ulogic;
+  signal dvfs_transient         : std_ulogic;  -- prevent DMA transaction while DVFS is switching
 
   -- TLB
   signal pending_dma_read, pending_dma_write : std_ulogic;
@@ -260,6 +276,7 @@ architecture rtl of esp_acc_dma is
   signal tlb_wr_address : std_logic_vector((log2xx(tlb_entries) -1) downto 0);
   signal dma_address : addr_t;
   signal dma_length : std_logic_vector(31 downto 0);
+  signal rcv_p2p_length,rcv_p2p_length_in : std_logic_vector(31 downto 0);  --not sure if necessary
 
   -- Sample acc_done:
   signal pending_acc_done, clear_acc_done : std_ulogic;
@@ -274,58 +291,82 @@ architecture rtl of esp_acc_dma is
   signal acc_idle : std_ulogic;
   signal mon_dvfs_ctrl : monitor_dvfs_type;
 
+
   -----------------------------------------------------------------------------
   -- De-comment signals you wish to debug
   -----------------------------------------------------------------------------
    attribute mark_debug : string;
-
-   attribute mark_debug of apbi    : signal is "true";
-   attribute mark_debug of apbo    : signal is "true";
-  -- attribute mark_debug of sample    : signal is "true";
-  -- attribute mark_debug of readdata  : signal is "true";
-  -- attribute mark_debug of dvfs_apbo : signal is "true";
-   attribute mark_debug of irq      : signal is "true";
-  -- attribute mark_debug of irqset   : signal is "true";
-   attribute mark_debug of irq_state: signal is "true";
-  -- attribute mark_debug of header                    : signal is "true";
-  -- attribute mark_debug of payload_address: signal is "true";
-  -- attribute mark_debug of payload_length    : signal is "true";
-  -- attribute mark_debug of sample_flits                        : signal is "true";
-   attribute mark_debug of irq_header                : signal is "true";
-   attribute mark_debug of interrupt_full            : signal is "true";
-   attribute mark_debug of interrupt_data_in         : signal is "true";
-   attribute mark_debug of interrupt_wrreq           : signal is "true";
--- attribute mark_debug of dma_state : signal is "true";
-  -- attribute mark_debug of status : signal is "true";
-  -- attribute mark_debug of sample_status : signal is "true";
-  -- attribute mark_debug of count                : signal is "true";
-  -- attribute mark_debug of increment_count      : signal is "true";
-  -- attribute mark_debug of clear_count          : signal is "true";
-  -- attribute mark_debug of dma_tran_done        : signal is "true";
-  -- attribute mark_debug of dma_tran_header_sent : signal is "true";
-  -- attribute mark_debug of dma_tran_start       : signal is "true";
-  -- attribute mark_debug of dvfs_transient       : signal is "true";
-  -- attribute mark_debug of pending_dma_read : signal is "true";
-  -- attribute mark_debug of pending_dma_write : signal is "true";
-  -- attribute mark_debug of tlb_valid : signal is "true";
-  -- attribute mark_debug of tlb_clear : signal is "true";
-  -- attribute mark_debug of tlb_empty : signal is "true";
-  -- attribute mark_debug of tlb_write : signal is "true";
-  -- attribute mark_debug of tlb_wr_address : signal is "true";
-  -- attribute mark_debug of dma_address : signal is "true";
-  -- attribute mark_debug of dma_length : signal is "true";
-  -- attribute mark_debug of pending_acc_done : signal is "true";
-  -- attribute mark_debug of clear_acc_done : signal is "true";
-  -- attribute mark_debug of dma_snd_delay : signal is "true";
-  -- attribute mark_debug of dma_rcv_delay : signal is "true";
-  -- attribute mark_debug of read_burst : signal is "true";
-  -- attribute mark_debug of write_burst : signal is "true";
-  -- attribute mark_debug of noc_delay : signal is "true";
-  -- attribute mark_debug of burst : signal is "true";
-  -- attribute mark_debug of acc_idle : signal is "true";
-  -- attribute mark_debug of mon_dvfs_ctrl : signal is "true";
+   --attribute mark_debug of dma_rcv_rdreq_int    : signal is "true";
+   --attribute mark_debug of dma_rcv_data_out_int : signal is "true";
+   --attribute mark_debug of dma_rcv_empty_int    : signal is "true";
+   --attribute mark_debug of dma_snd_wrreq_int    : signal is "true";
+   --attribute mark_debug of dma_snd_data_in_int  : signal is "true";
+   --attribute mark_debug of dma_snd_full_int     : signal is "true";
+   --attribute mark_debug of apbi    : signal is "true";
+   --attribute mark_debug of apbo    : signal is "true";
+   --attribute mark_debug of sample    : signal is "true";
+   --attribute mark_debug of readdata  : signal is "true";
+   --attribute mark_debug of dvfs_apbo : signal is "true";
+   --attribute mark_debug of irq      : signal is "true";
+   --attribute mark_debug of irqset   : signal is "true";
+   --attribute mark_debug of irq_state: signal is "true";
+   --attribute mark_debug of header                    : signal is "true";
+   --attribute mark_debug of payload_address: signal is "true";
+   --attribute mark_debug of payload_length    : signal is "true";
+   --attribute mark_debug of sample_flits                        : signal is "true";
+   --attribute mark_debug of irq_header                : signal is "true";
+   --attribute mark_debug of interrupt_full            : signal is "true";
+   --attribute mark_debug of interrupt_data_in         : signal is "true";
+   --attribute mark_debug of interrupt_wrreq           : signal is "true";
+   --attribute mark_debug of dma_state : signal is "true";
+   --attribute mark_debug of status : signal is "true";
+   --attribute mark_debug of sample_status : signal is "true";
+   --attribute mark_debug of burst_count                : signal is "true";
+   --attribute mark_debug of increment_burst_count      : signal is "true";
+   --attribute mark_debug of clear_burst_count          : signal is "true";
+   --attribute mark_debug of dma_tran_done        : signal is "true";
+   --attribute mark_debug of dma_tran_header_sent : signal is "true";
+   --attribute mark_debug of dma_tran_start       : signal is "true";
+   --attribute mark_debug of dvfs_transient       : signal is "true";
+   --attribute mark_debug of pending_dma_read : signal is "true";
+   --attribute mark_debug of pending_dma_write : signal is "true";
+   --attribute mark_debug of tlb_valid : signal is "true";
+   --attribute mark_debug of tlb_clear : signal is "true";
+   --attribute mark_debug of tlb_empty : signal is "true";
+   --attribute mark_debug of tlb_write : signal is "true";
+   --attribute mark_debug of tlb_wr_address : signal is "true";
+   --attribute mark_debug of dma_address : signal is "true";
+   --attribute mark_debug of dma_length : signal is "true";
+   --attribute mark_debug of llc_coherent_dma_rcv_rdreq          : signal is "true";
+   --attribute mark_debug of llc_coherent_dma_rcv_data_out       : signal is "true";
+   --attribute mark_debug of llc_coherent_dma_rcv_empty          : signal is "true";
+   --attribute mark_debug of llc_coherent_dma_snd_wrreq          : signal is "true";
+   --attribute mark_debug of llc_coherent_dma_snd_data_in        : signal is "true";
+   --attribute mark_debug of llc_coherent_dma_snd_full           : signal is "true";
+   --attribute mark_debug of dma_rcv_rdreq                       : signal is "true";
+   --attribute mark_debug of dma_rcv_data_out                    : signal is "true";
+   --attribute mark_debug of dma_rcv_empty                       : signal is "true";
+   --attribute mark_debug of dma_snd_wrreq                       : signal is "true";
+   --attribute mark_debug of dma_snd_data_in                     : signal is "true";
+   --attribute mark_debug of dma_snd_full                        : signal is "true";
+   --attribute mark_debug of pending_acc_done : signal is "true";
+   --attribute mark_debug of clear_acc_done : signal is "true";
+   --attribute mark_debug of dma_snd_delay : signal is "true";
+   --attribute mark_debug of dma_rcv_delay : signal is "true";
+   --attribute mark_debug of read_burst : signal is "true";
+   --attribute mark_debug of write_burst : signal is "true";
+   --attribute mark_debug of noc_delay : signal is "true";
+   --attribute mark_debug of burst : signal is "true";
+   --attribute mark_debug of acc_idle : signal is "true";
+   --attribute mark_debug of mon_dvfs_ctrl : signal is "true";
+   --attribute mark_debug of rcv_p2p_length : signal is "true";
+   --attribute mark_debug of rcv_p2p_length_in : signal is "true";
+   --attribute mark_debug of skip_wait_p2p_req : signal is "true";
+   --attribute mark_debug of skip_wait_p2p_req_in : signal is "true";
 
 begin  -- rtl
+
+  read_length <= rd_length;
 
   -----------------------------------------------------------------------------
   -- IRQ packet
@@ -366,10 +407,11 @@ begin  -- rtl
         tlb_valid            => tlb_valid,
         tlb_write            => tlb_write,
         tlb_wr_address       => tlb_wr_address,
-        tlb_datain           => dma_rcv_data_out_int(GLOB_PHYS_ADDR_BITS - 1 downto 0),
+        tlb_datain           => tlb_wr_data,
         dma_address          => dma_address,
         dma_length           => dma_length);
   end generate tlb_gen;
+
 
   no_tlb_gen: if tlb_entries = 0 generate
     -- No DMA transaction can occur
@@ -437,23 +479,29 @@ begin  -- rtl
     end if;
   end process coherence_model_select;
 
-  p2p_dst_y <= get_origin_y(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
-  p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
+  p2p_dst_y <= get_origin_y(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
+  p2p_dst_x <= get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
+  p2p_mcast_ndests <= to_integer(unsigned(bankreg(P2P_REG)(P2P_BIT_MCAST_DESTS + P2P_WIDTH_MCAST_DESTS - 1 downto P2P_BIT_MCAST_DESTS)));
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
-                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x)
+                        p2p_src_index_r, p2p_dst_arr_y, p2p_dst_arr_x, p2p_dst_y, p2p_dst_x,
+                        coherence, local_y, local_x, dma_tran_done)
     variable msg_type : noc_msg_type;
-    variable header_v : noc_flit_type;
+    variable header_v : dma_noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
     variable address : addr_t;
+    variable offset : std_logic_vector(WPF_BITS - 1 downto 0);
     variable length : std_logic_vector(31 downto 0);
+    variable len_tmp : std_logic_vector(31 downto 0);
     variable mem_x, mem_y : local_yx;
     variable is_p2p : std_ulogic;
     variable p2p_src_x, p2p_src_y : local_yx;
-    variable p2p_header_v : noc_flit_type;
+    variable p2p_header_v : dma_noc_flit_type;
   begin  -- process make_packet
 
     is_p2p := '0';
+    len_tmp := (others => '0');
+    offset := (others => '0');
 
     if tlb_empty = '1' then
       -- fetch page table
@@ -464,7 +512,7 @@ begin  -- rtl
       end if;
       tmp(31 downto 0) := bankreg(PT_ADDRESS_REG);
       address := tmp(GLOB_PHYS_ADDR_BITS - 1 downto 0);
-      length  := bankreg(PT_NCHUNK_REG);
+      length := bankreg(PT_NCHUNK_REG);
       if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
         msg_type := REQ_DMA_READ;
       else
@@ -516,14 +564,17 @@ begin  -- rtl
     p2p_src_x := bankreg(P2P_REG)(6 + 6 * p2p_src_index_r downto 4 + 6 * p2p_src_index_r);
 
     if msg_type = REQ_P2P then
-      p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
-      p2p_header_v(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
+      p2p_header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
+      p2p_header_v(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_HEADER;
     else
-      p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, msg_type, hprot);
+      p2p_header_v := create_header_mcast(DMA_NOC_FLIT_SIZE, local_y, local_x,
+                                          p2p_dst_arr_y(MAX_MCAST_DESTS - 2 downto 0),
+                                          p2p_dst_arr_x(MAX_MCAST_DESTS - 2 downto 0),
+                                          p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type);
     end if;
 
     header_v := (others => '0');
-    header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, hprot);
+    header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, hprot);
     if is_p2p = '0' then
       header <= header_v;
     else
@@ -531,35 +582,68 @@ begin  -- rtl
     end if;
 
     payload_address <= (others => '0');
-    payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+    payload_address(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
     payload_address(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= address;
 
     payload_length <= (others => '0');
-    payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+    payload_length(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
     payload_length(31 downto 0) <= length;
 
   end process make_packet;
 
+
   process (clk, rst)
+    variable dma_offset : std_logic_vector(WPF_BITS - 1 downto 0);
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
       header_r <= (others => '0');
+      p2p_header_r <= (others => '0');
       payload_address_r <= (others => '0');
       payload_length_r <= (others => '0');
-      count <= conv_std_logic_vector(1, 32);
+      burst_count <= conv_std_logic_vector(1, 32);
+      p2p_count <= conv_std_logic_vector(1, 32);
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
+      tlb_count <= (others => '0');
+      word_count <= (others => '0');
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_r <= header;
         payload_address_r <= payload_address;
         payload_length_r <= payload_length;
+        -- if msg_type = RSP_P2P and skip_wait_p2p_req = '0' then
+        if skip_wait_p2p_req = '0' then
+          p2p_header_r <= header;
+        end if;
       end if;
-      if increment_count = '1' then
-        count <= count + 1;
+      if increment_burst_count = '1' then
+        burst_count <= burst_count + 1;
       end if;
-      if clear_count = '1' then
-        count <= conv_std_logic_vector(1, 32);
+      if clear_burst_count = '1' then
+        burst_count <= conv_std_logic_vector(1, 32);
+      end if;
+      if increment_tlb_count = '1' then
+        tlb_count <= tlb_count + 1;
+      end if;
+      if clear_tlb_count = '1' then
+        tlb_count <= (others => '0');
+      end if;
+      if increment_word_count = '1' then
+        word_count <= word_count + 1;
+      end if;
+      if clear_word_count = '1' then
+        word_count <= (others => '0');
+      end if;
+      if set_word_count = '1' then
+        dma_offset := payload_address(W_OFF_RANGE_LO + WPF_BITS - 1 downto W_OFF_RANGE_LO);
+        word_count <= (others => '0');
+        word_count(WPF_BITS - 1 downto 0) <= dma_offset;
+      end if;
+      if increment_p2p_count = '1' then
+        p2p_count <= p2p_count + 1;
+      end if;
+      if clear_p2p_count = '1' then
+        p2p_count <= conv_std_logic_vector(1, 32);
       end if;
       if sample_rd_size = '1' then
         size_r <= rd_size;
@@ -582,52 +666,6 @@ begin  -- rtl
     coherent_dma_length <= (others => '0');
     coherent_dma_length(31 downto 0) <= payload_length_r(31 downto 0);
   end process fill_coherent_dma_req;
-
-  -----------------------------------------------------------------------------
-  -- Endianness on narrow NoC
-  -----------------------------------------------------------------------------
-  fixen_bypass <= '1' when size_r /= HSIZE_DWORD else '0';
-
-  fixen_64to32_in: fixen_64to32
-    port map (
-      clk         => clk,
-      rstn        => rst,
-      bypass_i    => fixen_bypass,
-      in_data_i   => fixen_bufdin_data,
-      in_valid_i  => fixen_bufdin_valid,
-      in_ready_o  => fixen_bufdin_ready,
-      out_data_o  => bufdin_data,
-      out_valid_o => bufdin_valid,
-      out_ready_i => bufdin_ready);
-
-  fixen_64to32_ou: fixen_64to32
-    port map (
-      clk         => clk,
-      rstn        => rst,
-      bypass_i    => fixen_bypass,
-      in_data_i   => bufdout_data,
-      in_valid_i  => bufdout_valid,
-      in_ready_o  => bufdout_ready,
-      out_data_o  => fixen_bufdout_data,
-      out_valid_o => fixen_bufdout_valid,
-      out_ready_i => fixen_bufdout_ready_act);
-
-  fixen_out_msg_type <= get_msg_type(NOC_FLIT_SIZE, header_r);
-
-  fixen_bufdout_ready_fix: process (fixen_bufdout_ready, fixen_bypass, fixen_out_msg_type,
-                                    p2p_rsp_snd_full, dma_snd_full_int, dvfs_transient,
-                                    dma_state) is
-  begin  -- process fixen_bufdout_ready_fix
-    if ARCH_BITS /= 32 or GLOB_CPU_AXI /= 0 or fixen_bypass = '1' then
-      fixen_bufdout_ready_act <= fixen_bufdout_ready;
-    elsif (dvfs_transient = '0' and dma_state = request_data and
-           ((fixen_out_msg_type  = RSP_P2P and p2p_rsp_snd_full = '0') or
-            (fixen_out_msg_type /= RSP_P2P and dma_snd_full_int = '0'))) then
-      fixen_bufdout_ready_act <= '1';
-    else
-      fixen_bufdout_ready_act <= '0';
-    end if;
-  end process fixen_bufdout_ready_fix;
 
   -----------------------------------------------------------------------------
   -- DMA
@@ -653,32 +691,44 @@ begin  -- rtl
     end if;
   end process sample_acc_done;
 
-  dma_roundtrip: process (dma_state, rst, count, rd_request, fixen_bufdin_ready,
-                          wr_request, fixen_bufdout_valid, fixen_bufdout_data, bankreg,
+  dma_roundtrip: process (dma_state, rst, burst_count, p2p_count, word_count, tlb_count, rd_request, bufdin_ready,
+                          wr_request, bufdout_valid, bufdout_data, bankreg,
                           pending_acc_done, dma_snd_full_int, dma_rcv_empty_int, dma_rcv_data_out_int,
                           header_r, payload_address_r, payload_length_r,
                           dma_tran_start, tlb_empty, pending_dma_write,
                           pending_dma_read, coherent_dma_ready, dvfs_transient,
-                          size_r, coherence,
-                          p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full, acc_flush_done)
-    variable payload_data : noc_flit_type;
+                          size_r, coherence, p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full,
+                          acc_flush_done, read_length, rcv_p2p_length, skip_wait_p2p_req, p2p_header_r)
+    variable payload_data : dma_noc_flit_type;
     variable preamble : noc_preamble_type;
     variable msg : noc_msg_type;
     variable len : std_logic_vector(31 downto 0);
     variable tlb_wr_address_next : std_logic_vector(31 downto 0);
+    variable word_count_int : integer;
+    variable continue_p2p : std_ulogic;
+    variable p2p_length_v : std_logic_vector(31 downto 0);
   begin  -- process dma_roundtrip
 
     dma_next <= dma_state;
     sample_flits <= '0';
     sample_rd_size <= '0';
     sample_wr_size <= '0';
-    increment_count <= '0';
-    clear_count <= '0';
+    increment_burst_count <= '0';
+    clear_burst_count <= '0';
+    increment_tlb_count <= '0';
+    increment_word_count <= '0';
+    clear_tlb_count <= '0';
+    clear_word_count <= '0';
+    set_word_count <= '0';
+    word_count_int := to_integer(unsigned(word_count));
+    increment_p2p_count <= '0';
+    clear_p2p_count <= '0';
     --TLB
-    tlb_wr_address_next := count - 1;
+    tlb_wr_address_next := tlb_count;
     tlb_wr_address <= tlb_wr_address_next(log2xx(tlb_entries) - 1 downto 0);
     tlb_write <= '0';
     tlb_valid <= '0';
+    tlb_wr_data <= (others => '0');
 
     -- Change DMA status
     status <= (others => '0');
@@ -696,16 +746,24 @@ begin  -- rtl
 
     p2p_src_index_inc <= '0';
 
-    preamble := get_preamble(NOC_FLIT_SIZE, dma_rcv_data_out_int);
-    msg := get_msg_type(NOC_FLIT_SIZE, header_r);
-    len := payload_length_r(31 downto 0);
-    if count /= len then
-      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
+    continue_p2p := skip_wait_p2p_req;
+    p2p_length_v := rcv_p2p_length;
+
+    preamble := get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out_int);
+    msg := get_msg_type(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & header_r);
+    if DMA_NOC_WIDTH > ARCH_BITS then
+      len := dma_word_pad & payload_length_r(31 downto dma_word_bits);
     else
-      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+      len := payload_length_r(31 downto 0);
     end if;
-    -- Note that NOC_FLIT_SIZE os ARCH_BITS + PREAMBLE_WIDTH
-    payload_data(ARCH_BITS - 1 downto 0) := fix_endian(fixen_bufdout_data, size_r);
+    if burst_count = len or burst_count = rcv_p2p_length then
+      payload_data(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+    else
+      payload_data(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
+    end if;
+
+    -- Note that DMA_NOC_FLIT_SIZE os DMA_NOC_WIDTH + PREAMBLE_WIDTH
+    payload_data(DMA_NOC_WIDTH - 1 downto 0) := fix_endian(bufdout_data, size_r);
 
     -- Default private cache inputs
     coherent_dma_read  <= '0';
@@ -715,10 +773,10 @@ begin  -- rtl
     acc_rst_next <= rst;
     conf_done <= '0';
     rd_grant <= '0';
-    fixen_bufdin_data <= fix_endian(dma_rcv_data_out_int(ARCH_BITS - 1 downto 0), size_r);
-    fixen_bufdin_valid <= '0';
+    bufdin_data <= fix_endian(dma_rcv_data_out_int(DMA_NOC_WIDTH - 1 downto 0), size_r);
+    bufdin_valid <= '0';
     wr_grant <= '0';
-    fixen_bufdout_ready <= '0';
+    bufdout_ready <= '0';
 
     clear_acc_done <= '0';
     flush <= '0';
@@ -737,9 +795,13 @@ begin  -- rtl
         -- check could be done in hardware with multiple flags.
         -- There is no need to check the status register, because whenever the
         -- FSM returns to idle, the status register is set to zero.
+        continue_p2p :='0';
         clear_acc_done <= '1';
         if bankreg(CMD_REG)(CMD_BIT_START) = '1' and tlb_empty = '1' and scatter_gather /= 0 then
           sample_flits <= '1';
+          if DMA_NOC_WIDTH > ARCH_BITS and (coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL) then
+            set_word_count <= '1';
+          end if;
           if coherence /= ACC_COH_FULL then
             dma_next <= send_header;
           else
@@ -902,10 +964,29 @@ begin  -- rtl
 
       when wait_req_p2p =>
         burst <= '1';
-        if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
-          p2p_req_rcv_rdreq <= '1';
-          sample_flits <= '1';
+        -- if the consumer has requested more data than the last burst produced,
+        -- we skip the wait_req_p2p state and continue sending the next burst
+        if skip_wait_p2p_req = '1' then
           dma_next <= send_header;
+        elsif p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
+          p2p_req_rcv_rdreq <= '1';
+          if count_n_dest = p2p_mcast_ndests then
+              sample_flits <= '1';
+          end if;
+          dma_next <= receive_p2p_length;
+        end if;
+
+      when receive_p2p_length =>
+        burst <= '1';
+        if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
+          p2p_length_v := p2p_req_rcv_data_out(31 downto 0);
+          p2p_rsp_snd_data_in <= header_r;
+          p2p_req_rcv_rdreq <= '1';
+          if count_n_dest = p2p_mcast_ndests then
+            dma_next <= send_header;
+          else
+            dma_next <= wait_req_p2p;
+          end if;
         end if;
 
       when send_header =>
@@ -915,13 +996,20 @@ begin  -- rtl
           dma_snd_wrreq_int <= '1';
           dma_tran_header_sent <= '1';
           if msg = REQ_P2P then
-            dma_next <= reply_header;
             p2p_src_index_inc <= '1';
+            dma_snd_data_in_int(64) <= '0';
+            dma_next <= request_length;
           else
             dma_next <= request_address;
           end if;
         elsif p2p_rsp_snd_full = '0' and dvfs_transient = '0' and msg = RSP_P2P then
-          p2p_rsp_snd_data_in <= header_r;
+          --in the case the consumer requested more data than the last burst,
+          --we don't need to sample a new header, and can send the same p2p_header
+          if skip_wait_p2p_req = '1'  then
+            p2p_rsp_snd_data_in <= p2p_header_r;
+          else
+            p2p_rsp_snd_data_in <= header_r;
+          end if;
           p2p_rsp_snd_wrreq <= '1';
           dma_tran_header_sent <= '1';
           dma_next <= request_data;
@@ -946,7 +1034,7 @@ begin  -- rtl
           dma_snd_wrreq_int <= '1';
           if msg = DMA_FROM_DEV then
             -- In case of a write, length is not the tail!
-            dma_snd_data_in_int(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+            dma_snd_data_in_int(DMA_NOC_FLIT_SIZE - 1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
             dma_next <= request_data;
           else
             dma_next <= reply_header;
@@ -964,8 +1052,8 @@ begin  -- rtl
             ((msg = RSP_P2P and p2p_rsp_snd_full = '0') or
              (msg /= RSP_P2P and dma_snd_full_int = '0'))) then
           write_burst <= '1';
-          fixen_bufdout_ready <= '1';
-          if fixen_bufdout_valid = '1' then
+          bufdout_ready <= '1';
+          if bufdout_valid = '1' then
             if msg = RSP_P2P  then
               p2p_rsp_snd_data_in <= payload_data;
               p2p_rsp_snd_wrreq <= '1';
@@ -973,12 +1061,37 @@ begin  -- rtl
               dma_snd_data_in_int <= payload_data;
               dma_snd_wrreq_int <= '1';
             end if;
-            if count = len then
-              clear_count <= '1';
+
+            -- local accelerator has finished its write burst
+            if burst_count = len then
+              if p2p_count < rcv_p2p_length then
+                -- burst length is less than what consumer accelerator requested
+                continue_p2p := '1';
+              else
+                -- burst length matches what consumer accelerator requested
+                continue_p2p := '0';
+                clear_p2p_count <= '1';
+              end if;
+              clear_burst_count <= '1';
               dma_tran_done <= '1';
               dma_next <= running;
+            -- the amount request by the consumer has been sent, but the accelerator burst is not complete
+            elsif burst_count > conv_std_logic_vector(0, 32) and burst_count = rcv_p2p_length then
+              continue_p2p := '0';
+              if (p2p_count = len) then
+                --if burst completes, go back to idle
+                dma_next <= running;
+                dma_tran_done <='1';
+                clear_p2p_count <='1';
+              else
+                --otherwise wait for another request from the consumer
+                increment_p2p_count <= '1';
+                dma_next <= wait_req_p2p;
+              end if;
+              clear_burst_count <= '1';
             else
-              increment_count <= '1';
+              increment_burst_count <= '1';
+              increment_p2p_count <= '1';
             end if;
           end if;
         end if;
@@ -995,22 +1108,38 @@ begin  -- rtl
         burst <= '1';
         dma_rcv_delay <= dma_rcv_empty_int;       -- for DVFS TRAFFIC policy
         if dma_rcv_empty_int = '0' and tlb_empty = '1' and dvfs_transient = '0' then
-          dma_rcv_rdreq_int <= '1';
           tlb_write <= '1';
-          increment_count <= '1';
-          if preamble = PREAMBLE_TAIL then
-            clear_count <= '1';
-            tlb_valid <= '1';
-            dma_next <= idle;
+          increment_word_count <= '1';
+          increment_tlb_count <= '1';
+          tlb_wr_data <= dma_rcv_data_out_int(word_count_int * ARCH_BITS + GLOB_PHYS_ADDR_BITS - 1 downto word_count_int * ARCH_BITS);
+          if word_count_int = WORDS_PER_FLIT - 1 or tlb_count = bankreg(PT_NCHUNK_REG) - 1 then
+            dma_rcv_rdreq_int <= '1';
+            increment_burst_count <= '1';
+            clear_word_count <= '1';
+            if preamble = PREAMBLE_TAIL and tlb_count = bankreg(PT_NCHUNK_REG) - 1 then
+              clear_burst_count <= '1';
+              clear_p2p_count <= '1';
+              clear_tlb_count <= '1';
+              tlb_valid <= '1';
+              dma_next <= idle;
+            end if;
           end if;
         elsif dma_rcv_empty_int = '0' and dvfs_transient = '0' then
-          fixen_bufdin_valid <= '1';
+          bufdin_valid <= '1';
           read_burst <= '1';
-          if fixen_bufdin_ready = '1' then
+          if bufdin_ready = '1' then
             dma_rcv_rdreq_int <= '1';
+            increment_burst_count <= '1';
             if preamble = PREAMBLE_TAIL then
-              dma_tran_done <= '1';
-              dma_next <= running;
+              --if producer sends less data than requested, then wait for another header
+              if msg = REQ_P2P and (burst_count < read_length - 1) then
+                  dma_next <= reply_header;
+              else
+                dma_tran_done <= '1';
+                dma_next <= running;
+                clear_burst_count <= '1';
+                clear_p2p_count <= '1';
+              end if;
             end if;
           end if;
         end if;
@@ -1019,6 +1148,10 @@ begin  -- rtl
         dma_next <= idle;
 
     end case;
+
+    skip_wait_p2p_req_in <= continue_p2p;
+    rcv_p2p_length_in <= p2p_length_v;
+
   end process dma_roundtrip;
 
   -- Interrupt over NoC
@@ -1055,9 +1188,41 @@ begin  -- rtl
     if rst = '0' then                   -- asynchronous reset (active low)
       dma_state <= idle;
       irq_state <= idle;
+      skip_wait_p2p_req <= '0';
+      rcv_p2p_length <= (others => '0');
     elsif clk'event and clk = '1' then  -- rising clock edge
       dma_state <= dma_next;
       irq_state <= irq_next;
+      skip_wait_p2p_req <= skip_wait_p2p_req_in;
+      rcv_p2p_length <= rcv_p2p_length_in;
+    end if;
+  end process;
+
+  process (clk, rst)
+  begin  -- process
+    if rst = '0' then                   -- asynchronous reset (active low)
+      count_n_dest <= 0;
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      if dma_state = receive_p2p_length then
+        if count_n_dest = p2p_mcast_ndests and p2p_req_rcv_empty = '0' then
+          count_n_dest <= 0;
+        elsif p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
+          count_n_dest <= count_n_dest + 1;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  dest_arr_mod : process (clk, rst, dma_state, p2p_req_rcv_rdreq, p2p_dst_x, p2p_dst_y)
+  begin
+  if rst = '0' then                   -- asynchronous reset (active low)
+      p2p_dst_arr_x <= (others => (others => '0'));
+      p2p_dst_arr_y <= (others => (others => '0'));
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      if dma_state = wait_req_p2p and p2p_req_rcv_rdreq = '1' then
+        p2p_dst_arr_x(count_n_dest) <= p2p_dst_x;
+        p2p_dst_arr_y(count_n_dest) <= p2p_dst_y;
+      end if;
     end if;
   end process;
 

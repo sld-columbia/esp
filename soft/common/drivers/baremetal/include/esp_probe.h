@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023 Columbia University, System Level Design Group
+ * Copyright (c) 2011-2024 Columbia University, System Level Design Group
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -107,5 +107,6 @@ void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsr
 #define esp_p2p_set_nsrcs(_dev, _n) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | (P2P_MASK_NSRCS & (_n - 1)))
 #define esp_p2p_set_y(_dev, _n, _y) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)))
 #define esp_p2p_set_x(_dev, _n, _x) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)))
+#define esp_p2p_set_mcast_ndests(_dev, _n) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_MCAST_NDESTS & (_n - 1)) << P2P_SHIFT_MCAST_NDESTS))
 
 #endif /* __ESP_PROBE_H__ */

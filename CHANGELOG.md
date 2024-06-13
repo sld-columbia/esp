@@ -7,6 +7,47 @@ Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Calendar Versioning](https://calver.org/) with format
 `YYYY.MINOR.MICRO`.
 
+## [2024.1.0]
+
+### Added
+
+- **Architecture**
+  - Configurable NoC width for DMA and coherence planes (#215)
+  - Configurable cache line size (#215)
+
+- **ASIC Design**
+  - New memory integration flow for ASIC techonologies (#196)
+
+- **Accelerators**
+  - Catapult SystemC Flow
+    - _MAC_ example accelerator
+  - Catapult C++ Flow
+    - 3-in-1 _Cryptography_ accelerator with SHA1, SHA2, and AES engines
+
+- **Infrastructure**
+  - Support for proFPGA xcvu19p board
+  - Python utility for preloading simulation memory
+  - Script for selectively installing submodules
+
+### Improved
+- **Architecture**
+  - SystemVerilog implementation of NoC router (#194)
+  - IOLink: make width flexible, fix warnings, and automatically generate required text files for simulation
+
+- **Infrastructure**
+  - ESPLink: timeout and retry transactions in case of dropped packets
+  - Move to Vivado version 2023.2
+  - Move to proFPGA tools version 2021A
+
+- **Software**
+  - Updates to ESP Monitors API
+
+### Fixed
+
+- **Architecture**
+  - Robust SSH/SCP to designs with the Ariane core and caches enabled
+  - P2P accelerator communication with LLC-coherent and coherent DMA selected
+
 ## [2023.1.0]
 
 ### Added

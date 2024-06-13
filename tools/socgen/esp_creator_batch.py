@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ###############################################################################
@@ -19,10 +19,10 @@ from mmi64_gen import *
 from power_gen import *
 
 def print_usage():
-  print("Usage                    : ./esp_creator_batch.py <dma_width> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
+  print("Usage                    : ./esp_creator_batch.py <arch_bits> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
   print("")
   print("")
-  print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
+  print("      <arch_bits>        : Word size for CPU architecture (32 for Leon3/Ibex, 64 for Ariane)")
   print("      <tech_type>        : Technology type (fpga or asic)")
   print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
   print("      <linux_mac>        : MAC Address for Linux network interface")
@@ -36,7 +36,7 @@ if len(sys.argv) != 9:
     print_usage()
     sys.exit(1)
 
-DMA_WIDTH = int(sys.argv[1])
+ARCH_BITS = int(sys.argv[1])
 TECH_TYPE = sys.argv[2]
 TECH = sys.argv[3]
 LINUX_MAC = sys.argv[4]
@@ -46,7 +46,7 @@ EMU_TECH = sys.argv[7]
 EMU_FREQ = sys.argv[8]
 
 root = Tk()
-soc = SoC_Config(DMA_WIDTH, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, False)
+soc = SoC_Config(ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, False)
 
 esp_config = soc_config(soc)
 create_socmap(esp_config, soc)

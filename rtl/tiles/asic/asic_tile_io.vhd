@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
@@ -91,52 +91,52 @@ entity asic_tile_io is
     -- Pad configuratio
     pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
-    noc1_data_n_in     : in    noc_flit_type;
-    noc1_data_s_in     : in    noc_flit_type;
-    noc1_data_w_in     : in    noc_flit_type;
-    noc1_data_e_in     : in    noc_flit_type;
+    noc1_data_n_in     : in    coh_noc_flit_type;
+    noc1_data_s_in     : in    coh_noc_flit_type;
+    noc1_data_w_in     : in    coh_noc_flit_type;
+    noc1_data_e_in     : in    coh_noc_flit_type;
     noc1_data_void_in  : in    std_logic_vector(3 downto 0);
     noc1_stop_in       : in    std_logic_vector(3 downto 0);
-    noc1_data_n_out    : out   noc_flit_type;
-    noc1_data_s_out    : out   noc_flit_type;
-    noc1_data_w_out    : out   noc_flit_type;
-    noc1_data_e_out    : out   noc_flit_type;
+    noc1_data_n_out    : out   coh_noc_flit_type;
+    noc1_data_s_out    : out   coh_noc_flit_type;
+    noc1_data_w_out    : out   coh_noc_flit_type;
+    noc1_data_e_out    : out   coh_noc_flit_type;
     noc1_data_void_out : out   std_logic_vector(3 downto 0);
     noc1_stop_out      : out   std_logic_vector(3 downto 0);
-    noc2_data_n_in     : in    noc_flit_type;
-    noc2_data_s_in     : in    noc_flit_type;
-    noc2_data_w_in     : in    noc_flit_type;
-    noc2_data_e_in     : in    noc_flit_type;
+    noc2_data_n_in     : in    coh_noc_flit_type;
+    noc2_data_s_in     : in    coh_noc_flit_type;
+    noc2_data_w_in     : in    coh_noc_flit_type;
+    noc2_data_e_in     : in    coh_noc_flit_type;
     noc2_data_void_in  : in    std_logic_vector(3 downto 0);
     noc2_stop_in       : in    std_logic_vector(3 downto 0);
-    noc2_data_n_out    : out   noc_flit_type;
-    noc2_data_s_out    : out   noc_flit_type;
-    noc2_data_w_out    : out   noc_flit_type;
-    noc2_data_e_out    : out   noc_flit_type;
+    noc2_data_n_out    : out   coh_noc_flit_type;
+    noc2_data_s_out    : out   coh_noc_flit_type;
+    noc2_data_w_out    : out   coh_noc_flit_type;
+    noc2_data_e_out    : out   coh_noc_flit_type;
     noc2_data_void_out : out   std_logic_vector(3 downto 0);
     noc2_stop_out      : out   std_logic_vector(3 downto 0);
-    noc3_data_n_in     : in    noc_flit_type;
-    noc3_data_s_in     : in    noc_flit_type;
-    noc3_data_w_in     : in    noc_flit_type;
-    noc3_data_e_in     : in    noc_flit_type;
+    noc3_data_n_in     : in    coh_noc_flit_type;
+    noc3_data_s_in     : in    coh_noc_flit_type;
+    noc3_data_w_in     : in    coh_noc_flit_type;
+    noc3_data_e_in     : in    coh_noc_flit_type;
     noc3_data_void_in  : in    std_logic_vector(3 downto 0);
     noc3_stop_in       : in    std_logic_vector(3 downto 0);
-    noc3_data_n_out    : out   noc_flit_type;
-    noc3_data_s_out    : out   noc_flit_type;
-    noc3_data_w_out    : out   noc_flit_type;
-    noc3_data_e_out    : out   noc_flit_type;
+    noc3_data_n_out    : out   coh_noc_flit_type;
+    noc3_data_s_out    : out   coh_noc_flit_type;
+    noc3_data_w_out    : out   coh_noc_flit_type;
+    noc3_data_e_out    : out   coh_noc_flit_type;
     noc3_data_void_out : out   std_logic_vector(3 downto 0);
     noc3_stop_out      : out   std_logic_vector(3 downto 0);
-    noc4_data_n_in     : in    noc_flit_type;
-    noc4_data_s_in     : in    noc_flit_type;
-    noc4_data_w_in     : in    noc_flit_type;
-    noc4_data_e_in     : in    noc_flit_type;
+    noc4_data_n_in     : in    dma_noc_flit_type;
+    noc4_data_s_in     : in    dma_noc_flit_type;
+    noc4_data_w_in     : in    dma_noc_flit_type;
+    noc4_data_e_in     : in    dma_noc_flit_type;
     noc4_data_void_in  : in    std_logic_vector(3 downto 0);
     noc4_stop_in       : in    std_logic_vector(3 downto 0);
-    noc4_data_n_out    : out   noc_flit_type;
-    noc4_data_s_out    : out   noc_flit_type;
-    noc4_data_w_out    : out   noc_flit_type;
-    noc4_data_e_out    : out   noc_flit_type;
+    noc4_data_n_out    : out   dma_noc_flit_type;
+    noc4_data_s_out    : out   dma_noc_flit_type;
+    noc4_data_w_out    : out   dma_noc_flit_type;
+    noc4_data_e_out    : out   dma_noc_flit_type;
     noc4_data_void_out : out   std_logic_vector(3 downto 0);
     noc4_stop_out      : out   std_logic_vector(3 downto 0);
     noc5_data_n_in     : in    misc_noc_flit_type;
@@ -151,16 +151,16 @@ entity asic_tile_io is
     noc5_data_e_out    : out   misc_noc_flit_type;
     noc5_data_void_out : out   std_logic_vector(3 downto 0);
     noc5_stop_out      : out   std_logic_vector(3 downto 0);
-    noc6_data_n_in     : in    noc_flit_type;
-    noc6_data_s_in     : in    noc_flit_type;
-    noc6_data_w_in     : in    noc_flit_type;
-    noc6_data_e_in     : in    noc_flit_type;
+    noc6_data_n_in     : in    dma_noc_flit_type;
+    noc6_data_s_in     : in    dma_noc_flit_type;
+    noc6_data_w_in     : in    dma_noc_flit_type;
+    noc6_data_e_in     : in    dma_noc_flit_type;
     noc6_data_void_in  : in    std_logic_vector(3 downto 0);
     noc6_stop_in       : in    std_logic_vector(3 downto 0);
-    noc6_data_n_out    : out   noc_flit_type;
-    noc6_data_s_out    : out   noc_flit_type;
-    noc6_data_w_out    : out   noc_flit_type;
-    noc6_data_e_out    : out   noc_flit_type;
+    noc6_data_n_out    : out   dma_noc_flit_type;
+    noc6_data_s_out    : out   dma_noc_flit_type;
+    noc6_data_w_out    : out   dma_noc_flit_type;
+    noc6_data_e_out    : out   dma_noc_flit_type;
     noc6_data_void_out : out   std_logic_vector(3 downto 0);
     noc6_stop_out      : out   std_logic_vector(3 downto 0)
     );
@@ -221,40 +221,40 @@ architecture rtl of asic_tile_io is
 
   -- JTAG signals
   signal test_rstn             : std_ulogic;
-  signal test1_output_port_s   : noc_flit_type;
+  signal test1_output_port_s   : coh_noc_flit_type;
   signal test1_data_void_out_s : std_ulogic;
   signal test1_stop_in_s       : std_ulogic;
-  signal test2_output_port_s   : noc_flit_type;
+  signal test2_output_port_s   : coh_noc_flit_type;
   signal test2_data_void_out_s : std_ulogic;
   signal test2_stop_in_s       : std_ulogic;
-  signal test3_output_port_s   : noc_flit_type;
+  signal test3_output_port_s   : coh_noc_flit_type;
   signal test3_data_void_out_s : std_ulogic;
   signal test3_stop_in_s       : std_ulogic;
-  signal test4_output_port_s   : noc_flit_type;
+  signal test4_output_port_s   : dma_noc_flit_type;
   signal test4_data_void_out_s : std_ulogic;
   signal test4_stop_in_s       : std_ulogic;
   signal test5_output_port_s   : misc_noc_flit_type;
   signal test5_data_void_out_s : std_ulogic;
   signal test5_stop_in_s       : std_ulogic;
-  signal test6_output_port_s   : noc_flit_type;
+  signal test6_output_port_s   : dma_noc_flit_type;
   signal test6_data_void_out_s : std_ulogic;
   signal test6_stop_in_s       : std_ulogic;
-  signal test1_input_port_s    : noc_flit_type;
+  signal test1_input_port_s    : coh_noc_flit_type;
   signal test1_data_void_in_s  : std_ulogic;
   signal test1_stop_out_s      : std_ulogic;
-  signal test2_input_port_s    : noc_flit_type;
+  signal test2_input_port_s    : coh_noc_flit_type;
   signal test2_data_void_in_s  : std_ulogic;
   signal test2_stop_out_s      : std_ulogic;
-  signal test3_input_port_s    : noc_flit_type;
+  signal test3_input_port_s    : coh_noc_flit_type;
   signal test3_data_void_in_s  : std_ulogic;
   signal test3_stop_out_s      : std_ulogic;
-  signal test4_input_port_s    : noc_flit_type;
+  signal test4_input_port_s    : dma_noc_flit_type;
   signal test4_data_void_in_s  : std_ulogic;
   signal test4_stop_out_s      : std_ulogic;
   signal test5_input_port_s    : misc_noc_flit_type;
   signal test5_data_void_in_s  : std_ulogic;
   signal test5_stop_out_s      : std_ulogic;
-  signal test6_input_port_s    : noc_flit_type;
+  signal test6_input_port_s    : dma_noc_flit_type;
   signal test6_data_void_in_s  : std_ulogic;
   signal test6_stop_out_s      : std_ulogic;
 
@@ -317,18 +317,18 @@ architecture rtl of asic_tile_io is
   signal noc6_data_void_out_s   : std_logic_vector(4 downto 0);
   signal noc6_io_data_void_in  : std_ulogic;
   signal noc6_io_data_void_out : std_ulogic;
-  signal noc1_input_port        : noc_flit_type;
-  signal noc2_input_port        : noc_flit_type;
-  signal noc3_input_port        : noc_flit_type;
-  signal noc4_input_port        : noc_flit_type;
+  signal noc1_input_port        : coh_noc_flit_type;
+  signal noc2_input_port        : coh_noc_flit_type;
+  signal noc3_input_port        : coh_noc_flit_type;
+  signal noc4_input_port        : dma_noc_flit_type;
   signal noc5_input_port        : misc_noc_flit_type;
-  signal noc6_input_port        : noc_flit_type;
-  signal noc1_output_port       : noc_flit_type;
-  signal noc2_output_port       : noc_flit_type;
-  signal noc3_output_port       : noc_flit_type;
-  signal noc4_output_port       : noc_flit_type;
+  signal noc6_input_port        : dma_noc_flit_type;
+  signal noc1_output_port       : coh_noc_flit_type;
+  signal noc2_output_port       : coh_noc_flit_type;
+  signal noc3_output_port       : coh_noc_flit_type;
+  signal noc4_output_port       : dma_noc_flit_type;
   signal noc5_output_port       : misc_noc_flit_type;
-  signal noc6_output_port       : noc_flit_type;
+  signal noc6_output_port       : dma_noc_flit_type;
 
   --attribute keep              : string;
   attribute keep of noc1_io_stop_in       : signal is "true";
@@ -721,7 +721,7 @@ begin
         paddr       => 16#800#,
         pmask       => 16#f00#,
         pirq        => 12,
-        little_end  => GLOB_CPU_AXI * CFG_L2_DISABLE,
+        little_end  => GLOB_CPU_RISCV * CFG_L2_DISABLE,
         memtech     => CFG_FABTECH,
         enable_mdio => 1,
         fifosize    => CFG_ETH_FIFO,

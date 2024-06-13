@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -67,36 +67,36 @@ entity llc_wrapper is
 
     -- NoC1->tile
     coherence_req_rdreq        : out std_ulogic;
-    coherence_req_data_out     : in  noc_flit_type;
+    coherence_req_data_out     : in  coh_noc_flit_type;
     coherence_req_empty        : in  std_ulogic;
     -- tile->NoC2
     coherence_fwd_wrreq        : out std_ulogic;
-    coherence_fwd_data_in      : out noc_flit_type;
+    coherence_fwd_data_in      : out coh_noc_flit_type;
     coherence_fwd_full         : in  std_ulogic;
     -- tile->NoC3
     coherence_rsp_snd_wrreq    : out std_ulogic;
-    coherence_rsp_snd_data_in  : out noc_flit_type;
+    coherence_rsp_snd_data_in  : out coh_noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
     -- NoC3->tile
     coherence_rsp_rcv_rdreq    : out std_ulogic;
-    coherence_rsp_rcv_data_out : in  noc_flit_type;
+    coherence_rsp_rcv_data_out : in  coh_noc_flit_type;
     coherence_rsp_rcv_empty    : in  std_ulogic;
     -- NoC4->tile
     dma_rcv_rdreq              : out std_ulogic;
-    dma_rcv_data_out           : in  noc_flit_type;
+    dma_rcv_data_out           : in  dma_noc_flit_type;
     dma_rcv_empty              : in  std_ulogic;
     -- tile->NoC6
     dma_snd_wrreq              : out std_ulogic;
-    dma_snd_data_in            : out noc_flit_type;
+    dma_snd_data_in            : out dma_noc_flit_type;
     dma_snd_full               : in  std_ulogic;
     -- LLC->ext
     ext_req_ready              : in  std_ulogic;
     ext_req_valid              : out std_ulogic;
-    ext_req_data               : out std_logic_vector(ARCH_BITS - 1 downto 0);
+    ext_req_data               : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     -- ext->LLC
     ext_rsp_ready              : out std_ulogic;
     ext_rsp_valid              : in  std_ulogic;
-    ext_rsp_data               : in  std_logic_vector(ARCH_BITS - 1 downto 0);
+    ext_rsp_data               : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     -- Monitor
     mon_cache                  : out monitor_cache_type
     );
@@ -140,8 +140,8 @@ architecture rtl of llc_wrapper is
   signal llc_dma_req_in_data_coh_msg     : mix_msg_t;
   signal llc_dma_req_in_data_hprot       : hprot_t;
   signal llc_dma_req_in_data_addr        : line_addr_t;
-  signal llc_dma_req_in_data_word_offset : word_offset_t;
-  signal llc_dma_req_in_data_valid_words : word_offset_t;
+  signal llc_dma_req_in_data_word_offset : dma_word_offset_t;
+  signal llc_dma_req_in_data_valid_words : dma_word_offset_t;
   signal llc_dma_req_in_data_line        : line_t;
   signal llc_dma_req_in_data_req_id      : llc_coh_dev_id_t;
   signal llc_dma_req_in_data_word_mask   : word_mask_t;
@@ -174,7 +174,7 @@ architecture rtl of llc_wrapper is
   signal llc_dma_rsp_out_data_invack_cnt  : invack_cnt_t;
   signal llc_dma_rsp_out_data_req_id      : llc_coh_dev_id_t;
   signal llc_dma_rsp_out_data_dest_id     : cache_id_t;  -- not used
-  signal llc_dma_rsp_out_data_word_offset : word_offset_t;
+  signal llc_dma_rsp_out_data_word_offset : dma_word_offset_t;
   signal llc_dma_rsp_out_data_word_mask   : word_mask_t;
 
   signal llc_fwd_out_ready        : std_ulogic;
@@ -299,7 +299,7 @@ architecture rtl of llc_wrapper is
   type fwd_out_reg_type is record
     state   : fwd_out_fsm;
     addr    : line_addr_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     coh_msg : mix_msg_t;
     line    : line_t;
     asserts : asserts_fwd_t;
@@ -331,7 +331,7 @@ architecture rtl of llc_wrapper is
     woffset    : word_offset_t;
     line       : line_t;
     word_mask  : word_mask_t;
-    word_cnt   : natural range 0 to 3;
+    word_cnt   : natural range 0 to 31;
     invack_cnt : invack_cnt_t;
     dest_x     : local_yx;
     dest_y     : local_yx;
@@ -344,11 +344,11 @@ architecture rtl of llc_wrapper is
     state      : dma_rsp_out_fsm;
     coh_msg    : coh_msg_t;
     dma32      : std_ulogic;
-    dma32_cnt  : integer range 0 to dma32_words - 1;
+    dma32_cnt  : integer range 0 to dma_words - 1;
     addr       : line_addr_t;
-    woffset    : word_offset_t;
+    woffset    : dma_word_offset_t;
     line       : line_t;
-    word_cnt   : natural range 0 to 3;
+    word_cnt   : natural range 0 to 31;
     invack_cnt : invack_cnt_t;
     dest_x     : local_yx;
     dest_y     : local_yx;
@@ -410,7 +410,7 @@ architecture rtl of llc_wrapper is
     line     : line_t;
     word_mask : word_mask_t;
     req_id   : cache_id_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     origin_x : local_yx;
     origin_y : local_yx;
     tile_id  : integer;
@@ -421,13 +421,13 @@ architecture rtl of llc_wrapper is
     state    : dma_req_in_fsm;
     coh_msg  : mix_msg_t;
     dma32    : std_ulogic;
-    dma32_cnt  : integer range 0 to dma32_words - 1;
+    dma32_cnt  : integer range 0 to dma_words - 1;
     hprot    : hprot_t;
     addr     : line_addr_t;
-    woffset  : word_offset_t;
+    woffset  : dma_word_offset_t;
     line     : line_t;
     req_id   : llc_coh_dev_id_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     origin_x : local_yx;
     origin_y : local_yx;
     tile_id  : integer;
@@ -483,7 +483,7 @@ architecture rtl of llc_wrapper is
     line     : line_t;
     word_mask : word_mask_t;
     req_id   : cache_id_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     origin_x : local_yx;
     origin_y : local_yx;
     tile_id  : integer;
@@ -545,12 +545,13 @@ architecture rtl of llc_wrapper is
   -- attribute mark_debug of llc_dma_req_in_data_valid_words : signal is "true";
   -- attribute mark_debug of llc_dma_req_in_data_line        : signal is "true";
   -- attribute mark_debug of llc_dma_req_in_data_req_id      : signal is "true";
+  -- attribute mark_debug of dma_req_in_reg                  : signal is "true";
 
   -- attribute mark_debug of llc_rsp_in_ready        : signal is "true";
   -- attribute mark_debug of llc_rsp_in_valid        : signal is "true";
   -- attribute mark_debug of llc_rsp_in_data_coh_msg : signal is "true";
   -- attribute mark_debug of llc_rsp_in_data_addr    : signal is "true";
-  -- -- attribute mark_debug of llc_rsp_in_data_line   : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_data_line   : signal is "true";
   -- attribute mark_debug of llc_rsp_in_data_req_id  : signal is "true";
 
   -- attribute mark_debug of llc_rsp_out_ready            : signal is "true";
@@ -572,6 +573,7 @@ architecture rtl of llc_wrapper is
   -- attribute mark_debug of llc_dma_rsp_out_data_req_id      : signal is "true";
   -- attribute mark_debug of llc_dma_rsp_out_data_dest_id     : signal is "true";
   -- attribute mark_debug of llc_dma_rsp_out_data_word_offset : signal is "true";
+  -- attribute mark_debug of dma_rsp_out_reg                  : signal is "true";
 
   -- attribute mark_debug of llc_fwd_out_ready        : signal is "true";
   -- attribute mark_debug of llc_fwd_out_valid        : signal is "true";
@@ -582,7 +584,7 @@ architecture rtl of llc_wrapper is
 
   -- attribute mark_debug of llc_mem_rsp_ready : signal is "true";
   -- attribute mark_debug of llc_mem_rsp_valid : signal is "true";
-  -- -- attribute mark_debug of llc_mem_rsp_data_line : signal is "true";
+  -- attribute mark_debug of llc_mem_rsp_data_line : signal is "true";
 
   -- attribute mark_debug of llc_mem_req_ready       : signal is "true";
   -- attribute mark_debug of llc_mem_req_valid       : signal is "true";
@@ -592,15 +594,15 @@ architecture rtl of llc_wrapper is
   -- attribute mark_debug of llc_mem_req_data_addr   : signal is "true";
   -- attribute mark_debug of llc_mem_req_data_line   : signal is "true";
 
-  -- -- attribute mark_debug of llc_stats_ready         : signal is "true";
-  -- -- attribute mark_debug of llc_stats_valid         : signal is "true";
-  -- -- attribute mark_debug of llc_stats_data          : signal is "true";
+  -- attribute mark_debug of llc_stats_ready         : signal is "true";
+  -- attribute mark_debug of llc_stats_valid         : signal is "true";
+  -- attribute mark_debug of llc_stats_data          : signal is "true";
 
-  -- --attribute mark_debug of asserts    : signal is "true";
-  -- --attribute mark_debug of bookmark   : signal is "true";
-  -- --attribute mark_debug of custom_dbg : signal is "true";
+  -- attribute mark_debug of asserts    : signal is "true";
+  -- attribute mark_debug of bookmark   : signal is "true";
+  -- attribute mark_debug of custom_dbg : signal is "true";
 
-  -- -- attribute mark_debug of ahbm_asserts : signal is "true";
+  -- attribute mark_debug of ahbm_asserts : signal is "true";
 
   -- attribute mark_debug of llc_cmd_state : signal is "true";
   -- attribute mark_debug of llc_cmd_next  : signal is "true";
@@ -615,6 +617,13 @@ architecture rtl of llc_wrapper is
   -- attribute mark_debug of rsp_out_state  : signal is "true";
   -- attribute mark_debug of req_in_state   : signal is "true";
   -- attribute mark_debug of rsp_in_state   : signal is "true";
+
+  -- attribute mark_debug of  dma_rcv_rdreq              : signal is "true";
+  -- attribute mark_debug of  dma_rcv_data_out           : signal is "true";
+  -- attribute mark_debug of  dma_rcv_empty              : signal is "true";
+  -- attribute mark_debug of  dma_snd_wrreq              : signal is "true";
+  -- attribute mark_debug of  dma_snd_data_in            : signal is "true";
+  -- attribute mark_debug of  dma_snd_full               : signal is "true";
 
 begin  -- architecture rtl
 
@@ -1006,26 +1015,26 @@ begin  -- architecture rtl
         if reg.word_cnt = 0 then
 
           ext_req_valid <= '1';
-          if GLOB_PHYS_ADDR_BITS < ARCH_BITS then
-            ext_req_data(ARCH_BITS - 1 downto GLOB_PHYS_ADDR_BITS) <= (others => '0');
+          if GLOB_PHYS_ADDR_BITS < CFG_MEM_LINK_BITS then
+            ext_req_data(CFG_MEM_LINK_BITS - 1 downto GLOB_PHYS_ADDR_BITS) <= (others => '0');
             ext_req_data(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.haddr;
           end if;
-          if GLOB_PHYS_ADDR_BITS = ARCH_BITS then
+          if GLOB_PHYS_ADDR_BITS = CFG_MEM_LINK_BITS then
             ext_req_data  <= reg.haddr;
           end if;
           if ext_req_ready = '1' then
             reg.word_cnt  := reg.word_cnt + 1;
           end if;
 
-        elsif reg.word_cnt = WORDS_PER_LINE then
+        elsif reg.word_cnt = CFG_CACHE_LINE_SIZE / CFG_MEM_LINK_BITS then
           ext_rsp_ready <= llc_mem_rsp_ready;
 
           if ext_rsp_valid = '1' then
-            reg.line(WORDS_PER_LINE*BITS_PER_WORD-1 downto (WORDS_PER_LINE-1)*BITS_PER_WORD) := ext_rsp_data;
+            reg.line(CFG_CACHE_LINE_SIZE-1 downto CFG_CACHE_LINE_SIZE - CFG_MEM_LINK_BITS) := ext_rsp_data;
 
             llc_mem_rsp_valid <= '1';
             if llc_mem_rsp_ready = '1' then
-              llc_mem_rsp_data_line <= ext_rsp_data & reg.line((WORDS_PER_LINE-1)*BITS_PER_WORD-1 downto 0);
+              llc_mem_rsp_data_line <= ext_rsp_data & reg.line(CFG_CACHE_LINE_SIZE - CFG_MEM_LINK_BITS - 1 downto 0);
               reg.state             := idle;
             else
               reg.state := send_mem_rsp;
@@ -1036,7 +1045,7 @@ begin  -- architecture rtl
           ext_rsp_ready <= '1';
 
           if ext_rsp_valid = '1' then
-            reg.line(reg.word_cnt*BITS_PER_WORD-1 downto (reg.word_cnt-1)*BITS_PER_WORD) := ext_rsp_data;
+            reg.line(reg.word_cnt*CFG_MEM_LINK_BITS-1 downto (reg.word_cnt-1)*CFG_MEM_LINK_BITS) := ext_rsp_data;
             reg.word_cnt                                                                 := reg.word_cnt + 1;
           end if;
 
@@ -1057,20 +1066,20 @@ begin  -- architecture rtl
         if reg.word_cnt = 0 then
 
           ext_req_valid <= '1';
-          if GLOB_PHYS_ADDR_BITS < ARCH_BITS then
-            ext_req_data(ARCH_BITS - 1 downto GLOB_PHYS_ADDR_BITS) <= (others => '0');
+          if GLOB_PHYS_ADDR_BITS < CFG_MEM_LINK_BITS then
+            ext_req_data(CFG_MEM_LINK_BITS - 1 downto GLOB_PHYS_ADDR_BITS) <= (others => '0');
             ext_req_data(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.haddr;
           end if;
-          if GLOB_PHYS_ADDR_BITS = ARCH_BITS then
+          if GLOB_PHYS_ADDR_BITS = CFG_MEM_LINK_BITS then
             ext_req_data  <= reg.haddr;
           end if;
           if ext_req_ready = '1' then
             reg.word_cnt  := reg.word_cnt + 1;
           end if;
 
-        elsif reg.word_cnt = WORDS_PER_LINE then
+        elsif reg.word_cnt = CFG_CACHE_LINE_SIZE / CFG_MEM_LINK_BITS then
 
-          ext_req_data <= reg.line(WORDS_PER_LINE*BITS_PER_WORD-1 downto (WORDS_PER_LINE-1)*BITS_PER_WORD);
+          ext_req_data <= reg.line(CFG_CACHE_LINE_SIZE-1 downto CFG_CACHE_LINE_SIZE - CFG_MEM_LINK_BITS);
           ext_req_valid <= '1';
           if ext_req_ready = '1' then
             reg.state     := idle;
@@ -1078,7 +1087,7 @@ begin  -- architecture rtl
 
         else
 
-          ext_req_data <= reg.line(reg.word_cnt*BITS_PER_WORD-1 downto (reg.word_cnt-1)*BITS_PER_WORD);
+          ext_req_data <= reg.line(reg.word_cnt*CFG_MEM_LINK_BITS-1 downto (reg.word_cnt-1)*CFG_MEM_LINK_BITS);
           ext_req_valid <= '1';
           if ext_req_ready = '1' then
             reg.word_cnt  := reg.word_cnt + 1;
@@ -1135,7 +1144,7 @@ begin  -- architecture rtl
     coherence_req_rdreq <= '0';
 
     -- incoming NoC messages parsing
-    preamble     := get_preamble(NOC_FLIT_SIZE, coherence_req_data_out);
+    preamble     := get_preamble(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_req_data_out);
 
     -- fsm states
     case reg.state is
@@ -1148,13 +1157,17 @@ begin  -- architecture rtl
 
           coherence_req_rdreq <= '1';
 
-          reg.coh_msg := get_msg_type(NOC_FLIT_SIZE, coherence_req_data_out);
-          reserved    := get_reserved_field(NOC_FLIT_SIZE, coherence_req_data_out);
+          reg.coh_msg := get_msg_type(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_req_data_out);
+          reserved    := get_reserved_field(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_req_data_out);
           reg.hprot   := reserved(HPROT_WIDTH - 1 downto 0);
-          reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+          if USE_SPANDEX = 0 then
+            reg.word_mask := (others => '0');
+          else
+            reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+          end if;
 
-          reg.origin_x                                              := get_origin_x(NOC_FLIT_SIZE, coherence_req_data_out);
-          reg.origin_y                                              := get_origin_y(NOC_FLIT_SIZE, coherence_req_data_out);
+          reg.origin_x := get_origin_x(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_req_data_out);
+          reg.origin_y := get_origin_y(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_req_data_out);
           if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) < noc_xlen and
              unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) < noc_ylen
           then
@@ -1207,13 +1220,13 @@ begin  -- architecture rtl
       -- RECEIVE DATA
       when rcv_data =>
         if coherence_req_empty = '0' then
-          if reg.word_cnt = WORDS_PER_LINE - 1 then
+          if reg.word_cnt = BITS_PER_LINE / COH_NOC_WIDTH - 1 then
             if llc_req_in_ready = '1' then
               coherence_req_rdreq <= '1';
 
-              reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                       BITS_PER_WORD * reg.word_cnt)
-                := coherence_req_data_out(BITS_PER_WORD - 1 downto 0);
+              reg.line((COH_NOC_WIDTH * reg.word_cnt) + COH_NOC_WIDTH - 1 downto
+                       COH_NOC_WIDTH * reg.word_cnt)
+                := coherence_req_data_out(COH_NOC_WIDTH - 1 downto 0);
               reg.state := rcv_header;
 
               llc_req_in_valid        <= '1';
@@ -1228,9 +1241,9 @@ begin  -- architecture rtl
           else
             coherence_req_rdreq <= '1';
 
-            reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                     (BITS_PER_WORD * reg.word_cnt))
-              := coherence_req_data_out(BITS_PER_WORD - 1 downto 0);
+            reg.line((COH_NOC_WIDTH * reg.word_cnt) + COH_NOC_WIDTH - 1 downto
+                     (COH_NOC_WIDTH * reg.word_cnt))
+              := coherence_req_data_out(COH_NOC_WIDTH - 1 downto 0);
 
             reg.word_cnt := reg.word_cnt + 1;
           end if;
@@ -1274,7 +1287,7 @@ begin  -- architecture rtl
     dma_rcv_rdreq       <= '0';
 
     -- incoming NoC messages parsing
-    dma_preamble := get_preamble(NOC_FLIT_SIZE, dma_rcv_data_out);
+    dma_preamble := get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
 
     -- fsm states
     case reg.state is
@@ -1287,10 +1300,10 @@ begin  -- architecture rtl
 
           dma_rcv_rdreq <= '1';
 
-          reg.coh_msg := get_msg_type(NOC_FLIT_SIZE, dma_rcv_data_out);
+          reg.coh_msg := get_msg_type(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
 
-          reg.origin_x := get_origin_x(NOC_FLIT_SIZE, dma_rcv_data_out);
-          reg.origin_y := get_origin_y(NOC_FLIT_SIZE, dma_rcv_data_out);
+          reg.origin_x := get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
+          reg.origin_y := get_origin_y(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
 
           if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) < noc_xlen and
              unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) < noc_ylen
@@ -1302,7 +1315,7 @@ begin  -- architecture rtl
               reg.req_id := std_logic_vector(to_unsigned(tile_dma_id(reg.tile_id), NLLC_MAX_LOG2));
             end if;
 
-            if ARCH_BITS /= 32 and eth_dma_id = tile_dma_id(reg.tile_id) then
+            if DMA_NOC_WIDTH /= 32 and eth_dma_id = tile_dma_id(reg.tile_id) then
               reg.dma32 := '1';
             else
               reg.dma32 := '0';
@@ -1322,7 +1335,8 @@ begin  -- architecture rtl
           dma_rcv_rdreq <= '1';
 
           reg.addr    := dma_rcv_data_out(ADDR_BITS - 1 downto LINE_RANGE_LO);
-          reg.woffset := dma_rcv_data_out(W_OFF_RANGE_HI downto W_OFF_RANGE_LO);
+          reg.woffset := dma_rcv_data_out(DMA_OFF_RANGE_HI downto DMA_OFF_RANGE_LO);
+
           reg.line    := (others => '0');
 
           if reg.coh_msg = REQ_DMA_READ then
@@ -1331,8 +1345,11 @@ begin  -- architecture rtl
 
           else
 
-            reg.word_cnt := to_integer(unsigned(reg.woffset));
+            reg.word_cnt := to_integer(unsigned(reg.woffset)) / dma_words;
             reg.state    := rcv_data_dma;
+            if reg.dma32 = '1' then
+              reg.dma32_cnt := to_integer(unsigned(reg.woffset)) mod dma_words;
+            end if;
 
           end if;
 
@@ -1353,14 +1370,11 @@ begin  -- architecture rtl
             llc_dma_req_in_data_word_offset <= reg.woffset;
             llc_dma_req_in_data_req_id      <= reg.req_id;
             -- Save DMA read length to most significant word in line field
-            if reg.dma32 = '1' then
---pragma translate_off
-              assert ARCH_BITS <= 64 report "Ethernet DMA32 not supported on architectures with bit-width greater than 64" severity error;
---pragma translate_on
-              word32_tmp := dma_rcv_data_out(31 downto 0) + X"00000001";
-              reg.line(BITS_PER_LINE - ADDR_BITS + 32 - 1 downto BITS_PER_LINE - ADDR_BITS) := '0' & word32_tmp(31 downto 1);
-            else
+            if eth_dma_id = tile_dma_id(reg.tile_id) or ARCH_BITS = 32 then
               reg.line(BITS_PER_LINE - 1 downto BITS_PER_LINE - ADDR_BITS) := dma_rcv_data_out(ADDR_BITS - 1 downto 0);
+            else
+              --on 64-bit architectures, accelerator DMA requests have lengths in terms of 64-bit words
+              reg.line(BITS_PER_LINE - 1 downto BITS_PER_LINE - ADDR_BITS) := dma_rcv_data_out(ADDR_BITS - 2 downto 0) & '0';
             end if;
             llc_dma_req_in_data_line <= reg.line;
 
@@ -1375,23 +1389,23 @@ begin  -- architecture rtl
 
         if dma_rcv_empty = '0' then
 
-          if reg.word_cnt = WORDS_PER_LINE - 1 or dma_preamble = PREAMBLE_TAIL then
+          if reg.word_cnt = BITS_PER_LINE / DMA_NOC_WIDTH - 1 or dma_preamble = PREAMBLE_TAIL then
 
             if llc_dma_req_in_ready = '1' then
 
               dma_rcv_rdreq <= '1';
 
               if reg.dma32 = '1' then
-                reg.line((BITS_PER_WORD * reg.word_cnt) + (32 * reg.dma32_cnt) + 32 - 1 downto
-                         (BITS_PER_WORD * reg.word_cnt) + (32 * reg.dma32_cnt)) :=
+                reg.line((DMA_NOC_WIDTH * reg.word_cnt) + (32 * reg.dma32_cnt) + 32 - 1 downto
+                         (DMA_NOC_WIDTH * reg.word_cnt) + (32 * reg.dma32_cnt)) :=
                   dma_rcv_data_out(31 downto 0);
 
-                reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma32_words;
+                reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma_words;
 
               else
-                reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                         BITS_PER_WORD * reg.word_cnt) :=
-                  dma_rcv_data_out(BITS_PER_WORD - 1 downto 0);
+                reg.line((DMA_NOC_WIDTH * reg.word_cnt) + DMA_NOC_WIDTH - 1 downto
+                         DMA_NOC_WIDTH * reg.word_cnt) :=
+                  dma_rcv_data_out(DMA_NOC_WIDTH - 1 downto 0);
               end if;
 
               if reg.dma32_cnt = 0 or reg.dma32 = '0' or dma_preamble = PREAMBLE_TAIL then
@@ -1399,7 +1413,11 @@ begin  -- architecture rtl
                 llc_dma_req_in_data_coh_msg     <= reg.coh_msg;
                 llc_dma_req_in_data_addr        <= reg.addr;
                 llc_dma_req_in_data_word_offset <= reg.woffset;
-                llc_dma_req_in_data_valid_words <= std_logic_vector(to_unsigned(reg.word_cnt, WORD_OFFSET_BITS)) - reg.woffset;
+                if reg.dma32 = '0' then
+                  llc_dma_req_in_data_valid_words <= std_logic_vector(to_unsigned(reg.word_cnt * dma_words + dma_words - 1, DMA_WORD_OFFSET_BITS)) - reg.woffset;
+                else
+                  llc_dma_req_in_data_valid_words <= std_logic_vector(to_unsigned(reg.word_cnt * dma_words + dma_req_in_reg.dma32_cnt, DMA_WORD_OFFSET_BITS)) - reg.woffset;
+                end if;
                 llc_dma_req_in_data_line        <= reg.line;
                 llc_dma_req_in_data_req_id      <= reg.req_id;
 
@@ -1424,20 +1442,20 @@ begin  -- architecture rtl
             dma_rcv_rdreq <= '1';
 
             if reg.dma32 = '1' then
-              reg.line((BITS_PER_WORD * reg.word_cnt) + (32 * reg.dma32_cnt) + 32 - 1 downto
-                       (BITS_PER_WORD * reg.word_cnt) + (32 * reg.dma32_cnt)) :=
+              reg.line((DMA_NOC_WIDTH * reg.word_cnt) + (32 * reg.dma32_cnt) + 32 - 1 downto
+                       (DMA_NOC_WIDTH * reg.word_cnt) + (32 * reg.dma32_cnt)) :=
               dma_rcv_data_out(31 downto 0);
 
-              reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma32_words;
+              reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma_words;
 
               if reg.dma32_cnt = 0 then
                 reg.word_cnt := reg.word_cnt + 1;
               end if;
 
             else
-              reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                       (BITS_PER_WORD * reg.word_cnt)) :=
-              dma_rcv_data_out(BITS_PER_WORD - 1 downto 0);
+              reg.line((DMA_NOC_WIDTH * reg.word_cnt) + DMA_NOC_WIDTH - 1 downto
+                       (DMA_NOC_WIDTH * reg.word_cnt)) :=
+              dma_rcv_data_out(DMA_NOC_WIDTH - 1 downto 0);
 
               reg.word_cnt := reg.word_cnt + 1;
             end if;
@@ -1482,7 +1500,7 @@ begin  -- architecture rtl
     coherence_rsp_rcv_rdreq <= '0';
 
     -- incoming NoC messages parsing
-    preamble     := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+    preamble     := get_preamble(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_rsp_rcv_data_out);
 
     -- fsm states
     case reg.state is
@@ -1494,11 +1512,16 @@ begin  -- architecture rtl
 
           coherence_rsp_rcv_rdreq <= '1';
 
-          reg.coh_msg := get_msg_type(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
-          reg.origin_x := get_origin_x(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
-          reg.origin_y := get_origin_y(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
-          reserved    := get_reserved_field(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
-          reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+          reg.coh_msg := get_msg_type(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_rsp_rcv_data_out);
+          reg.origin_x := get_origin_x(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_rsp_rcv_data_out);
+          reg.origin_y := get_origin_y(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_rsp_rcv_data_out);
+          reserved    := get_reserved_field(COH_NOC_FLIT_SIZE, coh_noc_flit_pad & coherence_rsp_rcv_data_out);
+
+          if USE_SPANDEX = 0 then
+            reg.word_mask := (others => '0');
+          else
+            reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+          end if;
 
           if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) < noc_xlen and
              unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) < noc_ylen
@@ -1568,14 +1591,14 @@ begin  -- architecture rtl
       -- RECEIVE DATA
       when rcv_data =>
         if coherence_rsp_rcv_empty = '0' then
-          if reg.word_cnt = WORDS_PER_LINE - 1 then
+          if reg.word_cnt = BITS_PER_LINE / COH_NOC_WIDTH - 1 then
             if llc_rsp_in_ready = '1' then
 
               coherence_rsp_rcv_rdreq <= '1';
 
-              reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                       BITS_PER_WORD * reg.word_cnt)
-                := coherence_rsp_rcv_data_out(BITS_PER_WORD - 1 downto 0);
+              reg.line((COH_NOC_WIDTH * reg.word_cnt) + COH_NOC_WIDTH - 1 downto
+                       COH_NOC_WIDTH * reg.word_cnt)
+                := coherence_rsp_rcv_data_out(COH_NOC_WIDTH - 1 downto 0);
 
               reg.state := rcv_header;
 
@@ -1591,9 +1614,9 @@ begin  -- architecture rtl
 
             coherence_rsp_rcv_rdreq <= '1';
 
-            reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                     (BITS_PER_WORD * reg.word_cnt))
-              := coherence_rsp_rcv_data_out(BITS_PER_WORD - 1 downto 0);
+            reg.line((COH_NOC_WIDTH * reg.word_cnt) + COH_NOC_WIDTH - 1 downto
+                     (COH_NOC_WIDTH * reg.word_cnt))
+              := coherence_rsp_rcv_data_out(COH_NOC_WIDTH - 1 downto 0);
 
             reg.word_cnt := reg.word_cnt + 1;
           end if;
@@ -1661,11 +1684,13 @@ begin  -- architecture rtl
             if llc_fwd_out_data_req_id'length < RESERVED_WIDTH then
               req_id(RESERVED_WIDTH-1 downto llc_fwd_out_data_req_id'length) := (others => '0');
             end if;
-            req_id(RESERVED_WIDTH-1 downto RESERVED_WIDTH - WORDS_PER_LINE) := llc_fwd_out_data_word_mask;
+            if USE_SPANDEX /= 0 then
+              req_id(RESERVED_WIDTH-1 downto RESERVED_WIDTH - WORDS_PER_LINE) := llc_fwd_out_data_word_mask;
+            end if;
             req_id(llc_fwd_out_data_req_id'length - 1 downto 0)            := llc_fwd_out_data_req_id;
 
             coherence_fwd_wrreq <= '1';
-            coherence_fwd_data_in <= create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x,
+            coherence_fwd_data_in <= create_header(COH_NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x,
                                                    reg.coh_msg, req_id);
 
             reg.state := send_addr;
@@ -1683,14 +1708,14 @@ begin  -- architecture rtl
 
             when FWD_WTfwd =>
 
-              coherence_fwd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+              coherence_fwd_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
               coherence_fwd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
               reg.state             := send_data;
               reg.word_cnt          := 0;
 
             when others =>
 
-          coherence_fwd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+          coherence_fwd_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
           coherence_fwd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
           reg.state := send_header;
 
@@ -1703,17 +1728,17 @@ begin  -- architecture rtl
 
           coherence_fwd_wrreq <= '1';
 
-          if reg.word_cnt = WORDS_PER_LINE - 1 then
+          if reg.word_cnt = BITS_PER_LINE / COH_NOC_WIDTH - 1 then
 
-            coherence_fwd_data_in <= PREAMBLE_TAIL & reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                                                              (BITS_PER_WORD * reg.word_cnt));
+            coherence_fwd_data_in <= PREAMBLE_TAIL & reg.line((COH_NOC_WIDTH * reg.word_cnt) + COH_NOC_WIDTH - 1 downto
+                                                              (COH_NOC_WIDTH * reg.word_cnt));
 
             reg.state := send_header;
 
           else
 
-            coherence_fwd_data_in <= PREAMBLE_BODY & reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                                                              (BITS_PER_WORD * reg.word_cnt));
+            coherence_fwd_data_in <= PREAMBLE_BODY & reg.line((COH_NOC_WIDTH * reg.word_cnt) + COH_NOC_WIDTH - 1 downto
+                                                              (COH_NOC_WIDTH * reg.word_cnt));
 
             reg.word_cnt := reg.word_cnt + 1;
 
@@ -1741,7 +1766,7 @@ begin  -- architecture rtl
     variable dest_y    : local_yx;
     variable reserved  : reserved_field_type;
     variable preamble  : noc_preamble_type;
-    variable last_lv   : std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
+    variable last_lv   : std_logic_vector(DMA_WORD_OFFSET_BITS - 1 downto 0);
     variable last      : integer range 0 to WORDS_PER_LINE - 1;
     variable mix_msg   : mix_msg_t;
 
@@ -1751,7 +1776,7 @@ begin  -- architecture rtl
     reg.asserts := (others => '0');
 
     last        := WORDS_PER_LINE - 1;
-    last_lv     := std_logic_vector(to_unsigned(last, WORD_OFFSET_BITS));
+    last_lv     := std_logic_vector(to_unsigned(last, DMA_WORD_OFFSET_BITS));
 
     dest_init := 0;
     dest_x    := (others => '0');
@@ -1785,7 +1810,10 @@ begin  -- architecture rtl
           reserved := std_logic_vector(resize(unsigned(
             llc_rsp_out_data_invack_cnt), RESERVED_WIDTH));
 
-          reserved(RESERVED_WIDTH-1 downto RESERVED_WIDTH - WORDS_PER_LINE) := reg.word_mask;
+          --do not send word mask when spandex is disabled to enable larger cache lines
+          if USE_SPANDEX /= 0 then
+            reserved(RESERVED_WIDTH-1 downto RESERVED_WIDTH - WORDS_PER_LINE) := reg.word_mask;
+          end if;
 
           if USE_SPANDEX = 0 then
             -- Set ESP legacy coherence message types
@@ -1799,7 +1827,7 @@ begin  -- architecture rtl
 
             coherence_rsp_snd_wrreq <= '1';
             coherence_rsp_snd_data_in <=
-              create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x,
+              create_header(COH_NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x,
                             mix_msg, reserved);
 
             reg.state := send_addr;
@@ -1831,7 +1859,7 @@ begin  -- architecture rtl
 
           coherence_rsp_snd_wrreq <= '1';
           coherence_rsp_snd_data_in <=
-            create_header(NOC_FLIT_SIZE, local_y, local_x, reg.dest_y, reg.dest_x,
+            create_header(COH_NOC_FLIT_SIZE, local_y, local_x, reg.dest_y, reg.dest_x,
                           mix_msg, reg.reserved);
 
           reg.state := send_addr;
@@ -1855,7 +1883,7 @@ begin  -- architecture rtl
             when RSP_DATA | RSP_EDATA | RSP_S | RSP_Odata | RSP_RVK_O | RSP_WTdata | RSP_V =>
 
           coherence_rsp_snd_wrreq   <= '1';
-          coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+          coherence_rsp_snd_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
           coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
           reg.state                 := send_data;
           reg.word_cnt              := 0;
@@ -1864,7 +1892,7 @@ begin  -- architecture rtl
               -- RSP_INV_ACK
 
               coherence_rsp_snd_wrreq   <= '1';
-              coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+              coherence_rsp_snd_data_in(COH_NOC_FLIT_SIZE - 1 downto COH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
               coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
               reg.state                 := send_header;
 
@@ -1878,17 +1906,17 @@ begin  -- architecture rtl
 
           coherence_rsp_snd_wrreq <= '1';
 
-          if reg.word_cnt = WORDS_PER_LINE - 1 then
+          if reg.word_cnt = BITS_PER_LINE / COH_NOC_WIDTH - 1 then
 
             coherence_rsp_snd_data_in <=
-              PREAMBLE_TAIL & read_word(reg.line, reg.word_cnt);
+              PREAMBLE_TAIL & read_coh_noc_word(reg.line, reg.word_cnt);
 
             reg.state := send_header;
 
           else
 
             coherence_rsp_snd_data_in <=
-              PREAMBLE_BODY & read_word(reg.line, reg.word_cnt);
+              PREAMBLE_BODY & read_coh_noc_word(reg.line, reg.word_cnt);
 
             reg.word_cnt := reg.word_cnt + 1;
 
@@ -1916,7 +1944,7 @@ begin  -- architecture rtl
     variable dest_x    : local_yx;
     variable dest_y    : local_yx;
     variable preamble  : noc_preamble_type;
-    variable last_lv   : std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
+    variable last_lv   : std_logic_vector(DMA_WORD_OFFSET_BITS - 1 downto 0);
     variable last      : integer range 0 to WORDS_PER_LINE - 1;
     variable mix_msg   : mix_msg_t;
 
@@ -1926,7 +1954,7 @@ begin  -- architecture rtl
     reg.asserts := (others => '0');
 
     last        := WORDS_PER_LINE - 1;
-    last_lv     := std_logic_vector(to_unsigned(last, WORD_OFFSET_BITS));
+    last_lv     := std_logic_vector(to_unsigned(last, DMA_WORD_OFFSET_BITS));
 
     dest_init := 0;
     dest_x    := (others => '0');
@@ -1955,7 +1983,7 @@ begin  -- architecture rtl
           -- invack_cnt(WORD_OFFSET_BITS downto 1) => valid word count
           reg.invack_cnt := llc_dma_rsp_out_data_invack_cnt;
           reg.woffset    := llc_dma_rsp_out_data_word_offset;
-          reg.word_cnt   := to_integer(unsigned(reg.woffset));
+          reg.word_cnt   := to_integer(unsigned(reg.woffset)) / dma_words;
 
           if llc_dma_rsp_out_data_req_id >= "0" then
             dest_init := to_integer(unsigned(llc_dma_rsp_out_data_req_id));
@@ -1965,8 +1993,9 @@ begin  -- architecture rtl
             end if;
           end if;
 
-          if ARCH_BITS /= 32 and dest_init = eth_dma_id then
+          if DMA_NOC_WIDTH /= 32 and dest_init = eth_dma_id then
             reg.dma32 := '1';
+            reg.dma32_cnt := to_integer(unsigned(reg.woffset)) mod dma_words;
           else
             reg.dma32 := '0';
           end if;
@@ -1982,7 +2011,7 @@ begin  -- architecture rtl
           if dma_snd_full = '0' then
 
             dma_snd_wrreq <= '1';
-            dma_snd_data_in <= create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y,
+            dma_snd_data_in <= create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, dest_y,
                                              dest_x, mix_msg, (others => '0'));
 
             reg.state := send_data_dma;
@@ -2012,7 +2041,7 @@ begin  -- architecture rtl
         if dma_snd_full = '0' then
 
           dma_snd_wrreq   <= '1';
-          dma_snd_data_in <= create_header(NOC_FLIT_SIZE, local_y, local_x, reg.dest_y, reg.dest_x, mix_msg, (others => '0'));
+          dma_snd_data_in <= create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, reg.dest_y, reg.dest_x, mix_msg, (others => '0'));
 
           reg.state := send_data_dma;
 
@@ -2021,10 +2050,10 @@ begin  -- architecture rtl
       -- SEND DATA DMA
       when send_data_dma =>
 
-        last_lv := reg.woffset + reg.invack_cnt(WORD_OFFSET_BITS downto 1);
-        last    := to_integer(unsigned(last_lv));
+        last_lv := reg.woffset + reg.invack_cnt(DMA_WORD_OFFSET_BITS downto 1);
+        last    := to_integer(unsigned(last_lv)) / dma_words;
 
-        if reg.invack_cnt(0) = '1' and reg.word_cnt = last and ((reg.dma32 = '0') or (reg.dma32_cnt = dma32_words - 1)) then
+        if reg.invack_cnt(0) = '1' and reg.word_cnt = last and ((reg.dma32 = '0') or (reg.dma32_cnt = dma_words - 1)) then
           preamble := PREAMBLE_TAIL;
         else
           preamble := PREAMBLE_BODY;
@@ -2033,16 +2062,16 @@ begin  -- architecture rtl
         if reg.dma32 = '1' then
           dma_snd_data_in <= preamble & read_word32(reg.line, reg.word_cnt, reg.dma32_cnt);
         else
-          dma_snd_data_in <= preamble & read_word(reg.line, reg.word_cnt);
+          dma_snd_data_in <= preamble & read_dma_noc_word(reg.line, reg.word_cnt);
         end if;
 
         if dma_snd_full = '0' then
 
           if reg.word_cnt = last then
-            dma_snd_wrreq <= '1';       -- send last word from this cache line
+            dma_snd_wrreq <= not reg.stall;       -- send last word from this cache line
 
             if reg.dma32 /= '0' then
-              reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma32_words;
+              reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma_words;
             end if;
 
             if reg.dma32_cnt = 0 then
@@ -2083,7 +2112,7 @@ begin  -- architecture rtl
               dma_snd_wrreq   <= '1';   -- send current word from this cache line
 
               if reg.dma32 /= '0' then
-                reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma32_words;
+                reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma_words;
               end if;
 
               if reg.dma32_cnt = 0 then

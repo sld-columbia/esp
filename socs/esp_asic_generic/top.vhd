@@ -102,7 +102,7 @@ architecture rtl of top is
       clk_emu_p       : in    std_logic;
       clk_emu_n       : in    std_logic;
       ext_clk         : in    std_logic;
-      fpga_data       : inout std_logic_vector(64 - 1 downto 0);
+      fpga_data       : inout std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
       fpga_valid_in   : in    std_logic_vector(0 downto 0);
       fpga_valid_out  : out   std_logic_vector(0 downto 0);
       fpga_clk_in     : in    std_logic_vector(0 downto 0);
@@ -163,7 +163,7 @@ architecture rtl of top is
       main_clk_n        : in    std_ulogic;
       jtag_clk_p        : in    std_ulogic;
       jtag_clk_n        : in    std_ulogic;
-      fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+      fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
       fpga_valid_in     : out   std_logic_vector(0 to CFG_NMEM_TILE - 1);
       fpga_valid_out    : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
       fpga_clk_in       : out   std_logic_vector(0 to CFG_NMEM_TILE - 1);
@@ -225,7 +225,7 @@ architecture rtl of top is
   signal chip_reset : std_logic;
 
   -- FPGA proxy memory link
-  signal fpga_data       : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+  signal fpga_data       : std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
   signal fpga_valid_in   : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_valid_out  : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_clk_in     : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);

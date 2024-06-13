@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -38,7 +38,7 @@ begin  -- rtl
     variable irq_info : std_logic_vector(RESERVED_WIDTH-1 downto 0);
     variable pirq : integer range 0 to NAHBIRQ-1;
   begin  -- process set_interrupt
-    irq_info := get_reserved_field(MISC_NOC_FLIT_SIZE, noc_flit_pad & interrupt_data_out);
+    irq_info := get_reserved_field(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & interrupt_data_out);
     noc_pirq <= (others => '0');
     interrupt_rdreq <= '0';
     pirq := conv_integer(irq_info);

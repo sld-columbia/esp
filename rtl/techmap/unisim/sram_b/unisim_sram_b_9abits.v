@@ -1,7 +1,7 @@
 //
 // Created with the ESP Memory Generator
 //
-// Copyright (c) 2011-2023 Columbia University, System Level Design Group
+// Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 //
 // @author Paolo Mantovani <paolo@cs.columbia.edu>

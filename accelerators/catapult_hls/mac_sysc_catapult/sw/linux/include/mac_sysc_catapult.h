@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2023 Columbia University, System Level Design Group
+// Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #ifndef _MAC_SYSC_CATAPULT_H_
 #define _MAC_SYSC_CATAPULT_H_

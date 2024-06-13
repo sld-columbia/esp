@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -161,7 +161,6 @@ begin  -- rtl
     -- Make a packet for interrupt request
     make_packet : process (irqi(cpuid), local_y, local_x, override_cpu_loc, cpu_loc_y, cpu_loc_x)
       variable msg_type    : noc_msg_type;
-      variable tmp         : noc_flit_type;
       variable header_v    : misc_noc_flit_type;
       variable payload_1_v : misc_noc_flit_type;
       variable payload_2_v : misc_noc_flit_type;

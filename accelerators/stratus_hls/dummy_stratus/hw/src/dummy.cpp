@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2023 Columbia University, System Level Design Group
+// Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #include "dummy.hpp"
@@ -22,6 +22,7 @@ void dummy::load_input()
         wait();
     }
 
+
     // Config
     uint32_t tokens;
     uint32_t batch;
@@ -44,30 +45,46 @@ void dummy::load_input()
             HLS_PROTO("load-dma");
 
             uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
+#if (DMA_WORD_PER_BEAT == 0)
             dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+#else
+            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+#endif
             offset += len;
 
             this->dma_read_ctrl.put(dma_info);
-
-            for (uint16_t i = 0; i < len; i++) {
-                uint64_t data;
+#if (DMA_WORD_PER_BEAT == 0)
+            for (uint16_t i = 0; i < len; i += DMA_WORD_PER_BEAT) {
                 sc_dt::sc_bv<64> data_bv;
-
-#if (DMA_WIDTH == 64)
-                data_bv = this->dma_read_chnl.get();
-#elif (DMA_WIDTH == 32)
-                data_bv.range(31, 0) = this->dma_read_chnl.get();
-                wait();
-                data_bv.range(63, 32) = this->dma_read_chnl.get();
-#endif
-                wait();
-                data = data_bv.to_uint64();
-
+                for (uint16_t k = 0; k < DMA_BEAT_PER_WORD; k++) {
+                    data_bv.range((k+1)*DMA_WIDTH-1, k * DMA_WIDTH) = this->dma_read_chnl.get();
+                    wait();
+                }
                 if (ping)
-                    plm0[i] = data;
+                    plm0[i] = data_bv.to_int64();
                 else
-                    plm1[i] = data;
+                    plm1[i] = data_bv.to_int64();
             }
+#else
+            for (uint16_t i = 0; i < len; i += DMA_WORD_PER_BEAT) {
+                HLS_BREAK_DEP(plm0);
+                HLS_BREAK_DEP(plm1);
+
+                uint64_t data;
+                sc_dt::sc_bv<DMA_WIDTH> data_bv;
+
+
+                data_bv = this->dma_read_chnl.get();
+                wait();
+                for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++) {
+                    HLS_UNROLL_SIMPLE;
+                    if (ping)
+                        plm0[i+k] = data_bv.range((k+1)*64 - 1, k*64).to_int64();
+                    else
+                        plm1[i+k] = data_bv.range((k+1)*64 - 1, k*64).to_int64();
+                }
+            }
+#endif
             this->load_compute_handshake();
             ping = !ping;
         }
@@ -114,29 +131,44 @@ void dummy::store_output()
             this->store_compute_handshake();
 
             uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
+#if (DMA_WORD_PER_BEAT == 0)
             dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+#else
+            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+#endif
             offset += len;
 
             this->dma_write_ctrl.put(dma_info);
-
-            for (uint16_t i = 0; i < len; i++) {
-
+#if (DMA_WORD_PER_BEAT == 0)
+            for (uint16_t i = 0; i < len; i += DMA_WORD_PER_BEAT) {
+                sc_dt::sc_int<64> data;
                 wait();
-                uint64_t data;
                 if (ping)
                     data = plm0[i];
                 else
                     data = plm1[i];
-                sc_dt::sc_bv<64> data_bv(data);
 
-#if (DMA_WIDTH == 64)
-                this->dma_write_chnl.put(data_bv);
-#elif (DMA_WIDTH == 32)
-                this->dma_write_chnl.put(data_bv.range(31, 0));
-                wait();
-                this->dma_write_chnl.put(data_bv.range(64, 32));
-#endif
+                sc_dt::sc_bv<DMA_WIDTH> data_bv(data);
+
+                for (uint16_t k = 0; k < DMA_BEAT_PER_WORD; k++) {
+                    this->dma_write_chnl.put(data_bv.range((k+1)*DMA_WIDTH - 1, k*DMA_WIDTH));
+                    wait();
+                }
             }
+#else
+            for (uint16_t i = 0; i < len; i += DMA_WORD_PER_BEAT) {
+                sc_dt::sc_bv<DMA_WIDTH> data_bv;
+                wait();
+                for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++) {
+                    HLS_UNROLL_SIMPLE;
+                    if (ping)
+                        data_bv.range((k+1)*64 - 1, k*64) = plm0[i + k];
+                    else
+                        data_bv.range((k+1)*64 - 1, k*64) = plm1[i + k];
+                }
+                this->dma_write_chnl.put(data_bv);
+            }
+#endif
             ping = !ping;
         }
 

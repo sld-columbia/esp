@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 CPU_SOFT_PATH := ../../../../$(CPU_ARCH)
 
@@ -36,6 +36,7 @@ endif
 CFLAGS += -I../include
 CFLAGS += -I../../common/include
 CFLAGS += -I$(DESIGN_PATH)
+CFLAGS += -DCACHELINE_WIDTH=$(CACHELINE_WIDTH)
 LDFLAGS := -lm
 EXTRA_CFLAGS += -Wall -Werror
 CC := $(CROSS_COMPILE)gcc

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023 Columbia University, System Level Design Group
+ * Copyright (c) 2011-2024 Columbia University, System Level Design Group
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -22,7 +22,6 @@
 #else
 #include <stdint.h>
 #define ASI_LEON_DFLUSH 0x11
-#define CACHELINE_SIZE 0x10
 #endif /* __KERNEL__ */
 
 
