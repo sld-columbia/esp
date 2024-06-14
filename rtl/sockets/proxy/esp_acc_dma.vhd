@@ -979,7 +979,11 @@ begin  -- rtl
       when receive_p2p_length =>
         burst <= '1';
         if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
-          p2p_length_v := p2p_req_rcv_data_out(31 downto 0);
+          if DMA_NOC_WIDTH > ARCH_BITS then
+            p2p_length_v := dma_word_pad & p2p_req_rcv_data_out(31 downto dma_word_bits);
+          else
+            p2p_length_v := p2p_req_rcv_data_out(31 downto 0);
+          end if;
           p2p_rsp_snd_data_in <= header_r;
           p2p_req_rcv_rdreq <= '1';
           if count_n_dest = p2p_mcast_ndests then
