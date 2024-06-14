@@ -128,16 +128,6 @@ static void fft_probe(struct esp_device **espdevs_fft)
 void setup_fft(struct esp_device *dev, fft_token_t *gold_fft, fft_token_t *mem_fft, unsigned **ptable)
 {
 	int i; 
-	//// Check DMA capabilities
-	//if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) 	{
-	//	printf("  -> scatter-gather DMA is disabled. Abort.\n");
-	//	return;
-	//}
-
-	//if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
-	//	printf("  -> Not enough TLB entries available. Abort.\n");
-	//	return;
-	//}
 
 	// Allocate memory
 	gold_fft = aligned_malloc(out_len * sizeof(float));

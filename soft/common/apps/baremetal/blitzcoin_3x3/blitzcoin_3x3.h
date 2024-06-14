@@ -3,9 +3,6 @@
 #ifndef __TOKEN_PM_H__
 #define __TOKEN_PM_H__
 
-//Define to run dummy config
-//#define PID_CONFIG 1
-
 //DEBUG Flag
 //#define DEBUG
 ///////////////////////
@@ -72,14 +69,6 @@
 #endif
 
 
-/* #define TOKEN_PM_CONFIG4_REG_DEFAULT 0x0A3D70A3 */
-/* #define TOKEN_PM_CONFIG5_REG_DEFAULT 0xD70A3D80 */
-/* #define TOKEN_PM_CONFIG6_REG_DEFAULT 0xC800000 */
-/* //#define TOKEN_PM_CONFIG6_REG_DEFAULT 0x0000000 */
-/* #define TOKEN_PM_CONFIG7_REG_DEFAULT 0x00000000 */
-/* #define TOKEN_PM_CONFIG8_REG_DEFAULT 0x07fffaa9 */
-//#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x2FFFFAFD
-//#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x07FFFAA7
 ///////////////////////
 // Accelerator Tiles and Address Map
 ///////////////////////
@@ -129,7 +118,7 @@ static unsigned mem_size;
 
 
 
-
+//Tile ID of the tiles with BlitzCoin enabled
 const unsigned acc_tile_ids[N_ACC] = {2,3,5,6,7,8};
 
 
@@ -140,60 +129,26 @@ const unsigned enable_const = 1;
 const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
-const unsigned max_tokens_vc707[N_ACC] = {63, 10, 36, 10, 36, 10};
+//Value setting of the ḿax'register of the tiles with PM 63 -> NVLDA, 10 -> FFT, 36 -> Viterbi
+const unsigned max_tokens[N_ACC] = {63, 10, 36, 10, 36, 10};
+const unsigned max_tokens_EXP0[N_ACC] = {40, 0, 40, 0, 0, 0};
 
-//const unsigned max_tokens_vc707[N_ACC] = {20, 20, 20, 20, 20, 20};
-const unsigned refresh_rate_min_const = 100;
-const unsigned refresh_rate_max_const = refresh_rate_min_const;
+const unsigned refresh_rate_min_const[N_ACC] = {97, 101, 103, 107, 109, 113}; //Choosing slighly different and co-prime refresh rates for the different tiles can help avoiding collisions and simplifies convergence
+const unsigned refresh_rate_max_const[N_ACC] = {97, 101, 103, 107, 109, 113}; 
 const unsigned total_tokens = 30;
-const unsigned total_tokens_ini = total_tokens; //Change to 24 for original test
+const unsigned total_tokens_ini = total_tokens;
 
 #define LUT_SIZE 64
 
-#ifdef PID_CONFIG
-	const unsigned lut_data_const[LUT_SIZE] = { 0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0};
-	const unsigned lut_data_const_vc707[LUT_SIZE] = { 0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0};
-#else
-	const unsigned lut_data_const[LUT_SIZE] = {  0,   4,   8,  12,  16,  20,  24,  28,
-						    32,  36,  40,  44,  48,  52,  56,  60,
-						    64,  68,  72,  76,  80,  84,  88,  92,
-						    96, 100, 104, 108, 112, 116, 120, 124,
-						   128, 132, 136, 140, 144, 148, 152, 156,
-						   160, 164, 168, 172, 176, 180, 184, 188,
-						   192, 196, 200, 204, 208, 212, 216, 220,
-						   224, 228, 232, 236, 240, 244, 248, 252};
-
-	const unsigned lut_data_const_vc707[LUT_SIZE] = {2, 2, 2, 2, 2, 2, 2, 2,
-							 2, 2, 2, 2, 2, 2, 2, 2,
-							 3, 3, 3, 3, 3, 3, 3, 3,
-							 3, 3, 3, 3, 3, 3, 3, 3,
-							 5, 5, 5, 5, 5, 5, 5, 5,
-							 5, 5, 5, 5, 5, 5, 5, 5,
-							 10, 10, 10, 10, 10, 10, 10, 10,
-							 10, 10, 10, 10, 10, 10, 10, 10};
-
- 	const unsigned lut_data_const_vc707_FFT[LUT_SIZE]= {255,  215,  168,  126,   98,   77,   58,   40,   24,   18,   14,   14,
+//Filled baed on each tile V,F response and our DRCo code vs freq setting
+ 	const unsigned lut_data_const_FFT[LUT_SIZE]= {255,  215,  168,  126,   98,   77,   58,   40,   24,   18,   14,   14,
    14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,
    14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,
    14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,
    14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,
    14,   14,   14,   14};
 
-	const unsigned lut_data_const_vc707_VIT[LUT_SIZE]= { 255,  250,  238,  226,  214,  203,  194,  184,  175,  165,  156,  149,
+	const unsigned lut_data_const_VIT[LUT_SIZE]= { 255,  250,  238,  226,  214,  203,  194,  184,  175,  165,  156,  149,
   142,  134,  127,  120,  113,  106,  101,   96,   91,   87,   82,   77,
    73,   68,   63,   59,   55,   51,   47,   43,   39,   39,   39,   39,
    39,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
@@ -201,34 +156,27 @@ const unsigned total_tokens_ini = total_tokens; //Change to 24 for original test
    39,   39,   39,   39};
 
 						 
-	const unsigned lut_data_const_vc707_NVDLA[LUT_SIZE]= {255,  255,  254,  251,  247,  243,  239,  235,  231,  227,  223,  219,
+	const unsigned lut_data_const_NVDLA[LUT_SIZE]= {255,  255,  254,  251,  247,  243,  239,  235,  231,  227,  223,  219,
   215,  211,  207,  203,  199,  196,  192,  188,  184,  180,  176,  172,
   168,  164,  160,  156,  152,  149,  145,  141,  137,  133,  130,  127,
   125,  122,  120,  117,  115,  112,  110,  107,  104,  102,   99,   97,
    94,   92,   89,   87,   84,   82,   79,   77,   74,   73,   71,   70,
    68,   67,   65,   64};
 
-	/* const unsigned lut_data_const_vc707[LUT_SIZE] = {1, 1, 1, 1, 1, 1, 1, 1, */
-	/* 						 1, 1, 1, 1, 1, 1, 1, 1, */
-	/* 						 3, 3, 3, 3, 3, 3, 3, 3, */
-	/* 						 3, 3, 3, 3, 3, 3, 3, 3, */
-	/* 						 4, 4, 4, 4, 4, 4, 4, 4, */
-	/* 						 4, 4, 4, 4, 4, 4, 4, 4, */
-	/* 						 10, 10, 10, 10, 10, 10, 10, 10, */
-	/* 						 10, 10, 10, 10, 10, 10, 10, 10}; */
 #endif
 
 const unsigned random_rate_const_0= 0;//For tile 0
 const unsigned random_rate_const = 17;
-//const unsigned neighbors_id_const[N_ACC] = {33825, 0}; // 00001 00001 00001 00001, 00000 00000 00000 00000 
-/*Define neighbors*/
+/*Define neighbors for each tile*/
+/*Neighbors do not have to be physical neigbors of a given tile, this can be adjusted with CSRs */
 const unsigned int neighbors_id_const[N_ACC] = {(1 << 15) + (2 << 10) + (4 << 5) + 5, (0 << 15) + (2 << 10) + (3 << 5) + 5, (0 << 15) + (3 << 10) + (4 << 5) + 5, (0 << 15) + (1 << 10) + (4 << 5) + 5, (0 << 15) +(1 << 10) + (3 << 5) + 5, (0 << 15) + (1 << 10) + (2 << 5) + 3};
+const unsigned int neighbors_id_const_EXP0[N_ACC] = {(2 << 15) + (2 << 10) + (2 << 5) + 2, 0, (0 << 15) + (0 << 10) + (0 << 5) + 0, 0, 0, 0};//For Experiment0 only neighbor IDs are defined for tiles 0 and 2, others are unused.
 const unsigned int pm_network_const[N_ACC] = {0,4,1,2,2,4};
-		// Allocate inital tokens - max 6 bit
+
 //const unsigned pm_network_const = 0;
 //Initialized by init_consts()
 //unsigned int pm_network_const[N_ACC];
-unsigned token_counter_override_vc707[N_ACC];
+unsigned token_counter_override[N_ACC];
 
 #define TOKEN_NEXT_MASK 0x7f
 
@@ -239,16 +187,10 @@ unsigned token_counter_override_vc707[N_ACC];
 
 // Set of tests of the bare-metal app.
 // Uncomment the tests that you want to execute
-// #define TEST_0 0
-//// basic test for vc707 FPGA
-//#define TEST_1 0
-//// test for vc707 FPGA including FFT accelerator execution
-//#define TEST_2 1
-//// test for vc707 FPGA including Viterbi accelerator execution
-//#define TEST_3 0
-// test for vc707 FPGA including Viterbi and FFT parallel accelerator executions
-#define TEST_4 1
-
+#define TEST_0 0
+//// basic test for coin exchange between 2 tiles
+#define TEST_1 1
+//// Test covering coin exchange for 6 tiles with Blitzcoin running parallel workloads on FFT, Viterbi and NVDLA
 ///////////////////////
 // Functions
 ///////////////////////
@@ -258,27 +200,18 @@ void init_consts()
 	int n;
 	unsigned remaining_tokens=total_tokens_ini;
 
-	/*for (n = 0; n < N_ACC; n++) {
+	for (n = 0; n < N_ACC; n++) {
 		// 1 for all accs part of token PM
 		
 		if(remaining_tokens>(1<<6-1)){
-			token_counter_override_vc707[n]=(1 << 7)+1<<6-1;
+			token_counter_override[n]=(1 << 7)+1<<6-1;
 			remaining_tokens=remaining_tokens-1<<6;
 		}
 		else{
-			token_counter_override_vc707[n]=(1 << 7)+remaining_tokens;
+			token_counter_override[n]=(1 << 7)+remaining_tokens;
 			remaining_tokens=0;
 		}
-	}*/
-	
-	token_counter_override_vc707[0]=(1<<7) + total_tokens_ini/6;
-	token_counter_override_vc707[1]=(1<<7) + total_tokens_ini/6;
-	token_counter_override_vc707[2]=(1<<7) + total_tokens_ini/6;
-	token_counter_override_vc707[3]=(1<<7) + total_tokens_ini/6;
-	token_counter_override_vc707[4]=(1<<7) + total_tokens_ini/6;
-	token_counter_override_vc707[5]=(1<<7) + total_tokens_ini/6;
-
-
+	}
 }
 
 void reset_blitzcoin(struct esp_device espdevs[])
@@ -355,8 +288,6 @@ void write_lut(struct esp_device espdevs[], const unsigned lut_data[LUT_SIZE],
 	}   
 }
 				   
-
-
 void write_lut_all(struct esp_device espdevs[], const unsigned lut_data[LUT_SIZE],
 	       unsigned random_rate, unsigned activity)
 {
@@ -365,7 +296,6 @@ void write_lut_all(struct esp_device espdevs[], const unsigned lut_data[LUT_SIZE
     
     printf("Write LUT\n");
 
-  
     for (i = 0; i < N_ACC; i++) {
 	for (j = 0; j < LUT_SIZE; j++) {
 	    lut_val = (1 << 17) | (0 << 16) | (lut_data[j] << 8) | j;
@@ -373,22 +303,6 @@ void write_lut_all(struct esp_device espdevs[], const unsigned lut_data[LUT_SIZE
 	}
     }
 }
-
-/* void validate_lut(struct esp_device espdevs[], unsigned lut_data, */
-/* 		  unsigned random_rate, unsigned activity) */
-/* { */
-/*     int i, j; */
-/*     unsigned reg_val = 0; */
-    
-/*     printf("Write LUT\n"); */
-
-/*     for (i = 0; i < N_ACC; i++) { */
-/* 	for (j = 0; j < LUT_SIZE; j++) { */
-/* 	    write_config1(&espdevs[i], 0, lut_data[j], 0, random_rate, activity); */
-/* 	} */
-/*     } */
-/* } */
-
 
 static inline uint64_t get_counter()
 {
@@ -404,4 +318,4 @@ static inline uint64_t get_counter()
     return counter;
 } 
 
-#endif /* __TOKEN_PM_H__ */
+
