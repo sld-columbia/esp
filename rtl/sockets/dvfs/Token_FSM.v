@@ -24,10 +24,6 @@
  );
  
  
- //TODO:
- //Decide on best startup approach
- //More advanced validation
- 
 
  //-------------Input Ports-----------------------------
  input   clock,reset,packet_in;//Add enable input 
@@ -80,7 +76,7 @@
  parameter SIDE_COUNT = 5 		  ;
  parameter SIZE_TOKEN = 7		  ;
  //parameter COUNT_MIN = 10;
- //parameter COUNT_MAX = 2000;
+ //parameter COUNT_MAX = 2000; Used for dynamic diming
 
  //-------------Internal Variables---------------------------
  reg [SIZE_COUNT-1:0]		   refresh_count		;
@@ -125,7 +121,6 @@ divider_unit DIV0 (
  .packet_out_addr(packet_out_addr_div)  ,
  .packet_in_addr(packet_in_addr)  ,
  .token_counter(token_counter) ,
- .tokens_next(tokens_next_div) ,
  .flag_start(start_divider),
  .sign(sign),
  .freeze(freeze_div),
@@ -136,10 +131,10 @@ divider_unit DIV0 (
  integer i;
  always @ (posedge clock)
  begin : OUTPUT_LOGIC
- if (reset == 1'b0) begin//Update reset in TB
+ if (reset == 1'b0) begin
 	refresh_count<=0;
 	side_count<=0;
-	refresh_rate<=15;//Somewhat arbitary value
+	refresh_rate<=15;//Arbitary value, will be updated by CSR write
         for (i=0; i<64; i=i+1) begin
             LUT[i] <= 8'b0;
 	end
@@ -168,10 +163,6 @@ divider_unit DIV0 (
  refresh_rate_next=refresh_rate;
  start_divider=0;
  tokens_next=token_counter;
- //packet_out=packet_out_div;
-// packet_out_val=packet_out_val_div;
- //packet_out_addr=packet_out_addr_div;
- //tokens_next=token_counter;
  packet_out=0;
  packet_out_val=0;
  packet_out_addr=0;
@@ -210,7 +201,6 @@ divider_unit DIV0 (
  	packet_out_addr=packet_out_addr_div;
  end 
  
-// if (packet_out_div==1 && packet_out_ready==0 && enable==1 && !(packet_in==1 && packet_in_val[31]==1)) begin //Freeze state till NoC ready to receive 
  if (packet_out_div==1 && packet_out_ready==0 && enable==1) begin //Freeze state till NoC ready to receive 
 	freeze_div=1;
  end 

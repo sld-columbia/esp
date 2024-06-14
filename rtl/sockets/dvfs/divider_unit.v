@@ -3,24 +3,22 @@ module divider_unit(
           divisor,
           clock,
           rst,
-		  tokens_next,
-		  token_counter,
-		  packet_out,
-		  packet_out_val,
-		  flag_start,
-		  packet_in_addr,
-		  packet_out_addr,
-		  sign,
-		  freeze,
-		  zerozero,
-		  token_delta
+          token_counter,
+          packet_out,
+          packet_out_val,
+          flag_start,
+          packet_in_addr,
+          packet_out_addr,
+          sign,
+          freeze,
+          zerozero,
+          token_delta
 );
    input [12:0] divider;
    input [6:0] divisor;
    input clock;
    input rst;
    input [6:0] token_counter;
-   output [6:0] tokens_next;
    output  packet_out;
    output [31:0] packet_out_val; 
    output [4:0] packet_out_addr;
@@ -42,7 +40,6 @@ module divider_unit(
    wire [6:0] zerozero;
    wire freeze;//If 1, the divider output maintains its state (when NoC not available)
    //Outputs
-   reg signed [6:0] tokens_next;
    reg [31:0] packet_out_val; 
    reg [4:0] packet_out_addr;
    reg packet_out;
@@ -69,8 +66,8 @@ module divider_unit(
                                   .rst( rst )
                                 );
  always @ (posedge clock)
- begin
- if (rst == 1'b0) begin//Update reset in TB
+ begin //SEQ logic
+ if (rst == 1'b0) begin
 	flag_end<=0;
 	token_counter_save<=0;
 	packet_in_addr_save<=0;
@@ -90,28 +87,24 @@ module divider_unit(
 	divided_out_save<=divided_out_wsave;
 	flag_end_last<=flag_end;
  end 
- end // End Of Block OUTPUT_LOGIC
+ end 
  
  always @*
- begin : COMBO
+ begin : COMBO //Combinational logic
  	//Default values
-	tokens_next=token_counter;
 	packet_out=0;
 	packet_out_addr=0;
-	packet_out_val=0;//Has
+	packet_out_val=0;//Has and max
 	if(flag_end==1 && zerozero_flag==0)
 	begin
-		tokens_next=(sign_save)? (token_counter_save+$signed(divided_out_wsave)): (token_counter_save-$signed(divided_out_wsave));
 		packet_out=1;
 		packet_out_addr=packet_in_addr_save;
 		packet_out_val[6:0]=sign_save?-$signed(divided_out_wsave):$signed(divided_out_wsave);
 		token_delta=(sign_save)? $signed(divided_out_wsave): -$signed(divided_out_wsave);
-	 	//packet_out_val[10]=~sign_save;
 		
 	end
 	if(flag_end==1 && zerozero_flag==1)
 	begin
-		tokens_next=token_counter_save+zerozero_save;
 		packet_out=1;
 		packet_out_addr=packet_in_addr_save;
 		packet_out_val[6:0]=$signed(-zerozero_save);
