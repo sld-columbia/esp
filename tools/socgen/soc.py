@@ -265,8 +265,6 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     self.clk_str.set(int(item[2]))
-    line = fp.readline()
-    item = line.split()
     if self.clk_str.get() == 2:
         self.sync_en.set(0)
     else:
@@ -397,10 +395,6 @@ class SoC_Config():
     fp.write("CONGIG_DSU_IP = " + self.dsu_ip + "\n")
     fp.write("CONGIG_DSU_ETH = " + self.dsu_eth + "\n")
     fp.write("CONFIG_CLK_STR = " + str(self.clk_str.get()) + "\n")
-    if self.clk_str.get() == 2:
-      fp.write("CONFIG_SYNC_EN = " + "0" + "\n")
-    else:
-      fp.write("CONFIG_SYNC_EN = " + "1" + "\n")
     if self.noc.monitor_ddr.get() == 1:
       fp.write("CONFIG_MON_DDR = y\n")
     else:
