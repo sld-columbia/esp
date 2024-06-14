@@ -131,7 +131,6 @@ module lookahead_router_multicast
   logic [4:0][4:0] saved_routing_request;
   logic [4:0][4:0] final_routing_request;  // ri lint_check_waive NOT_READ
   logic [4:0][4:0] next_hop_routing;
-  logic [4:0][4:0] inval_routing;
 
   logic [4:0][3:0] transp_final_routing_request;
 
@@ -164,8 +163,6 @@ module lookahead_router_multicast
   logic [4:0] forwarding_head;
   logic [4:0] forwarding_in_progress;
   logic [4:0] insert_lookahead_routing;
-  logic [4:0][2:0] val_checkme= 3'h0; //change this
-  logic [4:0][2:0] dest_checkme= 3'h0; //change this
 
   assign data_in[noc::kNorthPort] = data_n_in;
   assign data_in[noc::kSouthPort] = data_s_in;
@@ -271,46 +268,6 @@ module lookahead_router_multicast
 
   end  // for gen_input_fifo
 
-  always_comb begin
-
-    destination_arr_temp[0] = 'b0;
-    destination_arr_temp[1] = 'b0;
-    destination_arr_temp[2] = 'b0;
-    destination_arr_temp[3] = 'b0;
-    destination_arr_temp[4] = 'b0;
-    if (fifo_head[0].header.preamble.head && rd_fifo_or[0]) begin
-      destination_arr_temp[0] = (DEST_SIZE == 1) ? fifo_head[0].header.info.destination : {fifo_head[0].header.info.destination,fifo_head[0].header.info.destination_arr};
-      destination_arr_temp[1] = (DEST_SIZE == 1) ? fifo_head[0].header.info.destination : {fifo_head[0].header.info.destination,fifo_head[0].header.info.destination_arr};
-      destination_arr_temp[2] = (DEST_SIZE == 1) ? fifo_head[0].header.info.destination : {fifo_head[0].header.info.destination,fifo_head[0].header.info.destination_arr};
-      destination_arr_temp[3] = (DEST_SIZE == 1) ? fifo_head[0].header.info.destination : {fifo_head[0].header.info.destination,fifo_head[0].header.info.destination_arr};
-      destination_arr_temp[4] = (DEST_SIZE == 1) ? fifo_head[0].header.info.destination : {fifo_head[0].header.info.destination,fifo_head[0].header.info.destination_arr};
-    end else if (fifo_head[1].header.preamble.head && rd_fifo_or[1]) begin
-      destination_arr_temp[0] = (DEST_SIZE == 1) ? fifo_head[1].header.info.destination : {fifo_head[1].header.info.destination,fifo_head[1].header.info.destination_arr};
-      destination_arr_temp[1] = (DEST_SIZE == 1) ? fifo_head[1].header.info.destination : {fifo_head[1].header.info.destination,fifo_head[1].header.info.destination_arr};
-      destination_arr_temp[2] = (DEST_SIZE == 1) ? fifo_head[1].header.info.destination : {fifo_head[1].header.info.destination,fifo_head[1].header.info.destination_arr};
-      destination_arr_temp[3] = (DEST_SIZE == 1) ? fifo_head[1].header.info.destination : {fifo_head[1].header.info.destination,fifo_head[1].header.info.destination_arr};
-      destination_arr_temp[4] = (DEST_SIZE == 1) ? fifo_head[1].header.info.destination : {fifo_head[1].header.info.destination,fifo_head[1].header.info.destination_arr};
-    end else if (fifo_head[2].header.preamble.head && rd_fifo_or[2]) begin
-      destination_arr_temp[0] = (DEST_SIZE == 1) ? fifo_head[2].header.info.destination : {fifo_head[2].header.info.destination,fifo_head[2].header.info.destination_arr};
-      destination_arr_temp[1] = (DEST_SIZE == 1) ? fifo_head[2].header.info.destination : {fifo_head[2].header.info.destination,fifo_head[2].header.info.destination_arr};
-      destination_arr_temp[2] = (DEST_SIZE == 1) ? fifo_head[2].header.info.destination : {fifo_head[2].header.info.destination,fifo_head[2].header.info.destination_arr};
-      destination_arr_temp[3] = (DEST_SIZE == 1) ? fifo_head[2].header.info.destination : {fifo_head[2].header.info.destination,fifo_head[2].header.info.destination_arr};
-      destination_arr_temp[4] = (DEST_SIZE == 1) ? fifo_head[2].header.info.destination : {fifo_head[2].header.info.destination,fifo_head[2].header.info.destination_arr};
-    end else if (fifo_head[3].header.preamble.head && rd_fifo_or[3]) begin
-      destination_arr_temp[0] = (DEST_SIZE == 1) ? fifo_head[3].header.info.destination : {fifo_head[3].header.info.destination,fifo_head[3].header.info.destination_arr};
-      destination_arr_temp[1] = (DEST_SIZE == 1) ? fifo_head[3].header.info.destination : {fifo_head[3].header.info.destination,fifo_head[3].header.info.destination_arr};
-      destination_arr_temp[2] = (DEST_SIZE == 1) ? fifo_head[3].header.info.destination : {fifo_head[3].header.info.destination,fifo_head[3].header.info.destination_arr};
-      destination_arr_temp[3] = (DEST_SIZE == 1) ? fifo_head[3].header.info.destination : {fifo_head[3].header.info.destination,fifo_head[3].header.info.destination_arr};
-      destination_arr_temp[4] = (DEST_SIZE == 1) ? fifo_head[3].header.info.destination : {fifo_head[3].header.info.destination,fifo_head[3].header.info.destination_arr};
-    end else if (fifo_head[4].header.preamble.head && rd_fifo_or[4]) begin
-      destination_arr_temp[0] = (DEST_SIZE == 1) ? fifo_head[4].header.info.destination : {fifo_head[4].header.info.destination,fifo_head[4].header.info.destination_arr};
-      destination_arr_temp[1] = (DEST_SIZE == 1) ? fifo_head[4].header.info.destination : {fifo_head[4].header.info.destination,fifo_head[4].header.info.destination_arr};
-      destination_arr_temp[2] = (DEST_SIZE == 1) ? fifo_head[4].header.info.destination : {fifo_head[4].header.info.destination,fifo_head[4].header.info.destination_arr};
-      destination_arr_temp[3] = (DEST_SIZE == 1) ? fifo_head[4].header.info.destination : {fifo_head[4].header.info.destination,fifo_head[4].header.info.destination_arr};
-      destination_arr_temp[4] = (DEST_SIZE == 1) ? fifo_head[4].header.info.destination : {fifo_head[4].header.info.destination,fifo_head[4].header.info.destination_arr};
-    end
-  end
-
   //////////////////////////////////////////////////////////////////////////////
   // Output crossbar and arbitration
   //////////////////////////////////////////////////////////////////////////////
@@ -343,6 +300,21 @@ module lookahead_router_multicast
         .grant_valid(grant_valid[g_i])
       );
 
+      assign rd_fifo[g_i][noc::kNorthPort] = no_backpressure[g_i] && (enhanc_routing_configuration[g_i] == noc::goNorth);
+      assign rd_fifo[g_i][noc::kSouthPort] = no_backpressure[g_i] && (enhanc_routing_configuration[g_i] == noc::goSouth);
+      assign rd_fifo[g_i][noc::kEastPort] = no_backpressure[g_i] && (enhanc_routing_configuration[g_i] == noc::goEast);
+      assign rd_fifo[g_i][noc::kWestPort] = no_backpressure[g_i] && (enhanc_routing_configuration[g_i] == noc::goWest);
+      assign rd_fifo[g_i][noc::kLocalPort] = no_backpressure[g_i] && (enhanc_routing_configuration[g_i] == noc::goLocal);
+
+      always_comb begin
+        destination_arr_temp[g_i] = 'b0;
+        for (int j = 0; j < 5; j++) begin
+          if (fifo_head[j].header.preamble.head && rd_fifo[g_i][j]) begin
+            destination_arr_temp[g_i] = {fifo_head[j].header.info.destination, fifo_head[j].header.info.destination_arr};
+          end
+        end
+      end
+
       // Sample current routing configuration
       always_ff @(posedge clk) begin
         if (forwarding_in_progress[g_i]) begin
@@ -371,458 +343,68 @@ module lookahead_router_multicast
 	// Crossbar
     always_comb begin
       fifo_head_routing[g_i] = '0;
-      rd_fifo[g_i] = '0;
       out_unvalid_flit[g_i] = 1'b1;
 
+      // for each input port
       for (int j = 0; j < 5; j++) begin
         fifo_head_temp[g_i][j] = fifo_head[j].header.preamble.head ? fifo_head[j].header : fifo_head[j].flit;
-      end
-
-      inval_routing[g_i] = 5'b11111;
-
-	  // check for destination valid and invalidate the completed destinations
-      if (enhanc_routing_configuration[g_i] == noc::goNorth ) begin // current_routing_north
-        val_checkme[g_i] = 3'h7;
-        if (g_i == 0) begin // Going North
-          for (int index = 0; index < DEST_SIZE; index++) begin  //check_north_and_inval_dest
-            if (fifo_head[noc::kNorthPort].header.info.val[index]) begin
-              if (position.x != destination_arr_temp[noc::kNorthPort][index].x) begin  // dest_in_wrong_direction_for_next_router_0
-                fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
-                inval_routing[g_i][0] = 0;
-                dest_checkme[g_i] = 3'h7;
-              end else begin
-                if (position.y - 1 < destination_arr_temp[noc::kNorthPort][index].y) begin // opposite_direction_dest
-                  fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
-                  inval_routing[g_i][0] = 0;
-                  dest_checkme[g_i] = 3'h7;
+        // j is the current input port for output port g_i
+        if (enhanc_routing_configuration[g_i] == (1 << j)) begin
+	    // invalidate destinations that are no longer on the current multicast path
+          if (noc::int2noc_port(g_i) == noc::kNorthPort) begin
+            for (int index = 0; index < DEST_SIZE; index++) begin
+              if (fifo_head[j].header.info.val[index]) begin
+                // if going north, destination cannot be in different column
+                if (position.x != destination_arr_temp[noc::kNorthPort][index].x) begin
+                  fifo_head_temp[g_i][j].header.info.val[index] = 0;
+                //next tile is north of destination
+                end else if (position.y - 1 < destination_arr_temp[noc::kNorthPort][index].y) begin
+                  fifo_head_temp[g_i][j].header.info.val[index] = 0;
                 end
               end
             end
           end
-        end
 
-        if (g_i == 1) begin // Going South
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_south_and_inval_dest
-            // If going from south in to North out, you cant have E,W,N routing
-            inval_routing[g_i][3] = 0;
-            inval_routing[g_i][2] = 0;
-            inval_routing[g_i][0] = 0;
 
-            if (fifo_head[noc::kNorthPort].header.info.val[index]) begin
-              if (position.x != destination_arr_temp[noc::kNorthPort][index].x) begin
-                fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
-                inval_routing[g_i][0] = 0;
-                dest_checkme[g_i] = 3'h5;
-              end else begin  // wrong_direction_in_next_router_1
-                if (!destination_arr_temp[noc::kNorthPort][index].y) begin // destination is on the north // Check if pos.y+1 > dest
-                  fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
-                  inval_routing[g_i][0] = 0;
-                  dest_checkme[g_i] = 3'h5;
+          if (noc::int2noc_port(g_i) == noc::kSouthPort) begin
+            for (int index = 0; index < DEST_SIZE; index++) begin
+              if (fifo_head[j].header.info.val[index]) begin
+                // if going south, destination cannot be in a differnet column
+                if (position.x != destination_arr_temp[noc::kSouthPort][index].x) begin
+                  fifo_head_temp[g_i][j].header.info.val[index] = 0;
+                //next tile is south of destination
+                end else if (position.y + 1 > destination_arr_temp[noc::kSouthPort][index].y) begin
+                  fifo_head_temp[g_i][j].header.info.val[index] = 0;
                 end
               end
             end
           end
-        end
 
-        if (g_i == 2) begin // Going West
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
-             if (fifo_head[noc::kNorthPort].header.info.val[index]) begin
-               if (position.x - 1 < destination_arr_temp[noc::kNorthPort][index].x) begin // The destination is in the east direction
-                 fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
-                 inval_routing[g_i][0] = 0;
-                 dest_checkme[g_i] = 3'h3;
+          if (noc::int2noc_port(g_i) == noc::kWestPort) begin
+            for (int index = 0; index < DEST_SIZE; index++) begin
+               if (fifo_head[j].header.info.val[index]) begin
+                 // next tile is west of destination
+                 if (position.x - 1 < destination_arr_temp[noc::kWestPort][index].x) begin
+                   fifo_head_temp[g_i][j].header.info.val[index] = 0;
+                 end
                end
              end
-           end // check_west_and_inval_dest
-         end
+           end
 
-        if (g_i == 3) begin // Going East
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
-            if (fifo_head[noc::kNorthPort].header.info.val[index]) begin
-              if (position.x + 1 > destination_arr_temp[noc::kNorthPort][index].x) begin// The destination is in the east direction
-                fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
-                inval_routing[g_i][0] = 0;
-                dest_checkme[g_i] = 3'h1;
-              end
-            end
-          end // check_west_and_inval_dest
-        end
-
-        if (g_i == 4) begin // Going Local
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_east_and_inval_dest
-            if (fifo_head[noc::kNorthPort].header.info.val[index]) begin //
-              if ((position.x != destination_arr_temp[noc::kNorthPort][index].x) || (position.y != destination_arr_temp[noc::kNorthPort][index].y)) begin // local_out
-                fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
-                inval_routing[g_i][0]=0;
-                dest_checkme[g_i] = 3'h6;
-              end
-            end
-          end
-        end
-
-        fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kNorthPort].header.preamble.head ? fifo_head_temp[g_i][noc::kNorthPort].header : fifo_head[noc::kNorthPort].flit;
-        rd_fifo[g_i][noc::kNorthPort] = no_backpressure[g_i];
-        out_unvalid_flit[g_i] = in_unvalid_flit[noc::kNorthPort];
-
-      end
-
-      if (enhanc_routing_configuration[g_i] == noc::goSouth) begin  // current_routing_south
-        val_checkme[g_i] = 3'h5;
-        if (g_i == 0) begin // Going North
-          for (int index = 0; index < DEST_SIZE; index++) begin  //check_north_and_inval_dest
-            if (fifo_head[noc::kSouthPort].header.info.val[index]) begin 
-              // If going from south in to North out, you cant have E,W,S routing
-              inval_routing[g_i][3] = 0;
-              inval_routing[g_i][2] = 0;
-              inval_routing[g_i][1] = 0;
-              if (position.x != destination_arr_temp[noc::kSouthPort][index].x) begin  // dest_in_wrong_direction_for_next_router_0
-                fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
-                inval_routing[g_i][1] = 0;
-                dest_checkme[g_i] = 3'h7;
-              end else begin
-                if (position.y - 1 < destination_arr_temp[noc::kSouthPort][index].y) begin // opposite_direction_dest
-                  fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
-                  inval_routing[g_i][1] = 0;
-                  dest_checkme[g_i] = 3'h7;
+          if (noc::int2noc_port(g_i) == noc::kEastPort) begin
+            for (int index = 0; index < DEST_SIZE; index++) begin
+              if (fifo_head[j].header.info.val[index]) begin
+                // next tile is east of destination
+                if (position.x + 1 > destination_arr_temp[noc::kEastPort][index].x) begin
+                  fifo_head_temp[g_i][j].header.info.val[index] = 0;
                 end
               end
             end
           end
+
+          fifo_head_routing[g_i] = fifo_head_temp[g_i][j].header.preamble.head ? fifo_head_temp[g_i][j].header : fifo_head[j].flit;
+          out_unvalid_flit[g_i] = in_unvalid_flit[j];
         end
-
-        if (g_i == 1) begin // Going South
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_south_and_inval_dest
-            if (fifo_head[noc::kSouthPort].header.info.val[index]) begin
-              if (position.x != destination_arr_temp[noc::kSouthPort][index].x) begin
-                fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
-                inval_routing[g_i][1] = 0;
-                dest_checkme[g_i] = 3'h5;
-              end else begin  // wrong_direction_in_next_router_1
-                if (!destination_arr_temp[noc::kSouthPort][index].y) begin // destination is on the north // Check if pos.y+1 > dest
-                  fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
-                  inval_routing[g_i][1] = 0;
-                  dest_checkme[g_i] = 3'h5;
-	            end
-              end
-            end
-          end
-        end
-
-        if (g_i == 2) begin // Going West
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
-            if (fifo_head[noc::kSouthPort].header.info.val[index]) begin
-              if (position.x - 1 < destination_arr_temp[noc::kSouthPort][index].x) begin // The destination is in the east direction
-                fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
-                inval_routing[g_i][1] = 0;
-                dest_checkme[g_i] = 3'h3;
-              end
-            end
-          end // check_west_and_inval_dest
-        end
-
-        if (g_i == 3) begin // Going East
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
-             if (fifo_head[noc::kSouthPort].header.info.val[index]) begin
-               if (position.x + 1 > destination_arr_temp[noc::kSouthPort][index].x) begin // The destination is in the east direction
-                 fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
-                 inval_routing[g_i][1] = 0;
-                 dest_checkme[g_i] = 3'h1;
-               end
-             end
-           end // check_west_and_inval_dest
-         end
-
-        if (g_i == 4) begin // Going Local
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_east_and_inval_dest
-            if (fifo_head[noc::kSouthPort].header.info.val[index]) begin //
-              if ((position.x != destination_arr_temp[noc::kSouthPort][index].x) || (position.y != destination_arr_temp[noc::kSouthPort][index].y)) begin // local_out
-                fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
-                inval_routing[g_i][1] = 0;
-                dest_checkme[g_i] = 3'h6;
-              end
-            end
-          end
-        end
-
-        fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kSouthPort].header.preamble.head ? fifo_head_temp[g_i][noc::kSouthPort].header : fifo_head[noc::kSouthPort].flit;
-        rd_fifo[g_i][noc::kSouthPort] = no_backpressure[g_i];
-        out_unvalid_flit[g_i] = in_unvalid_flit[noc::kSouthPort];
-
-      end // current_routing_south
-
-      if (enhanc_routing_configuration[g_i] == noc::goWest) begin  // current_routing_west
-	    val_checkme[g_i] = 3'h3;
-        if (g_i == 0) begin // Going North
-          for (int index = 0; index < DEST_SIZE; index++) begin  //check_north_and_inval_dest
-            if (fifo_head[noc::kWestPort].header.info.val[index]) begin
-              // If going from west in to North out, you cant have E,W,S routing
-              inval_routing[g_i][3] = 0;
-              inval_routing[g_i][2] = 0;
-              inval_routing[g_i][1] = 0;
-              if (position.x != destination_arr_temp[noc::kWestPort][index].x) begin  // dest_in_wrong_direction_for_next_router_0
-                fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
-                inval_routing[g_i][2] = 0;
-                dest_checkme[g_i] = 3'h7;
-              end else begin
-                if (position.y - 1 < destination_arr_temp[noc::kWestPort][index].y) begin // opposite_direction_dest
-                  fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
-                  inval_routing[g_i][2] = 0;
-                  dest_checkme[g_i] = 3'h7;
-                end
-              end
-            end
-          end
-        end
-
-        if (g_i == 1) begin // Going South
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_south_and_inval_dest
-            if (fifo_head[noc::kWestPort].header.info.val[index]) begin
-              // If going from west in to south out, you cant have E,W,N routing
-              inval_routing[g_i][3] = 0;
-              inval_routing[g_i][2] = 0;
-              inval_routing[g_i][0] = 0;
-              if (position.x != destination_arr_temp[noc::kWestPort][index].x) begin
-                fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
-                dest_checkme[g_i] = 3'h5;
-              end else begin  // wrong_direction_in_next_router_1
-                if (!destination_arr_temp[noc::kWestPort][index].y) begin // destination is on the north // Check if pos.y+1 > dest
-                  fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
-                  dest_checkme[g_i] = 3'h5;
-	            end
-              end
-            end
-          end
-        end
-
-        if (g_i == 2) begin // Going West
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
-            if (fifo_head[noc::kWestPort].header.info.val[index]) begin
-              if (position.x - 1 < destination_arr_temp[noc::kWestPort][index].x) begin // The destination is in the east direction
-                fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
-                inval_routing[g_i][2] = 0;
-                dest_checkme[g_i] = 3'h3;
-              end
-              if (position.x - 1 == destination_arr_temp[noc::kWestPort][index].x) begin
-                inval_routing[g_i][1] = 1;
-                inval_routing[g_i][0] = 1;
-                inval_routing[g_i][4] = 1;
-              end else if (position.x - 1 != destination_arr_temp[noc::kWestPort][index].x) begin // Its its not a local there or not needed to go north or south, make the local bit of routing 0
-                inval_routing[g_i][4] = 0;
-                inval_routing[g_i][1] = 0;
-                inval_routing[g_i][0] = 0;
-              end
-            end
-          end // check_west_and_inval_dest
-        end
-
-        if (g_i == 3) begin // Going East
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
-            if (fifo_head[noc::kWestPort].header.info.val[index]) begin
-              if (position.x + 1 > destination_arr_temp[noc::kWestPort][index].x) begin// The destination is in the east direction
-                fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
-                inval_routing[g_i][2] = 0;
-                dest_checkme[g_i] = 3'h1;
-              end
-              if (position.x + 1 == destination_arr_temp[noc::kWestPort][index].x) begin
-                inval_routing[g_i][1] = ~inval_routing[g_i][1];
-                inval_routing[g_i][0] = ~inval_routing[g_i][0];
-              end else if (position.x + 1 != destination_arr_temp[noc::kWestPort][index].x) begin
-                inval_routing[g_i][1] = ~inval_routing[g_i][1];
-                inval_routing[g_i][0] = ~inval_routing[g_i][0];
-              end
-            end
-          end // check_west_and_inval_dest
-        end
-
-        if (g_i == 4) begin // Going Local
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_east_and_inval_dest
-            if (fifo_head[noc::kWestPort].header.info.val[index]) begin
-              if ((position.x != destination_arr_temp[noc::kWestPort][index].x) || (position.y != destination_arr_temp[noc::kWestPort][index].y)) begin // local_out
-                fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
-                inval_routing[g_i][2] = 0;
-                dest_checkme[g_i] = 3'h6;
-              end
-            end
-          end
-        end
-
-        fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kWestPort].header.preamble.head ? fifo_head_temp[g_i][noc::kWestPort].header : fifo_head[noc::kWestPort].flit;
-        rd_fifo[g_i][noc::kWestPort] = no_backpressure[g_i];
-        out_unvalid_flit[g_i] = in_unvalid_flit[noc::kWestPort];
-
-      end // current_routing_west
-
-      if (enhanc_routing_configuration[g_i] == noc::goEast) begin  // current_routing_east
-	    val_checkme[g_i] = 3'h1;
-        if (g_i == 0) begin // Going North
-          for (int index = 0; index < DEST_SIZE; index++) begin  //check_north_and_inval_dest
-            // If going from west in to North out, you cant have E,W,S routing
-            inval_routing[g_i][3] = 0;
-            inval_routing[g_i][2] = 0;
-            inval_routing[g_i][1] = 0;
-            if (fifo_head[noc::kEastPort].header.info.val[index]) begin
-              if (position.x != destination_arr_temp[noc::kEastPort][index].x) begin  // dest_in_wrong_direction_for_next_router_0
-                fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
-                inval_routing[g_i][3] = 0;
-                dest_checkme[g_i] = 3'h7;
-              end else begin
-                if (position.y - 1 < destination_arr_temp[noc::kEastPort][index].y) begin // opposite_direction_dest
-                  fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
-                  inval_routing[g_i][3] = 0;
-                  dest_checkme[g_i] = 3'h7;
-                end
-              end
-            end
-          end
-        end
-
-        if (g_i == 1) begin // Going South
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_south_and_inval_dest
-            if (fifo_head[noc::kEastPort].header.info.val[index]) begin
-              // If going from East in to South out, you cant have E,W,N routing
-              inval_routing[g_i][3] = 0;
-              inval_routing[g_i][2] = 0;
-              inval_routing[g_i][0] = 0;
-              if (position.x != destination_arr_temp[noc::kEastPort][index].x) begin
-                fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
-                inval_routing[g_i][3] = 0;
-                dest_checkme[g_i] = 3'h5;
-              end else begin  // wrong_direction_in_next_router_1
-                if (!destination_arr_temp[noc::kEastPort][index].y) begin // destination is on the north // Check if pos.y+1 > dest
-                  fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
-                  inval_routing[g_i][3] = 0;
-                  dest_checkme[g_i] = 3'h5;
-                end
-              end
-            end
-          end
-        end
-
-        if (g_i == 2) begin // Going West
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
-            if (fifo_head[noc::kEastPort].header.info.val[index]) begin
-              if (position.x - 1 < destination_arr_temp[noc::kEastPort][index].x) begin // The destination is in the east direction
-                fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
-                inval_routing[g_i][3] = 0;
-                dest_checkme[g_i] = 3'h3;
-              end
-              if (position.x - 1 != destination_arr_temp[noc::kEastPort][index].x) begin // Its its not a local there or not needed to go north or south, make the local bit of routing 0
-                inval_routing[g_i][4] = 0;
-                inval_routing[g_i][1] = 0;
-                inval_routing[g_i][0] = 0;
-              end
-            end
-          end // check_west_and_inval_dest
-        end
-
-        if (g_i == 3) begin // Going East
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
-            if (fifo_head[noc::kEastPort].header.info.val[index]) begin
-              if (position.x + 1 > destination_arr_temp[noc::kEastPort][index].x) begin// The destination is in the east direction
-                fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
-                inval_routing[g_i][3] = 0;
-                dest_checkme[g_i] = 3'h1;
-              end
-            end
-          end // check_west_and_inval_dest
-        end
-
-        if (g_i == 4) begin // Going Local
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_east_and_inval_dest
-            if (fifo_head[noc::kEastPort].header.info.val[index]) begin
-              if ((position.x != destination_arr_temp[noc::kEastPort][index].x) || (position.y != destination_arr_temp[noc::kEastPort][index].y)) begin // local_out
-                fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
-                inval_routing[g_i][3] = 0;
-                dest_checkme[g_i] = 3'h6;
-              end
-            end
-          end
-        end
-
-        fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kEastPort].header.preamble.head ? fifo_head_temp[g_i][noc::kEastPort].header : fifo_head[noc::kEastPort].flit;
-        rd_fifo[g_i][noc::kEastPort] = no_backpressure[g_i];
-        out_unvalid_flit[g_i] = in_unvalid_flit[noc::kEastPort];
-
-      end
-
-      if (enhanc_routing_configuration[g_i] == noc::goLocal) begin
-        val_checkme[g_i] = 3'h6;
-        if (g_i == 0) begin // Going North
-          for (int index = 0; index < DEST_SIZE; index++) begin  //check_north_and_inval_dest
-            if (fifo_head[noc::kLocalPort].header.info.val[index]) begin
-              if (position.x != destination_arr_temp[noc::kLocalPort][index].x) begin  // dest_in_wrong_direction_for_next_router_0
-                fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
-                inval_routing[g_i][4] = 0;
-                dest_checkme[g_i] = 3'h7;
-              end else begin
-                if (position.y - 1 < destination_arr_temp[noc::kLocalPort][index].y) begin // opposite_direction_dest
-                  fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
-                  inval_routing[g_i][4] = 0;
-                  dest_checkme[g_i] = 3'h7;
-                end
-              end
-            end
-          end
-        end
-
-        if (g_i == 1) begin // Going South
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_south_and_inval_dest
-            if (fifo_head[noc::kLocalPort].header.info.val[index]) begin
-              if (position.x != destination_arr_temp[noc::kLocalPort][index].x) begin
-                fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
-                inval_routing[g_i][4] = 0;
-                dest_checkme[g_i] = 3'h5;
-              end else begin  // wrong_direction_in_next_router_1
-                if (!destination_arr_temp[noc::kLocalPort][index].y) begin // destination is on the north // Check if pos.y+1 > dest
-                  fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
-                  inval_routing[g_i][4] = 0;
-                  dest_checkme[g_i] = 3'h5;
-      	      end
-              end
-            end
-          end
-        end
-
-        if (g_i == 2) begin // Going West
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
-            if (fifo_head[noc::kLocalPort].header.info.val[index]) begin
-              if (position.x - 1 < destination_arr_temp[noc::kLocalPort][index].x) begin // The destination is in the east direction
-                fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
-                inval_routing[g_i][4] = 0;
-                dest_checkme[g_i] = 3'h3;
-              end
-            end
-          end // check_west_and_inval_dest
-        end
-
-        if (g_i == 3) begin // Going East
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_west_and_inval_dest
-            if (fifo_head[noc::kLocalPort].header.info.val[index]) begin
-              if (position.x + 1 > destination_arr_temp[noc::kLocalPort][index].x) begin// The destination is in the east direction
-                fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
-                inval_routing[g_i][4] = 0;
-                dest_checkme[g_i] = 3'h1;
-              end
-            end
-          end // check_west_and_inval_dest
-        end
-
-        if (g_i == 4) begin // Going Local
-          for (int index = 0; index < DEST_SIZE; index++) begin  // check_east_and_inval_dest
-            if (fifo_head[noc::kLocalPort].header.info.val[index]) begin
-              if ((position.x != destination_arr_temp[noc::kLocalPort][index].x) || (position.y != destination_arr_temp[noc::kLocalPort][index].y)) begin // local_out
-                fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
-                inval_routing[g_i][4] = 0;
-                dest_checkme[g_i] = 3'h6;
-              end
-            end
-          end
-        end
-
-        fifo_head_routing[g_i] = fifo_head_temp[g_i][noc::kLocalPort].header.preamble.head ? fifo_head_temp[g_i][noc::kLocalPort].header : fifo_head[noc::kLocalPort].flit;
-        rd_fifo[g_i][noc::kLocalPort] = no_backpressure[g_i];
-        out_unvalid_flit[g_i] = in_unvalid_flit[noc::kLocalPort];
-
       end
     end
 
