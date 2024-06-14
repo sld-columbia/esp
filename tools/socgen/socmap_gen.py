@@ -571,6 +571,11 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_ETH_ENL : integer := 16#" + soc.dsu_eth[6:] + "#;\n\n")
 
   #
+  fp.write("  ------ Clock Strategy\n")
+  fp.write("  constant CFG_CLK_STR : integer := " + str(soc.clk_str.get()) + ";\n")
+  fp.write("  constant CFG_SYNC_EN : integer := " + str(soc.sync_en.get()) + ";\n\n")
+
+  #
   fp.write("  ------ NoC\n")
   fp.write("  constant CFG_XLEN : integer := " + str(soc.noc.cols) + ";\n")
   fp.write("  constant CFG_YLEN : integer := " + str(soc.noc.rows) + ";\n")
@@ -2314,6 +2319,364 @@ def print_cache_config(fp, soc, esp_config):
   fp.write("\n")
   fp.write("`endif // __CACHES_CFG_SVH__\n")
 
+def print_asic_top_level(fp_t, fp, soc, esp_config):
+
+  for line in fp_t:
+
+    if line.strip() == "-- < FPGA proxy memory link >":
+      if esp_config.nmem > 0: 
+        fp.write("    -- FPGA proxy memory link\n")
+        fp.write("    fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * CFG_MEM_LINK_BITS - 1 downto 0);\n")
+        fp.write("    fpga_valid_in   : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+        fp.write("    fpga_valid_out  : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+        fp.write("    fpga_clk_in     : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+        fp.write("    fpga_clk_out    : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+        fp.write("    fpga_credit_in  : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+        fp.write("    fpga_credit_out : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+      else:
+        fp.write("     -- FPGA proxy memory link - no memory tile used\n")
+
+    elif line.strip() == "-- < I/O link >":
+      if esp_config.has_iolink:
+        fp.write("    -- I/O link\n")
+        fp.write("    iolink_data       : inout std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);\n")
+        fp.write("    iolink_valid_in   : in    std_ulogic;\n")
+        fp.write("    iolink_valid_out  : out   std_ulogic;\n")
+        fp.write("    iolink_clk_in     : in    std_ulogic;\n")
+        fp.write("    iolink_clk_out    : out   std_ulogic;\n")
+        fp.write("    iolink_credit_in  : in    std_ulogic;\n")
+        fp.write("    iolink_credit_out : out   std_ulogic;\n")
+      else:
+        fp.write("    -- I/O link - not used\n")
+
+    elif line.strip() == "-- < Ethernet signals >":
+      if esp_config.has_eth:
+        fp.write("    -- Ethernet signals\n")
+        fp.write("    reset_o2        : out   std_ulogic;\n")
+        fp.write("    etx_clk         : in    std_ulogic;\n")
+        fp.write("    erx_clk         : in    std_ulogic;\n")
+        fp.write("    erxd            : in    std_logic_vector(3 downto 0);\n")
+        fp.write("    erx_dv          : in    std_ulogic;\n")
+        fp.write("    erx_er          : in    std_ulogic;\n")
+        fp.write("    erx_col         : in    std_ulogic;\n")
+        fp.write("    erx_crs         : in    std_ulogic;\n")
+        fp.write("    etxd            : out   std_logic_vector(3 downto 0);\n")
+        fp.write("    etx_en          : out   std_ulogic;\n")
+        fp.write("    etx_er          : out   std_ulogic;\n")
+        fp.write("    emdc            : out   std_ulogic;\n")
+        fp.write("    emdio           : inout std_logic;\n")
+      else:
+        fp.write("    -- Ethernet signals - not used\n")
+     
+    elif line.strip() == "-- < JTAG >":
+      if esp_config.has_jtag:
+        fp.write("    -- JTAG\n")
+        fp.write("    tclk            : in    std_logic;\n")
+        fp.write("    tms             : in    std_logic;\n")
+        fp.write("    tdi_io          : in    std_logic;\n")
+        fp.write("    tdi_cpu         : in    std_logic;\n")
+        fp.write("    tdi_mem         : in    std_logic;\n")
+        fp.write("    tdi_acc         : in    std_logic;\n")
+        fp.write("    tdo_io          : out   std_logic;\n")
+        fp.write("    tdo_cpu         : out   std_logic;\n")
+        fp.write("    tdo_mem         : out   std_logic;\n")
+        fp.write("    tdo_acc         : out   std_logic;\n")
+      else:
+        fp.write("    -- JTAG - not used\n")
+    elif line.strip() == "-- < Memory link pads >" :
+      fp.write("  memory_link_gen : for j in 0 to CFG_NMEM_TILE - 1 generate\n")
+      fp.write("    memory_wires_gen : for i in 0 to CFG_MEM_LINK_BITS - 1 generate\n")
+      fp.write("      fpga_oen_int(j * CFG_MEM_LINK_BITS + i) <= fpga_oen(j);\n")
+      fp.write("      fpga_data_pad_cfg(j * CFG_MEM_LINK_BITS * 20 + (i+1) * 20 -1 downto j * CFG_MEM_LINK_BITS * 20 + i * 20) <= full_pad_cfg(mem_tile_id(j));\n")
+      fp.write("    end generate memory_wires_gen;\n")
+      fp.write("    fpga_c_pad_cfg((j + 1) * 20 - 1 downto j * 20) <= full_pad_cfg(mem_tile_id(j));\n")
+      fp.write("  end generate memory_link_gen;\n")
+      fp.write("\n")
+      if esp_config.nmem > 1:
+        fp.write("  fpga_data_pad : iopadvvv generic map (tech => CFG_FABTECH, loc => fpga_data_pad_loc, level => cmos, voltage => x18v, width => (CFG_MEM_LINK_BITS * CFG_NMEM_TILE), oepol => 1)\n")
+        fp.write("    port map (fpga_data, fpga_data_out, fpga_oen_int, fpga_data_in, fpga_data_pad_cfg);\n")
+        fp.write("  fpga_valid_in_pad : inpadv generic map (loc => fpga_valid_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => CFG_NMEM_TILE)\n")
+        fp.write("    port map (fpga_valid_in, fpga_valid_in_int);\n")
+        fp.write("  fpga_valid_out_pad : outpadvvv generic map (loc => fpga_valid_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => CFG_NMEM_TILE)\n")
+        fp.write("    port map (fpga_valid_out, fpga_valid_out_int, fpga_c_pad_cfg);\n")
+        fp.write("  fpga_clk_in_pad : inpadv generic map (loc => fpga_clk_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => CFG_NMEM_TILE)\n")
+        fp.write("    port map (fpga_clk_in, fpga_clk_in_int);\n")
+        fp.write("  fpga_clk_out_pad : outpadvvv generic map (loc => fpga_clk_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => CFG_NMEM_TILE)\n")
+        fp.write("    port map (fpga_clk_out, fpga_clk_out_int, fpga_c_pad_cfg);\n")
+        fp.write("  fpga_credit_in_pad : inpadv generic map (loc => fpga_credit_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => CFG_NMEM_TILE)\n")
+        fp.write("    port map (fpga_credit_in, fpga_credit_in_int);\n")
+        fp.write("  fpga_credit_out_pad : outpadvvv generic map (loc => fpga_credit_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => CFG_NMEM_TILE)\n")
+        fp.write("    port map (fpga_credit_out, fpga_credit_out_int, fpga_c_pad_cfg);\n")
+      elif esp_config.nmem == 1:
+        fp.write("  fpga_data_pad : iopadv generic map (tech => CFG_FABTECH, loc => fpga_data_pad_loc, level => cmos, voltage => x18v, width => (CFG_MEM_LINK_BITS * CFG_NMEM_TILE), oepol => 1)\n")
+        fp.write("    port map (fpga_data, fpga_data_out, fpga_oen_int(0), fpga_data_in, fpga_data_pad_cfg(19 downto 0));\n")
+        fp.write("  fpga_valid_in_pad : inpad generic map (loc => fpga_valid_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (fpga_valid_in(0), fpga_valid_in_int(0));\n")
+        fp.write("  fpga_valid_out_pad : outpad generic map (loc => fpga_valid_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (fpga_valid_out(0), fpga_valid_out_int(0), fpga_c_pad_cfg);\n")
+        fp.write("  fpga_clk_in_pad : inpad generic map (loc => fpga_clk_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (fpga_clk_in(0), fpga_clk_in_int(0));\n")
+        fp.write("  fpga_clk_out_pad : outpad generic map (loc => fpga_clk_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (fpga_clk_out(0), fpga_clk_out_int(0), fpga_c_pad_cfg);\n")
+        fp.write("  fpga_credit_in_pad : inpad generic map (loc => fpga_credit_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (fpga_credit_in(0), fpga_credit_in_int(0));\n")
+        fp.write("  fpga_credit_out_pad : outpad generic map (loc => fpga_credit_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (fpga_credit_out(0), fpga_credit_out_int(0), fpga_c_pad_cfg);\n")
+      else:
+        fp.write("  -- No memory link used\n")
+    elif line.strip() == "-- < I/O Link pads >" :
+      if esp_config.has_iolink:
+        fp.write("  iolink_data_pad : iopadv generic map (tech => CFG_FABTECH, loc => iolink_data_pad_loc, level => cmos, voltage => x18v, width => CFG_IOLINK_BITS, oepol => 1)\n")
+        fp.write("    port map (iolink_data, iolink_data_out_int, iolink_data_oen, iolink_data_in_int, full_pad_cfg(io_tile_id));\n")
+        fp.write("  iolink_valid_in_pad : inpad generic map (loc => iolink_valid_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (iolink_valid_in, iolink_valid_in_int);\n")
+        fp.write("  iolink_valid_out_pad : outpad generic map (loc => iolink_valid_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (iolink_valid_out, iolink_valid_out_int, full_pad_cfg(io_tile_id));\n")
+        fp.write("  iolink_clk_in_pad : inpad generic map (loc => iolink_clk_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (iolink_clk_in, iolink_clk_in_int);\n")
+        fp.write("  iolink_clk_out_pad : outpad generic map (loc => iolink_clk_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (iolink_clk_out, iolink_clk_out_int, full_pad_cfg(io_tile_id));\n")
+        fp.write("  iolink_credit_in_pad : inpad generic map (loc => iolink_credit_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (iolink_credit_in, iolink_credit_in_int);\n")
+        fp.write("  iolink_credit_out_pad : outpad generic map (loc => iolink_credit_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)\n")
+        fp.write("    port map (iolink_credit_out, iolink_credit_out_int, full_pad_cfg(io_tile_id));\n")
+      else:
+        fp.write("  -- No I/O Link used\n")
+        fp.write("  iolink_valid_in_int  <= '0';\n")
+        fp.write("  iolink_data_in_int   <= (others => '0');\n")
+        fp.write("  iolink_clk_in_int    <= '0';\n")
+        fp.write("  iolink_credit_in_int <= '0';\n")
+    elif line.strip() == "-- < ETH pads >":
+      if esp_config.has_eth:
+        fp.write("  reset_o2_pad : outpad generic map (tech => CFG_FABTECH, loc => reset_o2_pad_loc, level => cmos, voltage => x18v)\n")
+        fp.write("    port map (reset_o2, reset_o2_int, full_pad_cfg(io_tile_id));\n")
+
+        fp.write("  etx_clk_pad : inpad generic map (tech => CFG_FABTECH, loc => etx_clk_pad_loc, level => cmos, voltage => x18v)\n")
+        fp.write("    port map (etx_clk, etx_clk_int);\n")
+        fp.write("  erx_clk_pad : inpad generic map (tech => CFG_FABTECH, loc => erx_clk_pad_loc, level => cmos, voltage => x18v)\n")
+        fp.write("    port map (erx_clk, erx_clk_int);\n")
+        fp.write("  erxd_pad : inpadv generic map (tech => CFG_FABTECH, loc => erxd_pad_loc, level => cmos, voltage => x18v, width => 4)\n")
+        fp.write("    port map (erxd, erxd_int);\n")
+        fp.write("  erx_dv_pad : inpad generic map (tech => CFG_FABTECH, loc => erx_dv_pad_loc, level => cmos, voltage => x18v)\n")
+        fp.write("    port map (erx_dv, erx_dv_int);\n")
+        fp.write("  erx_er_pad : inpad generic map (tech => CFG_FABTECH, loc => erx_er_pad_loc, level => cmos, voltage => x18v)\n")
+        fp.write("    port map (erx_er, erx_er_int);\n")
+        fp.write("  erx_col_pad : inpad generic map (tech => CFG_FABTECH, loc => erx_col_pad_loc, level => cmos, voltage => x18v)\n")
+        fp.write("    port map (erx_col, erx_col_int);\n")
+        fp.write("  erx_crs_pad : inpad generic map (tech => CFG_FABTECH, loc => erx_crs_pad_loc, level => cmos, voltage => x18v)\n")
+        fp.write("    port map (erx_crs, erx_crs_int);\n")
+
+        fp.write("  emdio_pad : iopad generic map (tech => CFG_FABTECH, loc => emdio_pad_loc, level => cmos, voltage => x18v, oepol => 1)\n")
+        fp.write("    port map (emdio, emdio_o, emdio_oe, emdio_i, full_pad_cfg(io_tile_id));\n")
+
+        fp.write("  etxd_pad : outpadv generic map (tech => CFG_FABTECH, loc => etxd_pad_loc, level => cmos, voltage => x18v, width => 4)\n")
+        fp.write("    port map (etxd, etxd_int, full_pad_cfg(io_tile_id));\n")
+        fp.write("  etx_en_pad : outpad generic map (tech => CFG_FABTECH, loc => etx_en_pad_loc, level => cmos, voltage => x18v)\n")
+        fp.write("    port map (etx_en, etx_en_int, full_pad_cfg(io_tile_id));\n")
+        fp.write("  etx_er_pad : outpad generic map (tech => CFG_FABTECH, loc => etx_er_pad_loc, level => cmos, voltage => x18v)\n")
+        fp.write("    port map (etx_er, etx_er_int, full_pad_cfg(io_tile_id));\n")
+        fp.write("  emdc_pad : outpad generic map (tech => CFG_FABTECH, loc => emdc_pad_loc, level => cmos, voltage => x18v)\n")
+        fp.write("    port map (emdc, emdc_int, full_pad_cfg(io_tile_id));\n")
+      else:
+        fp.write("  -- No ethernet used\n")
+        fp.write("  etx_clk_int <= '0';\n")
+        fp.write("  erx_clk_int <= '0';\n")
+        fp.write("  erxd_int    <= (others => '0');\n")
+        fp.write("  erx_dv_int  <= '0';\n")
+        fp.write("  erx_er_int  <= '0';\n")
+        fp.write("  erx_col_int <= '0';\n")
+        fp.write("  erx_crs_int <= '0';\n")
+        fp.write("  emdio_i     <= '0';\n")
+    elif line.strip() == "-- < JTAG pads >":
+      if esp_config.has_jtag:
+        fp.write("  -- tdi/o_cpu\n")
+        fp.write("  tdi_cpu_pad : inpad generic map (loc => tdi_cpu_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdi_cpu, tdi_int(cpu_tile_id(0)));\n")
+        fp.write("  tdo_cpu_pad : outpad generic map (loc => tdo_cpu_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdo_cpu, tdo_int(cpu_tile_id(0)), full_pad_cfg(cpu_tile_id(0)));\n")
+        fp.write("  -- tdi/o_io\n")
+        fp.write("  tdi_io_pad : inpad generic map (loc => tdi_io_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdi_io, tdi_int(io_tile_id));\n")
+        fp.write("  tdo_io_pad : outpad generic map (loc => tdo_io_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdo_io, tdo_int(io_tile_id), full_pad_cfg(io_tile_id));\n")
+
+        if esp_config.nmem > 0:
+          fp.write("  -- tdi/o_mem pad is close to memory tile 0\n")
+          fp.write("  tdi_mem_pad : inpad generic map (loc => tdi_mem_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdi_mem, tdi_int(mem_tile_id(0)));\n")
+          fp.write("  tdo_mem_pad : outpad generic map (loc => tdo_mem_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdo_mem, tdo_int(mem_tile_id(0)), full_pad_cfg(mem_tile_id(0)));\n")
+
+        if esp_config.ntiles > esp_config.nmem + esp_config.ncpu + esp_config.nslm + esp_config.nslmddr + 1:
+          fp.write("  -- tdi/o_acc\n")
+          fp.write("  tdi_acc_pad : inpad generic map (loc => tdi_acc_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdi_acc, tdi_int(acc_tile_id(0)));\n")
+          fp.write("  tdo_acc_pad : outpad generic map (loc => tdo_acc_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdo_acc, tdo_int(acc_tile_id(0)), full_pad_cfg(acc_tile_id(0)));\n")
+
+        fp.write("  tms_pad  : inpad generic map (loc => tms_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tms, tms_int);\n")
+        fp.write("  tclk_pad : inpad generic map (loc => tclk_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tclk, tclk_int);\n")
+        fp.write("\n")
+        fp.write("  unused_interface_gen : for i in 0 to CFG_TILES_NUM - 1 generate\n")
+        fp.write("    unused_td_io_gen: if i /= cpu_tile_id(0) and i /= io_tile_id and i /= mem_tile_id (0) and i /= acc_tile_id(0) generate\n")
+        fp.write("      tdi_int(i) <= '0';\n")
+        fp.write("    end generate unused_td_io_gen;\n")
+        fp.write("  end generate unused_interface_gen;\n")
+      else:
+        fp.write("  -- No JTAG used\n")
+        fp.write("  unused_tdi : for i in 0 to CFG_TILES_NUM - 1 generate\n")
+        fp.write("    tdi_int(i) <= '0';\n")
+        fp.write("  end generate unused_tdi;\n")
+        fp.write("  tms_int  <= '0';\n")
+        fp.write("  tclk_int <= '0';\n")
+
+    else:
+      fp.write(line)
+
+def print_asic_chip_emu(fp_t, fp, soc, esp_config):
+
+  for line in fp_t:
+
+    if line.strip() == "-- < Component FPGA proxy memory link >":
+      if esp_config.nmem > 0: 
+        fp.write("      -- FPGA proxy memory link\n")
+        fp.write("      fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * CFG_MEM_LINK_BITS - 1 downto 0);\n")
+        fp.write("      fpga_valid_in   : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+        fp.write("      fpga_valid_out  : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+        fp.write("      fpga_clk_in     : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+        fp.write("      fpga_clk_out    : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+        fp.write("      fpga_credit_in  : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+        fp.write("      fpga_credit_out : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);\n")
+      else:
+        fp.write("       -- FPGA proxy memory link - no memory tile used\n")
+
+    elif line.strip() == "-- < Component I/O link >":
+      if esp_config.has_iolink:
+        fp.write("      -- I/O link\n")
+        fp.write("      iolink_data       : inout std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);\n")
+        fp.write("      iolink_valid_in   : in    std_ulogic;\n")
+        fp.write("      iolink_valid_out  : out   std_ulogic;\n")
+        fp.write("      iolink_clk_in     : in    std_ulogic;\n")
+        fp.write("      iolink_clk_out    : out   std_ulogic;\n")
+        fp.write("      iolink_credit_in  : in    std_ulogic;\n")
+        fp.write("      iolink_credit_out : out   std_ulogic;\n")
+      else:
+        fp.write("      -- I/O link - not used\n")
+
+    elif line.strip() == "-- < Component Ethernet signals >":
+      if esp_config.has_eth:
+        fp.write("      -- Ethernet signals\n")
+        fp.write("      reset_o2        : out   std_ulogic;\n")
+        fp.write("      etx_clk         : in    std_ulogic;\n")
+        fp.write("      erx_clk         : in    std_ulogic;\n")
+        fp.write("      erxd            : in    std_logic_vector(3 downto 0);\n")
+        fp.write("      erx_dv          : in    std_ulogic;\n")
+        fp.write("      erx_er          : in    std_ulogic;\n")
+        fp.write("      erx_col         : in    std_ulogic;\n")
+        fp.write("      erx_crs         : in    std_ulogic;\n")
+        fp.write("      etxd            : out   std_logic_vector(3 downto 0);\n")
+        fp.write("      etx_en          : out   std_ulogic;\n")
+        fp.write("      etx_er          : out   std_ulogic;\n")
+        fp.write("      emdc            : out   std_ulogic;\n")
+        fp.write("      emdio           : inout std_logic;\n")
+      else:
+        fp.write("      -- Ethernet signals - not used\n")
+     
+    elif line.strip() == "-- < Component JTAG >":
+      if esp_config.has_jtag:
+        fp.write("      -- JTAG\n")
+        fp.write("      tclk            : in    std_logic;\n")
+        fp.write("      tms             : in    std_logic;\n")
+        fp.write("      tdi_io          : in    std_logic;\n")
+        fp.write("      tdi_cpu         : in    std_logic;\n")
+        fp.write("      tdi_mem         : in    std_logic;\n")
+        fp.write("      tdi_acc         : in    std_logic;\n")
+        fp.write("      tdo_io          : out   std_logic;\n")
+        fp.write("      tdo_cpu         : out   std_logic;\n")
+        fp.write("      tdo_mem         : out   std_logic;\n")
+        fp.write("      tdo_acc         : out   std_logic;\n")
+      else:
+        fp.write("      -- JTAG - not used\n")
+
+    elif line.strip() == "-- < Instance FPGA proxy memory link >":
+      if esp_config.nmem > 0: 
+        fp.write("      -- FPGA proxy memory link\n")
+        fp.write("      fpga_data         => fpga_data,\n")
+        fp.write("      fpga_valid_in     => fpga_valid_in,\n")
+        fp.write("      fpga_valid_out    => fpga_valid_out,\n")
+        fp.write("      fpga_clk_in       => fpga_clk_in,\n")
+        fp.write("      fpga_clk_out      => fpga_clk_out,\n")
+        fp.write("      fpga_credit_in    => fpga_credit_in,\n")
+        fp.write("      fpga_credit_out   => fpga_credit_out,\n")
+      else:
+        fp.write("      -- FPGA proxy memory link - no memory tile used\n")
+
+    elif line.strip() == "-- < Instance I/O link >":
+      if esp_config.has_iolink:
+        fp.write("      -- I/O link\n")
+        fp.write("      iolink_data       => iolink_data,\n")
+        fp.write("      iolink_valid_in   => iolink_valid_in,\n")
+        fp.write("      iolink_valid_out  => iolink_valid_out,\n")
+        fp.write("      iolink_clk_in     => iolink_clk_in,\n")
+        fp.write("      iolink_clk_out    => iolink_clk_out,\n")
+        fp.write("      iolink_credit_in  => iolink_credit_in,\n")
+        fp.write("      iolink_credit_out => iolink_credit_out,\n")
+      else:
+        fp.write("      -- I/O link - not used\n")
+
+    elif line.strip() == "-- < Instance Ethernet signals >":
+      if esp_config.has_eth:
+        fp.write("      -- Ethernet signals\n")
+        fp.write("      reset_o2          => reset_o2,\n")
+        fp.write("      etx_clk           => etx_clk,\n")
+        fp.write("      erx_clk           => erx_clk,\n")
+        fp.write("      erxd              => erxd,\n")
+        fp.write("      erx_dv            => erx_dv,\n")
+        fp.write("      erx_er            => erx_er,\n")
+        fp.write("      erx_col           => erx_col,\n")
+        fp.write("      erx_crs           => erx_crs,\n")
+        fp.write("      etxd              => etxd,\n")
+        fp.write("      etx_en            => etx_en,\n")
+        fp.write("      etx_er            => etx_er,\n")
+        fp.write("      emdc              => emdc,\n")
+        fp.write("      emdio             => emdio,\n")
+      else:
+        fp.write("      -- Ethernet signals - not used\n")
+     
+    elif line.strip() == "-- < Instance JTAG >":
+      if esp_config.has_jtag:
+        fp.write("      -- JTAG\n")
+        fp.write("      tclk              => tclk,\n")
+        fp.write("      tms               => tms,\n")
+        fp.write("      tdi_io            => tdi_io,\n")
+        fp.write("      tdi_cpu           => tdi_cpu,\n")
+        fp.write("      tdi_mem           => tdi_mem,\n")
+        fp.write("      tdi_acc           => tdi_acc,\n")
+        fp.write("      tdo_io            => tdo_io,\n")
+        fp.write("      tdo_cpu           => tdo_cpu,\n")
+        fp.write("      tdo_mem           => tdo_mem,\n")
+        fp.write("      tdo_acc           => tdo_acc,\n")
+      else:
+        fp.write("      -- JTAG - not used\n")
+
+    elif line.strip() == "-- < Unused signals >":
+      if esp_config.nmem == 0:
+        fp.write("  fpga_data         <= (others => '0');\n")
+        fp.write("  fpga_valid_out    <= '0';\n")
+        fp.write("  fpga_clk_out      <= '0';\n")
+        fp.write("  fpga_credit_out   <= '0';\n")
+      if esp_config.has_iolink == 0:
+        fp.write("  iolink_data       <= (others => '0');\n")
+        fp.write("  iolink_valid_out  <= '0';\n")
+        fp.write("  iolink_clk_out    <= '0';\n")
+        fp.write("  iolink_credit_out <= '0';\n")
+      if esp_config.has_eth == 0:
+        fp.write("  reset_o2          <= '0';\n")
+        fp.write("  etxd              <= (others => '0');\n")
+        fp.write("  etx_en            <= '0';\n")
+        fp.write("  etx_er            <= '0';\n")
+        fp.write("  emdc              <= '0';\n")
+        fp.write("  emdio             <= '0';\n")
+      if esp_config.has_jtag == 0:
+        fp.write("  tdo_io            <= '0';\n")
+        fp.write("  tdo_cpu           <= '0';\n")
+        fp.write("  tdo_mem           <= '0';\n")
+        fp.write("  tdo_acc           <= '0';\n")
+    else:
+      fp.write(line)
+
 def print_floorplan_constraints(fp, soc, esp_config):
   mem_num = 0
   mem_tiles = {}
@@ -2580,12 +2943,13 @@ def create_socmap(esp_config, soc):
   print("Created configuration into 'socmap.vhd'")
 
   if int(esp_config.nslm) > 0:
-    print("Created SLM config file into 'slm_memgen.txt'")
     fp = open('slm_memgen.txt' , 'w')
 
     print_slm(fp, soc, esp_config)
 
     fp.close()
+
+    print("Created SLM config file into 'slm_memgen.txt'")
 
   # ESPLink header
   fp = open('esplink.h', 'w')
@@ -2643,6 +3007,30 @@ def create_socmap(esp_config, soc):
   fp.close()
 
   print("Created RTL caches configuration into 'cache_cfg.svh'")
+
+  # ASIC top level
+  if (soc.TECH_TYPE == "asic"):
+    fp = open('../../ESP_ASIC_TOP.vhd', 'w')
+    fp_t = open('../../../esp/tools/asicgen/templates/ESP_ASIC_TOP.vhd', 'r')
+
+    print_asic_top_level(fp_t, fp, soc, esp_config)
+
+    fp_t.close()
+    fp.close()
+
+    print('Created ESP_ASIC_TOP.vhd')
+
+  # ASIC top level
+  if (soc.TECH_TYPE == "asic"):
+    fp = open('../../chip_emu_top.vhd', 'w')
+    fp_t = open('../../../esp/tools/asicgen/templates/chip_emu_top.vhd', 'r')
+
+    print_asic_chip_emu(fp_t, fp, soc, esp_config)
+
+    fp_t.close()
+    fp.close()
+
+    print('Created chip_emu_top.vhd')
 
   #memory floorplanning for profpga-xcvu440
   if (soc.TECH == "virtexu") and esp_config.nmem > 1:

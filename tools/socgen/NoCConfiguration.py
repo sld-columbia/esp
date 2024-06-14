@@ -113,7 +113,6 @@ class Tile():
         else:
           self.has_l2.set(0)
         self.has_l2_selection.config(state=DISABLED)
-      #if soc.IPs.SLM.count(selection) and soc.TECH == "gf12":
       if soc.IPs.SLM.count(selection) and soc.TECH == "asic":
         self.has_ddr_selection.config(state=NORMAL)
       else:
@@ -685,9 +684,16 @@ class NoCFrame(Pmw.ScrolledFrame):
       if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
         string += "***              Spandex support is still beta                 ***\n"
         string += "    The default HLS configuration is 512x4 L2 and 1024x8 LLC\n"
-        #if self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
         if self.soc.TECH != "asic" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
           string += "    Use a smaller implementation if not using a Virtex US/US+\n"
+      if (clk_region_skip > 0):
+        string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead\n"
+      if (self.soc.clk_str.get() == 0 and self.soc.TECH_TYPE == "asic"):
+        string += "Clock strategy: two external clocks - 1 for the NoC and 1 for the Tiles. \n"
+      if (self.soc.clk_str.get() == 1 and self.soc.TECH_TYPE == "asic"):
+        string += "Clock strategy: 1 DCO per tile plus 1 DCO for the NoC inside the IO tile. \n"
+      if (self.soc.clk_str.get() == 2 and self.soc.TECH_TYPE == "asic"):
+        string += "Clock strategy: 1 DCO inside the IO tile for the full chip. \n"
       if self.noc.multicast_en.get():
         string += "***              Multicast NoC is in beta testing                ***\n"
       self.done.config(state=NORMAL)

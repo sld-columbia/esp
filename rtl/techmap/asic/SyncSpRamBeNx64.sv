@@ -70,7 +70,7 @@ module SyncSpRamBeNx64
 
    L1_SRAM_SP i_L1_SRAM_SP
      (
-      .CLK(Clk_CI),
+      .CLK0(Clk_CI),
       .A0(Addr_DI),
       .D0(WrData_DI),
       .Q0(RdData_DN),
