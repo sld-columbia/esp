@@ -124,7 +124,7 @@ void setup_nvdla(nvdla_token_t *mem,unsigned i_base, unsigned o_base, unsigned b
         *((unsigned int*) (NVDLA_BASE_ADDR + 16388)) = 0;
         *((unsigned int*) (NVDLA_BASE_ADDR + 12292)) = 0;
         int read_val, error_id = 0;
-		/*
+		/* Uncomment this section and below for funcitonal validation, this impacts runtime
         read_val = ioread32(&dev, 28672);
         if (read_val != 0)
         printf("error %u\n", error_id);
@@ -342,7 +342,7 @@ void run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t 
     //error_id++;
 
 
-for (int i = 0; i < N_ITER; i++) {
+for (int i = 0; i < N_ITER; i++) { //Note that if N_INTER is >1 the mutliple iterations may not be functional due to reset handling in baremetal.
 
         error_id = 0;
 
