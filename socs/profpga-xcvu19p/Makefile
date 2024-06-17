@@ -13,7 +13,7 @@ TECHLIB  = virtexup
 BOARD    = profpga-xcvu19p
 DESIGN   = esp-$(BOARD)
 SMP = 0
-BASE_FREQ_MHZ ?= 78
+BASE_FREQ_MHZ ?= 100
 LEON3_STACK ?= 0x5bfffff0
 USE_OPENSBI = 1
 

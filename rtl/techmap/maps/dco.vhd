@@ -89,6 +89,27 @@ begin  -- architecture rtl
 
   end generate;
 
+  inferred_gen : if (tech = inferred) generate
+
+    --x0 : gf12_dco
+    x0 : behav_dco
+      port map (
+        RSTN     => rstn,
+        EXT_CLK  => ext_clk,
+        EN       => en,
+        CLK_SEL  => clk_sel,
+        CC_SEL   => cc_sel,
+        FC_SEL   => fc_sel,
+        DIV_SEL  => div_sel,
+        FREQ_SEL => freq_sel,
+        CLK      => clk_int,
+        CLK_DIV  => clk_div);
+
+    clk <= clk_int;
+    lock <= count(dlog);
+
+  end generate;
+
 -- pragma translate_off
   noram : if has_dco(tech) = 0 generate
     x : process

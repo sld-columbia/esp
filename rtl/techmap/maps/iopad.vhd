@@ -28,6 +28,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
 use work.allpads.all;
+use work.esp_noc_csr_pkg.all;
 
 entity iopad is
   generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
@@ -66,7 +67,7 @@ begin
   asicp : if (tech = asic) and has_pads(tech) = 1 generate
     --x0 : gf12_iopad
     x0 : asic_iopad
-         generic map (PAD_TYPE => loc) port map (pad, i, oen, o, cfgi(2), cfgi(1), cfgi(0));
+         generic map (PAD_TYPE => loc) port map (pad, i, oen, o, cfgi(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0));
   end generate;
   xcv : if (is_unisim(tech) = 1) generate
     x0 : unisim_iopad generic map (level, slew, voltage, strength)

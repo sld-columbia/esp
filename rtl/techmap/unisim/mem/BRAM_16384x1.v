@@ -1,13 +1,14 @@
 `timescale 1 ps / 1 ps
 // Copyright (c) 2014-2021, Columbia University
-module BRAM_16384x1( CLK, A0, D0, Q0, WE0, WEM0, CE0, A1, D1, Q1, WE1, WEM1, CE1 );
-	input CLK;
+module BRAM_16384x1( CLK0, A0, D0, Q0, WE0, WEM0, CE0, CLK1, A1, D1, Q1, WE1, WEM1, CE1 );
+	input CLK0;
 	input [13:0] A0;
 	input D0;
 	output Q0;
 	input WE0;
 	input WEM0;
 	input CE0;
+	input CLK1;
 	input [13:0] A1;
 	input D1;
 	output Q1;
@@ -41,8 +42,8 @@ module BRAM_16384x1( CLK, A0, D0, Q0, WE0, WEM0, CE0, A1, D1, Q1, WE1, WEM1, CE1
 		.DOB(Q1),
 		.ADDRA(A0_tmp),
 		.ADDRB(A1_tmp),
-		.CLKA(CLK),
-		.CLKB(CLK),
+		.CLKA(CLK0),
+		.CLKB(CLK1),
 		.DIA(D0_tmp),
 		.DIB(D1_tmp),
 		.ENA(CE0_tmp),

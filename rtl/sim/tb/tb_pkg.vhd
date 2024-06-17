@@ -46,11 +46,11 @@ package body tb_pkg is
   begin
 
     for i in 1 to 32 / CFG_IOLINK_BITS loop
-      wait until rising_edge(clk);
+      wait until falling_edge(clk);
       valid <= '1';
       data  <= word(i * CFG_IOLINK_BITS - 1 downto (i - 1) * CFG_IOLINK_BITS);
     end loop;
-    wait until rising_edge(clk);
+    wait until falling_edge(clk);
     valid <= '0';
     wait until rising_edge(clk);
     wait until rising_edge(clk);

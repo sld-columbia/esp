@@ -6,6 +6,7 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
+use work.esp_global.all;
 use work.monitor_pkg.all;
 use work.nocpackage.all;
 
@@ -122,10 +123,9 @@ architecture mesh of sync_noc_set is
   component sync_noc_xy
     generic (
       PORTS     : std_logic_vector(4 downto 0);
---      local_x   : std_logic_vector(2 downto 0);
---      local_y   : std_logic_vector(2 downto 0);
       has_sync  : integer range 0 to 1;
-      this_noc_flit_size : integer range 32 to 1026); --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      this_noc_flit_size : integer range 32 to 1026;
+      DEST_SIZE : integer:= 6);
     port (
       clk           : in  std_logic;
       clk_tile      : in  std_logic;
@@ -157,10 +157,9 @@ begin
   sync_noc_set_1: sync_noc_xy
     generic map (
       PORTS    =>  PORTS,
---      local_x  =>  local_x,
---      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
-      this_noc_flit_size => COH_NOC_FLIT_SIZE) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      this_noc_flit_size => COH_NOC_FLIT_SIZE,
+      DEST_SIZE => 1)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -188,10 +187,9 @@ begin
   sync_noc_set_2: sync_noc_xy
     generic map (
       PORTS    =>  PORTS,
---      local_x  =>  local_x,
---      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
-      this_noc_flit_size => COH_NOC_FLIT_SIZE) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      this_noc_flit_size => COH_NOC_FLIT_SIZE,
+      DEST_SIZE => 1)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -219,10 +217,9 @@ begin
   sync_noc_set_3: sync_noc_xy
     generic map (
       PORTS    =>  PORTS,
---      local_x  =>  local_x,
---      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
-      this_noc_flit_size => COH_NOC_FLIT_SIZE) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      this_noc_flit_size => COH_NOC_FLIT_SIZE,
+      DEST_SIZE => 1)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -249,10 +246,9 @@ begin
   sync_noc_set_4: sync_noc_xy
     generic map (
       PORTS    =>  PORTS,
---      local_x  =>  local_x,
---      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
-      this_noc_flit_size => DMA_NOC_FLIT_SIZE) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      this_noc_flit_size => DMA_NOC_FLIT_SIZE,
+      DEST_SIZE => MAX_MCAST_DESTS * MULTICAST_NOC_EN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -280,10 +276,9 @@ begin
   sync_noc_set_5: sync_noc_xy
     generic map (
       PORTS    =>  PORTS,
---      local_x  =>  local_x,
---      local_y  =>  local_y,
       has_sync =>  0,
-      this_noc_flit_size => MISC_NOC_FLIT_SIZE) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      this_noc_flit_size => MISC_NOC_FLIT_SIZE,
+      DEST_SIZE => 1)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -311,10 +306,9 @@ begin
   sync_noc_set_6: sync_noc_xy
     generic map (
       PORTS    =>  PORTS,
---      local_x  =>  local_x,
---      local_y  =>  local_y,
       has_sync =>  HAS_SYNC,
-      this_noc_flit_size => DMA_NOC_FLIT_SIZE) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      this_noc_flit_size => DMA_NOC_FLIT_SIZE,
+      DEST_SIZE => MAX_MCAST_DESTS * MULTICAST_NOC_EN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,

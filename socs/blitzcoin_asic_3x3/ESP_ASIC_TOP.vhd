@@ -238,7 +238,18 @@ architecture rtl of ESP_ASIC_TOP is
   signal uart_ctsn_int   : std_logic;   -- UART1_RTSN (u1i.ctsn)
   signal uart_rtsn_int   : std_logic;   -- UART1_RTSN (u1o.rtsn)
 
+  signal cpuerr_vec      : std_ulogic_vector(0 to CFG_NCPU_TILE-1);
+
 begin
+
+  --pragma translate_off
+  process(noc_clk, noc_rstn)
+  begin  -- process
+    if noc_rstn = '1' then
+      assert cpuerr_vec(0) = '0' report "Program Completed!" severity failure;
+    end if;
+  end process;
+  --pragma translate_on
 
   -----------------------------------------------------------------------------
   -- PADS
@@ -637,6 +648,7 @@ begin
           noc_clk_lock       => '1',
           ext_clk            => noc_clk,
           clk_div            => clk_div_int(i),
+          cpuerr             => cpuerr_vec(tile_cpu_id(i)),
           tdi                => tdi_int(i),
           tdo                => tdo_int(i),
           tms                => tms_int,

@@ -34,6 +34,12 @@ package nocpackage is
   -- |reserved|
   --
 
+  -- Header with 2 destinations
+  -- |W+1        W|W-1     W-3|W-4     W-6|W-7     W-9|W-10   W-12|W-13   W-15|W-16   W-18|W-19  W-20|W-21     W-25|W-26       5|4   0|
+  -- |  PREAMBLE  |   Src Y   |   Src X   |   Dst1 Y  |   Dst1 X  |   Dst1 Y  |   Dst1 X  |   Valid  |  Msg. type  |   Reserved |LEWSN|
+
+
+
   constant HEADER_ROUTE_L : natural := 4;
   constant HEADER_ROUTE_E : natural := 3;
   constant HEADER_ROUTE_W : natural := 2;
@@ -67,13 +73,14 @@ package nocpackage is
   type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
   type arch_noc_flit_vector is array (natural range <>) of arch_noc_flit_type;
 
-
   --Rather than define seaprate functions for interacting with each NoC width,
   --we make them take the max width and then pad the inputs to fill.
   constant coh_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - COH_NOC_FLIT_SIZE downto 0) := (others => '0');
   constant dma_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - DMA_NOC_FLIT_SIZE downto 0) := (others => '0');
   constant misc_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE downto 0) := (others => '0');
   constant arch_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - ARCH_NOC_FLIT_SIZE downto 0) := (others => '0');
+
+  type dest_arr is array (natural range <>) of local_yx;
 
   -- Preamble encoding
   constant PREAMBLE_HEADER : noc_preamble_type := "10";
@@ -187,6 +194,7 @@ package nocpackage is
   constant ROUTER_DEPTH : integer := 4;
 
   type yx_vec is array (natural range <>) of std_logic_vector(2 downto 0);
+  type routing_vec is array (natural range <>) of std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
 
   type tile_mem_info is record
     x     : local_yx;
@@ -497,6 +505,18 @@ package nocpackage is
     remote_x         : local_yx;
     msg_type         : noc_msg_type;
     reserved         : reserved_field_type)
+    return std_logic_vector;
+
+  function create_header_mcast (
+    constant flit_sz  : integer;
+    local_y           : local_yx;
+    local_x           : local_yx;
+    remote_y_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_x_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_y_comb     : local_yx;
+    remote_x_comb     : local_yx;
+    mcast_ndests      : integer;
+    msg_type          : noc_msg_type)
     return std_logic_vector;
 
   function narrow_to_large_flit (
@@ -821,6 +841,85 @@ package body nocpackage is
 
     return header;
   end create_header;
+
+function create_header_mcast (
+    constant flit_sz  : integer;
+    local_y           : local_yx;
+    local_x           : local_yx;
+    remote_y_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_x_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_y_comb     : local_yx;
+    remote_x_comb     : local_yx;
+    mcast_ndests      : integer;
+    msg_type          : noc_msg_type)
+    return std_logic_vector is
+    variable header : std_logic_vector(flit_sz - 1 downto 0);
+    variable go_right, go_left, go_up, go_down, routing: std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
+    variable remote_y, remote_x : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
+    constant RESERVED_OFFSET_MCAST : integer := flit_sz - PREAMBLE_WIDTH - NEXT_ROUTING_WIDTH - MSG_TYPE_WIDTH
+                                                - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MAX_MCAST_DESTS;
+  begin  -- create_header_ndest
+
+    header := (others => '0');
+
+    remote_y := (others => (others => '0'));
+    remote_x := (others => (others => '0'));
+    remote_y(MAX_MCAST_DESTS - 2 downto 0) := remote_y_arr;
+    remote_x(MAX_MCAST_DESTS - 2 downto 0) := remote_x_arr;
+    remote_y(mcast_ndests) := remote_y_comb;
+    remote_x(mcast_ndests) := remote_x_comb;
+
+    header(flit_sz - 1 downto
+           flit_sz - PREAMBLE_WIDTH) := PREAMBLE_HEADER;
+    header(flit_sz - PREAMBLE_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - YX_WIDTH) := local_y;
+    header(flit_sz - PREAMBLE_WIDTH - YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH) := local_x;
+    header(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH) := remote_y(0);
+    header(flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := remote_x(0);
+    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
+    for i in 1 to MAX_MCAST_DESTS - 1 loop
+      header(flit_sz - PREAMBLE_WIDTH - (4+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST - 1 downto
+             flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST) := remote_y(i);
+      header(flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST - 1 downto
+             flit_sz - PREAMBLE_WIDTH - (6+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST) := remote_x(i);
+    end loop;
+
+
+    for i in 0 to MAX_MCAST_DESTS - 1 loop
+      header(flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MSG_TYPE_WIDTH
+             - MAX_MCAST_DESTS - RESERVED_OFFSET_MCAST + i) := '1';
+      if i <= mcast_ndests then
+          if local_x < remote_x(i) then
+            go_right := "01000";
+          else
+            go_right := "10111";
+          end if;
+
+          if local_x > remote_x(i) then
+            go_left := "00100";
+          else
+            go_left := "11011";
+          end if;
+
+          if local_y < remote_y(i) then
+            routing := "01110" and go_left and go_right;
+          else
+            routing := "01101" and go_left and go_right;
+          end if;
+
+          if local_y = remote_y(i) and local_x = remote_x(i) then
+            routing := "10000";
+          end if;
+      end if;
+      header(NEXT_ROUTING_WIDTH-1 downto 0) := header(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
+    end loop;
+
+    return header;
+  end create_header_mcast;
 
   function narrow_to_large_flit (
     narrow_flit : misc_noc_flit_type)

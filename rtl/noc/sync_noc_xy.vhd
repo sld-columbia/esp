@@ -12,10 +12,9 @@ use work.nocpackage.all;
 entity sync_noc_xy is
   generic (
     PORTS     : std_logic_vector(4 downto 0);
---    local_x   : std_logic_vector(2 downto 0);
---    local_y   : std_logic_vector(2 downto 0);
     HAS_SYNC  : integer range 0 to 1 := 0;
-    this_noc_flit_size : integer range 32 to 1026);
+    this_noc_flit_size : integer range 32 to 1026;
+    DEST_SIZE : integer := 1);
   port (
     clk           : in  std_logic;
     clk_tile      : in  std_logic;
@@ -50,7 +49,8 @@ architecture mesh of sync_noc_xy is
       flow_control : integer;
       width        : integer;
       depth        : integer;
-      ports        : std_logic_vector(4 downto 0)
+      ports        : std_logic_vector(4 downto 0);
+      DEST_SIZE	   : integer
     );
 
     port (
@@ -121,8 +121,8 @@ architecture mesh of sync_noc_xy is
           flow_control => FLOW_CONTROL,
           width        => this_noc_flit_size,
           depth        => ROUTER_DEPTH,
-          ports        => PORTS
-        )
+          ports        => PORTS,
+          DEST_SIZE    => DEST_SIZE)
       port map (
           clk           => clk,
           rst           => rst,

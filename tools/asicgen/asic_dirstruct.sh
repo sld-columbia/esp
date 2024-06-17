@@ -22,9 +22,9 @@ then
   mkdir "../../rtl/techmap/asic"
 fi
 
-if [ ! -d "$TECH_DIR_PATH/mem_models" ]
+if [ ! -d "$TECH_DIR_PATH/verilog" ]
 then
-  mkdir "$TECH_DIR_PATH/mem_models"
+  mkdir "$TECH_DIR_PATH/verilog"
 fi
 
 if [ ! -d "../../rtl/sim/asic" ]
@@ -35,6 +35,21 @@ fi
 if [ ! -d "$TECH_DIR_PATH/mem_wrappers" ]
 then
   mkdir "$TECH_DIR_PATH/mem_wrappers"
+fi
+
+if [ ! -d "$TECH_DIR_PATH/mem_wrappers/tb" ]
+then
+  mkdir "$TECH_DIR_PATH/mem_wrappers/tb"
+fi
+
+if [ ! -d "$TECH_DIR_PATH/pad_wrappers" ]
+then
+  mkdir "$TECH_DIR_PATH/pad_wrappers"
+fi
+
+if [ ! -d "$TECH_DIR_PATH/dco_wrappers" ]
+then
+  mkdir "$TECH_DIR_PATH/dco_wrappers"
 fi
 
 if [ ! -d "$TECH_DIR_PATH/lib" ]
@@ -53,11 +68,19 @@ then
 fi
 
 cd ../../rtl/sim/asic
-ln -sf $TECH_DIR_PATH/mem_models verilog
+ln -sf $TECH_DIR_PATH/verilog verilog
 cd -
 
 cd ../../rtl/techmap/asic
 ln -sf $TECH_DIR_PATH/mem_wrappers mem
+cd -
+
+cd ../../rtl/techmap/asic
+ln -sf $TECH_DIR_PATH/pad_wrappers pad
+cd -
+
+cd ../../rtl/techmap/asic
+ln -sf $TECH_DIR_PATH/dco_wrappers dco
 cd -
 
 cd ../../tech/$DIRTECH_NAME
@@ -74,12 +97,12 @@ then
   cp ../../socs/esp_asic_generic/Makefile "$PROJ_DIR_PATH/"
 fi
 
-if [ ! -f "$PROJ_DIR_PATH/esp_asic_defconfig" ]
+if [ ! -f "$PROJ_DIR_PATH/esp_defconfig" ]
 then
   cp ../../socs/esp_asic_generic/esp_defconfig "$PROJ_DIR_PATH/"
 fi
 
-if [ ! -f "$PROJ_DIR_PATH/grlib_asic_defconfig" ]
+if [ ! -f "$PROJ_DIR_PATH/grlib_defconfig" ]
 then
   cp ../../socs/esp_asic_generic/grlib_defconfig "$PROJ_DIR_PATH/"
 fi
@@ -87,16 +110,6 @@ fi
 if [ ! -f "$PROJ_DIR_PATH/grlib_config.in" ]
 then
   cp ../../socs/esp_asic_generic/grlib_config.in "$PROJ_DIR_PATH/"
-fi
-
-if [ ! -f "$PROJ_DIR_PATH/chip_emu_top.vhd" ]
-then
-  cp ../../socs/esp_asic_generic/chip_emu_top.vhd "$PROJ_DIR_PATH/"
-fi
-
-if [ ! -f "$PROJ_DIR_PATH/ESP_ASIC_TOP.vhd" ]
-then
-  cp ../../socs/esp_asic_generic/ESP_ASIC_TOP.vhd "$PROJ_DIR_PATH/"
 fi
 
 if [ ! -f "$PROJ_DIR_PATH/fpga_proxy_top.vhd" ]
@@ -107,6 +120,11 @@ fi
 if [ ! -f "$PROJ_DIR_PATH/pads_loc.vhd" ]
 then
   cp ../../socs/esp_asic_generic/pads_loc.vhd "$PROJ_DIR_PATH/"
+fi
+
+if [ ! -f "$PROJ_DIR_PATH/pads_loc.txt" ]
+then
+  cp ../../socs/esp_asic_generic/pads_loc.txt "$PROJ_DIR_PATH/"
 fi
 
 if [ ! -f "$PROJ_DIR_PATH/systest.c" ]
@@ -123,3 +141,9 @@ if [ ! -f "$PROJ_DIR_PATH/top.vhd" ]
 then
   cp ../../socs/esp_asic_generic/top.vhd "$PROJ_DIR_PATH/"
 fi
+
+if [ ! -f "$PROJ_DIR_PATH/vsim.tcl" ]
+then
+  cp ../../socs/esp_asic_generic/vsim.tcl "$PROJ_DIR_PATH/"
+fi
+

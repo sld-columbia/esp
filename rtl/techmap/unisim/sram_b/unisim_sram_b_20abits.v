@@ -171,13 +171,14 @@ module unisim_sram_b_20abits(
         for (hh = 0; hh < 8; hh = hh + 1) begin : gen_wires_hhbanks
 
           BRAM_16384x1 bank_i(
-              .CLK(CLK),
+              .CLK0(CLK),
               .CE0(bank_CE[d][h][v][hh][0]),
               .A0(bank_A[d][h][v][hh][0]),
               .D0(bank_D[d][h][v][hh][0]),
               .WE0(bank_WE[d][h][v][hh][0]),
               .WEM0(bank_WEM[d][h][v][hh][0]),
               .Q0(bank_Q[d][h][v][hh][0]),
+              .CLK1(CLK),
               .CE1(bank_CE[d][h][v][hh][1]),
               .A1(bank_A[d][h][v][hh][1]),
               .D1(bank_D[d][h][v][hh][1]),

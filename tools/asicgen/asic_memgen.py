@@ -49,11 +49,13 @@ def data_struct(memory_list):
     return mem_dict
 
 
-def print_lib(file1, lib_list):
+def print_lib(file1, lib_list, tile_type):
 
-    dual_list = []
-    single_list = []
-    has_dual = False
+    list_2wr = []
+    list_1wr = []
+    list_1wr1r = []
+    has_2wr = False
+    has_1wr1r = False
 
     if os.path.exists(file1):
         out_file = open(file1, "r")
@@ -61,35 +63,60 @@ def print_lib(file1, lib_list):
         fl = f.split()
         for i in range(len(lib_list)):
             if lib_list[i][2] not in fl:
-                if lib_list[i][-1] == "single":
-                    single_list.append(lib_list[i])
-                elif lib_list[i][-1] == "dual":
-                    dual_list.append(lib_list[i])
-        if "dual_port" in f:
-            has_dual = True
+                if lib_list[i][-1] == "1wr":
+                    list_1wr.append(lib_list[i])
+                elif lib_list[i][-1] == "2wr":
+                    list_2wr.append(lib_list[i])
+                elif lib_list[i][-1] == "1wr1r":
+                    list_1wr1r.append(lib_list[i])
+        if "2wr" in f:
+            has_2wr = True
+        if "1wr1r" in f:
+            has_1wr1r = True
 
-        if len(single_list) > 0:
-            for i in range(len(single_list)):
-                if has_dual:
-                    out_file.seek(0)
-                    f_line = out_file.readlines()
-                    for j, line in enumerate(f_line):
-                        if line.startswith("dual_port"):
-                            f_line.insert(j, "%s 1 \n" %(' '.join(map(str, list(single_list[i][0:-1])))))
-                            break
-                    out_file = open(file1, "w")
-                    out_file.writelines(f_line)
-                    out_file.close()
+        if len(list_1wr) > 0:
+            for i in range(len(list_1wr)):
+                if tile_type == "io":
+                    if has_1wr1r or has_2wr:
+                        out_file.seek(0)
+                        f_line = out_file.readlines()
+                        for j, line in enumerate(f_line):
+                            if line.startswith("dual_port"):
+                                f_line.insert(j, "%s 1 \n" %(' '.join(map(str, list(list_1wr[i][0:-1])))))
+                                break
+                        out_file = open(file1, "w")
+                        out_file.writelines(f_line)
+                        out_file.close()
+                    else:
+                        out_file = open(file1, "a")
+                        out_file.write("%s 1 \n" %(' '.join(map(str, list(list_1wr[i][0:-1])))))
+                        out_file.close()
                 else:
-                    out_file = open(file1, "a")
-                    out_file.write("%s 1 \n" %(' '.join(map(str, list(single_list[i][0:-1])))))
-                    out_file.close()
+                    if has_2wr:
+                        out_file.seek(0)
+                        f_line = out_file.readlines()
+                        for j, line in enumerate(f_line):
+                            if line.startswith("dual_port"):
+                                f_line.insert(j, "%s 1 \n" %(' '.join(map(str, list(list_1wr[i][0:-1])))))
+                                break
+                        out_file = open(file1, "w")
+                        out_file.writelines(f_line)
+                        out_file.close()
+                    else:
+                        out_file = open(file1, "a")
+                        out_file.write("%s 1 \n" %(' '.join(map(str, list(list_1wr[i][0:-1])))))
+                        out_file.close()
 
-        if len(dual_list) > 0:
+        if len(list_1wr1r) > 0 and tile_type == "io":
             out_file = open(file1, "a+")
-            for i in range(len(dual_list)):
-                if dual_list[i][-1] == "dual":
-                    out_file.write("%s 2 \n" %(' '.join(map(str, list(dual_list[i][0:-1])))))
+            for i in range(len(list_1wr1r)):
+                if list_1wr1r[i][-1] == "1wr1r":
+                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_1wr1r[i][0:-1])))))
+        elif len(list_2wr) > 0:
+            out_file = open(file1, "a+")
+            for i in range(len(list_2wr)):
+                if list_2wr[i][-1] == "2wr":
+                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_2wr[i][0:-1])))))
             out_file.close()
 
     else:    
@@ -98,15 +125,22 @@ def print_lib(file1, lib_list):
         out_file.write("# setup 0.14 \n")
         out_file.write("# single_port \n")
         for i in range(len(lib_list)):
-            if lib_list[i][-1] == "single":
+            if lib_list[i][-1] == "1wr":
                 out_file.write("%s 1 \n" %(' '.join(map(str, list(lib_list[i][0:-1])))))
-            elif lib_list[i][-1] == "dual":
-                dual_list.append(lib_list[i])
-        if len(dual_list) > 0:
+            elif lib_list[i][-1] == "1wr1r":
+                list_1wr1r.append(lib_list[i])
+            elif lib_list[i][-1] == "2wr":
+                list_2wr.append(lib_list[i])
+        if len(list_1wr1r) > 0 and tile_type == "io":
             out_file.write("# dual_port \n")
-            for i in range(len(dual_list)):
-                if dual_list[i][-1] == "dual":
-                    out_file.write("%s 2 \n" %(' '.join(map(str, list(dual_list[i][0:-1])))))
+            for i in range(len(list_1wr1r)):
+                if list_1wr1r[i][-1] == "1wr1r":
+                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_1wr1r[i][0:-1])))))
+        if len(list_2wr) > 0:
+            out_file.write("# dual_port \n")
+            for i in range(len(list_2wr)):
+                if list_2wr[i][-1] == "2wr":
+                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_2wr[i][0:-1])))))
         out_file.close()            
 
         
@@ -118,9 +152,9 @@ def print_wrap_sp(file1, module1, address1, word1, macro_name):
         out_file = open(file1, "w")
         out_file.write("`timescale 1 ps / 1ps \n")
         out_file.write("\n")
-        out_file.write("module %s (CLK, A0, D0, Q0, WE0, WEM0, CE0); \n" %module1)
+        out_file.write("module %s (CLK0, A0, D0, Q0, WE0, WEM0, CE0); \n" %module1)
         out_file.write("\n")
-        out_file.write("  input           CLK;\n")
+        out_file.write("  input           CLK0;\n")
         out_file.write("  input           WE0;\n")
         out_file.write("  input           CE0;\n")
         out_file.write("  input  [%d : 0] A0;\n" %(address1 - 1))
@@ -155,8 +189,78 @@ def print_wrap_sp(file1, module1, address1, word1, macro_name):
         out_file.write("endmodule")
         out_file.close()
 
+def print_wrap_sp_tb(file1, module1, address1, word1):
 
-def print_wrap_dp(file1, module1, address1, word1, macro_name):
+    if os.path.exists(file1):
+        None
+    else:
+        out_file = open(file1, "w")
+        out_file.write("`timescale 1 ps / 1ps \n")
+        out_file.write("\n")
+        out_file.write("module %s_tb; \n" %module1)
+        out_file.write("\n")
+        out_file.write("    parameter ADDR_WIDTH=%d; \n" %(address1))
+        out_file.write("    parameter DATA_WIDTH=%d; \n" %(word1))
+        out_file.write("\n")
+        out_file.write("    reg clk; \n")
+        out_file.write("    reg we; \n")
+        out_file.write("    reg ce; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] wem; \n")
+        out_file.write("    reg [ADDR_WIDTH-1 : 0] addr; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] wr_data; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] rd_data; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] tmp_mem [0:2**ADDR_WIDTH-1]; \n")
+        out_file.write("\n")
+        out_file.write("    integer errors; \n")
+        out_file.write("\n")
+        out_file.write("    %s sram (\n" %module1)
+        out_file.write("      .CLK0(clk),\n")
+        out_file.write("      .WE0(we),\n")
+        out_file.write("      .CE0(ce),\n")
+        out_file.write("      .A0(addr),\n")
+        out_file.write("      .D0(wr_data),\n")
+        out_file.write("      .WEM0(wem),\n")
+        out_file.write("      .Q0(rd_data)\n")
+        out_file.write("    );\n")
+        out_file.write("\n")
+        out_file.write("    always #5 clk = ~clk;\n")
+        out_file.write("\n")
+        out_file.write("    initial begin\n")
+        out_file.write("        {clk, ce, we, wem, addr, wr_data} <= 0;\n")
+        out_file.write("        errors <= 0;\n")
+        out_file.write("\n")
+        out_file.write("        repeat (2) @(posedge clk);\n")
+        out_file.write("\n")
+        out_file.write("        ce <= 1'b1;\n")
+        out_file.write("        we <= 1'b1;\n")
+        out_file.write("        wem <= {DATA_WIDTH{1'b1}};\n")
+        out_file.write("\n")
+        out_file.write("        for (integer i = 0; i < 2**ADDR_WIDTH; i = i + 1) begin\n")
+        out_file.write("            addr = i;\n")
+        out_file.write("            wr_data = $random;\n")
+        out_file.write("            tmp_mem[i] = wr_data;\n")
+        out_file.write("            repeat (1) @(posedge clk);\n")
+        out_file.write("        end\n")
+        out_file.write("\n")
+        out_file.write("        we <= 1'b0;\n")
+        out_file.write("\n")
+        out_file.write("        for (integer i = 0; i < 2**ADDR_WIDTH; i = i + 1) begin\n")
+        out_file.write("            addr <= i;\n")
+        out_file.write("            repeat (1) @(posedge clk);\n")
+        out_file.write("            if (i!=0 && rd_data !== tmp_mem[i-1]) begin\n")
+        out_file.write("                $display(\"Mismatch at time=%0t a=0x%0h exp=0x%0h got=0x%0h\", $time, i-1, tmp_mem[i-1], rd_data);\n")
+        out_file.write("                errors <= errors + 1;\n")
+        out_file.write("            end\n")
+        out_file.write("        end\n")
+        out_file.write("\n")
+        out_file.write("        $display(\"Errors: %0d\", errors);\n")
+        out_file.write("        $finish;\n")
+        out_file.write("    end\n")
+        out_file.write("\n")
+        out_file.write("endmodule\n")
+        out_file.close()
+
+def print_wrap_io_dp(file1, module1, address1, word1, macro_name):
      
     if os.path.exists(file1):
         None
@@ -206,6 +310,228 @@ def print_wrap_dp(file1, module1, address1, word1, macro_name):
         out_file.write("\n")
         out_file.write("endmodule")
         out_file.close()
+
+def print_wrap_io_dp_tb(file1, module1, address1, word1):
+
+    if os.path.exists(file1):
+        None
+    else:
+        out_file = open(file1, "w")
+        out_file.write("`timescale 1 ps / 1ps \n")
+        out_file.write("\n")
+        out_file.write("module %s_tb; \n" %module1)
+        out_file.write("\n")
+        out_file.write("    parameter ADDR_WIDTH=%d; \n" %(address1))
+        out_file.write("    parameter DATA_WIDTH=%d; \n" %(word1))
+        out_file.write("\n")
+        out_file.write("    reg clk; \n")
+        out_file.write("    reg we; \n")
+        out_file.write("    reg ce; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] wem; \n")
+        out_file.write("    reg [ADDR_WIDTH-1 : 0] addr; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] wr_data; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] rd_data; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] tmp_mem [0:2**ADDR_WIDTH-1]; \n")
+        out_file.write("\n")
+        out_file.write("    integer errors; \n")
+        out_file.write("\n")
+        out_file.write("    %s sram (\n" %module1)
+        out_file.write("      .CLK0(clk),\n")
+        out_file.write("      .CE0(ce),\n")
+        out_file.write("      .A0(addr),\n")
+        out_file.write("      .Q0(rd_data),\n")
+        out_file.write("      .CLK1(clk),\n")
+        out_file.write("      .CE1(ce),\n")
+        out_file.write("      .A1(addr),\n")
+        out_file.write("      .WE1(we),\n")
+        out_file.write("      .WEM1(wem),\n")
+        out_file.write("      .D1(wr_data)\n")
+        out_file.write("    );\n")
+        out_file.write("\n")
+        out_file.write("    always #5 clk = ~clk;\n")
+        out_file.write("\n")
+        out_file.write("    initial begin\n")
+        out_file.write("        {clk, ce, we, wem, addr, wr_data} <= 0;\n")
+        out_file.write("        errors <= 0;\n")
+        out_file.write("\n")
+        out_file.write("        repeat (2) @(posedge clk);\n")
+        out_file.write("\n")
+        out_file.write("        ce <= 1'b1;\n")
+        out_file.write("        we <= 1'b1;\n")
+        out_file.write("        wem <= {DATA_WIDTH{1'b1}};\n")
+        out_file.write("\n")
+        out_file.write("        for (integer i = 0; i < 2**ADDR_WIDTH; i = i + 1) begin\n")
+        out_file.write("            addr = i;\n")
+        out_file.write("            wr_data = $random;\n")
+        out_file.write("            tmp_mem[i] = wr_data;\n")
+        out_file.write("            repeat (1) @(posedge clk);\n")
+        out_file.write("        end\n")
+        out_file.write("\n")
+        out_file.write("        we <= 1'b0;\n")
+        out_file.write("\n")
+        out_file.write("        for (integer i = 0; i < 2**ADDR_WIDTH; i = i + 1) begin\n")
+        out_file.write("            addr <= i;\n")
+        out_file.write("            repeat (1) @(posedge clk);\n")
+        out_file.write("            if (i!=0 && rd_data !== tmp_mem[i-1]) begin\n")
+        out_file.write("                $display(\"Mismatch at time=%0t a=0x%0h exp=0x%0h got=0x%0h\", $time, i-1, tmp_mem[i-1], rd_data);\n")
+        out_file.write("                errors <= errors + 1;\n")
+        out_file.write("            end\n")
+        out_file.write("        end\n")
+        out_file.write("\n")
+        out_file.write("        $display(\"Errors: %0d\", errors);\n")
+        out_file.write("        $finish;\n")
+        out_file.write("    end\n")
+        out_file.write("\n")
+        out_file.write("endmodule\n")
+        out_file.close()
+
+def print_wrap_dp(file1, module1, address1, word1, macro_name):
+     
+    if os.path.exists(file1):
+        None
+    else:
+        out_file = open(file1, "w")
+        out_file.write("`timescale 1 ps / 1ps \n")
+        out_file.write("\n")
+        out_file.write("module %s (CLK0, A0, D0, WE0, WEM0, Q0, CE0, \n" %module1)
+        out_file.write("           CLK1, A1, D1, WE1, WEM1, Q1, CE1); \n")
+        out_file.write("\n")
+        out_file.write("  input           CLK0;\n")
+        out_file.write("  input           CLK1;\n")
+        out_file.write("  input           CE0;\n")
+        out_file.write("  input           CE1;\n")
+        out_file.write("  input           WE0;\n")
+        out_file.write("  input           WE1;\n")
+        out_file.write("  input  [%d : 0] A0;\n" %(address1 - 1))
+        out_file.write("  input  [%d : 0] A1;\n" %(address1 - 1))
+        out_file.write("  input  [%d : 0] D0;\n" %(word1 - 1))
+        out_file.write("  input  [%d : 0] D1;\n" %(word1 - 1))
+        out_file.write("  input  [%d : 0] WEM0;\n" %(word1 - 1))
+        out_file.write("  input  [%d : 0] WEM1;\n" %(word1 - 1))
+        out_file.write("  output [%d : 0] Q0;\n" %(word1 - 1))
+        out_file.write("  output [%d : 0] Q1;\n" %(word1 - 1))
+        out_file.write("\n")
+        out_file.write("// In case of chip enable and write enable active low \n")
+        out_file.write("// Uncomment this logic \n")
+        out_file.write("/* \n")
+        out_file.write("  reg P0_CEN; \n")
+        out_file.write("  reg P1_CEN; \n")
+        out_file.write("  reg [%d : 0] P0_WEN; \n" %(word1 -1))
+        out_file.write("  reg [%d : 0] P1_WEN; \n" %(word1 -1))
+        out_file.write("  reg [%d : 0] P0_A; \n" %(address1 -1))
+        out_file.write("  reg [%d : 0] P1_A; \n" %(address1 -1))
+        out_file.write("  reg [%d : 0] P0_D; \n" %(word1 -1))
+        out_file.write("  reg [%d : 0] P1_D; \n" %(word1 -1))
+        out_file.write("\n")
+        out_file.write("  always @(*) begin \n")
+        out_file.write("    P0_CEN = ~CE0; \n")
+        out_file.write("    P0_WEN = (WE0 == 1'b1)? ~WEM0 : {%d{1'b1}}; \n" %word1)
+        out_file.write("    P0_A = A0; \n")
+        out_file.write("    P0_D = D0; \n")
+        out_file.write("    P1_CEN = ~CE1; \n")
+        out_file.write("    P1_WEN = (WE1 == 1'b1)? ~WEM1 : {%d{1'b1}}; \n" %word1)
+        out_file.write("    P1_A = A1; \n")
+        out_file.write("    P1_D = D1; \n")
+        out_file.write("  end \n")
+        out_file.write("*/ \n")
+        out_file.write("\n")
+        out_file.write("  %s sram \n" %macro_name)
+        out_file.write("  ( \n")
+        out_file.write("// map the memory interface with the wrapper \n")
+        out_file.write("// assign constants or create your own logic for missing ports \n")
+        out_file.write("  ); \n")
+        out_file.write("\n")
+        out_file.write("endmodule")
+        out_file.close()
+
+def print_wrap_dp_tb(file1, module1, address1, word1):
+
+    if os.path.exists(file1):
+        None
+    else:
+        out_file = open(file1, "w")
+        out_file.write("`timescale 1 ps / 1ps \n")
+        out_file.write("\n")
+        out_file.write("module %s_tb; \n" %module1)
+        out_file.write("\n")
+        out_file.write("    parameter ADDR_WIDTH=%d; \n" %(address1))
+        out_file.write("    parameter DATA_WIDTH=%d; \n" %(word1))
+        out_file.write("\n")
+        out_file.write("    reg clk; \n")
+        out_file.write("    reg we0; \n")
+        out_file.write("    reg we1; \n")
+        out_file.write("    reg ce0; \n")
+        out_file.write("    reg ce1; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] wem0; \n")
+        out_file.write("    reg [ADDR_WIDTH-1 : 0] addr0; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] wr_data0; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] rd_data0; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] wem1; \n")
+        out_file.write("    reg [ADDR_WIDTH-1 : 0] addr1; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] wr_data1; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] rd_data1; \n")
+        out_file.write("    reg [DATA_WIDTH-1 : 0] tmp_mem [0:2**ADDR_WIDTH-1]; \n")
+        out_file.write("\n")
+        out_file.write("    integer errors; \n")
+        out_file.write("\n")
+        out_file.write("    %s sram (\n" %module1 )
+        out_file.write("      .CLK0(clk),\n")
+        out_file.write("      .CE0(ce0),\n")
+        out_file.write("      .WE0(we0),\n")
+        out_file.write("      .WEM0(wem0),\n")
+        out_file.write("      .A0(addr0),\n")
+        out_file.write("      .D0(wr_data0),\n")
+        out_file.write("      .Q0(rd_data0),\n")
+        out_file.write("      .CLK1(clk),\n")
+        out_file.write("      .CE1(ce1),\n")
+        out_file.write("      .A1(addr1),\n")
+        out_file.write("      .WE1(we1),\n")
+        out_file.write("      .WEM1(wem1),\n")
+        out_file.write("      .D1(wr_data1),\n")
+        out_file.write("      .Q1(rd_data1)\n")
+        out_file.write("    );\n")
+        out_file.write("\n")
+        out_file.write("    always #5 clk = ~clk;\n")
+        out_file.write("\n")
+        out_file.write("    initial begin\n")
+        out_file.write("        {clk, ce0, we0, wem0, addr0, wr_data0} <= 0;\n")
+        out_file.write("        errors <= 0;\n")
+        out_file.write("\n")
+        out_file.write("        repeat (2) @(posedge clk);\n")
+        out_file.write("\n")
+        out_file.write("        ce0 <= 1'b1;\n")
+        out_file.write("        we0 <= 1'b1;\n")
+        out_file.write("        wem0 <= {DATA_WIDTH{1'b1}};\n")
+        out_file.write("\n")
+        out_file.write("        ce1 <= 1'b1;\n")
+        out_file.write("        we1 <= 1'b0;\n")
+        out_file.write("        wem1 <= {DATA_WIDTH{1'b1}};\n")
+        out_file.write("\n")
+        out_file.write("        for (integer i = 0; i < 2**ADDR_WIDTH; i = i + 1) begin\n")
+        out_file.write("            addr0 = i;\n")
+        out_file.write("            wr_data0 = $random;\n")
+        out_file.write("            tmp_mem[i] = wr_data0;\n")
+        out_file.write("            repeat (1) @(posedge clk);\n")
+        out_file.write("        end\n")
+        out_file.write("\n")
+        out_file.write("        we0 <= 1'b0;\n")
+        out_file.write("\n")
+        out_file.write("        for (integer i = 0; i < 2**ADDR_WIDTH; i = i + 1) begin\n")
+        out_file.write("            addr1 <= i;\n")
+        out_file.write("            repeat (1) @(posedge clk);\n")
+        out_file.write("            if (i!=0 && rd_data1 !== tmp_mem[i-1]) begin\n")
+        out_file.write("                $display(\"Mismatch at time=%0t a=0x%0h exp=0x%0h got=0x%0h\", $time, i-1, tmp_mem[i-1], rd_data1);\n")
+        out_file.write("                errors <= errors + 1;\n")
+        out_file.write("            end\n")
+        out_file.write("        end\n")
+        out_file.write("\n")
+        out_file.write("        $display(\"Errors: %0d\", errors);\n")
+        out_file.write("        $finish;\n")
+        out_file.write("    end\n")
+        out_file.write("\n")
+        out_file.write("endmodule\n")
+        out_file.close()
+
 
 def print_cache_def(memory, module, address_size):
 
@@ -279,7 +605,7 @@ def llc_sp_gen(out_path, mem_dict, val_addr):
         if mem_dict["llc"][idx]["address_size"] in val_addr:
             if int(mem_dict["llc"][idx]["word_size"]) == 64:
                 file = out_path + "/LLC_SRAM_SP_LINE_" + mem_dict["llc"][idx]["address_size"] + "x" + mem_dict["llc"][idx]["word_size"] + ".v"
-                #file = out_path + "/LLC_SRAM_SP_LINE" + ".v"
+                file_tb = out_path + "/tb/LLC_SRAM_SP_LINE_" + mem_dict["llc"][idx]["address_size"] + "x" + mem_dict["llc"][idx]["word_size"] + "_tb.sv"
                 module = "LLC_SRAM_SP_LINE_" + mem_dict["llc"][idx]["address_size"] + "x" + mem_dict["llc"][idx]["word_size"]
                 memory = "LLC_SRAM_SP_LINE"
                 address = int(math.log(int(mem_dict["llc"][idx]["address_size"]),2))
@@ -294,13 +620,18 @@ def llc_sp_gen(out_path, mem_dict, val_addr):
                 else:
                     print_wrap_sp(file, module, address, word, macro_name)
                     print("\"llc %s\" generated!" %(' '.join(map(str, list(mem_dict["llc"][idx].values())))))
+                if os.path.exists(file_tb):
+                    None
+                else:
+                    print_wrap_sp_tb(file_tb, module, address, word)
+                    print("\"llc_tb %s\" generated!" %(' '.join(map(str, list(mem_dict["llc"][idx].values())))))
                 if cnt < 3:
                     print_cache_def(memory, module, address_size)
                 cnt += 1
         
             elif int(mem_dict["llc"][idx]["word_size"]) == 28:
                 file = out_path + "/LLC_SRAM_SP_MIXED_" + mem_dict["llc"][idx]["address_size"] + "x" + mem_dict["llc"][idx]["word_size"] + ".v"
-                #file = out_path + "/LLC_SRAM_SP_MIXED" + ".v"
+                file_tb = out_path + "/tb/LLC_SRAM_SP_MIXED_" + mem_dict["llc"][idx]["address_size"] + "x" + mem_dict["llc"][idx]["word_size"] + "_tb.sv"
                 module = "LLC_SRAM_SP_MIXED_" + mem_dict["llc"][idx]["address_size"] + "x" + mem_dict["llc"][idx]["word_size"]
                 memory = "LLC_SRAM_SP_MIXED"
                 address = int(math.log(int(mem_dict["llc"][idx]["address_size"]),2))
@@ -315,6 +646,11 @@ def llc_sp_gen(out_path, mem_dict, val_addr):
                 else:
                     print_wrap_sp(file, module, address, word, macro_name)
                     print("\"llc %s\" generated!" %(' '.join(map(str, list(mem_dict["llc"][idx].values())))))
+                if os.path.exists(file_tb):
+                    None
+                else:
+                    print_wrap_sp_tb(file_tb, module, address, word)
+                    print("\"llc_tb %s\" generated!" %(' '.join(map(str, list(mem_dict["llc"][idx].values())))))
                 if cnt < 3:
                     print_cache_def(memory, module, address_size)
                 cnt += 1
@@ -322,7 +658,7 @@ def llc_sp_gen(out_path, mem_dict, val_addr):
         
             elif int(mem_dict["llc"][idx]["word_size"]) == 16:
                 file = out_path + "/LLC_SRAM_SP_SHARED_" + mem_dict["llc"][idx]["address_size"] + "x" + mem_dict["llc"][idx]["word_size"] + ".v"
-                #file = out_path + "/LLC_SRAM_SP_SHARED" + ".v"
+                file_tb = out_path + "/tb/LLC_SRAM_SP_SHARED_" + mem_dict["llc"][idx]["address_size"] + "x" + mem_dict["llc"][idx]["word_size"] + "_tb.sv"
                 module = "LLC_SRAM_SP_SHARED_" + mem_dict["llc"][idx]["address_size"] + "x" + mem_dict["llc"][idx]["word_size"]
                 memory = "LLC_SRAM_SP_SHARED"
                 address = int(math.log(int(mem_dict["llc"][idx]["address_size"]),2))
@@ -337,6 +673,11 @@ def llc_sp_gen(out_path, mem_dict, val_addr):
                 else:
                     print_wrap_sp(file, module, address, word, macro_name)
                     print("\"llc %s\" generated!" %(' '.join(map(str, list(mem_dict["llc"][idx].values())))))
+                if os.path.exists(file_tb):
+                    None
+                else:
+                    print_wrap_sp_tb(file_tb, module, address, word)
+                    print("\"llc_tb %s\" generated!" %(' '.join(map(str, list(mem_dict["llc"][idx].values())))))
                 if cnt < 3:
                     print_cache_def(memory, module, address_size)
                 cnt += 1
@@ -346,7 +687,7 @@ def llc_sp_gen(out_path, mem_dict, val_addr):
             
     if len(lib_list)>0:
         file = out_path + "/llc_lib.txt"
-        print_lib(file, lib_list)
+        print_lib(file, lib_list, "llc")
 
 
 def l2_policy_check(mem_dict):
@@ -392,7 +733,7 @@ def l2_sp_gen(out_path, mem_dict, val_addr):
         if mem_dict["l2"][idx]["address_size"] in val_addr:
             if int(mem_dict["l2"][idx]["word_size"]) == 64:
                 file = out_path + "/L2_SRAM_SP_LINE_" + mem_dict["l2"][idx]["address_size"] + "x" + mem_dict["l2"][idx]["word_size"] + ".v"
-                #file = out_path + "/L2_SRAM_SP_LINE" + ".v"
+                file_tb = out_path + "/tb/L2_SRAM_SP_LINE_" + mem_dict["l2"][idx]["address_size"] + "x" + mem_dict["l2"][idx]["word_size"] + "_tb.sv"
                 module = "L2_SRAM_SP_LINE_" + mem_dict["l2"][idx]["address_size"] + "x" + mem_dict["l2"][idx]["word_size"]
                 memory = "L2_SRAM_SP_LINE"
                 address = int(math.log(int(mem_dict["l2"][idx]["address_size"]),2))
@@ -407,13 +748,18 @@ def l2_sp_gen(out_path, mem_dict, val_addr):
                 else:
                     print_wrap_sp(file, module, address, word, macro_name)
                     print("\"l2 %s\" generated!" %(' '.join(map(str, list(mem_dict["l2"][idx].values())))))
+                if os.path.exists(file_tb):
+                    None
+                else:
+                    print_wrap_sp_tb(file_tb, module, address, word)
+                    print("\"l2_tb %s\" generated!" %(' '.join(map(str, list(mem_dict["l2"][idx].values())))))
                 if cnt < 2:
                     print_cache_def(memory, module, address_size)
                 cnt += 1
         
             elif int(mem_dict["l2"][idx]["word_size"]) == 24:
                 file = out_path + "/L2_SRAM_SP_MIXED_" + mem_dict["l2"][idx]["address_size"] + "x" + mem_dict["l2"][idx]["word_size"] + ".v"
-                #file = out_path + "/L2_SRAM_SP_MIXED" + ".v"
+                file_tb = out_path + "/tb/L2_SRAM_SP_MIXED_" + mem_dict["l2"][idx]["address_size"] + "x" + mem_dict["l2"][idx]["word_size"] + "_tb.sv"
                 module = "L2_SRAM_SP_MIXED_" + mem_dict["l2"][idx]["address_size"] + "x" + mem_dict["l2"][idx]["word_size"]
                 memory = "L2_SRAM_SP_MIXED"
                 address = int(math.log(int(mem_dict["l2"][idx]["address_size"]),2))
@@ -428,6 +774,11 @@ def l2_sp_gen(out_path, mem_dict, val_addr):
                 else:
                     print_wrap_sp(file, module, address, word, macro_name)
                     print("\"l2 %s\" generated!" %(' '.join(map(str, list(mem_dict["l2"][idx].values())))))
+                if os.path.exists(file_tb):
+                    None
+                else:
+                    print_wrap_sp_tb(file_tb, module, address, word)
+                    print("\"l2_tb %s\" generated!" %(' '.join(map(str, list(mem_dict["l2"][idx].values())))))
                 if cnt < 2:
                     print_cache_def(memory, module, address_size)
                 cnt += 1
@@ -437,7 +788,7 @@ def l2_sp_gen(out_path, mem_dict, val_addr):
             
     if len(lib_list)>0:
         file = out_path + "/l2_lib.txt"
-        print_lib(file, lib_list)
+        print_lib(file, lib_list, "l2")
 
 
 def l1_sp_gen(out_path, mem_dict):
@@ -446,9 +797,8 @@ def l1_sp_gen(out_path, mem_dict):
 
     if int(mem_dict["l1"][0]["word_size"]) == 64:
         if int(mem_dict["l1"][0]["address_size"]) == 256:
-            #file = out_path + "/L1_SRAM_SP_" + mem_dict["l1"][0]["address_size"] + "x" + mem_dict["l1"][0]["word_size"] + ".v"
             file = out_path + "/L1_SRAM_SP" + ".v"
-            #module = "L1_SRAM_SP_" + mem_dict["l1"][0]["address_size"] + "x" + mem_dict["l1"][0]["word_size"]
+            file_tb = out_path + "/tb/L1_SRAM_SP_tb.sv"
             module = "L1_SRAM_SP"
             address = int(math.log(int(mem_dict["l1"][0]["address_size"]),2))
             word = int(mem_dict["l1"][0]["word_size"])
@@ -462,8 +812,13 @@ def l1_sp_gen(out_path, mem_dict):
             else:
                 print_wrap_sp(file, module, address, word, macro_name)
                 print("\"l1 %s\" generated!" %(' '.join(map(str, list(mem_dict["l1"][0].values())))))
+            if os.path.exists(file_tb):
+                None
+            else:
+                print_wrap_sp_tb(file_tb, module, address, word)
+                print("\"l1_tb %s\" generated!" %(' '.join(map(str, list(mem_dict["l1"][0].values())))))
             file = out_path + "/l1_lib.txt"
-            print_lib(file, lib_list)
+            print_lib(file, lib_list, "l1")
                 
         else:
             print("Error: \"l1 %s\" " %(' '.join(map(str, list(mem_dict["l1"][0].values())))))
@@ -498,6 +853,7 @@ def slm_sp_gen(out_path, mem_dict, val_word):
     for idx in range(len(mem_dict["slm"])):
         if mem_dict["slm"][idx]["word_size"] in val_word:
             file = out_path + "/SLM_SRAM_SP_" + mem_dict["slm"][idx]["address_size"] + "x" + mem_dict["slm"][idx]["word_size"] + ".v"
+            file_tb = out_path + "/tb/SLM_SRAM_SP_" + mem_dict["slm"][idx]["address_size"] + "x" + mem_dict["slm"][idx]["word_size"] + "_tb.sv"
             module = "SLM_SRAM_SP_" + mem_dict["slm"][idx]["address_size"] + "x" + mem_dict["slm"][idx]["word_size"]
             address = int(math.log(int(mem_dict["slm"][idx]["address_size"]),2))
             word = int(mem_dict["slm"][idx]["word_size"])
@@ -511,13 +867,18 @@ def slm_sp_gen(out_path, mem_dict, val_word):
             else:
                 print_wrap_sp(file, module, address, word, macro_name)
                 print("\"slm %s\" generated!" %(' '.join(map(str, list(mem_dict["slm"][idx].values())))))
+            if os.path.exists(file_tb):
+                None
+            else:
+                print_wrap_sp_tb(file_tb, module, address, word)
+                print("\"slm_tb %s\" generated!" %(' '.join(map(str, list(mem_dict["slm"][idx].values())))))
     
         else:
             None
 
     if len(lib_list) > 0:
         file = out_path + "/slm_lib.txt"
-        print_lib(file, lib_list)
+        print_lib(file, lib_list, "slm")
 
 
 def io_dp_policy_check(mem_dict):
@@ -526,7 +887,7 @@ def io_dp_policy_check(mem_dict):
     valid_comb = [("4096","16"), ("256","32")]
     
     for i in range(len(mem_dict["io"])):
-        if mem_dict["io"][i]["port_type"] == "dual":
+        if mem_dict["io"][i]["port_type"] == "1wr1r" or mem_dict["io"][i]["port_type"] == "2wr":
             if (mem_dict["io"][i]["address_size"], mem_dict["io"][i]["word_size"]) not in valid_comb:
                 print("Error: \"io %s\" " %(' '.join(map(str, list(mem_dict["io"][i].values())))))
                 print('''       Dual port IO memory supports the following configuration:
@@ -546,7 +907,7 @@ def io_sp_policy_check(mem_dict):
     valid_addresses = ["256", "512", "1024", "2048", "4096", "8192", "16384"]
     
     for i in range(len(mem_dict["io"])):
-        if mem_dict["io"][i]["port_type"] == "single":
+        if mem_dict["io"][i]["port_type"] == "1wr":
             if mem_dict["io"][i]["address_size"] not in valid_addresses:
                 print("Error: \"io %s\" " %(' '.join(map(str, list(mem_dict["io"][i].values())))))
                 print('''       Single port IO memory support the following address sizes:
@@ -569,9 +930,10 @@ def io_gen(out_path, mem_dict, val_dp_conf, val_sp_conf):
     lib_list = []
 
     for idx in range(len(mem_dict["io"])):
-        if mem_dict["io"][idx]["port_type"] == "dual":
+        if mem_dict["io"][idx]["port_type"] == "1wr1r" or mem_dict["io"][idx]["port_type"] == "2wr":
             if (mem_dict["io"][idx]["address_size"], mem_dict["io"][idx]["word_size"]) in val_dp_conf:
                 file = out_path + "/IO_DP_" + mem_dict["io"][idx]["address_size"] + "x" + mem_dict["io"][idx]["word_size"] + ".v"
+                file_tb = out_path + "/tb/IO_DP_" + mem_dict["io"][idx]["address_size"] + "x" + mem_dict["io"][idx]["word_size"] + "_tb.sv"
                 module = "IO_DP_" + mem_dict["io"][idx]["address_size"] + "x" + mem_dict["io"][idx]["word_size"]
                 address = int(math.log(int(mem_dict["io"][idx]["address_size"]),2))
                 word = int(mem_dict["io"][idx]["word_size"])
@@ -579,19 +941,26 @@ def io_gen(out_path, mem_dict, val_dp_conf, val_sp_conf):
                 address_size = mem_dict["io"][idx]["address_size"]
                 area = mem_dict["io"][idx]["area"]
                 port_type = mem_dict["io"][idx]["port_type"]
+
                 lib_list.append([address_size, word, module, area, port_type])
                 if os.path.exists(file):
                     None
                 else:
-                    print_wrap_dp(file, module, address, word, macro_name)
+                    print_wrap_io_dp(file, module, address, word, macro_name)
                     print("\"io dual port %s\" generated!" %(' '.join(map(str, list(mem_dict["io"][idx].values())))))
+                if os.path.exists(file_tb):
+                    None
+                else:
+                    print_wrap_io_dp_tb(file_tb, module, address, word)
+                    print("\"io_tb dual port %s\" generated!" %(' '.join(map(str, list(mem_dict["io"][idx].values())))))
     
             else:
                 None
 
-        elif mem_dict["io"][idx]["port_type"] == "single":
+        elif mem_dict["io"][idx]["port_type"] == "1wr":
             if (mem_dict["io"][idx]["address_size"], mem_dict["io"][idx]["word_size"]) in val_sp_conf:
                 file = out_path + "/IO_SP_" + mem_dict["io"][idx]["address_size"] + "x" + mem_dict["io"][idx]["word_size"] + ".v"
+                file_tb = out_path + "/tb/IO_SP_" + mem_dict["io"][idx]["address_size"] + "x" + mem_dict["io"][idx]["word_size"] + "_tb.sv"
                 module = "IO_SP_" + mem_dict["io"][idx]["address_size"] + "x" + mem_dict["io"][idx]["word_size"]
                 address = int(math.log(int(mem_dict["io"][idx]["address_size"]),2))
                 word = int(mem_dict["io"][idx]["word_size"])
@@ -605,21 +974,27 @@ def io_gen(out_path, mem_dict, val_dp_conf, val_sp_conf):
                 else:
                     print_wrap_sp(file, module, address, word, macro_name)
                     print("\"io single port %s\" generated!" %(' '.join(map(str, list(mem_dict["io"][idx].values())))))
+                if os.path.exists(file_tb):
+                    None
+                else:
+                    print_wrap_sp_tb(file_tb, module, address, word)
+                    print("\"io_tb single port %s\" generated!" %(' '.join(map(str, list(mem_dict["io"][idx].values())))))
     
         else:
             None    
             
     if len(lib_list) > 0:
         file = out_path + "/io_lib.txt"
-        print_lib(file, lib_list)
+        print_lib(file, lib_list, "io")
 
 def acc_gen(out_path, mem_dict):
     
     lib_list = []
 
     for idx in range(len(mem_dict["acc"])):
-        if mem_dict["acc"][idx]["port_type"] == "dual":
+        if mem_dict["acc"][idx]["port_type"] == "2wr":
             file = out_path + "/ACC_SRAM_DP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"] + ".v"
+            file_tb = out_path + "/tb/ACC_SRAM_DP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"] + "_tb.sv"
             module = "ACC_SRAM_DP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"]
             address = int(math.log(int(mem_dict["acc"][idx]["address_size"]),2))
             word = int(mem_dict["acc"][idx]["word_size"])
@@ -633,9 +1008,15 @@ def acc_gen(out_path, mem_dict):
             else:
                 print_wrap_dp(file, module, address, word, macro_name)
                 print("\"acc dual port %s\" generated!" %(' '.join(map(str, list(mem_dict["acc"][idx].values())))))
+            if os.path.exists(file_tb):
+                None
+            else:
+                print_wrap_dp_tb(file_tb, module, address, word)
+                print("\"acc_tb dual port %s\" generated!" %(' '.join(map(str, list(mem_dict["acc"][idx].values())))))
     
-        elif mem_dict["acc"][idx]["port_type"] == "single":
+        elif mem_dict["acc"][idx]["port_type"] == "1wr":
             file = out_path + "/ACC_SRAM_SP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"] + ".v"
+            file_tb = out_path + "/tb/ACC_SRAM_SP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"] + "_tb.sv"
             module = "ACC_SRAM_SP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"]
             address = int(math.log(int(mem_dict["acc"][idx]["address_size"]),2))
             word = int(mem_dict["acc"][idx]["word_size"])
@@ -649,13 +1030,18 @@ def acc_gen(out_path, mem_dict):
             else:
                 print_wrap_sp(file, module, address, word, macro_name)
                 print("\"acc single port %s\" generated!" %(' '.join(map(str, list(mem_dict["acc"][idx].values())))))
+            if os.path.exists(file_tb):
+                None
+            else:
+                print_wrap_sp_tb(file_tb, module, address, word)
+                print("\"acc_tb single port %s\" generated!" %(' '.join(map(str, list(mem_dict["acc"][idx].values())))))
     
         else:
             None    
             
     if len(lib_list) > 0:
         file = out_path + "/acc_lib.txt"
-        print_lib(file, lib_list)
+        print_lib(file, lib_list, "acc")
 
 out_path = sys.argv[1]
 memory_list = []

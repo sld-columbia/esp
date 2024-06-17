@@ -107,6 +107,10 @@ class SoC_Config():
     else:
       self.cache_rtl.set(0)
       self.cache_spandex.set(1)
+    if self.clk_str.get() == 2:
+      self.sync_en.set(0)
+    else:
+      self.sync_en.set(1)
 
   def update_list_of_ips(self):
     self.list_of_ips = tuple(self.IPs.EMPTY) + tuple(self.IPs.PROCESSORS) + tuple(self.IPs.MISC) + tuple(self.IPs.MEM) + tuple(self.IPs.SLM) + tuple(self.IPs.ACCELERATORS)
@@ -170,6 +174,14 @@ class SoC_Config():
     self.noc.dma_noc_width.set(int(item[2]))
     self.noc.create_topology(self.noc.top, rows, cols)
     # CONFIG_CPU_CACHES = L2_SETS L2_WAYS LLC_SETS LLC_WAYS
+    line = fp.readline()
+    if line.find("CONFIG_MULTICAST_NOC_EN = y") != -1:
+      self.noc.multicast_en.set(1)
+    else:
+      self.noc.multicast_en.set(0)
+    line = fp.readline()
+    item = line.split()
+    self.noc.max_mcast_dests.set(int(item[2]))
     line = fp.readline()
     if line.find("CONFIG_CACHE_EN = y") != -1:
       self.cache_en.set(1)
@@ -249,6 +261,14 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     self.dsu_eth = item[2]
+    # Advanced config
+    line = fp.readline()
+    item = line.split()
+    self.clk_str.set(int(item[2]))
+    if self.clk_str.get() == 2:
+        self.sync_en.set(0)
+    else:
+        self.sync_en.set(1)
     # Monitors
     line = fp.readline()
     if line.find("CONFIG_MON_DDR = y") != -1:
@@ -312,6 +332,11 @@ class SoC_Config():
     fp.write("CONFIG_NOC_COLS = " + str(self.noc.cols) + "\n")
     fp.write("CONFIG_COH_NOC_WIDTH = " + str(self.noc.coh_noc_width.get()) + "\n")
     fp.write("CONFIG_DMA_NOC_WIDTH = " + str(self.noc.dma_noc_width.get()) + "\n")
+    if self.noc.multicast_en.get() == 1:
+      fp.write("CONFIG_MULTICAST_NOC_EN = y\n")
+    else:
+      fp.write("#CONFIG_MULTICAST_NOC_EN is not set\n")
+    fp.write("CONFIG_MAX_MCAST_DESTS = " + str(self.noc.max_mcast_dests.get()) + "\n")
     if self.cache_en.get() == 1:
       fp.write("CONFIG_CACHE_EN = y\n")
     else:
@@ -351,6 +376,7 @@ class SoC_Config():
       self.dsu_eth = dsu_eth
     fp.write("CONGIG_DSU_IP = " + self.dsu_ip + "\n")
     fp.write("CONGIG_DSU_ETH = " + self.dsu_eth + "\n")
+    fp.write("CONFIG_CLK_STR = " + str(self.clk_str.get()) + "\n")
     if self.noc.monitor_ddr.get() == 1:
       fp.write("CONFIG_MON_DDR = y\n")
     else:
@@ -476,6 +502,9 @@ class SoC_Config():
     # Debug Link
     self.dsu_ip = ""
     self.dsu_eth = ""
+    # Advanced Configuration
+    self.clk_str = IntVar()
+    self.sync_en = IntVar()
 
     # Define whether SGMII has to be used or not: it is not used for ProFPGA boards
     if self.FPGA_BOARD.find("profpga") != -1:

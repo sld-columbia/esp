@@ -2,7 +2,8 @@ module lookahead_router_wrapper
   #(
     parameter bit FlowControl = noc::kFlowControlAckNack,
     parameter int unsigned Width = 32,
-    parameter bit [4:0] Ports = noc::AllPorts
+    parameter bit [4:0] Ports = noc::AllPorts,
+    parameter int unsigned DEST_SIZE = 1
     )
   (
    input  logic clk,
@@ -32,30 +33,61 @@ module lookahead_router_wrapper
   assign position.x = CONST_localx;
   assign position.y = CONST_localy;
 
-  lookahead_router
-    #(
-      .FlowControl(FlowControl),
-      .DataWidth(Width - $bits(noc::preamble_t)),
-      .Ports(Ports)
-      ) router_impl_i
-      (
-       .clk,
-       .rst(~rst),
-       .position,
-       .data_n_in,
-       .data_s_in,
-       .data_w_in,
-       .data_e_in,
-       .data_p_in,
-       .data_void_in,
-       .stop_out,
-       .data_n_out,
-       .data_s_out,
-       .data_w_out,
-       .data_e_out,
-       .data_p_out,
-       .data_void_out,
-       .stop_in
-       );
+  generate
+    if (DEST_SIZE <= 1) begin
+      lookahead_router
+        #(
+          .FlowControl(FlowControl),
+          .DataWidth(Width - $bits(noc::preamble_t)),
+          .Ports(Ports)
+          ) router_impl_i
+          (
+           .clk,
+           .rst(~rst),
+           .position,
+           .data_n_in,
+           .data_s_in,
+           .data_w_in,
+           .data_e_in,
+           .data_p_in,
+           .data_void_in,
+           .stop_out,
+           .data_n_out,
+           .data_s_out,
+           .data_w_out,
+           .data_e_out,
+           .data_p_out,
+           .data_void_out,
+           .stop_in
+           );
+    end else begin
+      lookahead_router_multicast
+        #(
+          .FlowControl(FlowControl),
+          .DataWidth(Width - $bits(noc::preamble_t)),
+          .Ports(Ports),
+          .DEST_SIZE(DEST_SIZE)
+         ) router_impl_i
+          (
+           .clk,
+           .rst(~rst),
+           .position,
+           .data_n_in,
+           .data_s_in,
+           .data_w_in,
+           .data_e_in,
+           .data_p_in,
+           .data_void_in,
+           .stop_out,
+           .data_n_out,
+           .data_s_out,
+           .data_w_out,
+           .data_e_out,
+           .data_p_out,
+           .data_void_out,
+           .stop_in
+           );
+    end
+  endgenerate
 
 endmodule

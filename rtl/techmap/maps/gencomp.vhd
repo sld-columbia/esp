@@ -166,11 +166,11 @@ constant has_sram_ecc :  tech_ability_type :=
         (virtex7 => 1, virtexup => 1, virtexu => 1, others => 0);
 
 constant padoen_polarity : tech_ability_type :=
-        (asic => 0, others => 0);
+        (asic => 1, others => 0);
         --(gf12 => 1, others => 0);
 
 constant has_pads : tech_ability_type :=
-	(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, asic => 0, others => 0);
+	(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, asic => 1, others => 0);
 	--(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
 
 constant has_ds_pads : tech_ability_type :=
@@ -268,7 +268,7 @@ constant has_pll : tech_ability_type :=
      (virtex7 => 1, virtexup => 1, virtexu => 1,  others => 0);
 
 constant has_dco : tech_ability_type :=
-     (asic => 1, others => 0);
+     (asic => 1, inferred => 1, others => 0);
 --     (gf12 => 1, others => 0);
 
 -- pragma translate_off

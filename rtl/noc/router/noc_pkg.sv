@@ -53,6 +53,18 @@ package noc;
     get_onehot_port.go_local = (port == kLocalPort);
   endfunction // get_onehot_port
 
+  function automatic noc_port_t int2noc_port(
+    input int i);
+    case(i)
+      0 : return kNorthPort;
+      1 : return kSouthPort;
+      2 : return kWestPort;
+      3 : return kEastPort;
+      4 : return kLocalPort;
+      default : return kNorthPort;
+    endcase
+  endfunction // int2noc_port 
+
   parameter direction_t goNorth = get_onehot_port(kNorthPort);
   parameter direction_t goSouth = get_onehot_port(kSouthPort);
   parameter direction_t goWest = get_onehot_port(kWestPort);
@@ -93,11 +105,5 @@ package noc;
     logic head;
     logic tail;
   } preamble_t;
-
-  typedef struct packed {
-    xy_t source;
-    xy_t destination;
-    message_t message;
-  } packet_info_t;
 
 endpackage

@@ -62,8 +62,6 @@ ifeq ($(CONFIG_HAS_DVFS),y)
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/dvfs_vlog.flist), $(ESP_ROOT)/rtl/$(f))
 endif
 
-# TO DO this is a temporary solution to include the token-based power management modules
-VLOG_SRCS += $(foreach f, $(ESP_ROOT)/../rtl/sockets/dvfs, $(shell (find $(f) -name "*.v")))
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.v")))
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.sv")))
 VLOG_SRCS += $(THIRDPARTY_VLOG) $(THIRDPARTY_SVLOG)
