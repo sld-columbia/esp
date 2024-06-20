@@ -145,7 +145,6 @@ linux-distclean:
 ## Modelsim
 VLOGOPT +=
 VLOGOPT += -incr
-VLOGOPT += -64
 VLOGOPT += -nologo
 VLOGOPT += -suppress 13262
 VLOGOPT += -suppress 2286

@@ -194,7 +194,6 @@ GENUS_VLOGOPT += -define WT_DCACHE=1
 ## Modelsim
 VLOGOPT +=
 VLOGOPT += -incr
-VLOGOPT += -64
 VLOGOPT += -nologo
 VLOGOPT += -suppress 13262
 VLOGOPT += -suppress 2286
@@ -203,7 +202,7 @@ VLOGOPT += +define+WT_DCACHE
 VLOGOPT += -pedanticerrors
 VLOGOPT += -suppress 2583
 ifeq ("$(CPU_ARCH)", "ariane")
-VSIMOPT += +UVM_NO_RELNOTES -64 +permissive-off
+VSIMOPT += +UVM_NO_RELNOTES +permissive-off
 VSIMOPT += -voptargs="+acc"
 else
 VSIMOPT += -novopt

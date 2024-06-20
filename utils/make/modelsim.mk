@@ -18,6 +18,7 @@ VSIMOPT += -suppress 2697
 VSIMOPT += -suppress 8617
 VSIMOPT += -suppress 151
 VSIMOPT += -suppress 143
+VSIMOPT += -suppress 8386
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VSIMOPT += -L secureip_ver -L unisims_ver
 endif
