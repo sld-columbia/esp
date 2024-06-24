@@ -51,11 +51,11 @@ def data_struct(memory_list):
 
 def print_lib(file1, lib_list, tile_type):
 
-    list_2wr = []
-    list_1wr = []
-    list_1wr1r = []
-    has_2wr = False
-    has_1wr1r = False
+    list_2rw = []
+    list_1rw = []
+    list_1rw1r = []
+    has_2rw = False
+    has_1rw1r = False
 
     if os.path.exists(file1):
         out_file = open(file1, "r")
@@ -63,60 +63,60 @@ def print_lib(file1, lib_list, tile_type):
         fl = f.split()
         for i in range(len(lib_list)):
             if lib_list[i][2] not in fl:
-                if lib_list[i][-1] == "1wr":
-                    list_1wr.append(lib_list[i])
-                elif lib_list[i][-1] == "2wr":
-                    list_2wr.append(lib_list[i])
-                elif lib_list[i][-1] == "1wr1r":
-                    list_1wr1r.append(lib_list[i])
-        if "2wr" in f:
-            has_2wr = True
-        if "1wr1r" in f:
-            has_1wr1r = True
+                if lib_list[i][-1] == "1rw":
+                    list_1rw.append(lib_list[i])
+                elif lib_list[i][-1] == "2rw":
+                    list_2rw.append(lib_list[i])
+                elif lib_list[i][-1] == "1rw1r":
+                    list_1rw1r.append(lib_list[i])
+        if "2rw" in f:
+            has_2rw = True
+        if "1rw1r" in f:
+            has_1rw1r = True
 
-        if len(list_1wr) > 0:
-            for i in range(len(list_1wr)):
+        if len(list_1rw) > 0:
+            for i in range(len(list_1rw)):
                 if tile_type == "io":
-                    if has_1wr1r or has_2wr:
+                    if has_1rw1r or has_2rw:
                         out_file.seek(0)
                         f_line = out_file.readlines()
                         for j, line in enumerate(f_line):
                             if line.startswith("dual_port"):
-                                f_line.insert(j, "%s 1 \n" %(' '.join(map(str, list(list_1wr[i][0:-1])))))
+                                f_line.insert(j, "%s 1 \n" %(' '.join(map(str, list(list_1rw[i][0:-1])))))
                                 break
                         out_file = open(file1, "w")
                         out_file.writelines(f_line)
                         out_file.close()
                     else:
                         out_file = open(file1, "a")
-                        out_file.write("%s 1 \n" %(' '.join(map(str, list(list_1wr[i][0:-1])))))
+                        out_file.write("%s 1 \n" %(' '.join(map(str, list(list_1rw[i][0:-1])))))
                         out_file.close()
                 else:
-                    if has_2wr:
+                    if has_2rw:
                         out_file.seek(0)
                         f_line = out_file.readlines()
                         for j, line in enumerate(f_line):
                             if line.startswith("dual_port"):
-                                f_line.insert(j, "%s 1 \n" %(' '.join(map(str, list(list_1wr[i][0:-1])))))
+                                f_line.insert(j, "%s 1 \n" %(' '.join(map(str, list(list_1rw[i][0:-1])))))
                                 break
                         out_file = open(file1, "w")
                         out_file.writelines(f_line)
                         out_file.close()
                     else:
                         out_file = open(file1, "a")
-                        out_file.write("%s 1 \n" %(' '.join(map(str, list(list_1wr[i][0:-1])))))
+                        out_file.write("%s 1 \n" %(' '.join(map(str, list(list_1rw[i][0:-1])))))
                         out_file.close()
 
-        if len(list_1wr1r) > 0 and tile_type == "io":
+        if len(list_1rw1r) > 0 and tile_type == "io":
             out_file = open(file1, "a+")
-            for i in range(len(list_1wr1r)):
-                if list_1wr1r[i][-1] == "1wr1r":
-                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_1wr1r[i][0:-1])))))
-        elif len(list_2wr) > 0:
+            for i in range(len(list_1rw1r)):
+                if list_1rw1r[i][-1] == "1rw1r":
+                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_1rw1r[i][0:-1])))))
+        elif len(list_2rw) > 0:
             out_file = open(file1, "a+")
-            for i in range(len(list_2wr)):
-                if list_2wr[i][-1] == "2wr":
-                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_2wr[i][0:-1])))))
+            for i in range(len(list_2rw)):
+                if list_2rw[i][-1] == "2rw":
+                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_2rw[i][0:-1])))))
             out_file.close()
 
     else:    
@@ -125,22 +125,22 @@ def print_lib(file1, lib_list, tile_type):
         out_file.write("# setup 0.14 \n")
         out_file.write("# single_port \n")
         for i in range(len(lib_list)):
-            if lib_list[i][-1] == "1wr":
+            if lib_list[i][-1] == "1rw":
                 out_file.write("%s 1 \n" %(' '.join(map(str, list(lib_list[i][0:-1])))))
-            elif lib_list[i][-1] == "1wr1r":
-                list_1wr1r.append(lib_list[i])
-            elif lib_list[i][-1] == "2wr":
-                list_2wr.append(lib_list[i])
-        if len(list_1wr1r) > 0 and tile_type == "io":
+            elif lib_list[i][-1] == "1rw1r":
+                list_1rw1r.append(lib_list[i])
+            elif lib_list[i][-1] == "2rw":
+                list_2rw.append(lib_list[i])
+        if len(list_1rw1r) > 0 and tile_type == "io":
             out_file.write("# dual_port \n")
-            for i in range(len(list_1wr1r)):
-                if list_1wr1r[i][-1] == "1wr1r":
-                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_1wr1r[i][0:-1])))))
-        if len(list_2wr) > 0:
+            for i in range(len(list_1rw1r)):
+                if list_1rw1r[i][-1] == "1rw1r":
+                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_1rw1r[i][0:-1])))))
+        if len(list_2rw) > 0:
             out_file.write("# dual_port \n")
-            for i in range(len(list_2wr)):
-                if list_2wr[i][-1] == "2wr":
-                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_2wr[i][0:-1])))))
+            for i in range(len(list_2rw)):
+                if list_2rw[i][-1] == "2rw":
+                    out_file.write("%s 2 \n" %(' '.join(map(str, list(list_2rw[i][0:-1])))))
         out_file.close()            
 
         
@@ -887,7 +887,7 @@ def io_dp_policy_check(mem_dict):
     valid_comb = [("4096","16"), ("256","32")]
     
     for i in range(len(mem_dict["io"])):
-        if mem_dict["io"][i]["port_type"] == "1wr1r" or mem_dict["io"][i]["port_type"] == "2wr":
+        if mem_dict["io"][i]["port_type"] == "1rw1r" or mem_dict["io"][i]["port_type"] == "2rw":
             if (mem_dict["io"][i]["address_size"], mem_dict["io"][i]["word_size"]) not in valid_comb:
                 print("Error: \"io %s\" " %(' '.join(map(str, list(mem_dict["io"][i].values())))))
                 print('''       Dual port IO memory supports the following configuration:
@@ -907,7 +907,7 @@ def io_sp_policy_check(mem_dict):
     valid_addresses = ["256", "512", "1024", "2048", "4096", "8192", "16384"]
     
     for i in range(len(mem_dict["io"])):
-        if mem_dict["io"][i]["port_type"] == "1wr":
+        if mem_dict["io"][i]["port_type"] == "1rw":
             if mem_dict["io"][i]["address_size"] not in valid_addresses:
                 print("Error: \"io %s\" " %(' '.join(map(str, list(mem_dict["io"][i].values())))))
                 print('''       Single port IO memory support the following address sizes:
@@ -930,7 +930,7 @@ def io_gen(out_path, mem_dict, val_dp_conf, val_sp_conf):
     lib_list = []
 
     for idx in range(len(mem_dict["io"])):
-        if mem_dict["io"][idx]["port_type"] == "1wr1r" or mem_dict["io"][idx]["port_type"] == "2wr":
+        if mem_dict["io"][idx]["port_type"] == "1rw1r" or mem_dict["io"][idx]["port_type"] == "2rw":
             if (mem_dict["io"][idx]["address_size"], mem_dict["io"][idx]["word_size"]) in val_dp_conf:
                 file = out_path + "/IO_DP_" + mem_dict["io"][idx]["address_size"] + "x" + mem_dict["io"][idx]["word_size"] + ".v"
                 file_tb = out_path + "/tb/IO_DP_" + mem_dict["io"][idx]["address_size"] + "x" + mem_dict["io"][idx]["word_size"] + "_tb.sv"
@@ -957,7 +957,7 @@ def io_gen(out_path, mem_dict, val_dp_conf, val_sp_conf):
             else:
                 None
 
-        elif mem_dict["io"][idx]["port_type"] == "1wr":
+        elif mem_dict["io"][idx]["port_type"] == "1rw":
             if (mem_dict["io"][idx]["address_size"], mem_dict["io"][idx]["word_size"]) in val_sp_conf:
                 file = out_path + "/IO_SP_" + mem_dict["io"][idx]["address_size"] + "x" + mem_dict["io"][idx]["word_size"] + ".v"
                 file_tb = out_path + "/tb/IO_SP_" + mem_dict["io"][idx]["address_size"] + "x" + mem_dict["io"][idx]["word_size"] + "_tb.sv"
@@ -992,7 +992,7 @@ def acc_gen(out_path, mem_dict):
     lib_list = []
 
     for idx in range(len(mem_dict["acc"])):
-        if mem_dict["acc"][idx]["port_type"] == "2wr":
+        if mem_dict["acc"][idx]["port_type"] == "2rw":
             file = out_path + "/ACC_SRAM_DP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"] + ".v"
             file_tb = out_path + "/tb/ACC_SRAM_DP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"] + "_tb.sv"
             module = "ACC_SRAM_DP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"]
@@ -1014,7 +1014,7 @@ def acc_gen(out_path, mem_dict):
                 print_wrap_dp_tb(file_tb, module, address, word)
                 print("\"acc_tb dual port %s\" generated!" %(' '.join(map(str, list(mem_dict["acc"][idx].values())))))
     
-        elif mem_dict["acc"][idx]["port_type"] == "1wr":
+        elif mem_dict["acc"][idx]["port_type"] == "1rw":
             file = out_path + "/ACC_SRAM_SP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"] + ".v"
             file_tb = out_path + "/tb/ACC_SRAM_SP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"] + "_tb.sv"
             module = "ACC_SRAM_SP_" + mem_dict["acc"][idx]["address_size"] + "x" + mem_dict["acc"][idx]["word_size"]

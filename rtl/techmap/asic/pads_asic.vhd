@@ -4,7 +4,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 
 -------------------------------------------------------------------------------
 -- Inpad
@@ -60,7 +60,7 @@ end;
 library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 
 entity asic_iopad is
   generic (
@@ -121,7 +121,7 @@ end;
 library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 
 entity asic_iopadien is
   generic (
@@ -191,7 +191,7 @@ end;
 library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 
 entity asic_outpad is
   generic (

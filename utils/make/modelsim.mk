@@ -8,6 +8,7 @@ VCOMOPT +=
 VCOMOPT += -suppress vcom-1491
 VLOGOPT += -suppress 2275
 VLOGOPT += -suppress 2583
+VLOGOPT += -suppress 2892
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VLOGOPT += +define+XILINX_FPGA
 endif

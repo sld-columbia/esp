@@ -307,7 +307,7 @@ begin
       DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
         port map (
           data_in  => dco_clk_div2_int,
-          sel      => dco_clk_delay_sel,
+          sel      => dco_clk_delay_sel(3 downto 0),
           data_out => dco_clk_div2_90_int);
 
       tile_clk <= dco_clk_div2_90_int;

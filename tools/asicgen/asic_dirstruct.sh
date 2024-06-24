@@ -68,24 +68,24 @@ then
 fi
 
 cd ../../rtl/sim/asic
-ln -sf $TECH_DIR_PATH/verilog verilog
-cd -
+ln -sTf $TECH_DIR_PATH/verilog verilog
+cd - > /dev/null
 
 cd ../../rtl/techmap/asic
-ln -sf $TECH_DIR_PATH/mem_wrappers mem
-cd -
+ln -sTf $TECH_DIR_PATH/mem_wrappers mem
+cd - > /dev/null
 
 cd ../../rtl/techmap/asic
-ln -sf $TECH_DIR_PATH/pad_wrappers pad
-cd -
+ln -sTf $TECH_DIR_PATH/pad_wrappers pad
+cd - > /dev/null
 
 cd ../../rtl/techmap/asic
-ln -sf $TECH_DIR_PATH/dco_wrappers dco
-cd -
+ln -sTf $TECH_DIR_PATH/dco_wrappers dco
+cd - > /dev/null
 
 cd ../../tech/$DIRTECH_NAME
-ln -sf $TECH_DIR_PATH/lib lib
-cd -
+ln -sTf $TECH_DIR_PATH/lib lib
+cd - > /dev/null
 
 if [ ! -d "$PROJ_DIR_PATH" ]
 then
@@ -145,5 +145,15 @@ fi
 if [ ! -f "$PROJ_DIR_PATH/vsim.tcl" ]
 then
   cp ../../socs/esp_asic_generic/vsim.tcl "$PROJ_DIR_PATH/"
+fi
+
+if [ ! -f "$PROJ_DIR_PATH/asic_memlist.txt" ]
+then
+  touch $PROJ_DIR_PATH/asic_memlist.txt
+fi
+
+if [ ! -f "$PROJ_DIR_PATH/asic_padlist.txt" ]
+then
+  touch $PROJ_DIR_PATH/asic_padlist.txt
 fi
 

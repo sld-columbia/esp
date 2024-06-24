@@ -461,8 +461,6 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "    The default HLS configuration is 512x4 L2 and 1024x8 LLC\n"
         if self.soc.TECH != "asic" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
           string += "    Use a smaller implementation if not using a Virtex US/US+\n"
-      if (clk_region_skip > 0):
-        string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead\n"
       if (self.soc.clk_str.get() == 0 and self.soc.TECH_TYPE == "asic"):
         string += "Clock strategy: two external clocks - 1 for the NoC and 1 for the Tiles. \n"
       if (self.soc.clk_str.get() == 1 and self.soc.TECH_TYPE == "asic"):
