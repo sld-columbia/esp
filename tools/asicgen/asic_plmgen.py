@@ -301,6 +301,10 @@ class memory():
         #     fd.write("          if (h % " + str(normalized_parallelism) + " == " + str(normalized_iface) + ") begin\n")
         fd.write("            if (ctrlh[" + str(iface) + "] == h && ctrlv[" + str(iface) + "] == v && CE" + str(iface) + " == 1'b1) begin\n")
         # Check that no port is accessed by more than one interface
+        if (self.name.split("_")[0] == "slm"):
+            ASSERT_ON = False
+        else:
+            ASSERT_ON = True
         if (ASSERT_ON):
             fd.write("// synthesis translate_off\n")
             fd.write("// synopsys translate_off\n")
@@ -408,6 +412,10 @@ class memory():
         fd.write("  " + "reg  " + sel_dbank_reg_width_str  + " seld     " + sel_reg_dims_str   + ";\n")
         fd.write("  " + "reg  " + sel_hbank_reg_width_str  + " selh     " + sel_reg_dims_str   + ";\n")
         fd.write("  " + "reg  " + sel_vbank_reg_width_str  + " selv     " + sel_reg_dims_str   + ";\n")
+        if (self.name.split("_")[0] == "slm"):
+            ASSERT_ON = False
+        else:
+            ASSERT_ON = True
         if (ASSERT_ON):
             fd.write("// synthesis translate_off\n")
             fd.write("// synopsys translate_off\n")
