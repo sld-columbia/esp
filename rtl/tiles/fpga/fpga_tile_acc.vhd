@@ -405,7 +405,7 @@ begin
       noc_rstn                => rst,
       tile_rstn               => tile_rstn,
       noc_clk                 => noc_clk,
-      tile_clk                => tile_clk,
+      tile_clk                => clk,
       acc_clk                 => acc_clk,
       -- CSRs
       tile_config             => open,
