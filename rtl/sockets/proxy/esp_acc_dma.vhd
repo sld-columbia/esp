@@ -991,7 +991,6 @@ begin  -- rtl
           dma_tran_header_sent <= '1';
           if msg = REQ_P2P then
             p2p_src_index_inc <= '1';
-            dma_snd_data_in_int(64) <= '0';
             dma_next <= request_length;
           else
             dma_next <= request_address;
