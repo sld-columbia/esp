@@ -20,18 +20,18 @@ DMA, distributed interrupt, and run-time coherence selection, that
 hide the complexity of hardware and software integration from the
 accelerator designer.
 
-Currently, ESP supports the integration of multi-core
-[LEON3](https://www.gaisler.com/index.php/downloads/leongrlib)
-processor from GRLIB and single-core
-[Ariane](https://github.com/pulp-platform/ariane) processors from the
-Pulp Platform. LEON3 implements the SPARC V8 32-bits ISA, while Ariane
-implements the RISC-V 64-bits ISA.
+Currently, ESP supports the integration of the
+[LEON3](https://www.gaisler.com/index.php/downloads/leongrlib) processor from
+GRLIB, the [Ariane](https://github.com/pulp-platform/ariane) core from the PULP
+Platform, and the [Ibex](https://github.com/lowRISC/ibex) core from lowRISC.
+LEON3 implements the SPARC V8 32-bit ISA, Ariane implements the RISC-V
+64-bit ISA, and Ibex implements the RISC-V 32-bit ISA.
 
 In addition to processor cores, ESP embeds accelerator design examples
 created with Stratus HLS in SystemC, Vivado HLS in C/C++ and Chisel.
 
 Furthermore, ESP can serve as a platform to integrate third-party IP
-blocks.  For example, ESP integrates the NVIDIA Deep Learning
+blocks. For example, ESP integrates the NVIDIA Deep Learning
 Accelerator [NVDLA](http://nvdla.org/), which can be placed on any ESP
 accelerator tile.
 
@@ -91,5 +91,5 @@ please refer to the READMEs inside each of them for more information.
 ## Stay tuned for the new features under development:
 
    - Dynamic partial reconfiguration SoC flow
-   - New machine learning and cryptography accelerators
    - Expanded support for ASIC design
+   - New platform services for programmable accelerators

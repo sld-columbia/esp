@@ -23,9 +23,9 @@ repository, including co-authors of portions of code from the first commit.
  - Luca Piccolboni
  - Christian Pilato
 
-### External collaborators
+### Collaborators
 
-The affiliation of external collaborators is reported at the time of their
+The affiliation of collaborators is reported at the time of their
 contribution. Current affiliation may be different.
 
  - Juan E. Contreras (Pacific Northwest National Laboratory)
@@ -35,6 +35,10 @@ contribution. Current affiliation may be different.
  - John-David Wellman (IBM)
  - Jeff Zhang (Harvard University)
  - Zeran Zhu (University of Illinois)
+ - Martin Cochet (IBM)
+ - Erik Loscalzo (Columbia University)
+ - Ajay Vanamali (Columbia University)
+ - Manish Shankar (Columbia University)
 
 
 ### [Contacts](https://esp.cs.columbia.edu/contact/)

@@ -33,7 +33,11 @@
        - Copyright (c) 2011 CERN
 
 
-   4. All source files released in Git submodules are governed by their
+   4. The module `Tile_LDO_Ctrl` contains an adapted version of a PID
+      controller from OpenCores, released with the LGPL license. The file is tagged
+      with the author, license, and link to the original source.
+
+   5. All source files released in Git submodules are governed by their
       respective license(s) in accordance with the credits and license files
       released in each linked repository.
 
