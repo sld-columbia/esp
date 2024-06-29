@@ -457,92 +457,94 @@ class NoCFrame(Pmw.ScrolledFrame):
        (self.noc.dma_noc_width.get() == 64 and self.noc.max_mcast_dests.get() <= 5)):
       # Spandex beta warning
       if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
-        string += "***              Spandex support is still beta                 ***\n"
-        string += "    The default HLS configuration is 512x4 L2 and 1024x8 LLC\n"
+        string += "INFO: Spandex cache hierarchy is in beta testing\n"
+        string += "The default HLS configuration is 512x4 L2 and 1024x8 LLC\n"
         if self.soc.TECH != "asic" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
           string += "    Use a smaller implementation if not using a Virtex US/US+\n"
       if (self.soc.clk_str.get() == 0 and self.soc.TECH_TYPE == "asic"):
-        string += "Clock strategy: two external clocks - 1 for the NoC and 1 for the Tiles. \n"
+        string += "INFO: Clock strategy: two external clocks - 1 for the NoC and 1 for the Tiles. \n"
       if (self.soc.clk_str.get() == 1 and self.soc.TECH_TYPE == "asic"):
-        string += "Clock strategy: 1 DCO per tile plus 1 DCO for the NoC inside the IO tile. \n"
+        string += "INFO: Clock strategy: 1 DCO per tile plus 1 DCO for the NoC inside the IO tile. \n"
       if (self.soc.clk_str.get() == 2 and self.soc.TECH_TYPE == "asic"):
-        string += "Clock strategy: 1 DCO inside the IO tile for the full chip. \n"
+        string += "INFO: Clock strategy: 1 DCO inside the IO tile for the full chip. \n"
       if self.noc.multicast_en.get():
-        string += "***              Multicast NoC is in beta testing                ***\n"
+        string += "INFO: Multicast NoC is in beta testing\n"
+      if self.noc.dma_noc_width.get() != self.soc.ARCH_BITS:
+        string += "INFO: to enable accelerator private caches, DMA NoC width must match CPU architecture size (64 bits for Ariane, 32 for Leon3 and Ibex)\n"
       self.done.config(state=NORMAL)
     else:
       if (self.noc.cols > 8 or self.noc.rows > 8): 
-        string += "Maximum number of rows and columns is 8.\n"
+        string += "ERROR: Maximum number of rows and columns is 8.\n"
       if (tot_cpu == 0):
-        string += "At least one CPU is required.\n"
+        string += "ERROR: At least one CPU is required.\n"
       if (tot_cpu > 1 and not self.soc.cache_en.get()):
-        string += "Caches are required for multicore SoCs.\n"
+        string += "ERROR: Caches are required for multicore SoCs.\n"
       if (tot_io == 0):
-        string += "At least I/O tile is required.\n"
+        string += "ERROR: At least I/O tile is required.\n"
       if (tot_cpu > NCPU_MAX):
-        new_err = "Maximum number of supported CPUs is " + str(NCPU_MAX) + ".\n"
+        new_err = "ERROR: Maximum number of supported CPUs is " + str(NCPU_MAX) + ".\n"
         string += new_err
       if (tot_io > 1):
-        string += "Multiple I/O tiles are not supported.\n"
+        string += "ERROR: Multiple I/O tiles are not supported.\n"
       if (tot_mem < 1 and tot_slm < 1):
-        string += "There must be at least 1 memory tile or 1 SLM tile.\n"
+        string += "ERROR: There must be at least 1 memory tile or 1 SLM tile.\n"
       if (tot_mem > self.soc.nmem_max):
-        string += "There must be no more than " + str(self.soc.nmem_max) + " memory tiles.\n"
+        string += "ERROR: There must be no more than " + str(self.soc.nmem_max) + " memory tiles.\n"
       if (tot_mem == 0 and (self.soc.CPU_ARCH.get() != "ibex")):
-        string += "SLM tiles can be used in place of memory tiles only with the lowRISC ibex core.\n"
+        string += "ERROR: SLM tiles can be used in place of memory tiles only with the lowRISC ibex core.\n"
       if (tot_mem == 0 and (self.soc.cache_en.get() == 1)):
-        string += "There must be at least 1 memory tile to enable the ESP cache hierarchy.\n"
+        string += "ERROR: There must be at least 1 memory tile to enable the ESP cache hierarchy.\n"
       if (tot_mem == 3): 
-        string += "Number of memory tiles must be a power of 2.\n" 
+        string += "ERROR: Number of memory tiles must be a power of 2.\n" 
       if (tot_slm > NSLM_MAX):
-        string += "There must be no more than " + str(NSLM_MAX) + " SLM tiles.\n"
+        string += "ERROR: There must be no more than " + str(NSLM_MAX) + " SLM tiles.\n"
       if (tot_slm > 1 and self.soc.slm_kbytes.get() < 1024):
-        string += "SLM size must be 1024 KB or more if placing more than one SLM tile.\n"
+        string += "ERROR: SLM size must be 1024 KB or more if placing more than one SLM tile.\n"
       if (self.soc.llc_sets.get() >= 8192 and self.soc.llc_ways.get() >= 16 and tot_mem == 1): 
-        string += "A 2MB LLC (8192 sets and 16 ways) requires multiple memory tiles.\n"
+        string += "ERROR: A 2MB LLC (8192 sets and 16 ways) requires multiple memory tiles.\n"
       if (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)):
-        string += "A 3x3 NoC or larger is recommended for multiple memory tiles for virtexu (profpga-xcvu440).\n" 
+        string += "ERROR: A 3x3 NoC or larger is recommended for multiple memory tiles for virtexu (profpga-xcvu440).\n" 
       if (tot_acc > NACC_MAX):
-        string += "There must no more than " + str(NACC_MAX) + " (can be relaxed).\n"
+        string += "ERROR: There must no more than " + str(NACC_MAX) + " (can be relaxed).\n"
       if (tot_tiles > NTILE_MAX):
-        string += "Maximum number of supported tiles is " + str(NTILE_MAX) + ".\n"
+        string += "ERROR: Maximum number of supported tiles is " + str(NTILE_MAX) + ".\n"
       if (tot_full_coherent > NFULL_COHERENT_MAX):
-        string += "Maximum number of supported fully-coherent devices is " + str(NFULL_COHERENT_MAX) + ".\n"
+        string += "ERROR: Maximum number of supported fully-coherent devices is " + str(NFULL_COHERENT_MAX) + ".\n"
       if (tot_llc_coherent > NLLC_COHERENT_MAX):
-        string += "Maximum number of supported LLC-coherent devices is " + str(NLLC_COHERENT_MAX) + ".\n"
+        string += "ERROR: Maximum number of supported LLC-coherent devices is " + str(NLLC_COHERENT_MAX) + ".\n"
       if (self.soc.cache_spandex.get() != 0 and self.soc.CPU_ARCH.get() != "ariane" and self.soc.cache_en.get() == 1):
-        string += "Spandex currently supports only RISC-V Ariane processor core.\n"
+        string += "ERROR: Spandex currently supports only RISC-V Ariane processor core.\n"
       if (self.soc.cache_en.get() == 1 and self.soc.cache_line_size.get() < self.noc.coh_noc_width.get()):
-        string += "Cache line size must be greater than or equal to coherence NoC bitwidth.\n"
+        string += "ERROR: Cache line size must be greater than or equal to coherence NoC bitwidth.\n"
       if (self.soc.cache_en.get() == 1 and self.soc.cache_line_size.get() < self.noc.dma_noc_width.get()):
-        string += "Cache line size must be greater than or equal to DMA NoC bitwidth.\n"
+        string += "ERROR: Cache line size must be greater than or equal to DMA NoC bitwidth.\n"
       if (self.soc.TECH == "asic" and self.soc.cache_line_size.get() < self.soc.mem_link_width.get()):
-        string += "Cache line size must be greater than or equal to mem link bitwidth.\n"
+        string += "ERROR: Cache line size must be greater than or equal to mem link bitwidth.\n"
       if (self.soc.TECH == "asic" and self.noc.coh_noc_width.get() < self.soc.mem_link_width.get()):
-        string += "Coherence NoC bitwdith must be greater than or equal to mem link bitwidth.\n"
+        string += "ERROR: Coherence NoC bitwdith must be greater than or equal to mem link bitwidth.\n"
       if (self.soc.TECH == "asic" and self.noc.dma_noc_width.get() < self.soc.mem_link_width.get()):
-        string += "DMA NoC bitwdith must be greater than or equal to mem link bitwidth.\n"
+        string += "ERROR: DMA NoC bitwdith must be greater than or equal to mem link bitwidth.\n"
       if (self.soc.cache_en.get() != 1) and (self.noc.coh_noc_width.get() > self.soc.ARCH_BITS):
-        string += "Caches must be enabled to support a coherence NoC width larger than the CPU architecture size.\n"
+        string += "ERROR: Caches must be enabled to support a coherence NoC width larger than the CPU architecture size.\n"
       if (self.noc.coh_noc_width.get() < self.soc.ARCH_BITS):
-        string += "Coherence NoC width must be greater than or equal to the CPU architecture size.\n"
+        string += "ERROR: Coherence NoC width must be greater than or equal to the CPU architecture size.\n"
       if (self.noc.dma_noc_width.get() < self.soc.ARCH_BITS):
-        string += "DMA NoC width must be greater than or equal to the CPU architecture size.\n"
+        string += "ERROR: DMA NoC width must be greater than or equal to the CPU architecture size.\n"
       if (not acc_impl_valid):
-        string += "All accelerators must have a selected implementation.\n"
+        string += "ERROR: All accelerators must have a selected implementation.\n"
       if (self.soc.cache_line_size.get() > 128 and (self.soc.cache_spandex.get() == 1 or self.soc.cache_rtl.get() == 0)):
-        string += "Only ESP RTL caches support cache line size greater than 128 bits.\n"
+        string += "ERROR: Only ESP RTL caches support cache line size greater than 128 bits.\n"
       if (self.soc.jtag_en.get() == 1 and (self.noc.dma_noc_width.get() != 64 or self.noc.coh_noc_width.get() != 64)):
-        string += "JTAG is only supported for 64-bit coherence and DMA NoC planes.\n"
+        string += "ERROR: JTAG is only supported for 64-bit coherence and DMA NoC planes.\n"
       if ((self.soc.TECH == "asic" or self.soc.TECH == "inferred" or self.soc.ESP_EMU_TECH != "none") \
            and tot_mem >= 1 and self.soc.cache_en.get() == 0):
-        string += "Caches must be enabled for ASIC design with memory tiles.\n"
+        string += "ERROR: Caches must be enabled for ASIC design with memory tiles.\n"
       if (self.noc.multicast_en.get() and self.noc.dma_noc_width.get() == 64 and self.noc.max_mcast_dests.get() > 5):
-        string += "64-bit DMA NoC supports up to 5 multicast destinations.\n"
+        string += "ERROR: 64-bit DMA NoC supports up to 5 multicast destinations.\n"
       if (self.noc.multicast_en.get() and self.noc.dma_noc_width.get() == 128 and self.noc.max_mcast_dests.get() > 14):
-        string += "128-bit DMA NoC supports up to 14 multicast destinations.\n"
+        string += "ERROR: 128-bit DMA NoC supports up to 14 multicast destinations.\n"
       if (self.noc.multicast_en.get() and self.noc.dma_noc_width.get() == 32):
-        string += "32-bit DMA NoC does not support multicast.\n"
+        string += "ERROR: 32-bit DMA NoC does not support multicast.\n"
 
     # Update message box
     self.message.insert(0.0, string)
