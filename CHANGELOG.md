@@ -7,6 +7,43 @@ Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Calendar Versioning](https://calver.org/) with format
 `YYYY.MINOR.MICRO`.
 
+## [2024.2.0]
+
+### Added
+
+- **Architecture**
+  - Multicast NoC for enhanced accelerator P2P communication
+  - Support for token-based DVFS mechanism over the NoC
+  - New NoC domain CSRs
+  - Implementation of BlitzCoin DVFS algorithm
+
+- **ASIC Design**
+  - Pad integration flow (#227)
+  - Clock-strategy selection from GUI (#227)
+  - Automatic generation of top level (#227)
+
+### Improved
+
+- **Architecture**
+  - Flexible P2P commmunication for mismatched burst lengths
+  - Add a CSR for resetting third-party accelerators
+  - Deprecate old DVFS mechansim and cleanup clock hierarchy
+
+- **Accelerator Design Flows**
+  - Stratus HLS: Add ability to synthesize accelerators for inferred tech
+
+- **Infrastructure**
+  - Bump modelsim support to 2023.2 DE
+  - Improve GUI messaging
+
+### Fixed
+
+- **ASIC Design**
+  - Fix multiport handling in memory integration flow (#227)
+
+- **Infrastructure**
+  - Various fixes for new proFPGA xcvu19p board
+
 ## [2024.1.0]
 
 ### Added

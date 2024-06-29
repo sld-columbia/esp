@@ -1,5 +1,3 @@
-// Copyright (c) 2011-2024 Columbia University, System Level Design Group
-
 /* PID_Ctrl module RTL adapted from OpenCores PID controller
 Link: https://opencores.org/projects/pid_controller
 Author: Zhu Xu
