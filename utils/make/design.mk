@@ -115,7 +115,7 @@ endif
 # Testbench
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(SIMTOP).vhd
 
-TOP_VLOG_RTL_SRCS +=
+#TOP_VLOG_RTL_SRCS += $(DESIGN_PATH)/$(CHIP_TOP).v
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 TOP_VLOG_SIM_SRCS += $(XILINX_VIVADO)/data/verilog/src/glbl.v
 endif

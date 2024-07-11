@@ -28,6 +28,19 @@ package tb_pkg is
       iolink_data_oen       : out std_ulogic);
   end component tb_cryoai;
 
+  component tb_cryoai_2 is
+    port (
+      reset                 : in  std_ulogic;
+      iolink_clk_in_int     : in  std_ulogic;
+      iolink_valid_in_int   : in  std_ulogic;
+      iolink_data_in_int    : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_clk_out_int    : in  std_ulogic;
+      iolink_credit_out_int : out std_ulogic;
+      iolink_valid_out_int  : out std_ulogic;
+      iolink_data_out_int   : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_data_oen       : out std_ulogic);
+  end component tb_cryoai_2;
+
   procedure snd_flit_iolink (
     signal clk   : in  std_ulogic;
     signal word  : in  std_logic_vector(ARCH_BITS - 1 downto 0);

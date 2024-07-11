@@ -13,7 +13,7 @@ use work.stdio.all;
 -- pragma translate_on
 use work.tb_pkg.all;
 
-entity tb_cryoai is
+entity tb_cryoai_2 is
   port (
     reset                 : in  std_ulogic;
     iolink_clk_in_int     : in  std_ulogic;
@@ -24,9 +24,9 @@ entity tb_cryoai is
     iolink_valid_out_int  : out std_ulogic;
     iolink_data_out_int   : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
     iolink_data_oen       : out std_ulogic);
-end entity tb_cryoai;
+end entity tb_cryoai_2;
 
-architecture rtl of tb_cryoai is
+architecture rtl of tb_cryoai_2 is
 
   signal valid_out      : std_ulogic;
   signal data_out       : std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
@@ -41,13 +41,11 @@ begin
   ---------------------------------------------------------------------------
   -- Cryo-AI test for ad03_cxx_catapult accelerator
   ---------------------------------------------------------------------------
-  test_cryoai : process
+  test_cryoai_2 : process
 
     file bootloader : text open read_mode is "../soft-build/ibex/prom.txt";
-    file program    : text open read_mode is "../soft-build/ibex/baremetal/ad03_cxx_catapult.txt";
-    file in_data    : text open read_mode is "../ad03_cxx_catapult_in.txt";
-    file out_data   : text open read_mode is "../ad03_cxx_catapult_out.txt";
-    file exp_data   : text open read_mode is "../ad03_cxx_catapult_exp.txt";
+    file program    : text open read_mode is "../soft-build/ibex/systest.txt";
+    file in_data    : text open read_mode is "../data.txt";
 
     variable text_word, text_data : line;
     variable word_var             : std_logic_vector(31 downto 0);
@@ -139,18 +137,31 @@ begin
     word <= X"00000001";
     snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
     -- send data
-    word <= X"00000000";
-    snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-
-    -- send address
-    word <= X"60090399";
-    snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-    -- send length
     word <= X"00000001";
     snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-    -- send data
-    word <= X"00000000";
+
+    -------------------------------------------------------------------------
+    -- Send inputs
+    -------------------------------------------------------------------------
+    -- send address
+    word <= X"80020bb1";
     snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+    -- send length
+    word <= X"00000064";
+    snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+    -- send data
+    for j in 0 to 99 loop
+      readline(in_data, text_word);
+      read(text_word, data, ok);
+      exp_word <= std_logic_vector(to_signed(data, 32));
+      wait for 1 ns;
+      word(31 downto 24) <= exp_word(7 downto 0);
+      word(23 downto 16) <= exp_word(15 downto 8);
+      word(15 downto 8) <= exp_word(23 downto 16);
+      word(7 downto 0) <= exp_word(31 downto 24);
+      wait for 1 ns;
+      snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+    end loop;  -- j
 
     ---------------------------------------------------------------------------
     -- Send last 2 soft resets
@@ -168,72 +179,12 @@ begin
       wait for 80000 ns;
     end loop;  -- i
 
-    ---------------------------------------------------------------------------
-    -- Accelerator execution
-    ---------------------------------------------------------------------------
-    for i in 0 to 1 loop
-      -------------------------------------------------------------------------
-      -- Send accelerator inputs
-      -------------------------------------------------------------------------
-      -- send address
-      word <= X"80020bb1";
-      snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-      -- send length
-      word <= X"00000020";
-      snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-      -- send data
-      for j in 0 to 31 loop
-        readline(in_data, text_word);
-        read(text_word, data, ok);
-        word(31 downto 24) <= std_logic_vector(to_signed(data, 8));
-        readline(in_data, text_word);
-        read(text_word, data, ok);
-        word(23 downto 16) <= std_logic_vector(to_signed(data, 8));
-        readline(in_data, text_word);
-        read(text_word, data, ok);
-        word(15 downto 8)  <= std_logic_vector(to_signed(data, 8));
-        readline(in_data, text_word);
-        read(text_word, data, ok);
-        word(7 downto 0)   <= std_logic_vector(to_signed(data, 8));
-
-        snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-      end loop;  -- j
-
-      -------------------------------------------------------------------------
-      -- Send accelerator expected outputs
-      -------------------------------------------------------------------------
-      -- send address
-      word <= X"80020b21";
-      snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-      -- send length
-      word <= X"00000020";
-      snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-      -- send data
-      for j in 0 to 31 loop
-        readline(out_data, text_word);
-        read(text_word, data, ok);
-        word(31 downto 24) <= std_logic_vector(to_signed(data, 8));
-        readline(out_data, text_word);
-        read(text_word, data, ok);
-        word(23 downto 16) <= std_logic_vector(to_signed(data, 8));
-        readline(out_data, text_word);
-        read(text_word, data, ok);
-        word(15 downto 8)  <= std_logic_vector(to_signed(data, 8));
-        readline(out_data, text_word);
-        read(text_word, data, ok);
-        word(7 downto 0)   <= std_logic_vector(to_signed(data, 8));
-
-        snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-      end loop;  -- j
-
-      wait for 100 ns;
-      
       -------------------------------------------------------------------------
       -- Wait for reset of output data handshake
       -------------------------------------------------------------------------
       while true loop
         -- send address
-        word <= X"60090398";
+        word <= X"60090380";
         snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
         -- send length
         word <= X"00000001";
@@ -272,136 +223,56 @@ begin
       end loop;
 
       wait for 100 ns;
-      
-      -------------------------------------------------------------------------
-      -- Set input data handshake
-      -------------------------------------------------------------------------
-      -- send address
-      word <= X"60090381";
-      snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-      -- send length
-      word <= X"00000001";
-      snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-      -- send data
-      word <= X"00000001";
-      snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-
-      wait for 100 ns;
-      
-      -------------------------------------------------------------------------
-      -- Wait for output data handshake
-      -------------------------------------------------------------------------
-      while true loop
-        -- send addressess
-        word <= X"60090398";
-        snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-        -- send length
-        word <= X"00000001";
-        snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-
-        iolink_data_oen <= '0';
-        while true loop
-          wait until rising_edge(iolink_clk_in_int);
-          if iolink_valid_in_int = '1' then
-            word(15 downto 0) <= iolink_data_in_int;
-            exit;
-          end if;
-        end loop;
-        while true loop
-          wait until rising_edge(iolink_clk_in_int);
-          if iolink_valid_in_int = '1' then
-            exit;
-          end if;
-        end loop;
-
-        wait until rising_edge(iolink_clk_out_int);
-        iolink_credit_out_int <= '1';
-        wait until rising_edge(iolink_clk_out_int);
-        iolink_credit_out_int <= '0';
-
-        iolink_data_oen <= '1';
-
-        if word(15 downto 0) = X"0001" then
-          exit;
-        end if;
-
-        for j in 0 to 31 loop
-          wait until rising_edge(iolink_clk_in_int);
-        end loop;
-      end loop;
-
-      wait for 100 ns;
 
       -------------------------------------------------------------------------
       -- Read output data
       -------------------------------------------------------------------------
       -- send address
-      word <= X"80020c30";
+      word <= X"80020000";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       -- send length
-      word <= X"00000020";
+      word <= X"00000001";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
 
       iolink_data_oen <= '0';
 
-      credit_to_clear := false;
-      credit_to_set   := true;
-
-      -- send data
-      for j in 0 to 31 loop
-        readline(exp_data, text_word);
-        read(text_word, data, ok);
-        exp_word(31 downto 24) <= std_logic_vector(to_signed(data, 8));
-        readline(exp_data, text_word);
-        read(text_word, data, ok);
-        exp_word(23 downto 16) <= std_logic_vector(to_signed(data, 8));
-        readline(exp_data, text_word);
-        read(text_word, data, ok);
-        exp_word(15 downto 8)  <= std_logic_vector(to_signed(data, 8));
-        readline(exp_data, text_word);
-        read(text_word, data, ok);
-        exp_word(7 downto 0)   <= std_logic_vector(to_signed(data, 8));
-
-        while true loop
-          wait until rising_edge(iolink_clk_in_int);
-          if credit_to_clear = true then
-            iolink_credit_out_int <= '0';
-          end if;
-          if j /= 0 and credit_to_set = true then
-            iolink_credit_out_int <= '1';
-            credit_to_clear       := true;
-            credit_to_set         := false;
-          end if;
-          if iolink_valid_in_int = '1' then
-            word(15 downto 0) <= iolink_data_in_int;
-            exit;
-          end if;
-        end loop;
-        while true loop
-          wait until rising_edge(iolink_clk_in_int);
-          if iolink_valid_in_int = '1' then
-            word(31 downto 16) <= iolink_data_in_int;
-            credit_to_set      := true;
-            exit;
-          end if;
-        end loop;
-
-        wait for 0.2 ns;
-
-        if word /= exp_word then
-          tmp := to_integer(unsigned(word));
-          report "Wrong output word: " & integer'image(tmp);
-          tmp := to_integer(unsigned(exp_word));
-          report "Wrong output exp_word: " & integer'image(tmp);
+      while true loop
+        wait until rising_edge(iolink_clk_in_int);
+        if iolink_valid_in_int = '1' then
+          word(15 downto 0) <= iolink_data_in_int;
+          exit;
         end if;
-        if word = exp_word then
-            report "correct word for index " & integer'image(j);
+      end loop;
+      while true loop
+        wait until rising_edge(iolink_clk_in_int);
+        if iolink_valid_in_int = '1' then
+          word(31 downto 16) <= iolink_data_in_int;
+          exit;
         end if;
-      end loop;  -- j
+      end loop;
+
+      exp_word <= X"BA130000";
 
       wait until rising_edge(iolink_clk_out_int);
       iolink_credit_out_int <= '1';
       wait until rising_edge(iolink_clk_out_int);
+      iolink_credit_out_int <= '0';
+      iolink_data_oen       <= '1';
+
+      wait for 0.2 ns;
+      if word /= exp_word then
+        tmp := to_integer(unsigned(word));
+        report "Wrong output word: " & integer'image(tmp);
+        tmp := to_integer(unsigned(exp_word));
+        report "Wrong output exp_word: " & integer'image(tmp);
+      end if;
+
+      if word = exp_word then
+        report "PASS";
+      end if;
+
+      wait until rising_edge(iolink_clk_out_int);
+
       iolink_credit_out_int <= '0';
       iolink_data_oen       <= '1';
 
@@ -417,8 +288,6 @@ begin
       -- send data
       word <= X"00000000";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-
-    end loop;  -- i
 
     while true loop
       wait until rising_edge(iolink_valid_in_int);

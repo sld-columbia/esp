@@ -108,10 +108,10 @@ $(SOFT_BUILD)/systest.exe: systest.c $(SOFT_BUILD)/uart.o
 	$(SOFT_BUILD)/uart.o -lm -lgcc $<
 
 $(SOFT_BUILD)/systest.bin: $(TEST_PROGRAM)
-	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O binary $< $@
+	$(QUIET_OBJCP) riscv32-unknown-elf-objcopy -O binary $< $@
 
 $(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
-	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O srec --gap-fill 0 $< $@
+	$(QUIET_OBJCP) riscv32-unknown-elf-objcopy -O srec --gap-fill 0 $< $@
 
 
 sysroot:
