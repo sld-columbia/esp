@@ -1037,11 +1037,13 @@ package tile is
       ROUTER_PORTS      : ports_vec            := "11111";
       HAS_SYNC          : integer range 0 to 1 := 1);
     port (
-      raw_rstn           : in  std_ulogic;
-      noc_rstn           : in  std_ulogic;
+      rst                : in  std_ulogic;
+      noc_clk_lock       : in  std_ulogic;
       tile_rstn          : in  std_ulogic;
       noc_clk            : in  std_ulogic;
       tile_clk           : in  std_ulogic;
+      noc_rstn           : out std_ulogic;
+      raw_rstn           : out std_ulogic;
       acc_clk            : out std_ulogic;
       -- CSRs
       tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
@@ -1053,7 +1055,7 @@ package tile is
       dco_clk_sel        : out  std_ulogic;
       dco_en             : out  std_ulogic;
       dco_clk_delay_sel  : out std_logic_vector(11 downto 0);
-	  acc_activity		 : in std_ulogic;
+      acc_activity	 : in std_ulogic;
       -- pad config
       pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NoC

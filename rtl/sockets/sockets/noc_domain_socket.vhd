@@ -44,11 +44,13 @@ entity noc_domain_socket is
     is_asic           : boolean              := false
 	);
   port (
-    raw_rstn           : in  std_ulogic;
-    noc_rstn           : in  std_ulogic;
+    rst                : in  std_ulogic;
+    noc_clk_lock       : in  std_ulogic;
     tile_rstn          : in  std_ulogic;
     noc_clk            : in  std_ulogic;  -- NoC clock
     tile_clk           : in  std_ulogic;
+    noc_rstn           : out std_ulogic;
+    raw_rstn           : out std_ulogic;
     acc_clk            : out std_ulogic;
     -- CSRs
     tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
@@ -221,7 +223,11 @@ architecture rtl of noc_domain_socket is
   signal apb_snd_wrreq : std_ulogic;
   signal apb_rcv_rdreq : std_ulogic;
 
-  -- Noc signals
+  -- NoC reset
+  signal noc_rstn_s : std_ulogic;
+  signal raw_rstn_s : std_ulogic;
+
+  -- NoC signals
   signal noc1_stop_in_s              : std_logic_vector(4 downto 0);
   signal noc1_stop_out_s             : std_logic_vector(4 downto 0);
   signal noc1_stop_in_noc            : std_ulogic;
@@ -394,6 +400,16 @@ architecture rtl of noc_domain_socket is
 begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
+  -- NOC RESET
+  -----------------------------------------------------------------------------
+  rst_noc : rstgen
+    generic map (acthigh => 1, syncin => 0)
+    port map (rst, noc_clk, noc_clk_lock, noc_rstn_s, raw_rstn_s);
+
+  noc_rstn <= noc_rstn_s;
+  raw_rstn <= raw_rstn_s;
+
+  -----------------------------------------------------------------------------
   -- NOC Connections
   ----------------------------------------------------------------------------
   noc1_stop_in_s         <= noc1_stop_in_noc & noc1_stop_in;
@@ -484,7 +500,7 @@ begin  -- architecture rtl
   noc_tile_sync_gen : if HAS_SYNC = 1 generate
     noc5_tile_synchronizers : noc32_synchronizers
       port map (
-        noc_rstn  => noc_rstn,  -- noc_rstn for asic, rst for fpga
+        noc_rstn  => noc_rstn_s,  -- noc_rstn for asic, rst for fpga
         tile_rstn => tile_rstn,  -- same
         noc_clk   => noc_clk,   -- noc_clk for asic, noc_clk_int for fpga
         tile_clk  => tile_clk,   -- tile_clk for asic, acc_clk for fpga
@@ -516,7 +532,7 @@ begin  -- architecture rtl
     port map (
       clk                => noc_clk,    -- noc_clk_int
       clk_tile           => tile_clk,    -- acc_clk
-      rst                => noc_rstn,   -- rst
+      rst                => noc_rstn_s,   -- rst
       rst_tile           => tile_rstn,   -- tile_rstn
       CONST_local_x      => this_local_x,
       CONST_local_y      => this_local_y,
@@ -618,7 +634,7 @@ begin  -- architecture rtl
         SIMULATION => SIMULATION,
         is_asic    => true)
       port map (
-        noc_rstn           => noc_rstn,
+        noc_rstn           => noc_rstn_s,
         tile_rstn          => tile_rstn,
         noc_clk            => noc_clk,
         tile_clk           => tile_clk,
@@ -649,7 +665,7 @@ begin  -- architecture rtl
 
   noc5_mux_i : noc5_mux
     port map (
-      rstn                    => noc_rstn,
+      rstn                    => noc_rstn_s,
       clk                     => noc_clk,
       noc5_input_port         => noc5_input_port,
       noc5_data_void_in       => noc5_data_void_in_noc,
@@ -710,7 +726,7 @@ begin  -- architecture rtl
   dco_fc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
   dco_cc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
   dco_clk_sel  <= tile_config_int(ESP_CSR_DCO_CFG_LSB + 1);
-  dco_en       <= raw_rstn and tile_config_int(ESP_CSR_DCO_CFG_LSB);
+  dco_en       <= raw_rstn_s and tile_config_int(ESP_CSR_DCO_CFG_LSB);
 
   -- Using only one apbo signal
   no_apb : for i in 0 to NAPBSLV - 1 generate
@@ -738,7 +754,7 @@ begin  -- architecture rtl
       has_ddr => has_ddr)
     port map(
       clk         => noc_clk,           -- noc_clk_int
-      rstn        => noc_rstn,          -- rst
+      rstn        => noc_rstn_s,        -- rst
       pconfig     => this_csr_pconfig,
       tile_config => tile_config_int,
       pm_config   => pm_config,
@@ -752,7 +768,7 @@ begin  -- architecture rtl
       tech         => CFG_FABTECH,
       local_apb_en => this_local_apb_en)
     port map (
-      rst              => noc_rstn,     -- rst
+      rst              => noc_rstn_s,   -- rst
       clk              => noc_clk,      -- noc_clk_int
       local_y          => this_local_y,
       local_x          => this_local_x,
