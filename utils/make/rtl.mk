@@ -108,8 +108,12 @@ techmap_flist:
 
 
 check_all_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
-	@echo $(ALL_SIM_SRCS) > $@.new; \
-	if test -f $(RTL_CFG_BUILD)/$@.old; then \
+	@echo $(SIM_VHDL_PKGS) > $@.new;
+	@echo $(SIM_VHDL_SRCS) >> $@.new;
+	@echo $(SIM_VLOG_SRCS) >> $@.new;
+	@echo $(IP_XCI_SRCS) >> $@.new;
+	@echo $(DAT_SRCS) >> $@.new;
+	@if test -f $(RTL_CFG_BUILD)/$@.old; then \
 		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \
 		if [ $$? -eq 0 ]; then \
 			rm $@.new; \
@@ -130,8 +134,12 @@ check_all_srcs-distclean:
 .PHONY: check_all_srcs check_all_srcs-distclean
 
 check_all_rtl_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
-	@echo $(ALL_RTL_SRCS) > $@.new; \
-	if test -f $@.old; then \
+	@echo $(VHDL_PKGS) > $@.new;
+	@echo $(VHDL_SRCS) >> $@.new;
+	@echo $(VLOG_SRCS) >> $@.new;
+	@echo $(IP_XCI_SRCS) >> $@.new;
+	@echo $(DAT_SRCS) >> $@.new;
+	@if test -f $@.old; then \
 		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \
 		if [ $$? -eq 0 ]; then \
 			rm $@.new; \
