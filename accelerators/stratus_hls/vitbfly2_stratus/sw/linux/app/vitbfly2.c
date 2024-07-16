@@ -4,7 +4,7 @@
 
 int main(int argc, char **argv)
 {
-	decode_wrapper();
+    decode_wrapper();
 
-	return 0;
+    return 0;
 }

@@ -17,25 +17,22 @@ int32_t rows = ROWS;
 #define NACC 1
 
 struct cholesky_stratus_access cholesky_cfg_000[] = {
-         /* <<--descriptor-->> */
+    /* <<--descriptor-->> */
     {
-        .rows = ROWS,
-		.src_offset = 0,
-		.dst_offset = 0,
-		.esp.coherence = ACC_COH_FULL,
-		.esp.p2p_store = 0,
-		.esp.p2p_nsrcs = 0,
-		.esp.p2p_srcs = {"", "", "", ""},
-    }
-};
+        .rows          = ROWS,
+        .src_offset    = 0,
+        .dst_offset    = 0,
+        .esp.coherence = ACC_COH_FULL,
+        .esp.p2p_store = 0,
+        .esp.p2p_nsrcs = 0,
+        .esp.p2p_srcs  = {"", "", "", ""},
+    }};
 
-esp_thread_info_t cfg_000[] = {
-	{
-        .run = true,
-        .devname = "cholesky_stratus.0",
-        .ioctl_req = CHOLESKY_STRATUS_IOC_ACCESS,
-        .esp_desc = &(cholesky_cfg_000[0].esp),
-    }
-};
+esp_thread_info_t cfg_000[] = {{
+    .run       = true,
+    .devname   = "cholesky_stratus.0",
+    .ioctl_req = CHOLESKY_STRATUS_IOC_ACCESS,
+    .esp_desc  = &(cholesky_cfg_000[0].esp),
+}};
 
 #endif /* __ESP_CFG_000_H__ */

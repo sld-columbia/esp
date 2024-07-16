@@ -1,0 +1,35 @@
+---
+BasedOnStyle: LLVM
+TabWidth: 4
+IndentWidth: 4
+UseTab: Never
+ColumnLimit: 120
+
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: Consecutive
+AlignEscapedNewlines: Left
+AlignTrailingComments: true
+
+DerivePointerAlignment: false
+PointerAlignment: Right
+
+SpaceBeforeParens: ControlStatements
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: false
+
+IndentCaseBlocks: true
+IndentCaseLabels: true
+IndentGotoLabels: false
+IndentPPDirectives: BeforeHash
+IndentWrappedFunctionNames: true
+
+SortIncludes: false
+
+BreakBeforeBraces: Linux
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeColon
+
+AllowShortFunctionsOnASingleLine: None
+...
