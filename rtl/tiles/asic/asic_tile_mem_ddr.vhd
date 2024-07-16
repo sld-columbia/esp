@@ -58,8 +58,6 @@ entity asic_tile_mem_ddr is
     tdo                : out std_logic;
     tms                : in  std_logic;
     tclk               : in  std_logic;
-    -- Tile config
-    tile_config        : in std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
     -- DCO config
     dco_en            : in std_ulogic;
     dco_clk_sel       : in std_ulogic;
@@ -154,11 +152,13 @@ architecture rtl of asic_tile_mem_ddr is
       phy_rstn        : in  std_logic);
   end component ahb2bsg_dmc;
 
-  signal ddr_cfg0 : std_logic_vector(31 downto 0);
-  signal ddr_cfg1 : std_logic_vector(31 downto 0);
-  signal ddr_cfg1 : std_logic_vector(31 downto 0);
+  signal ddr_cfg0_s : std_logic_vector(31 downto 0);
+  signal ddr_cfg1_s : std_logic_vector(31 downto 0);
+  signal ddr_cfg1_s : std_logic_vector(31 downto 0);
 
-  signal mem_id : integer range 0 to CFG_NDDR_TILE - 1;
+  signal tile_id_s : std_logic_vector(CFG_TILES_NUM - 1 downto 0);
+  signal tile_id   : integer range 0 to CFG_TILES_NUM - 1;
+  signal mem_id    : integer range 0 to CFG_NDDR_TILE - 1;
 
   -- Tile clock and reset (only for I/O tile)
   signal tile_rstn_s  : std_ulogic;
@@ -254,6 +254,9 @@ begin
       lpddr_dq_oen    => lpddr_o.lpddr_dq_oen,
       lpddr_dq_o      => lpddr_o.lpddr_dq_o,
       lpddr_dq_i      => lpddr_i.lpddr_dq_i,
+      ddr_cfg0        => ddr_cfg0_s,
+      ddr_cfg1        => ddr_cfg1_s,
+      ddr_cfg2        => ddr_cfg2_s, 
       ahbso           => ahbso,
       ahbsi           => ahbsi,
       calib_done      => calib_done,
@@ -422,14 +425,8 @@ begin
       mon_cache           => open,
       mon_dvfs            => open);
 
-
-  -- DDR Controller configuration
-  ddr_cfg0 <= tile_config(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
-  ddr_cfg1 <= tile_config(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
-  ddr_cfg2 <= tile_config(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
-
   -- IDs
-  tile_id <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+  tile_id <= to_integer(unsigned(tile_id_s));
   mem_id  <= tile_mem_id(tile_id);
 
 end;

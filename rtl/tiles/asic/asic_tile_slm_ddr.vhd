@@ -22,7 +22,7 @@ library unisim;
 use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
-use work.esp_noc_csr_pkg.all;
+use work.esp_csr_pkg.all;
 use work.jtag_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
@@ -80,8 +80,6 @@ entity asic_tile_slm_ddr is
     tdo                : out std_logic;
     tms                : in  std_logic;
     tclk               : in  std_logic;
-    -- Tile config
-    tile_config        : in std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
     -- DCO config
     dco_en            : in std_ulogic;
     dco_clk_sel       : in std_ulogic;
@@ -176,14 +174,15 @@ architecture rtl of asic_tile_slm_ddr is
       phy_rstn        : in  std_logic);
   end component ahb2bsg_dmc;
 
-  signal ddr_cfg0 : std_logic_vector(31 downto 0);
-  signal ddr_cfg1 : std_logic_vector(31 downto 0);
-  signal ddr_cfg2 : std_logic_vector(31 downto 0);
+  signal ddr_cfg0_s : std_logic_vector(31 downto 0);
+  signal ddr_cfg1_s : std_logic_vector(31 downto 0);
+  signal ddr_cfg2_s : std_logic_vector(31 downto 0);
 
   signal ddr_ahbsi : ahb_slv_in_type;
   signal ddr_ahbso : ahb_slv_out_type;
 
   signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
+  signal tile_id_s : std_logic_vector(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
   signal this_slmddr_id : integer range 0 to SLMDDR_ID_RANGE_MSB;
   signal this_slmddr_haddr  : integer range 0 to 4095;
   signal this_slmddr_hmask  : integer range 0 to 4095;
@@ -259,6 +258,9 @@ begin
   this_slmddr_haddr <= slmddr_haddr(this_slmddr_id);
   this_slmddr_hmask <= slmddr_hmask(this_slmddr_id);
 
+  tile_id        <= to_integer(unsigned(tile_id_s));
+  this_slmddr_id <= tile_slmddr_id(tile_id);
+
   -- DDR controller
   ahb2bsg_dmc_1 : ahb2bsg_dmc
     port map (
@@ -289,9 +291,9 @@ begin
       lpddr_dq_oen    => lpddr_o_dq_oen,
       lpddr_dq_o      => lpddr_o_dq_o,
       lpddr_dq_i      => lpddr_i_dq_i,
-      ddr_cfg0        => ddr_cfg0,
-      ddr_cfg1        => ddr_cfg1,
-      ddr_cfg2        => ddr_cfg2,
+      ddr_cfg0        => ddr_cfg0_s,
+      ddr_cfg1        => ddr_cfg1_s,
+      ddr_cfg2        => ddr_cfg2_s,
       ahbso           => ddr_ahbso,
       ahbsi           => ddr_ahbsi,
       calib_done      => lpddr_o_calib_done,
@@ -400,6 +402,7 @@ begin
       clk_div             => clk_div,   -- test clock output to PCB
       tile_clk_out        => tile_clk_s,   -- DDR PHY 2x clock
       tile_rstn_out       => tile_rstn_s,
+      tile_id_out         => tile_id_s,
       dco_clk_div2        => dco_clk_div2,         -- DDR PHY 1x clock
       dco_clk_div2_90     => dco_clk_div2_90,      -- user clock
       dco_freq_sel        => dco_freq_sel,
@@ -412,6 +415,9 @@ begin
       phy_rstn            => phy_rstn,
       ddr_ahbsi           => ddr_ahbsi,
       ddr_ahbso           => ddr_ahbso,
+      ddr_cfg0            => ddr_cfg0_s,
+      ddr_cfg1            => ddr_cfg1_s,
+      ddr_cfg2            => ddr_cfg2_s,
       test1_output_port   => test1_output_port_s,
       test1_data_void_out => test1_data_void_out_s,
       test1_stop_in       => test1_stop_out_s,
@@ -451,14 +457,5 @@ begin
       mon_noc             => mon_noc,
       mon_mem             => open,
       mon_dvfs            => open);
-
-
-  -- DDR Controller configuration
-  ddr_cfg0 <= tile_config(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
-  ddr_cfg1 <= tile_config(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
-  ddr_cfg2 <= tile_config(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
-
-  tile_id        <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_NOC_MSB downto ESP_CSR_TILE_ID_NOC_LSB)));
-  this_slmddr_id <= tile_slmddr_id(tile_id);
 
 end;

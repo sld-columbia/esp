@@ -24,7 +24,7 @@ library unisim;
 use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
-use work.esp_noc_csr_pkg.all;
+use work.esp_csr_pkg.all;
 use work.jtag_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
@@ -54,8 +54,6 @@ entity asic_tile_io is
     clk_div_noc        : out   std_ulogic;
     ext_clk            : in    std_ulogic;  -- backup tile clock
     clk_div            : out   std_ulogic;  -- tile clock monitor for testing purposes
-    -- Tile config
-    tile_config        : in std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
     -- Ethernet
     reset_o2           : out   std_ulogic;
     etx_clk            : in    std_ulogic;
@@ -150,16 +148,9 @@ architecture rtl of asic_tile_io is
   signal tile_rstn_s   : std_ulogic;
   signal tile_clk_s    : std_ulogic;
 
-  -- NoC DCO config
-  signal dco_noc_en       : std_ulogic;
-  signal dco_noc_clk_sel  : std_ulogic;
-  signal dco_noc_cc_sel   : std_logic_vector(5 downto 0);
-  signal dco_noc_fc_sel   : std_logic_vector(5 downto 0);
-  signal dco_noc_div_sel  : std_logic_vector(2 downto 0);
-  signal dco_noc_freq_sel : std_logic_vector(1 downto 0);
-  
   -- Ethernet and Debug link
   signal mdcscaler : integer range 0 to 2047;
+  signal mdcscaler_int : std_logic_vector(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
   signal mdcscaler_reg : integer range 0 to 2047;
   signal mdcscaler_not_changed : std_ulogic;
   signal eth_rstn : std_ulogic;
@@ -353,7 +344,7 @@ begin
   end process eth_rstn_gen;
 
     -- MDC scaler configuration
-  mdcscaler              <= conv_integer(tile_config(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB));
+  mdcscaler              <= conv_integer(mdcscaler_int);
   mdcscaler_not_changed <= '1' when mdcscaler_reg = mdcscaler else '0';
   eth_rstn <= tile_rstn_s and mdcscaler_not_changed;
 
@@ -476,13 +467,6 @@ begin
       dco_cc_sel         => dco_cc_sel,
       dco_clk_sel        => dco_clk_sel,
       dco_en             => dco_en,
-      -- NoC DCO config
-      dco_noc_freq_sel   => dco_noc_freq_sel,
-      dco_noc_div_sel    => dco_noc_div_sel,
-      dco_noc_fc_sel     => dco_noc_fc_sel,
-      dco_noc_cc_sel     => dco_noc_cc_sel,
-      dco_noc_clk_sel    => dco_noc_clk_sel,
-      dco_noc_en         => dco_noc_en,
       -- Ethernet
       eth0_apbi          => eth0_apbi,
       eth0_apbo          => eth0_apbo,
@@ -491,6 +475,7 @@ begin
       eth0_ahbmi         => eth0_ahbmi,
       eth0_ahbmo         => eth0_ahbmo,
       edcl_ahbmo         => edcl_ahbmo,
+      mdcscaler          => mdcscaler_int,
       -- DVI
       dvi_apbi           => dvi_apbi,
       dvi_apbo           => dvi_apbo,
@@ -553,12 +538,4 @@ begin
       mon_noc             => mon_noc,
       mon_dvfs            => open);
 
-
-  dco_noc_freq_sel <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 0  downto ESP_CSR_DCO_NOC_CFG_MSB - 0  - 1);
-  dco_noc_div_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 2  downto ESP_CSR_DCO_NOC_CFG_MSB - 2  - 2);
-  dco_noc_fc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 5  downto ESP_CSR_DCO_NOC_CFG_MSB - 5  - 5);
-  dco_noc_cc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 11 downto ESP_CSR_DCO_NOC_CFG_MSB - 11 - 5);
-  dco_noc_clk_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_LSB + 1);
-  dco_noc_en       <= raw_rstn and tile_config(ESP_CSR_DCO_NOC_CFG_LSB);
-  
 end;

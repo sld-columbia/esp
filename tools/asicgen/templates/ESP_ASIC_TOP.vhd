@@ -193,9 +193,6 @@ architecture rtl of ESP_ASIC_TOP is
   signal tile_clk      : std_logic_vector(CFG_TILES_NUM-1 downto 0); 
   signal tile_rstn     : std_logic_vector(CFG_TILES_NUM-1 downto 0); 
  
-  type tile_config_vector is array (CFG_TILES_NUM-1 downto 0) of std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
-  signal tile_config : tile_config_vector;
-
   -- I/O for PADS
   constant pad_fixed_cfg : std_logic_vector(19 - (ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB + 1) downto 0) := (others => '0');
   type pad_cfg_full_array is array (0 to CFG_TILES_NUM - 1) of std_logic_vector(19 downto 0);
@@ -516,8 +513,6 @@ begin
         noc_rstn                => noc_rstn(i),
         raw_rstn                => raw_rstn(i),
         acc_clk                 => open,
-        -- CSRs
-        tile_config             => tile_config(i),
         -- DCO config
         dco_freq_sel            => dco_freq_sel(i),
         dco_div_sel             => dco_div_sel(i),
@@ -914,8 +909,6 @@ begin
           tdo                     => tdo_int(i),
           tms                     => tms_int,
           tclk                    => tclk_int,
-          -- Tile config
-          tile_config             => tile_config(i),
           -- DCO config
           dco_freq_sel            => dco_freq_sel(i),
           dco_div_sel             => dco_div_sel(i),

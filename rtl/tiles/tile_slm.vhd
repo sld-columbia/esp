@@ -44,6 +44,7 @@ entity tile_slm is
     ext_clk            : in  std_ulogic;
     clk_div            : out std_ulogic;
     tile_clk_out       : out std_ulogic;
+    tile_id_out        : out std_logic_vector(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
     -- DCO config
     dco_freq_sel       : in std_logic_vector(1 downto 0);
     dco_div_sel        : in std_logic_vector(2 downto 0);
@@ -55,7 +56,10 @@ entity tile_slm is
     -- DDR controller ports (this_has_ddr -> 1)
     dco_clk_div2       : out std_ulogic;
     dco_clk_div2_90    : out std_ulogic;
-    tile_rstn_out          : out std_ulogic;
+    tile_rstn_out      : out std_ulogic;
+    ddr_cfg0           : out std_logic_vector(31 downto 0);
+    ddr_cfg1           : out std_logic_vector(31 downto 0);
+    ddr_cfg2           : out std_logic_vector(31 downto 0);
     phy_rstn           : out std_ulogic;
     ddr_ahbsi          : out ahb_slv_in_type;
     ddr_ahbso          : in  ahb_slv_out_type;
@@ -320,6 +324,7 @@ begin
   -- Tile parameters
   -----------------------------------------------------------------------------
   tile_id           <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+  tile_id_out       <= tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
 
   this_slm_id       <= tile_slm_id(tile_id);
   this_slm_hindex   <= slm_hindex(this_slm_id);
@@ -393,6 +398,10 @@ begin
     ahbso(0)  <= ddr_ahbso;
   end generate offchip_gen;
 
+  -- DDR Controller configuration
+  ddr_cfg0 <= tile_config(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
+  ddr_cfg1 <= tile_config(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
+  ddr_cfg2 <= tile_config(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
 
   -----------------------------------------------------------------------------
   -- Services

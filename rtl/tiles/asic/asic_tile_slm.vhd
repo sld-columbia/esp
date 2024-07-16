@@ -265,6 +265,7 @@ begin
       ext_clk             => ext_clk,
       clk_div             => clk_div,
       tile_clk_out        => tile_clk_s,
+      tile_id_out         => open,
       dco_clk_div2        => open,
       dco_clk_div2_90     => open,
       tile_rstn_out       => tile_rstn_s,

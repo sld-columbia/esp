@@ -1046,7 +1046,7 @@ package tile is
       raw_rstn           : out std_ulogic;
       acc_clk            : out std_ulogic;
       -- CSRs
-      tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
+--      tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
       -- DCO config
       dco_freq_sel       : out  std_logic_vector(1 downto 0);
       dco_div_sel        : out  std_logic_vector(2 downto 0);

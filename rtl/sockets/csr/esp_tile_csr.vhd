@@ -104,8 +104,41 @@ architecture rtl of esp_tile_csr is
 
   constant DEFAULT_ACC_COH : std_logic_vector(1 downto 0) := (others => '0');
 
+  -- Maico modification start
+
+  constant DEFAULT_DCO_NOC_CFG : std_logic_vector(18 downto 0) := 
+    "11" & "100" & "000000" & "100101" & "0" & "1";
+  -- FREQ_SEL    DIV_SEL    FC_SEL    CC_SEL    CLK_SEL   EN
+
+  constant DEFAULT_MDC_SCALER_CFG : std_logic_vector(10 downto 0) := conv_std_logic_vector(490, 11);
+  -- Assume default I/O tile DCO frequency is 490MHz
+
+  -- DDR_CFG0
+  constant DEFAULT_DDR_CFG0 : std_logic_vector(31 downto 0) :=
+    X"2" & X"A" & X"F" & X"1" & X"3FF" & X"4";
+  -- | 31-28 | 27-24 | 23-20 | 19-16 |  15-4  |    3-0    |
+  -- |  trp  |  trc  |  trfc |  tmrd |  trefi | delay_sel |
+
+  -- DDR_CFG1
+  constant DEFAULT_DDR_CFG1 : std_logic_vector(31 downto 0) :=
+    X"B" & X"3" & X"A" & X"7" & X"A" & X"2" & X"1" & X"7";
+  -- |   31-28   | 27-24 | 23-20 | 19-16 | 15-12 | 11-8 |  7-4 |  3-0 |
+  -- | col_width | tcas  | trtp  | twtr  |  twr  | trcd | trrd | tras |
+
+  -- DDR_CFG2
+  constant DEFAULT_DDR_CFG2 : std_logic_vector(31 downto 0) :=
+    '0' & X"9C4A" & "011" & "011001" & "10" & X"E";
+  -- | 31 |     30-15   |    14-12    |   11-6   |     5-4    |    3-0    |
+  -- | /  | init_cycles | dqs_sel_cal | bank_pos | bank_width | row_width |
+
+
+  --- constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
+  ---   DEFAULT_ACC_COH & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID & DEFAULT_TILE_ID & "0";
   constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
+    DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_MDC_SCALER_CFG & DEFAULT_DCO_NOC_CFG &
     DEFAULT_ACC_COH & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID & DEFAULT_TILE_ID & "0";
+
+  -- Maico modification end
 
   signal csr_addr : integer range 0 to 31;
 
@@ -138,16 +171,37 @@ architecture rtl of esp_tile_csr is
       -- Config read access
       case csr_addr is
         when ESP_CSR_VALID_ADDR =>
-          readdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0) <= config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB);
+          readdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0) <= 
+            config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB);
         when ESP_CSR_TILE_ID_ADDR =>
-          readdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0) <= config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
+          readdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0) <= 
+            config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
         when ESP_CSR_ARIANE_HARTID_ADDR =>
-          readdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0) <= config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB);
+          readdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0) <= 
+            config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB);
         when ESP_CSR_CPU_LOC_OVR_ADDR =>
-          readdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0) <= config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB);
+          readdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0) <= 
+            config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB);
         when ESP_CSR_ACC_COH_ADDR =>
-          readdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0) <= config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB);
-
+          readdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0) <= 
+            config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB);
+        -- Maico modification start
+        when ESP_CSR_DCO_NOC_CFG_ADDR =>
+          readdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0) <= 
+            config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB);
+        when ESP_CSR_MDC_SCALER_CFG_ADDR =>
+          readdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0) <= 
+            config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB);
+        when ESP_CSR_DDR_CFG0_ADDR =>
+          readdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0) <=
+            config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
+        when ESP_CSR_DDR_CFG1_ADDR =>
+          readdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0) <=
+            config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
+        when ESP_CSR_DDR_CFG2_ADDR =>
+          readdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0) <=
+            config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
+        -- Maico modification end
         when others =>
           readdata <= (others => '0');
       end case;
@@ -191,15 +245,37 @@ architecture rtl of esp_tile_csr is
       if apbi.paddr(8 downto 7) = "11" and (apbi.psel(pindex) and apbi.penable and apbi.pwrite) = '1' then
         case csr_addr is
           when ESP_CSR_VALID_ADDR =>
-            config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB) <= apbi.pwdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0);
+            config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB) <= 
+              apbi.pwdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0);
           when ESP_CSR_TILE_ID_ADDR =>
-            config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= apbi.pwdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
+            config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= 
+              apbi.pwdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
           when ESP_CSR_ARIANE_HARTID_ADDR =>
-            config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB) <= apbi.pwdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0);
+            config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB) <= 
+              apbi.pwdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0);
           when ESP_CSR_CPU_LOC_OVR_ADDR =>
-            config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB) <= apbi.pwdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0);
+            config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB) <= 
+              apbi.pwdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0);
           when ESP_CSR_ACC_COH_ADDR =>
-            config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB) <= apbi.pwdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0);
+            config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB) <= 
+              apbi.pwdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0);
+          -- Maico modification start
+          when ESP_CSR_DCO_NOC_CFG_ADDR =>
+            config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB) <=
+              apbi.pwdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0);
+          when ESP_CSR_MDC_SCALER_CFG_ADDR =>
+            config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB) <=
+              apbi.pwdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
+          when ESP_CSR_DDR_CFG0_ADDR =>
+            config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB) <=
+              apbi.pwdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0);
+          when ESP_CSR_DDR_CFG1_ADDR =>
+            config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB) <=
+              apbi.pwdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0);
+          when ESP_CSR_DDR_CFG2_ADDR =>
+            config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB) <=
+              apbi.pwdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0);
+          -- Maico modification end
           when ESP_CSR_SRST_ADDR =>
             srst <= wdata(0);
           when ESP_CSR_TP_ACC_RST =>
