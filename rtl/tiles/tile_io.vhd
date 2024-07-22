@@ -798,8 +798,8 @@ begin
               noc_apbi_wirq.pwrite = '1' and noc_apbi_wirq.paddr(11 downto 0) = x"004" and
               noc_apbi_wirq.paddr(31 downto 16) = x"0c20" and irq_pwdata_hit = '1') then
 
-            header_reg := create_header(MISC_NOC_FLIT_SIZE, this_local_y, this_local_x, dest_y, dest_x,
-                                        INTERRUPT, X"00");
+            header_reg := create_header_misc(MISC_NOC_FLIT_SIZE, this_local_y, this_local_x, dest_y, dest_x,
+                                        INTERRUPT, (others => '0'));
             header_reg(MISC_NOC_FLIT_SIZE - 1 downto
                        MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
 

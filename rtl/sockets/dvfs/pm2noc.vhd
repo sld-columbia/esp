@@ -213,7 +213,7 @@ begin
             reg.val   := packet_out_val;
 
             noc5_data_void_in <= '0';
-            noc5_input_port <= create_header(MISC_NOC_FLIT_SIZE,
+            noc5_input_port <= create_header_misc(MISC_NOC_FLIT_SIZE,
                                              local_y, local_x, dest_y, dest_x,
                                              DVFS_MSG, (others => '0'));
           end if;
