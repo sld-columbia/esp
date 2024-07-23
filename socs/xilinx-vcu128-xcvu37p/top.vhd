@@ -349,7 +349,7 @@ begin
       generic map(
         hindex       => CFG_AHB_JTAG,
         ehindex      => CFG_AHB_JTAG + 1,
-        pindex       => 14,
+        pindex       => 6,
         paddr        => 16#800#,
         pmask        => 16#f00#,
         pirq         => 12,
@@ -388,7 +388,7 @@ begin
 
     sgmii0 : sgmii_vcu118
       generic map(
-        pindex          => 15,
+        pindex          => 7,
         paddr           => 16#010#,
         pmask           => 16#ff0#,
         abits           => 8,

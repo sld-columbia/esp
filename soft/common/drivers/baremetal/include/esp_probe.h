@@ -37,13 +37,13 @@
  * 2 - Interrupt controller
  * 3 - Timer
  * 4 - Reserved
- * 5-8 - DVFS controller
- * 9-12 - Processors' private cache controller (must change with NCPU_MAX)
- * 13 - SVGA controller
- * 14 - Ethernet MAC controller
- * 15 - Ethernet SGMII PHY controller
- * 16-19 - LLC cache controller (must change with NMEM_MAX)
- * 84-(NAPBS-1) - Accelerators
+ * 5 - SVGA controller
+ * 6 - Ethernet MAC controller
+ * 7 - Ethernet SGMII PHY controller
+ * 8-23 - Processors' private cache controller (must change with NCPU_MAX)
+ * 24-39 - LLC cache controller (must change with NMEM_MAX)
+ * 40-295 - Distributed monitors (equal to the number of tiles NTILE_MAX)
+ * 296-(NAPBS-1) - Accelerators
  */
 #define NAPBSLV 128
 #define NACC_MAX 44

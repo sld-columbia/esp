@@ -823,7 +823,7 @@ begin
       generic map(
         hindex => CFG_AHB_JTAG,
         ehindex => CFG_AHB_JTAG + 1,
-        pindex => 14,
+        pindex => 6,
         paddr => 16#800#,
         pmask => 16#f00#,
         pirq => 12,
@@ -906,7 +906,7 @@ begin
   svga : if CFG_SVGA_ENABLE /= 0 generate
     svga0 : svgactrl generic map(
       memtech => CFG_FABTECH,
-      pindex => 13,
+      pindex => 5,
       paddr => 6,
       hindex => 0,
       clk0 => 25000,

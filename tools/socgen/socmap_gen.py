@@ -21,8 +21,8 @@ IRQ_LINES = 32
 # We simply set some value consistently with RTL, but these limits
 # can be increased by editing nocpackage accordingly.
 # <esp>/rtl/include/sld/noc/nocpackage.vhd
-NCPU_MAX = 4
-NMEM_MAX = 4
+NCPU_MAX = 16
+NMEM_MAX = 16
 NSLM_MAX = 16
 # Caches are provisioning 4 bits for IDs and 16 bits for sharers
 # This can be changed here:
@@ -44,15 +44,14 @@ NTILE_MAX = 256
 # 2 - Interrupt controller
 # 3 - Timer
 # 4 - ESPLink
-# 5-8 - DVFS controller
-# 9-12 - Processors' private cache controller (must change with NCPU_MAX)
-# 13 - SVGA controller
-# 14 - Ethernet MAC controller
-# 15 - Ethernet SGMII PHY controller
-# 16-19 - LLC cache controller (must change with NMEM_MAX)
-# 20-275 - Distributed monitors (equal to the number of tiles NTILE_MAX)
-# 276-(NAPBS-1) - Accelerators
-NACC_MAX = NAPBS - 2 * NCPU_MAX - NMEM_MAX - NTILE_MAX - 8
+# 5 - SVGA controller
+# 6 - Ethernet MAC controller
+# 7 - Ethernet SGMII PHY controller
+# 8-23 - Processors' private cache controller (must change with NCPU_MAX)
+# 24-39 - LLC cache controller (must change with NMEM_MAX)
+# 40-295 - Distributed monitors (equal to the number of tiles NTILE_MAX)
+# 296-(NAPBS-1) - Accelerators
+NACC_MAX = NAPBS - NCPU_MAX - NMEM_MAX - NTILE_MAX - 16
 
 # Default device mapping
 RST_ADDR = dict()
@@ -110,23 +109,23 @@ DVFS_PINDEX = [5, 6, 7, 8]
 L2_CACHE_PIRQ = 3
 
 # Private cache I/O-bus slave indices (more indices can be reserved if necessary)
-L2_CACHE_PINDEX = [9, 10, 11, 12]
+L2_CACHE_PINDEX = list(range(8, 8 + NCPU_MAX))
 
 # Last-level cache physical interrupt line
 LLC_CACHE_PIRQ = 4
 
 # Last-level cache I/O-bus slave indices (more indices can be reserved if necessary)
-LLC_CACHE_PINDEX = [16, 17, 18, 19]
+LLC_CACHE_PINDEX = list(range(24, 24 + NMEM_MAX))
 
 # ESP Tile CSRs APB indices
-CSR_PINDEX = list(range(20, 20 + NTILE_MAX))
+CSR_PINDEX = list(range(40, 40 + NTILE_MAX))
 
 # I/O memory area offset for CSRs
 CSR_APB_ADDR = 0x900
 CSR_APB_ADDR_MSK = 0xffe
 
 # First I/O-bus index for accelerators
-SLD_APB_PINDEX = 20 + NTILE_MAX
+SLD_APB_PINDEX = 40 + NTILE_MAX
 
 # I/O memory area offset for accelerators (address bits 19-8)
 SLD_APB_ADDR = 0x100
@@ -1074,7 +1073,7 @@ def print_mapping(fp, soc, esp_config):
         fp.write("      0 => ahb_device_reg (VENDOR_UIUC, UIUC_SPANDEX_L2, 0, 0, CFG_SLD_L2_CACHE_IRQ),\n")
       else:
         fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_L2_CACHE, 0, 0, CFG_SLD_L2_CACHE_IRQ),\n")
-      fp.write("      1 => apb_iobar(16#" + format(0xD0 + l2.idx, '03X') + "#, 16#fff#),\n")
+      fp.write("      1 => apb_iobar(16#" + format(0xD0 + l2.idx - 8, '03X') + "#, 16#fff#),\n")
       fp.write("      2 => (others => '0')),\n")
   fp.write("    others => pconfig_none);\n\n")
 
@@ -1088,7 +1087,7 @@ def print_mapping(fp, soc, esp_config):
       fp.write("      0 => ahb_device_reg (VENDOR_UIUC, UIUC_SPANDEX_LLC, 0, 0, CFG_SLD_LLC_CACHE_IRQ),\n")
     else:
       fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_LLC_CACHE, 0, 0, CFG_SLD_LLC_CACHE_IRQ),\n")
-    fp.write("      1 => apb_iobar(16#" + format(0xD0 + llc.idx, '03X') + "#, 16#fff#),\n")
+    fp.write("      1 => apb_iobar(16#" + format(0xE0 + llc.idx - 24, '03X') + "#, 16#fff#),\n")
     fp.write("      2 => (others => '0')),\n")
   fp.write("    others => pconfig_none);\n\n")
 
@@ -1193,11 +1192,11 @@ def print_mapping(fp, soc, esp_config):
     llc = esp_config.llcs[i]
     fp.write("    " + str(llc.idx) + " => llc_cache_pconfig(" + str(i) + "),\n")
   if esp_config.has_svga:
-    fp.write("    13 => svga_pconfig,\n")
+    fp.write("    5 => svga_pconfig,\n")
   if esp_config.has_eth:
-    fp.write("    14 => eth0_pconfig,\n")
+    fp.write("    6 => eth0_pconfig,\n")
     if esp_config.has_sgmii:
-      fp.write("    15 => sgmii0_pconfig,\n")
+      fp.write("    7 => sgmii0_pconfig,\n")
   for i in range(0, esp_config.ntiles):
     fp.write("    " + str(CSR_PINDEX[i]) + " => csr_t_" + str(i) + "_pconfig,\n")
   for i in range(0, esp_config.nacc):
@@ -1528,33 +1527,33 @@ def print_mapping(fp, soc, esp_config):
   # 1 - I/O bus bridge
   # 2 - Interrupt controller
   # 3 - Timer
+  # 4 - ESPLink
   for i in range(0, 4):
     fp.write("    " + str(i) + " => io_tile_id,\n")
-  # 13 - SVGA controller
+  # 5 - SVGA controller
   if esp_config.has_svga:
-    fp.write("    13 => io_tile_id,\n")
-  # 14 - Ethernet MAC controller
-  # 15 - Ethernet SGMII PHY controller
+    fp.write("    5 => io_tile_id,\n")
+  # 6 - Ethernet MAC controller
+  # 7 - Ethernet SGMII PHY controller
   if esp_config.has_eth:
-    fp.write("    14 => io_tile_id,\n")
+    fp.write("    6 => io_tile_id,\n")
     if esp_config.has_sgmii:
-      fp.write("    15 => io_tile_id,\n")
-  # 20-83 - ESP Tile CSRs
+      fp.write("    7 => io_tile_id,\n")
+  # 40-295 - ESP Tile CSRs
   for i in range(0, esp_config.ntiles):
     fp.write("    " + str(CSR_PINDEX[i]) + " => " + str(i) + ",\n")
-  # 20-(NAPBSLV - 1) - Accelerators
+  # 296-(NAPBSLV - 1) - Accelerators
   for i in range(0, esp_config.ntiles):
     t =  esp_config.tiles[i]
     if t.type == "acc":
       acc_pindex = t.acc.idx
       fp.write("    " + str(acc_pindex) + " => " + str(i) + ",\n")
-    # 16-19 - LLC cache controller (must change with NMEM_MAX)
+    # 24-39 - LLC cache controller (must change with NMEM_MAX)
     if t.type == "mem":
       if esp_config.coherence:
         llc_pindex = t.llc.idx
         fp.write("    " + str(llc_pindex) + " => " + str(i) + ",\n")
-    # 5-8 - Processors' DVFS controller (must change with NCPU_MAX)
-    # 9-12 - Processors' private cache controller (must change with NCPU_MAX)
+    # 8-23 - Processors' private cache controller (must change with NCPU_MAX)
     if t.type == "cpu":
       if esp_config.coherence:
         fp.write("    " + str(t.l2.idx) + " => " + str(i) + ",\n")
@@ -1764,10 +1763,10 @@ def print_tiles(fp, esp_config):
   fp.write("    1 => '1',\n")
   fp.write("    2 => '1',\n")
   fp.write("    3 => '1',\n")
-  fp.write("    13 => to_std_logic(CFG_SVGA_ENABLE),\n")
-  fp.write("    14 => to_std_logic(CFG_GRETH),\n")
+  fp.write("    5 => to_std_logic(CFG_SVGA_ENABLE),\n")
+  fp.write("    6 => to_std_logic(CFG_GRETH),\n")
   if esp_config.has_sgmii:
-    fp.write("    15 => to_std_logic(CFG_GRETH),\n")
+    fp.write("    7 => to_std_logic(CFG_GRETH),\n")
   for j in range(0, esp_config.ndvfs):
     dvfs = esp_config.dvfs_ctrls[j]
     if dvfs.id != -1:
@@ -2126,7 +2125,7 @@ def print_devtree(fp, soc, esp_config):
   for i in range(esp_config.nl2):
     l2 = esp_config.l2s[i]
     if l2.idx != -1:
-      address = base + 0xD000 + (l2.idx << 8)
+      address = base + 0xD000 + ((l2.idx - 8) << 8)
       address_str = format(address, "x")
       size_str = "100"
       fp.write("    l2cache" + str(l2.id) + "@" + address_str + " {\n")
@@ -2144,7 +2143,7 @@ def print_devtree(fp, soc, esp_config):
   for i in range(esp_config.nllc):
     llc = esp_config.llcs[i]
     if llc.idx != -1:
-      address = base + 0xD000 + (llc.idx << 8)
+      address = base + 0xE000 + ((llc.idx - 24) << 8)
       address_str = format(address, "x")
       size_str = "100"
       fp.write("    llccache" + str(llc.id) + "@" + address_str + " {\n")

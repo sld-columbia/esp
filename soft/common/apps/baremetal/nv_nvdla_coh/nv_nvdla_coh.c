@@ -28,7 +28,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define CSR_TILE_SIZE 0x200
 #define CSR_BASE_ADDR 0x60090000
 #define COH_REG_INDEX 99
-#define TP_RST_REG_INDEX 102
+#define TP_RST_REG_INDEX 100
 
 #define PLIC_ADDR 0x6c000000
 #define PLIC_IP_OFFSET 0x1000
