@@ -68,10 +68,10 @@ constant XUSER_WIDTH : integer := 10;
 --    AHB data vectors based on the address input. If a core uses a function
 --    that does not have the address input, a failure will be asserted.
 --
-constant CORE_ACDM : integer := CFG_AHB_ACDM; 
+constant CORE_ACDM : integer := CFG_AHB_ACDM;
 
-constant NAHBMST   : integer := 16;  -- maximum AHB masters
-constant NAHBSLV   : integer := 16;  -- maximum AHB slaves
+constant NAHBMST   : integer := 32;  -- maximum AHB masters
+constant NAHBSLV   : integer := 32;  -- maximum AHB slaves
 constant NAPBSLV   : integer := GLOB_MAXIOSLV; -- maximum APB slaves
 constant NAHBIRQ   : integer := 32 + 32*GRLIB_CONFIG_ARRAY(grlib_amba_inc_nirq); -- maximum interrupts
 constant NAHBAMR   : integer := 4;  -- maximum address mapping registers

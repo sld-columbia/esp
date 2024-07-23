@@ -515,8 +515,10 @@ class SoC_Config():
       self.nmem_max = 1
     elif self.FPGA_BOARD == "profpga-xc7v2000t":
       self.nmem_max = 2
-    else:
+    elif self.FPGA_BOARD == "profpga-xcvu440":
       self.nmem_max = 4
+    else:
+      self.nmem_max = 8
 
     # Read GRLIB configurations
     with open("../grlib/grlib_config.vhd") as fp:

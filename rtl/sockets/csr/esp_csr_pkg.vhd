@@ -11,7 +11,9 @@ use work.nocpackage.all;
 
 package esp_csr_pkg is
 
-  constant ESP_CSR_WIDTH : integer := 17 + CFG_NCPU_TILE * 2 * YX_WIDTH;
+  constant NCPU_TILE_MAX : integer := 16;
+
+  constant ESP_CSR_WIDTH : integer := 17 + NCPU_TILE_MAX * 2 * YX_WIDTH;
 
   constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
   constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
@@ -29,15 +31,17 @@ package esp_csr_pkg is
   constant ESP_CSR_ACC_COH_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 14;
   constant ESP_CSR_ACC_COH_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 15;
 
-  constant ESP_CSR_CPU_LOC_OVR_ADDR : integer range 0 to 31 := 4;
-  constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16;
-  constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16 + CFG_NCPU_TILE * 2 * YX_WIDTH;
+  constant ESP_CSR_TP_ACC_RST : integer range 0 to 31 := 4;
 
   -- Soft reset
   constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 5;  -- reserved address
 
-  -- Force reset of third-party accelerators
-  constant ESP_CSR_TP_ACC_RST : integer range 0 to 31 := 6;
+  constant ESP_CSR_CPU_LOC_OVR_0_ADDR : integer range 0 to 31 := 6;
+  constant ESP_CSR_CPU_LOC_OVR_1_ADDR : integer range 0 to 31 := 7;
+  constant ESP_CSR_CPU_LOC_OVR_2_ADDR : integer range 0 to 31 := 8;
+  constant ESP_CSR_CPU_LOC_OVR_3_ADDR : integer range 0 to 31 := 9;
+  constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16;
+  constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16 + NCPU_TILE_MAX * 2 * YX_WIDTH;
 
   component esp_tile_csr
     generic (

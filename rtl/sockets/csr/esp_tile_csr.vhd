@@ -93,7 +93,7 @@ architecture rtl of esp_tile_csr is
   -- CSRs
   signal config_r  : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
 
-  constant DEFAULT_CPU_LOC_OVR : std_logic_vector(CFG_NCPU_TILE * 2 * YX_WIDTH downto 0) := (others => '0');
+  constant DEFAULT_CPU_LOC_OVR : std_logic_vector(NCPU_TILE_MAX * 2 * YX_WIDTH downto 0) := (others => '0');
   -- CPU_Y(N-1) CPU_X(N-1) .... CPU_Y(0) CPU_X(0)    OVERWRITE DEFAULT FROM SOCMAP
 
   constant DEFAULT_ARIANE_HARTID : std_logic_vector(4 downto 0) :=
@@ -143,10 +143,20 @@ architecture rtl of esp_tile_csr is
           readdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0) <= config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
         when ESP_CSR_ARIANE_HARTID_ADDR =>
           readdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0) <= config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB);
-        when ESP_CSR_CPU_LOC_OVR_ADDR =>
-          readdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0) <= config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB);
         when ESP_CSR_ACC_COH_ADDR =>
           readdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0) <= config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB);
+        when ESP_CSR_CPU_LOC_OVR_0_ADDR =>
+          readdata <=
+            config_r(ESP_CSR_CPU_LOC_OVR_LSB + 31 downto ESP_CSR_CPU_LOC_OVR_LSB);
+        when ESP_CSR_CPU_LOC_OVR_1_ADDR =>
+          readdata <=
+            config_r(ESP_CSR_CPU_LOC_OVR_LSB + 63 downto ESP_CSR_CPU_LOC_OVR_LSB + 32);
+        when ESP_CSR_CPU_LOC_OVR_2_ADDR =>
+          readdata <=
+            config_r(ESP_CSR_CPU_LOC_OVR_LSB + 95 downto ESP_CSR_CPU_LOC_OVR_LSB + 64);
+        when ESP_CSR_CPU_LOC_OVR_3_ADDR =>
+          readdata <=
+            config_r(ESP_CSR_CPU_LOC_OVR_LSB + 127 downto ESP_CSR_CPU_LOC_OVR_LSB + 96);
 
         when others =>
           readdata <= (others => '0');
@@ -196,14 +206,20 @@ architecture rtl of esp_tile_csr is
             config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= apbi.pwdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
           when ESP_CSR_ARIANE_HARTID_ADDR =>
             config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB) <= apbi.pwdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0);
-          when ESP_CSR_CPU_LOC_OVR_ADDR =>
-            config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB) <= apbi.pwdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0);
           when ESP_CSR_ACC_COH_ADDR =>
             config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB) <= apbi.pwdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0);
-          when ESP_CSR_SRST_ADDR =>
-            srst <= wdata(0);
           when ESP_CSR_TP_ACC_RST =>
             tp_acc_rst <= wdata(0);
+          when ESP_CSR_SRST_ADDR =>
+            srst <= wdata(0);
+          when ESP_CSR_CPU_LOC_OVR_0_ADDR =>
+            config_r(ESP_CSR_CPU_LOC_OVR_LSB + 31 downto ESP_CSR_CPU_LOC_OVR_LSB) <= apbi.pwdata;
+          when ESP_CSR_CPU_LOC_OVR_1_ADDR =>
+            config_r(ESP_CSR_CPU_LOC_OVR_LSB + 63 downto ESP_CSR_CPU_LOC_OVR_LSB + 32) <= apbi.pwdata;
+          when ESP_CSR_CPU_LOC_OVR_2_ADDR =>
+            config_r(ESP_CSR_CPU_LOC_OVR_LSB + 95 downto ESP_CSR_CPU_LOC_OVR_LSB + 64) <= apbi.pwdata;
+          when ESP_CSR_CPU_LOC_OVR_3_ADDR =>
+            config_r(ESP_CSR_CPU_LOC_OVR_LSB + 127 downto ESP_CSR_CPU_LOC_OVR_LSB + 96) <= apbi.pwdata;
 
           when others => null;
         end case;

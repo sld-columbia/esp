@@ -70,7 +70,6 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 #define YX_REG 0x2c
 #define YX_SHIFT_X 0
 #define YX_SHIFT_Y 16
-#define YX_MASK_YX 0x7
 #define YX_MASK_YX 0xF
 
 /* bank(12)       : SRC_OFFSET (offset in bytes from beginning of physical buffer) */

@@ -318,16 +318,16 @@ architecture rtl of tile_io is
     2      => '1',                                  -- irq3mp / plic
     3      => '1',                                  -- gptimer
     4      => '1',                                  -- esplink
-    13     => to_std_logic(CFG_SVGA_ENABLE),        -- svga
-    14     => to_std_logic(CFG_GRETH),              -- eth mac
-    15     => to_std_logic(CFG_SGMII * CFG_GRETH),  -- eth phy
+    5      => to_std_logic(CFG_SVGA_ENABLE),        -- svga
+    6      => to_std_logic(CFG_GRETH),              -- eth mac
+    7      => to_std_logic(CFG_SGMII * CFG_GRETH),  -- eth phy
     others => '0');
 
   constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := (
     0      => '1',                            -- bootrom
     1      => '1',                            -- ahb2apb
     2      => to_std_logic(GLOB_CPU_RISCV * GLOB_CPU_AXI),  -- risc-v clint
-    12     => to_std_logic(CFG_SVGA_ENABLE),  -- frame buffer
+    3      => to_std_logic(CFG_SVGA_ENABLE),  -- frame buffer
     others => '0');
 
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask_misc;
@@ -508,14 +508,11 @@ begin
 
   -- NB: all local I/O-bus slaves are accessed through proxy as if they were
   -- remote. This allows any master in the system to access them
-  no_pslv_gen_1 : for i in 5 to 12 generate
-    noc_apbo(i) <= apb_none;
-  end generate no_pslv_gen_1;
-  no_pslv_gen_2 : for i in 16 to NAPBSLV - 1 generate
+  no_pslv_gen : for i in 8 to NAPBSLV - 1 generate
     skip_csr_apb_gen : if i /= this_csr_pindex generate
       noc_apbo(i) <= apb_none;
     end generate skip_csr_apb_gen;
-  end generate no_pslv_gen_2;
+  end generate no_pslv_gen;
 
   -----------------------------------------------------------------------------
   -- Self configuration
@@ -542,11 +539,11 @@ begin
     ahbmo(0)   <= eth0_ahbmo;
     eth0_ahbmi <= ahbmi;
 
-    noc_apbo(14) <= eth0_apbo;
+    noc_apbo(6) <= eth0_apbo;
     eth0_apbi    <= noc_apbi;
 
     sgmii_gen : if CFG_SGMII = 1 generate
-      noc_apbo(15) <= sgmii0_apbo;
+      noc_apbo(7) <= sgmii0_apbo;
       sgmii0_apbi  <= noc_apbi;
     end generate sgmii_gen;
 
@@ -564,12 +561,12 @@ begin
   no_ethernet : if CFG_ETH_EN = 0 or CFG_GRETH = 0 generate
     eth0_ahbmi   <= ahbm_in_none;
     eth0_apbi    <= apb_slv_in_none;
-    noc_apbo(14) <= apb_none;
+    noc_apbo(6) <= apb_none;
   end generate no_ethernet;
 
   no_sgmii_gen : if CFG_ETH_EN = 0 or CFG_GRETH = 0 or CFG_SGMII = 0 generate
     sgmii0_apbi  <= apb_slv_in_none;
-    noc_apbo(15) <= apb_none;
+    noc_apbo(7) <= apb_none;
   end generate no_sgmii_gen;
 
   iolink_en: if CFG_IOLINK_EN = 1 generate
@@ -912,12 +909,12 @@ begin
   noc_apbo(4).pindex <= 4;
 
   -----------------------------------------------------------------------------
-  -- APB 13: DVI
+  -- APB 5: DVI
   -----------------------------------------------------------------------------
 
   -- SVGA component interface
   svga_on_apb : if CFG_SVGA_ENABLE /= 0 generate
-    noc_apbo(13) <= dvi_apbo;
+    noc_apbo(5) <= dvi_apbo;
     ahbmo2(0)    <= dvi_ahbmo;
 
     -- Dedicated Video Memory with dual-port interface.
@@ -954,7 +951,7 @@ begin
   end generate svga_on_apb;
 
   no_svga_on_apb : if CFG_SVGA_ENABLE = 0 generate
-    noc_apbo(13) <= apb_none;
+    noc_apbo(5) <= apb_none;
     ahbmo2(0) <= ahbm_none;
   end generate no_svga_on_apb;
 
