@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
-create_ip -name gig_ethernet_pcs_pma -vendor xilinx.com -library ip -version 16.2 -module_name sgmii_vcu128
+create_ip -name gig_ethernet_pcs_pma -vendor xilinx.com -library ip -version 16.1 -module_name sgmii_vcu128
 
 set_property -dict [list \
 			CONFIG.ETHERNET_BOARD_INTERFACE {sgmii_lvds} \

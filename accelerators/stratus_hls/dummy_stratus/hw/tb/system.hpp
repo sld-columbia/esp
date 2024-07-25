@@ -48,6 +48,7 @@ public:
         acc->dma_write_ctrl(dma_write_ctrl);
         acc->dma_read_chnl(dma_read_chnl);
         acc->dma_write_chnl(dma_write_chnl);
+        acc->dma_write_rsp(dma_write_rsp);
         acc->conf_info(conf_info);
         acc->conf_done(conf_done);
         acc->acc_done(acc_done);

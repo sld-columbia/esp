@@ -765,6 +765,9 @@ package tile is
       bufdout_ready                 : out std_ulogic;
       bufdout_data                  : in  std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
       bufdout_valid                 : in  std_ulogic;
+      wr_rsp_ready                  : in  std_ulogic;
+      wr_rsp_data                   : out std_logic;
+      wr_rsp_valid                  : out std_ulogic;
       acc_done                      : in  std_ulogic;
       flush                         : out std_ulogic;
       acc_flush_done                : in  std_ulogic;
@@ -788,7 +791,7 @@ package tile is
       dma_snd_full                  : in  std_ulogic;
       interrupt_wrreq               : out std_ulogic;
       interrupt_data_in             : out misc_noc_flit_type;
-	  acc_activity					: out std_ulogic;
+      acc_activity         	    : out std_ulogic;
       interrupt_full                : in  std_ulogic);
   end component;
 
@@ -832,7 +835,9 @@ package tile is
       tlb_wr_address       : in  std_logic_vector((log2xx(tlb_entries) -1) downto 0);
       tlb_datain           : in  std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
       dma_address          : out std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
-      dma_length           : out std_logic_vector(31 downto 0));
+      dma_length           : out std_logic_vector(31 downto 0);
+      p2p_wr_qd            : in std_logic
+);
   end component;
 
   component tile_dvfs

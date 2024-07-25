@@ -448,6 +448,9 @@ def write_acc_interface(f, acc, noc_width, datatype, rst, is_vivadohls_if, is_ca
     f.write("      dma_write_ctrl_data_index  : out std_logic_vector(" + str(31) + " downto 0);\n")
     f.write("      dma_write_ctrl_data_length : out std_logic_vector(" + str(31) + " downto 0);\n")
     f.write("      dma_write_ctrl_data_size   : out std_logic_vector(" + str(2) + " downto 0);\n")
+    f.write("      dma_write_rsp_valid        : in  std_ulogic;\n")
+    f.write("      dma_write_rsp_ready        : out std_ulogic;\n")
+    f.write("      dma_write_rsp_data         : in  std_logic;\n")
     f.write("      dma_read_chnl_valid        : in  std_ulogic;\n")
     f.write("      dma_read_chnl_ready        : out std_ulogic;\n")
     f.write("      dma_read_chnl_data         : in  std_logic_vector(" + str(noc_width - 1) + " downto 0);\n")
@@ -690,6 +693,9 @@ def write_acc_port_map(f, acc, noc_width, datatype, rst, is_noc_interface, is_vi
     f.write("      dma_write_ctrl_data_index  => dma_write_ctrl_data_index,\n")
     f.write("      dma_write_ctrl_data_length => dma_write_ctrl_data_length,\n")
     f.write("      dma_write_ctrl_data_size   => dma_write_ctrl_data_size,\n")
+    f.write("      dma_write_rsp_valid        => dma_write_rsp_valid,\n")
+    f.write("      dma_write_rsp_ready        => dma_write_rsp_ready,\n")
+    f.write("      dma_write_rsp_data         => dma_write_rsp_data,\n")
     f.write("      dma_read_chnl_valid        => dma_read_chnl_valid,\n")
     f.write("      dma_read_chnl_ready        => dma_read_chnl_ready,\n")
     f.write("      dma_read_chnl_data         => dma_read_chnl_data,\n")
@@ -1781,7 +1787,7 @@ def gen_noc_interface(acc, noc_width, template_dir, out_dir, is_axi):
       elif tline.find("-- <<axi_unused>>") >= 0:
         tie_unused_axi(f, acc, noc_width)
       elif tline.find("-- <<accelerator_instance>>") >= 0:
-        f.write("  " + acc.name + "_rlt_i: " + acc.name)
+        f.write("  " + acc.name + "_rtl_i: " + acc.name)
         if is_axi:
           f.write("_wrapper\n")
           write_axi_acc_port_map(f, acc, noc_width)

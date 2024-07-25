@@ -1,4 +1,4 @@
-module <acc_full_name>_basic_dma32( clk, rst, dma_read_chnl_valid, dma_read_chnl_data, dma_read_chnl_ready,
+module <acc_full_name>_basic_dma32( clk, rst, dma_read_chnl_valid, dma_read_chnl_data, dma_read_chnl_ready, dma_write_rsp_valid, dma_write_rsp_data, dma_write_rsp_ready,
 /* <<--params-list-->> */
 conf_done, acc_done, debug, dma_read_ctrl_valid, dma_read_ctrl_data_index, dma_read_ctrl_data_length, dma_read_ctrl_data_size, dma_read_ctrl_ready, dma_write_ctrl_valid, dma_write_ctrl_data_index, dma_write_ctrl_data_length, dma_write_ctrl_data_size, dma_write_ctrl_ready, dma_write_chnl_valid, dma_write_chnl_data, dma_write_chnl_ready);
 
@@ -28,6 +28,10 @@ conf_done, acc_done, debug, dma_read_ctrl_valid, dma_read_ctrl_data_index, dma_r
    output 	 dma_write_chnl_valid;
    output [31:0] dma_write_chnl_data;
 
+   output        dma_write_rsp_ready;
+   input         dma_write_rsp_valid;
+   input         dma_write_rsp_data;
+
    output 	 acc_done;
    output [31:0] debug;
 
@@ -36,6 +40,7 @@ conf_done, acc_done, debug, dma_read_ctrl_valid, dma_read_ctrl_data_index, dma_r
 
    assign dma_read_ctrl_valid = 1'b0;
    assign dma_read_chnl_ready = 1'b1;
+   assign dma_write_rsp_ready = 1'b1;
    assign dma_write_ctrl_valid = 1'b0;
    assign dma_write_chnl_valid = 1'b0;
    assign debug = 32'd0;

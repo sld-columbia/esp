@@ -174,8 +174,7 @@ module lookahead_router_multicast
   // This is to ensure the new router is backwards compatible
   assign data_in[noc::kLocalPort][PortWidth-1:$bits(noc::direction_t)+1] = data_p_in[PortWidth-1:$bits(noc::direction_t)+1];
   assign data_in[noc::kLocalPort][$bits(noc::direction_t)-1:0] = data_p_in[$bits(noc::direction_t)-1:0];
-  assign data_in[noc::kLocalPort][$bits(noc::direction_t)] = data_p_in[PortWidth-1] ? 1 : data_p_in[$bits(noc::direction_t)];
-
+  assign data_in[noc::kLocalPort][$bits(noc::direction_t)] = (data_p_in[PortWidth-1] && !(|data_p_in[$bits(noc::direction_t) + (DEST_SIZE - 1):$bits(noc::direction_t)])) ? 1 : data_p_in[$bits(noc::direction_t)];
   //This router has a single cycle delay.
   // When using ready-valid protocol, the register is placed at the output; for credit-based,
   // the register is the input FIFO (not bypassable) and the output of the crossbar is not

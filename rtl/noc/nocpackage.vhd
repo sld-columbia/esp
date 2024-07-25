@@ -73,6 +73,11 @@ package nocpackage is
   type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
   type arch_noc_flit_vector is array (natural range <>) of arch_noc_flit_type;
 
+ 
+  type mcast_type is record
+    header_vec : dma_noc_flit_vector(0 to 3);
+    quad_count : std_logic_vector(0 to 3);
+  end record;
   --Rather than define seaprate functions for interacting with each NoC width,
   --we make them take the max width and then pad the inputs to fill.
   constant coh_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - COH_NOC_FLIT_SIZE downto 0) := (others => '0');
@@ -516,8 +521,9 @@ package nocpackage is
     remote_y_comb     : local_yx;
     remote_x_comb     : local_yx;
     mcast_ndests      : integer;
-    msg_type          : noc_msg_type)
-    return std_logic_vector;
+    msg_type          : noc_msg_type;
+    p2p_mcast_nsrcs   : std_ulogic)
+    return mcast_type;
 
   function narrow_to_large_flit (
     narrow_flit : misc_noc_flit_type)
@@ -851,23 +857,32 @@ function create_header_mcast (
     remote_y_comb     : local_yx;
     remote_x_comb     : local_yx;
     mcast_ndests      : integer;
-    msg_type          : noc_msg_type)
-    return std_logic_vector is
+    msg_type          : noc_msg_type;
+    p2p_mcast_nsrcs   : std_ulogic)
+    return mcast_type is
+    variable mcast_data : mcast_type;
     variable header : std_logic_vector(flit_sz - 1 downto 0);
     variable go_right, go_left, go_up, go_down, routing: std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
     variable remote_y, remote_x : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
+    variable valid_0, valid_1, valid_2, valid_3 : std_logic_vector(MAX_MCAST_DESTS - 1 downto 0);
     constant RESERVED_OFFSET_MCAST : integer := flit_sz - PREAMBLE_WIDTH - NEXT_ROUTING_WIDTH - MSG_TYPE_WIDTH
                                                 - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MAX_MCAST_DESTS;
   begin  -- create_header_ndest
 
     header := (others => '0');
-
+    mcast_data.header_vec := (others => (others => '0'));
+    mcast_data.quad_count := (others => '0');
     remote_y := (others => (others => '0'));
     remote_x := (others => (others => '0'));
     remote_y(MAX_MCAST_DESTS - 2 downto 0) := remote_y_arr;
     remote_x(MAX_MCAST_DESTS - 2 downto 0) := remote_x_arr;
     remote_y(mcast_ndests) := remote_y_comb;
     remote_x(mcast_ndests) := remote_x_comb;
+
+    valid_0 := (others => '0');
+    valid_1 := (others => '0');
+    valid_2 := (others => '0');
+    valid_3 := (others => '0');
 
     header(flit_sz - 1 downto
            flit_sz - PREAMBLE_WIDTH) := PREAMBLE_HEADER;
@@ -888,37 +903,95 @@ function create_header_mcast (
              flit_sz - PREAMBLE_WIDTH - (6+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST) := remote_x(i);
     end loop;
 
-
     for i in 0 to MAX_MCAST_DESTS - 1 loop
-      header(flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MSG_TYPE_WIDTH
-             - MAX_MCAST_DESTS - RESERVED_OFFSET_MCAST + i) := '1';
       if i <= mcast_ndests then
-          if local_x < remote_x(i) then
-            go_right := "01000";
-          else
-            go_right := "10111";
-          end if;
+        if local_x < remote_x(i) then
+          go_right := "01000";
+        else
+          go_right := "10111";
+        end if;
 
-          if local_x > remote_x(i) then
-            go_left := "00100";
-          else
-            go_left := "11011";
-          end if;
+        if local_x > remote_x(i) then
+          go_left := "00100";
+        else
+          go_left := "11011";
+        end if;
 
-          if local_y < remote_y(i) then
-            routing := "01110" and go_left and go_right;
-          else
-            routing := "01101" and go_left and go_right;
-          end if;
+        if local_y < remote_y(i) then
+          routing := "01110" and go_left and go_right;
+        else
+          routing := "01101" and go_left and go_right;
+        end if;
 
-          if local_y = remote_y(i) and local_x = remote_x(i) then
-            routing := "10000";
+        if local_y = remote_y(i) and local_x = remote_x(i) then
+          routing := "10000";
+        end if;
+        if p2p_mcast_nsrcs = '1' then	--multi source mcast
+          if (local_y >= remote_y(i)) and (local_x < remote_x(i)) then  --top right
+            valid_0(i) := '1';
+            valid_1(i) := '0';
+            valid_2(i) := '0';
+            valid_3(i) := '0';
+            mcast_data.quad_count(0) := '1';
+            mcast_data.header_vec(0)(NEXT_ROUTING_WIDTH-1 downto 0) := mcast_data.header_vec(0)(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
           end if;
-      end if;
-      header(NEXT_ROUTING_WIDTH-1 downto 0) := header(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
+          if (local_y > remote_y(i)) and (local_x >= remote_x(i)) then --top left
+            valid_0(i) := '0';
+            valid_1(i) := '1';
+            valid_2(i) := '0';
+            valid_3(i) := '0';
+            mcast_data.quad_count(1) := '1';
+            mcast_data.header_vec(1)(NEXT_ROUTING_WIDTH-1 downto 0) := mcast_data.header_vec(1)(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
+          end if;
+          if (local_y < remote_y(i)) and (local_x <= remote_x(i)) then --bottom right
+            valid_0(i) := '0';
+            valid_1(i) := '0';
+            valid_2(i) := '1';
+            valid_3(i) := '0';
+            mcast_data.quad_count(2) := '1';
+            mcast_data.header_vec(2)(NEXT_ROUTING_WIDTH-1 downto 0) := mcast_data.header_vec(2)(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
+          end if;
+          if (local_y <= remote_y(i)) and (local_x > remote_x(i)) then --bottom left
+            valid_0(i) := '0';
+            valid_1(i) := '0';
+            valid_2(i) := '0';
+            valid_3(i) := '1';
+            mcast_data.quad_count(3) := '1';
+            mcast_data.header_vec(3)(NEXT_ROUTING_WIDTH-1 downto 0) := mcast_data.header_vec(3)(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
+          end if;
+        else	--single source mcast
+          header(flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MSG_TYPE_WIDTH
+                 - MAX_MCAST_DESTS - RESERVED_OFFSET_MCAST + i) := '1';
+          header(NEXT_ROUTING_WIDTH-1 downto 0) := header(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
+        end if;
+      end if;	--if i <= mcast_ndests
     end loop;
 
-    return header;
+    if p2p_mcast_nsrcs = '1' then
+      mcast_data.header_vec(0) := header(flit_sz - 1 downto flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MSG_TYPE_WIDTH
+                                                 - RESERVED_OFFSET_MCAST)
+                       & valid_0 &
+                       mcast_data.header_vec(0)(NEXT_ROUTING_WIDTH - 1 downto 0);
+      mcast_data.header_vec(1) := header(flit_sz - 1 downto flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MSG_TYPE_WIDTH
+                                                 - RESERVED_OFFSET_MCAST)
+                       & valid_1 &
+                       mcast_data.header_vec(1)(NEXT_ROUTING_WIDTH - 1 downto 0);
+      mcast_data.header_vec(2) := header(flit_sz - 1 downto flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MSG_TYPE_WIDTH
+                                                 - RESERVED_OFFSET_MCAST)
+                       & valid_2 &
+                       mcast_data.header_vec(2)(NEXT_ROUTING_WIDTH - 1 downto 0);
+      mcast_data.header_vec(3) := header(flit_sz - 1 downto flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MSG_TYPE_WIDTH
+                                                 - RESERVED_OFFSET_MCAST)
+                       & valid_3 &
+                       mcast_data.header_vec(3)(NEXT_ROUTING_WIDTH - 1 downto 0);
+    else
+      mcast_data.header_vec(0) := header;
+      mcast_data.header_vec(1) := (others => '0');
+      mcast_data.header_vec(2) := (others => '0');
+      mcast_data.header_vec(3) := (others => '0');
+    end if;
+
+    return mcast_data;
   end create_header_mcast;
 
   function narrow_to_large_flit (

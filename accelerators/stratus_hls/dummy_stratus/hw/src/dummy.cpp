@@ -124,11 +124,15 @@ void dummy::store_output()
     // Store
     bool ping = true;
     uint32_t offset = 0;
-    for (int n = 0; n < batch; n++)
-        for (int b = tokens; b > 0; b -= PLM_SIZE)
+    sc_dt::sc_bv<1> write_rsp_data;
+    for (int n = 0; n < batch; n++) {
+        write_rsp_data = 0;
+        for (int b = tokens; b > 0; )
         {
             HLS_PROTO("store-dma");
-            this->store_compute_handshake();
+            if (write_rsp_data == 0) {
+                this->store_compute_handshake();
+            }
 
             uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
 #if (DMA_WORD_PER_BEAT == 0)
@@ -136,7 +140,6 @@ void dummy::store_output()
 #else
             dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
 #endif
-            offset += len;
 
             this->dma_write_ctrl.put(dma_info);
 #if (DMA_WORD_PER_BEAT == 0)
@@ -169,8 +172,16 @@ void dummy::store_output()
                 this->dma_write_chnl.put(data_bv);
             }
 #endif
-            ping = !ping;
+            wait();
+            write_rsp_data = this->dma_write_rsp.get();
+            wait();
+            if (write_rsp_data == 0) {
+                b -= PLM_SIZE;
+                offset += len;
+                ping = !ping;
+            }
         }
+    }
 
     // Conclude
     {
