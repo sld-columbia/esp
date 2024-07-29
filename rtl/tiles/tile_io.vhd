@@ -327,7 +327,7 @@ architecture rtl of tile_io is
     0      => '1',                            -- bootrom
     1      => '1',                            -- ahb2apb
     2      => to_std_logic(GLOB_CPU_RISCV * GLOB_CPU_AXI),  -- risc-v clint
-    12     => to_std_logic(CFG_SVGA_ENABLE),  -- frame buffer
+    3      => to_std_logic(CFG_SVGA_ENABLE),  -- frame buffer
     others => '0');
 
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask_misc;

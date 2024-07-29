@@ -367,7 +367,7 @@ begin
   variable hmbsel  : std_logic_vector(0 to NAHBAMR-1);
   variable nslave  : natural range 0 to 31;
   variable vsplit  : std_logic_vector(0 to nahbmx-1);
-  variable bnslave : std_logic_vector(3 downto 0);
+  variable bnslave : std_logic_vector(4 downto 0);
   variable area    : std_logic_vector(1 downto 0);
   variable hready  : std_ulogic;
   variable defslv  : std_ulogic;
@@ -463,13 +463,25 @@ begin
     if r.defmst = '1' then hsel := (others => '0'); end if;
 
     bnslave(0) := hsel(1) or hsel(3) or hsel(5) or hsel(7) or
-                  hsel(9) or hsel(11) or hsel(13) or hsel(15);
+                  hsel(9) or hsel(11) or hsel(13) or hsel(15) or
+                  hsel(17) or hsel(19) or hsel(21) or hsel(23) or
+                  hsel(25) or hsel(27) or hsel(29) or hsel(31);
     bnslave(1) := hsel(2) or hsel(3) or hsel(6) or hsel(7) or
-                  hsel(10) or hsel(11) or hsel(14) or hsel(15);
+                  hsel(10) or hsel(11) or hsel(14) or hsel(15) or
+                  hsel(18) or hsel(19) or hsel(22) or hsel(23) or
+                  hsel(26) or hsel(27) or hsel(30) or hsel(31);
     bnslave(2) := hsel(4) or hsel(5) or hsel(6) or hsel(7) or
-                  hsel(12) or hsel(13) or hsel(14) or hsel(15);
+                  hsel(12) or hsel(13) or hsel(14) or hsel(15) or
+                  hsel(20) or hsel(21) or hsel(22) or hsel(23) or
+                  hsel(28) or hsel(29) or hsel(30) or hsel(31);
     bnslave(3) := hsel(8) or hsel(9) or hsel(10) or hsel(11) or
-                  hsel(12) or hsel(13) or hsel(14) or hsel(15);
+                  hsel(12) or hsel(13) or hsel(14) or hsel(15) or
+                  hsel(24) or hsel(25) or hsel(26) or hsel(27) or
+                  hsel(28) or hsel(29) or hsel(30) or hsel(31);
+    bnslave(4) := hsel(16) or hsel(17) or hsel(18) or hsel(19) or
+                  hsel(20) or hsel(21) or hsel(22) or hsel(23) or
+                  hsel(24) or hsel(25) or hsel(26) or hsel(27) or
+                  hsel(28) or hsel(29) or hsel(30) or hsel(31);
     nslave := conv_integer(bnslave(SIMAX downto 0));
 
     if ((((IOAREA and IOMSK) = (haddr(31 downto 20) and IOMSK)) and (ioen /= 0))

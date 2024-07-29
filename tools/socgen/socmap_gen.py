@@ -14,7 +14,7 @@ from thirdparty import *
 # <esp>/rtl/include/grlib/amba/amba.vhd
 # <esp>/soft/leon3/include/esp_probe.h
 NAPBS = 512
-NAHBS = 16
+NAHBS = 32
 # Physical interrupt lines
 IRQ_LINES = 32
 # Maximum number of components is not an actual limitation in ESP
@@ -81,10 +81,10 @@ AHB2APB_HADDR["ibex"] = 0x600
 RISCV_CLINT_HINDEX = 2
 
 # Memory controller slave index
-DDR_HINDEX = [4, 5, 6, 7]
+DDR_HINDEX = list(range(4, 4 + NMEM_MAX))
 
 # First shared-local memory slave index
-SLM_HINDEX = 8
+SLM_HINDEX = 20
 
 # Main memory area (12 MSBs)
 DDR_HADDR = dict()
@@ -100,7 +100,7 @@ SLMDDR_HADDR = 0xC00
 DDR_SIZE = 0x400
 
 # Frame-buffer index
-FB_HINDEX = 12
+FB_HINDEX = 3
 
 # CPU tile power manager I/O-bus slave index
 DVFS_PINDEX = [5, 6, 7, 8]
@@ -870,7 +870,11 @@ def print_mapping(fp, soc, esp_config):
   fp.write("  ----  Memory controllers\n")
   offset = DDR_HADDR[esp_config.cpu_arch];
   if esp_config.nmem > 0:
-    size = int(DDR_SIZE / esp_config.nmem)
+    #workaround for using 7 mem tiles with profpga-xcvu19p
+    if esp_config.nmem > 4:
+      size = int(DDR_SIZE / 8)
+    else:
+      size = int(DDR_SIZE / esp_config.nmem)
   else:
     size = DDR_SIZE
   mask = 0xfff & ~(size - 1)
