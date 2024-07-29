@@ -211,10 +211,13 @@ architecture rtl of esp_acc_dma is
   signal count_n_dest         : integer range 0 to MAX_MCAST_DESTS - 1;
   signal p2p_mcast_ndests     : integer range 0 to MAX_MCAST_DESTS - 1;
 
-  signal p2p_mcast_nsrcs      : std_ulogic;	-- KL
+  signal p2p_mcast_nsrcs      : std_ulogic;
   signal p2p_ndest_vec        : std_logic_vector(0 to 3);
-  signal p2p_mcast_header_vec : dma_noc_flit_vector(0 to 3);		--KL
-  signal p2p_filled_quadrants : integer range 0 to 7;				--KL
+  signal p2p_ndest_vec_l      : std_logic_vector(0 to 3);
+  signal p2p_mcast_header_vec : dma_noc_flit_vector(0 to 3);
+  signal p2p_mcast_header_vec_l : dma_noc_flit_vector(0 to 3);
+  signal p2p_filled_quadrants : integer range 0 to 4;
+  signal p2p_filled_quadrants_l : integer range 0 to 4;
   signal p2p_wr_qd          : std_logic;
   signal set_p2p_wr_qd      : std_logic;
   signal clear_p2p_wr_qd    : std_logic;
@@ -521,6 +524,10 @@ end generate tlb_gen;
     len_tmp := (others => '0');
     offset := (others => '0');
 
+    p2p_mcast_header_vec <= (others => (others => '0'));
+    p2p_ndest_vec <= (others => '0');
+    p2p_filled_quadrants <= 0;   
+
     if tlb_empty = '1' then
       -- fetch page table
       if GLOB_PHYS_ADDR_BITS > 32 then
@@ -588,9 +595,9 @@ end generate tlb_gen;
       if p2p_mcast_nsrcs = '1' then       --multiple source multicasting
         if hdr_gen = '0' then	--first time running
           mcast_data := create_header_mcast(DMA_NOC_FLIT_SIZE, local_y, local_x,
-                                             p2p_dst_arr_y(MAX_MCAST_DESTS - 2 downto 0),
-                                             p2p_dst_arr_x(MAX_MCAST_DESTS - 2 downto 0),
-                                             p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type, p2p_mcast_nsrcs);	--CHANGE_KL: added p2p_mcast_nsrcs;
+                                              p2p_dst_arr_y(MAX_MCAST_DESTS - 2 downto 0),
+                                              p2p_dst_arr_x(MAX_MCAST_DESTS - 2 downto 0),
+                                              p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type, p2p_mcast_nsrcs);	--CHANGE_KL: added p2p_mcast_nsrcs;
 
           p2p_mcast_header_vec <= mcast_data.header_vec;
           p2p_ndest_vec <= mcast_data.quad_count;
@@ -601,9 +608,9 @@ end generate tlb_gen;
           end loop;
           p2p_filled_quadrants <= to_integer(p2p_filled_quad);
         end if;
-        p2p_header_v := p2p_mcast_header_vec(to_integer(unsigned(q_state)));
+        p2p_header_v := p2p_mcast_header_vec_l(to_integer(unsigned(q_state)));
       else	--single source multicasting; same as before
- 	mcast_data := create_header_mcast(DMA_NOC_FLIT_SIZE, local_y, local_x,
+ 	      mcast_data := create_header_mcast(DMA_NOC_FLIT_SIZE, local_y, local_x,
                                             p2p_dst_arr_y(MAX_MCAST_DESTS - 2 downto 0),
                                             p2p_dst_arr_x(MAX_MCAST_DESTS - 2 downto 0),
                                             p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type, p2p_mcast_nsrcs);	--CHANGE_KL: added p2p_mcast_nsrcs;
@@ -645,6 +652,9 @@ end generate tlb_gen;
       tlb_count <= (others => '0');
       word_count <= (others => '0');
       p2p_wr_qd <= '0';
+      p2p_mcast_header_vec_l <= (others => (others => '0'));
+      p2p_ndest_vec_l <= (others => '0');
+      p2p_filled_quadrants_l <= 0;
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_r <= header;
@@ -703,6 +713,11 @@ end generate tlb_gen;
       end if;
       if clear_p2p_wr_qd = '1' then
         p2p_wr_qd <= '0';
+      end if;
+      if hdr_gen = '0' then
+        p2p_mcast_header_vec_l <= p2p_mcast_header_vec;
+        p2p_ndest_vec_l <= p2p_ndest_vec;
+        p2p_filled_quadrants_l <= p2p_filled_quadrants;
       end if;
     end if;
   end process;
@@ -847,7 +862,7 @@ end generate tlb_gen;
     burst <= '0';
 
     if p2p_mcast_nsrcs = '1' and hdr_gen = '1' then
-      case p2p_filled_quadrants is
+      case p2p_filled_quadrants_l is
         when 0 =>
           if_cond_0 := (others => '0');
           if_cond_1 := (others => '0');
@@ -863,7 +878,6 @@ end generate tlb_gen;
         when 4 =>
           if_cond_0 := rcv_p2p_length(29 downto 0) & "00";
           if_cond_1 := len(29 downto 0) & "00";
-        when others =>
       end case;
     else
       if_cond_0 := rcv_p2p_length;
@@ -1332,23 +1346,23 @@ end generate tlb_gen;
       q_next <= (others => '0');
     elsif clk'event and clk = '1' then	-- rising clock edge
       if hdr_gen_init = '1' then
-        if p2p_ndest_vec(0) = '1' then
+        if p2p_ndest_vec_l(0) = '1' then
           q_state <= "00";
-        elsif p2p_ndest_vec(1) = '1' then
+        elsif p2p_ndest_vec_l(1) = '1' then
           q_state <= "01";
-        elsif p2p_ndest_vec(2) = '1' then
+        elsif p2p_ndest_vec_l(2) = '1' then
           q_state <= "10";
-        elsif p2p_ndest_vec(3) = '1' then
+        elsif p2p_ndest_vec_l(3) = '1' then
           q_state <= "11";
         else
           q_state <= "00";
         end if;
       else
-        if p2p_ndest_vec(to_integer(unsigned(q_state) + "01")) = '1' then
+        if p2p_ndest_vec_l(to_integer(unsigned(q_state) + "01")) = '1' then
           q_next <= std_logic_vector(unsigned(q_state) + "01");
-        elsif p2p_ndest_vec(to_integer(unsigned(q_state) + "10")) = '1' then
+        elsif p2p_ndest_vec_l(to_integer(unsigned(q_state) + "10")) = '1' then
           q_next <= std_logic_vector(unsigned(q_state) + "10");
-        elsif p2p_ndest_vec(to_integer(unsigned(q_state) + "11")) = '1' then
+        elsif p2p_ndest_vec_l(to_integer(unsigned(q_state) + "11")) = '1' then
           q_next <= std_logic_vector(unsigned(q_state) + "11");
         else
           q_next <= q_state;

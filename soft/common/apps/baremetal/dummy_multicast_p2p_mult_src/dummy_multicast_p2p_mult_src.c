@@ -28,7 +28,7 @@ typedef u64 token_t;
 
 // User defined registers
 #define TOKENS 512
-#define BATCH 4
+#define BATCH 16
 #define mask 0x0LL
 
 // Control the number of consumers
@@ -36,7 +36,7 @@ typedef u64 token_t;
 #define NUM_MULTICAST_1 8
 
 // MCAST Select the source ID
-#define SOURCE_DEV_ID_0 10
+#define SOURCE_DEV_ID_0 12
 #define SOURCE_DEV_ID_1 3
 
 /* Size of the contiguous chunks for scatter/gather */
@@ -50,8 +50,8 @@ static int validate_dummy_0(token_t *mem)
     int rtn = 0;
     for (j = 0; j < BATCH; j++)
         for (i = 0; i < TOKENS; i++)
-            if (mem[i + j * TOKENS] != (mask | (token_t) (i + j * TOKENS))) {
-                // printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
+            if (mem[i + j * TOKENS] != (mask | (token_t) ((2 * BATCH * TOKENS) + (i + j * TOKENS)))) {
+//                printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
                 rtn++;
             }
     return rtn;
@@ -75,7 +75,7 @@ static void init_buf_0(token_t *mem)
     int i, j;
     for (j = 0; j < BATCH; j++)
         for (i = 0; i < TOKENS; i++)
-            mem[i + j * TOKENS] = (mask | (token_t) (i + j * TOKENS));
+            mem[i + j * TOKENS] = (mask | (token_t) ((2 * BATCH * TOKENS) + (i + j * TOKENS)));
 }
 
 static void init_buf_1(token_t *mem)
@@ -142,9 +142,9 @@ int main(int argc, char * argv[])
 
 	unsigned **ptable = NULL;
 	token_t *mem;
-    int dev_id_0[NUM_MULTICAST_0 + 1] = {10, 2, 4, 5, 7, 12, 13, 15};
+    int dev_id_0[NUM_MULTICAST_0 + 1] = {12, 2, 4, 5, 7, 10, 13, 15};
     int dev_id_1[NUM_MULTICAST_1 + 1] = {3, 0, 1, 6, 8, 9, 11, 14, 16};
-    int dev_id[NUM_MULTICAST_0 + NUM_MULTICAST_1 + 1 + 1] = {3, 10, 0, 1, 2, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16};
+    int dev_id[NUM_MULTICAST_0 + NUM_MULTICAST_1 + 1 + 1] = {3, 12, 0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16};
     int i;
 
     // Check if scatter-gather DMA is disabled

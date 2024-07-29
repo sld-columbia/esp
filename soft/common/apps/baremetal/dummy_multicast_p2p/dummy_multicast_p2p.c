@@ -28,14 +28,16 @@ typedef u64 token_t;
 
 // User defined registers
 #define TOKENS 512
-#define BATCH 4
+#define BATCH 16
 #define mask 0x0LL
 
 // Control the number of consumers
-#define NUM_MULTICAST 2
+//#define NUM_MULTICAST 16
+#define NUM_MULTICAST 16
 
 // MCAST Select the source ID
-#define SOURCE_DEV_ID 0
+//#define SOURCE_DEV_ID 7
+#define SOURCE_DEV_ID 7
 
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 20
@@ -102,10 +104,10 @@ int main(int argc, char * argv[])
 	unsigned coherence;
         long long start, end;
 
-    printf("Scanning device tree...\n");
+//    printf("Scanning device tree...\n");
 	ndev = probe(&devs, VENDOR_SLD, SLD_DUMMY, DEV_NAME);
 	if (!ndev) {
-		printf("Error: %s device not found!\n", DEV_NAME);
+//		printf("Error: %s device not found!\n", DEV_NAME);
 		exit(EXIT_FAILURE);
 	}
 
@@ -121,29 +123,29 @@ int main(int argc, char * argv[])
 
     // Check if scatter-gather DMA is disabled
     if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) == 0) {
-        printf("  -> scatter-gather DMA is disabled. Abort.\n");
+//        printf("  -> scatter-gather DMA is disabled. Abort.\n");
         return 0;
     }
 
     if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) < nchunk) {
-        printf("  -> Not enough TLB entries available. Abort.\n");
+//        printf("  -> Not enough TLB entries available. Abort.\n");
         return 0;
     }
 
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(dummy_buf_size);
-    printf("\n  memory buffer base-address = %p\n", mem);
+//    printf("\n  memory buffer base-address = %p\n", mem);
     coherence = ACC_COH_NONE;
 
     // Initialize input: write floating point hex values (simpler to debug)
-    init_buf(mem);
+    init_buf(&mem[source_dev_id * BATCH * TOKENS]);
 
     //Alocate and populate page table
     ptable = aligned_malloc(nchunk * sizeof(unsigned *));
     for (i = 0; i < nchunk; i++)
         ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(unsigned))];
-    printf("  ptable = %p\n", ptable);
-    printf("  nchunk = %lu\n\n", nchunk);
+//    printf("  ptable = %p\n", ptable);
+//    printf("  nchunk = %lu\n\n", nchunk);
 
     for (int i = 0; i < num_multicast + 1; i++) {
         // Configure device
@@ -157,13 +159,8 @@ int main(int argc, char * argv[])
         iowrite32(&devs[i], PT_ADDRESS_REG, (unsigned long) ptable);
         iowrite32(&devs[i], PT_NCHUNK_REG, nchunk);
         iowrite32(&devs[i], PT_SHIFT_REG, CHUNK_SHIFT);
-        iowrite32(&devs[i], SRC_OFFSET_REG, 0);
-        if (i == source_dev_id)
-            iowrite32(&devs[i], DST_OFFSET_REG, 0);
-//        else if (i == 0)
-//            iowrite32(&devs[i], DST_OFFSET_REG, source_dev_id * dummy_buf_size / (num_multicast + 1));
-        else
-            iowrite32(&devs[i], DST_OFFSET_REG, i * dummy_buf_size / (num_multicast + 1));
+        iowrite32(&devs[i], SRC_OFFSET_REG, source_dev_id * dummy_buf_size / (num_multicast + 1));
+        iowrite32(&devs[i], DST_OFFSET_REG, i * dummy_buf_size / (num_multicast + 1));
 
         // Accelerator-specific registers
         iowrite32(&devs[i], TOKENS_REG, TOKENS);
@@ -174,7 +171,7 @@ int main(int argc, char * argv[])
     esp_flush(coherence);
 
     // Start accelerator
-    printf("  Starting multicast to %d accelerators...\n", num_multicast);
+//    printf("  Starting multicast to %d accelerators...\n", num_multicast);
 
     start = get_counter();
 
@@ -196,7 +193,7 @@ int main(int argc, char * argv[])
     }
 
     end = get_counter();
-    printf("Total cycles = %lld\n", end - start);
+//    printf("Total cycles = %lld\n", end - start);
 
     for (int i = 0; i < num_multicast + 1; i++) {
         iowrite32(&devs[i], CMD_REG, 0x0);
@@ -206,15 +203,18 @@ int main(int argc, char * argv[])
     printf("  Validating...\n\n");
 
     // Validation
-    for (int i = 0; i < num_multicast; i++) {
-        int error_increment = validate_dummy(&mem[(i + 1) * BATCH * TOKENS]);
+    for (int i = 0; i < num_multicast + 1; i++) {
+        int error_increment = 0;
+        if (i != source_dev_id) {
+            error_increment = validate_dummy(&mem[i * BATCH * TOKENS]);
+        }
         // errors += validate_dummy(&mem[(i + 1) * BATCH * TOKENS]);
         errors += error_increment;
-//        printf("Memory Block %d Iterated...\n", i + 1);
+        printf("Memory Block %d Iterated...\n", i);
         if (!error_increment)
-            printf("Memory Block %d PASS\n", i + 1);
+            printf("Memory Block %d PASS\n", i);
         else
-            printf("Memory Block %d FAIL\n", i + 1);
+            printf("Memory Block %d FAIL\n", i);
     }
     printf("Total Errors %d\n", errors);
     if (!errors)
