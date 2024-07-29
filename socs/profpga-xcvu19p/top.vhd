@@ -51,7 +51,7 @@ entity top is
     esp_clk_n         : in    std_ulogic;  -- 78.25 MHz clock
     -- DDR4
     reset             : in    std_ulogic;
-    
+
     c0_sys_clk_p      : in    std_logic;   -- 125 MHz clock
     c0_sys_clk_n      : in    std_logic;   -- 125 MHz clock
     c0_ddr4_act_n     : out   std_logic;
@@ -70,7 +70,7 @@ entity top is
     c0_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
     c0_calib_complete : out   std_logic;
     c0_diagnostic_led : out   std_ulogic;
-    
+
     c1_sys_clk_p      : in    std_logic;   -- 125 MHz clock
     c1_sys_clk_n      : in    std_logic;   -- 125 MHz clock
     c1_ddr4_act_n     : out   std_logic;
@@ -89,7 +89,7 @@ entity top is
     c1_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
     c1_calib_complete : out   std_logic;
     c1_diagnostic_led : out   std_ulogic;
-    
+
     c2_sys_clk_p      : in    std_logic;   -- 125 MHz clock
     c2_sys_clk_n      : in    std_logic;   -- 125 MHz clock
     c2_ddr4_act_n     : out   std_logic;
@@ -108,7 +108,7 @@ entity top is
     c2_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
     c2_calib_complete : out   std_logic;
     c2_diagnostic_led : out   std_ulogic;
-    
+
     c3_sys_clk_p      : in    std_logic;   -- 125 MHz clock
     c3_sys_clk_n      : in    std_logic;   -- 125 MHz clock
     c3_ddr4_act_n     : out   std_logic;
@@ -127,6 +127,82 @@ entity top is
     c3_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
     c3_calib_complete : out   std_logic;
     c3_diagnostic_led : out   std_ulogic;
+
+    c4_sys_clk_p      : in    std_logic;   -- 125 MHz clock
+    c4_sys_clk_n      : in    std_logic;   -- 125 MHz clock
+    c4_ddr4_act_n     : out   std_logic;
+    c4_ddr4_adr       : out   std_logic_vector(16 downto 0);
+    c4_ddr4_ba        : out   std_logic_vector(1 downto 0);
+    c4_ddr4_bg        : out   std_logic_vector(1 downto 0);
+    c4_ddr4_cke       : out   std_logic_vector(1 downto 0);
+    c4_ddr4_odt       : out   std_logic_vector(1 downto 0);
+    c4_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
+    c4_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
+    c4_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
+    c4_ddr4_reset_n   : out   std_logic;
+    c4_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
+    c4_ddr4_dq        : inout std_logic_vector(71 downto 0);
+    c4_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
+    c4_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
+    c4_calib_complete : out   std_logic;
+    c4_diagnostic_led : out   std_ulogic;
+
+    c5_sys_clk_p      : in    std_logic;   -- 125 MHz clock
+    c5_sys_clk_n      : in    std_logic;   -- 125 MHz clock
+    c5_ddr4_act_n     : out   std_logic;
+    c5_ddr4_adr       : out   std_logic_vector(16 downto 0);
+    c5_ddr4_ba        : out   std_logic_vector(1 downto 0);
+    c5_ddr4_bg        : out   std_logic_vector(1 downto 0);
+    c5_ddr4_cke       : out   std_logic_vector(1 downto 0);
+    c5_ddr4_odt       : out   std_logic_vector(1 downto 0);
+    c5_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
+    c5_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
+    c5_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
+    c5_ddr4_reset_n   : out   std_logic;
+    c5_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
+    c5_ddr4_dq        : inout std_logic_vector(71 downto 0);
+    c5_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
+    c5_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
+    c5_calib_complete : out   std_logic;
+    c5_diagnostic_led : out   std_ulogic;
+
+    c6_sys_clk_p      : in    std_logic;   -- 125 MHz clock
+    c6_sys_clk_n      : in    std_logic;   -- 125 MHz clock
+    c6_ddr4_act_n     : out   std_logic;
+    c6_ddr4_adr       : out   std_logic_vector(16 downto 0);
+    c6_ddr4_ba        : out   std_logic_vector(1 downto 0);
+    c6_ddr4_bg        : out   std_logic_vector(1 downto 0);
+    c6_ddr4_cke       : out   std_logic_vector(1 downto 0);
+    c6_ddr4_odt       : out   std_logic_vector(1 downto 0);
+    c6_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
+    c6_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
+    c6_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
+    c6_ddr4_reset_n   : out   std_logic;
+    c6_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
+    c6_ddr4_dq        : inout std_logic_vector(71 downto 0);
+    c6_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
+    c6_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
+    c6_calib_complete : out   std_logic;
+    c6_diagnostic_led : out   std_ulogic;
+
+--    c7_sys_clk_p      : in    std_logic;   -- 125 MHz clock
+--    c7_sys_clk_n      : in    std_logic;   -- 125 MHz clock
+--    c7_ddr4_act_n     : out   std_logic;
+--    c7_ddr4_adr       : out   std_logic_vector(16 downto 0);
+--    c7_ddr4_ba        : out   std_logic_vector(1 downto 0);
+--    c7_ddr4_bg        : out   std_logic_vector(1 downto 0);
+--    c7_ddr4_cke       : out   std_logic_vector(1 downto 0);
+--    c7_ddr4_odt       : out   std_logic_vector(1 downto 0);
+--    c7_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
+--    c7_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
+--    c7_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
+--    c7_ddr4_reset_n   : out   std_logic;
+--    c7_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
+--    c7_ddr4_dq        : inout std_logic_vector(71 downto 0);
+--    c7_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
+--    c7_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
+--    c7_calib_complete : out   std_logic;
+--    c7_diagnostic_led : out   std_ulogic;
     -- UART
     uart_rxd          : in    std_ulogic;
     uart_txd          : out   std_ulogic;
@@ -208,7 +284,7 @@ architecture rtl of top is
   end component ahb2mig_ebddr4r5;
 
   function set_ddr_index (
-    constant n : integer range 0 to 3)
+    constant n : integer range 0 to 7)
     return integer is
   begin
     if n > (MEM_ID_RANGE_MSB) then
@@ -218,11 +294,15 @@ architecture rtl of top is
     end if;
   end set_ddr_index;
 
-  constant this_ddr_index : attribute_vector(0 to 3) := (
+  constant this_ddr_index : attribute_vector(0 to 7) := (
     0 => set_ddr_index(0),
     1 => set_ddr_index(1),
     2 => set_ddr_index(2),
-    3 => set_ddr_index(3)
+    3 => set_ddr_index(3),
+    4 => set_ddr_index(4),
+    5 => set_ddr_index(5),
+    6 => set_ddr_index(6),
+    7 => set_ddr_index(7)
     );
 
 -- Switches
@@ -230,11 +310,16 @@ architecture rtl of top is
 
 -- clock and reset
   signal clkm, clkm_1, clkm_2, clkm_3                   : std_ulogic := '0';
+  signal clkm_4, clkm_5, clkm_6, clkm_7                 : std_ulogic := '0';
   signal clkm_sync_rst, clkm_sync_rst_1                 : std_ulogic;
   signal clkm_sync_rst_2, clkm_sync_rst_3               : std_ulogic;
+  signal clkm_sync_rst_4, clkm_sync_rst_5               : std_ulogic;
+  signal clkm_sync_rst_6, clkm_sync_rst_7               : std_ulogic;
   signal rstn, rstraw, rstraw_1, rstraw_2, rstraw_3     : std_ulogic;
+  signal rstraw_4, rstraw_5, rstraw_6, rstraw_7         : std_ulogic;
   signal lock, rst                                      : std_ulogic;
   signal migrstn, migrstn_1, migrstn_2, migrstn_3       : std_logic;
+  signal migrstn_4, migrstn_5, migrstn_6, migrstn_7     : std_logic;
   signal cgi                                            : clkgen_in_type;
   signal cgo                                            : clkgen_out_type;
 
@@ -251,6 +336,18 @@ architecture rtl of top is
   signal c3_calib_done        : std_ulogic;
   signal c3_diagnostic_count  : std_logic_vector(26 downto 0);
   signal c3_diagnostic_toggle : std_ulogic;
+  signal c4_calib_done        : std_ulogic;
+  signal c4_diagnostic_count  : std_logic_vector(26 downto 0);
+  signal c4_diagnostic_toggle : std_ulogic;
+  signal c5_calib_done        : std_ulogic;
+  signal c5_diagnostic_count  : std_logic_vector(26 downto 0);
+  signal c5_diagnostic_toggle : std_ulogic;
+  signal c6_calib_done        : std_ulogic;
+  signal c6_diagnostic_count  : std_logic_vector(26 downto 0);
+  signal c6_diagnostic_toggle : std_ulogic;
+--  signal c7_calib_done        : std_ulogic;
+--  signal c7_diagnostic_count  : std_logic_vector(26 downto 0);
+--  signal c7_diagnostic_toggle : std_ulogic;
 
 -- Ethernet signals
   signal ethi : eth_in_type;
@@ -264,7 +361,7 @@ architecture rtl of top is
   signal uart_ctsn_int : std_logic;       -- UART1_RTSN (u1i.ctsn)
   signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
 
-constant MAX_NMEM_TILES : integer := 4;
+constant MAX_NMEM_TILES : integer := 8;
 -- Memory controller DDR4
   signal ddr_ahbsi : ahb_slv_in_vector_type(0 to MAX_NMEM_TILES - 1);
   signal ddr_ahbso : ahb_slv_out_vector_type(0 to MAX_NMEM_TILES - 1);
@@ -379,7 +476,7 @@ begin
   end process c0_diagnostic;
   c0_diagnostic_toggle <= c0_diagnostic_count(26);
   c0_led_diag_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c0_diagnostic_led, c0_diagnostic_toggle);
-  
+
   c1_diagnostic : process (clkm_1, clkm_sync_rst_1)
   begin  -- process c1_diagnostic
     if clkm_sync_rst_1 = '1' then           -- asynchronous reset (active high)
@@ -413,6 +510,49 @@ begin
   c3_diagnostic_toggle <= c3_diagnostic_count(26);
   c3_led_diag_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c3_diagnostic_led, c3_diagnostic_toggle);
 
+  c4_diagnostic : process (clkm, clkm_sync_rst)
+  begin  -- process c4_diagnostic
+    if clkm_sync_rst = '1' then           -- asynchronous reset (active high)
+      c4_diagnostic_count <= (others => '0');
+    elsif clkm'event and clkm = '1' then  -- rising clock edge
+      c4_diagnostic_count <= c4_diagnostic_count + 1;
+    end if;
+  end process c4_diagnostic;
+  c4_diagnostic_toggle <= c4_diagnostic_count(26);
+  c4_led_diag_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c4_diagnostic_led, c4_diagnostic_toggle);
+
+  c5_diagnostic : process (clkm, clkm_sync_rst)
+  begin  -- process c5_diagnostic
+    if clkm_sync_rst = '1' then           -- asynchronous reset (active high)
+      c5_diagnostic_count <= (others => '0');
+    elsif clkm'event and clkm = '1' then  -- rising clock edge
+      c5_diagnostic_count <= c5_diagnostic_count + 1;
+    end if;
+  end process c5_diagnostic;
+  c5_diagnostic_toggle <= c5_diagnostic_count(26);
+  c5_led_diag_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c5_diagnostic_led, c5_diagnostic_toggle);
+
+  c6_diagnostic : process (clkm, clkm_sync_rst)
+  begin  -- process c6_diagnostic
+    if clkm_sync_rst = '1' then           -- asynchronous reset (active high)
+      c6_diagnostic_count <= (others => '0');
+    elsif clkm'event and clkm = '1' then  -- rising clock edge
+      c6_diagnostic_count <= c6_diagnostic_count + 1;
+    end if;
+  end process c6_diagnostic;
+  c6_diagnostic_toggle <= c6_diagnostic_count(26);
+  c6_led_diag_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c6_diagnostic_led, c6_diagnostic_toggle);
+
+--  c7_diagnostic : process (clkm, clkm_sync_rst)
+--  begin  -- process c7_diagnostic
+--    if clkm_sync_rst = '1' then           -- asynchronous reset (active high)
+--      c7_diagnostic_count <= (others => '0');
+--    elsif clkm'event and clkm = '1' then  -- rising clock edge
+--      c7_diagnostic_count <= c7_diagnostic_count + 1;
+--    end if;
+--  end process c7_diagnostic;
+--  c7_diagnostic_toggle <= c7_diagnostic_count(26);
+--  c7_led_diag_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c7_diagnostic_led, c7_diagnostic_toggle);
 
 -------------------------------------------------------------------------------
 -- Leds -----------------------------------------------------------------------
@@ -437,6 +577,11 @@ begin
   calib1_complete_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c1_calib_complete, c1_calib_done);
   calib2_complete_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c2_calib_complete, c2_calib_done);
   calib3_complete_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c3_calib_complete, c3_calib_done);
+  calib4_complete_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c4_calib_complete, c4_calib_done);
+  calib5_complete_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c5_calib_complete, c5_calib_done);
+  calib6_complete_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c6_calib_complete, c6_calib_done);
+  --calib7_complete_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (c7_calib_complete, c7_calib_done);
+
 
 
   led3_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v) port map (LED_BLUE, '0');
@@ -477,7 +622,8 @@ begin
   cgi.pllctrl <= "00";
   cgi.pllrst  <= rstraw;
 
-  lock <= c0_calib_done and c1_calib_done and c2_calib_done and c3_calib_done and cgo.clklock;
+  lock <= c0_calib_done and c1_calib_done and c2_calib_done and c3_calib_done
+          and c4_calib_done and c5_calib_done and c6_calib_done and cgo.clklock;
 
   reset_pad : inpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (reset, rst);
   rst0      : rstgen                    -- reset generator
@@ -496,6 +642,18 @@ begin
   mig_rst3 : rstgen                         -- reset generator
     generic map (acthigh => 1)
     port map (rst, clkm_3, lock, migrstn_3, rstraw_3);
+  mig_rst4 : rstgen                         -- reset generator
+    generic map (acthigh => 1)
+    port map (rst, clkm_4, lock, migrstn_4, rstraw_4);
+  mig_rst5 : rstgen                         -- reset generator
+    generic map (acthigh => 1)
+    port map (rst, clkm_5, lock, migrstn_5, rstraw_5);
+  mig_rst6 : rstgen                         -- reset generator
+    generic map (acthigh => 1)
+    port map (rst, clkm_6, lock, migrstn_6, rstraw_6);
+--  mig_rst7 : rstgen                         -- reset generator
+--    generic map (acthigh => 1)
+--    port map (rst, clkm_7, lock, migrstn_7, rstraw_7);
 
   esp_clk_buf : ibufgds
     generic map(
@@ -556,7 +714,7 @@ begin
         ui_clk           => clkm,
         ui_clk_sync_rst  => clkm_sync_rst
         );
-    
+
     ddrc1 : ahb2mig_ebddr4r5
       generic map (
         hindex => 0,
@@ -588,7 +746,7 @@ begin
         ui_clk           => clkm_1,
         ui_clk_sync_rst  => clkm_sync_rst_1
         );
-    
+
     ddrc2 : ahb2mig_ebddr4r5
       generic map (
         hindex => 0,
@@ -620,7 +778,7 @@ begin
         ui_clk           => clkm_2,
         ui_clk_sync_rst  => clkm_sync_rst_2
         );
-    
+
     ddrc3 : ahb2mig_ebddr4r5
       generic map (
         hindex => 0,
@@ -652,7 +810,134 @@ begin
         ui_clk           => clkm_3,
         ui_clk_sync_rst  => clkm_sync_rst_3
         );
-  
+
+    ddrc4 : ahb2mig_ebddr4r5
+      generic map (
+        hindex => 0,
+        haddr  => ddr_haddr(this_ddr_index(4)),
+        hmask  => ddr_hmask(this_ddr_index(4)))
+      port map (
+        c0_sys_clk_p     => c4_sys_clk_p,
+        c0_sys_clk_n     => c4_sys_clk_n,
+        c0_ddr4_act_n    => c4_ddr4_act_n,
+        c0_ddr4_adr      => c4_ddr4_adr,
+        c0_ddr4_ba       => c4_ddr4_ba,
+        c0_ddr4_bg       => c4_ddr4_bg,
+        c0_ddr4_cke      => c4_ddr4_cke,
+        c0_ddr4_odt      => c4_ddr4_odt,
+        c0_ddr4_cs_n     => c4_ddr4_cs_n,
+        c0_ddr4_ck_t     => c4_ddr4_ck_t,
+        c0_ddr4_ck_c     => c4_ddr4_ck_c,
+        c0_ddr4_reset_n  => c4_ddr4_reset_n,
+        c0_ddr4_dm_dbi_n => c4_ddr4_dm_dbi_n,
+        c0_ddr4_dq       => c4_ddr4_dq,
+        c0_ddr4_dqs_c    => c4_ddr4_dqs_c,
+        c0_ddr4_dqs_t    => c4_ddr4_dqs_t,
+        ahbso            => ddr_ahbso(4),
+        ahbsi            => ddr_ahbsi(4),
+        calib_done       => c4_calib_done,
+        rst_n_syn        => migrstn_4,
+        rst_n_async      => rstraw_4,
+        clk_amba         => clkm_4,
+        ui_clk           => clkm_4,
+        ui_clk_sync_rst  => clkm_sync_rst_4
+        );
+
+    ddrc5 : ahb2mig_ebddr4r5
+      generic map (
+        hindex => 0,
+        haddr  => ddr_haddr(this_ddr_index(5)),
+        hmask  => ddr_hmask(this_ddr_index(5)))
+      port map (
+        c0_sys_clk_p     => c5_sys_clk_p,
+        c0_sys_clk_n     => c5_sys_clk_n,
+        c0_ddr4_act_n    => c5_ddr4_act_n,
+        c0_ddr4_adr      => c5_ddr4_adr,
+        c0_ddr4_ba       => c5_ddr4_ba,
+        c0_ddr4_bg       => c5_ddr4_bg,
+        c0_ddr4_cke      => c5_ddr4_cke,
+        c0_ddr4_odt      => c5_ddr4_odt,
+        c0_ddr4_cs_n     => c5_ddr4_cs_n,
+        c0_ddr4_ck_t     => c5_ddr4_ck_t,
+        c0_ddr4_ck_c     => c5_ddr4_ck_c,
+        c0_ddr4_reset_n  => c5_ddr4_reset_n,
+        c0_ddr4_dm_dbi_n => c5_ddr4_dm_dbi_n,
+        c0_ddr4_dq       => c5_ddr4_dq,
+        c0_ddr4_dqs_c    => c5_ddr4_dqs_c,
+        c0_ddr4_dqs_t    => c5_ddr4_dqs_t,
+        ahbso            => ddr_ahbso(5),
+        ahbsi            => ddr_ahbsi(5),
+        calib_done       => c5_calib_done,
+        rst_n_syn        => migrstn_5,
+        rst_n_async      => rstraw_5,
+        clk_amba         => clkm_5,
+        ui_clk           => clkm_5,
+        ui_clk_sync_rst  => clkm_sync_rst_5
+        );
+
+    ddrc6 : ahb2mig_ebddr4r5
+      generic map (
+        hindex => 0,
+        haddr  => ddr_haddr(this_ddr_index(6)),
+        hmask  => ddr_hmask(this_ddr_index(6)))
+      port map (
+        c0_sys_clk_p     => c6_sys_clk_p,
+        c0_sys_clk_n     => c6_sys_clk_n,
+        c0_ddr4_act_n    => c6_ddr4_act_n,
+        c0_ddr4_adr      => c6_ddr4_adr,
+        c0_ddr4_ba       => c6_ddr4_ba,
+        c0_ddr4_bg       => c6_ddr4_bg,
+        c0_ddr4_cke      => c6_ddr4_cke,
+        c0_ddr4_odt      => c6_ddr4_odt,
+        c0_ddr4_cs_n     => c6_ddr4_cs_n,
+        c0_ddr4_ck_t     => c6_ddr4_ck_t,
+        c0_ddr4_ck_c     => c6_ddr4_ck_c,
+        c0_ddr4_reset_n  => c6_ddr4_reset_n,
+        c0_ddr4_dm_dbi_n => c6_ddr4_dm_dbi_n,
+        c0_ddr4_dq       => c6_ddr4_dq,
+        c0_ddr4_dqs_c    => c6_ddr4_dqs_c,
+        c0_ddr4_dqs_t    => c6_ddr4_dqs_t,
+        ahbso            => ddr_ahbso(6),
+        ahbsi            => ddr_ahbsi(6),
+        calib_done       => c6_calib_done,
+        rst_n_syn        => migrstn_6,
+        rst_n_async      => rstraw_6,
+        clk_amba         => clkm_6,
+        ui_clk           => clkm_6,
+        ui_clk_sync_rst  => clkm_sync_rst_6
+        );
+
+--    ddrc7 : ahb2mig_ebddr4r5
+--      generic map (
+--        hindex => 0,
+--        haddr  => ddr_haddr(this_ddr_index(7)),
+--        hmask  => ddr_hmask(this_ddr_index(7)))
+--      port map (
+--        c0_sys_clk_p     => c7_sys_clk_p,
+--        c0_sys_clk_n     => c7_sys_clk_n,
+--        c0_ddr4_act_n    => c7_ddr4_act_n,
+--        c0_ddr4_adr      => c7_ddr4_adr,
+--        c0_ddr4_ba       => c7_ddr4_ba,
+--        c0_ddr4_bg       => c7_ddr4_bg,
+--        c0_ddr4_cke      => c7_ddr4_cke,
+--        c0_ddr4_odt      => c7_ddr4_odt,
+--        c0_ddr4_cs_n     => c7_ddr4_cs_n,
+--        c0_ddr4_ck_t     => c7_ddr4_ck_t,
+--        c0_ddr4_ck_c     => c7_ddr4_ck_c,
+--        c0_ddr4_reset_n  => c7_ddr4_reset_n,
+--        c0_ddr4_dm_dbi_n => c7_ddr4_dm_dbi_n,
+--        c0_ddr4_dq       => c7_ddr4_dq,
+--        c0_ddr4_dqs_c    => c7_ddr4_dqs_c,
+--        c0_ddr4_dqs_t    => c7_ddr4_dqs_t,
+--        ahbso            => ddr_ahbso(7),
+--        ahbsi            => ddr_ahbsi(7),
+--        calib_done       => c7_calib_done,
+--        rst_n_syn        => migrstn_7,
+--        rst_n_async      => rstraw_7,
+--        clk_amba         => clkm_7,
+--        ui_clk           => clkm_7,
+--        ui_clk_sync_rst  => clkm_sync_rst_7
+--        );
      end generate gen_mig;
 
   gen_mig_model : if (SIMULATION = true) generate
@@ -675,7 +960,7 @@ begin
         ahbsi => ddr_ahbsi(0),
         ahbso => ddr_ahbso(0)
         );
-    
+
     mig_ahbram1 : ahbram_sim
       generic map (
         hindex => 0,
@@ -693,7 +978,7 @@ begin
         ahbsi => ddr_ahbsi(1),
         ahbso => ddr_ahbso(1)
         );
-      
+
     mig_ahbram2 : ahbram_sim
       generic map (
         hindex => 0,
@@ -711,7 +996,7 @@ begin
         ahbsi => ddr_ahbsi(2),
         ahbso => ddr_ahbso(2)
         );
-    
+
     mig_ahbram3 : ahbram_sim
       generic map (
         hindex => 0,
@@ -730,6 +1015,78 @@ begin
         ahbso => ddr_ahbso(3)
         );
 
+    mig_ahbram4 : ahbram_sim
+      generic map (
+        hindex => 0,
+        tech   => 0,
+        kbytes => 1000,
+        pipe   => 0,
+        maccsz => AHBDW,
+        fname  => "ram.srec"
+        )
+      port map(
+        rst   => rstn,
+        clk   => clkm,
+        haddr => ddr_haddr(this_ddr_index(4)),
+        hmask => ddr_hmask(this_ddr_index(4)),
+        ahbsi => ddr_ahbsi(4),
+        ahbso => ddr_ahbso(4)
+        );
+
+    mig_ahbram5 : ahbram_sim
+      generic map (
+        hindex => 0,
+        tech   => 0,
+        kbytes => 1000,
+        pipe   => 0,
+        maccsz => AHBDW,
+        fname  => "ram.srec"
+        )
+      port map(
+        rst   => rstn,
+        clk   => clkm,
+        haddr => ddr_haddr(this_ddr_index(5)),
+        hmask => ddr_hmask(this_ddr_index(5)),
+        ahbsi => ddr_ahbsi(5),
+        ahbso => ddr_ahbso(5)
+        );
+
+    mig_ahbram6 : ahbram_sim
+      generic map (
+        hindex => 0,
+        tech   => 0,
+        kbytes => 1000,
+        pipe   => 0,
+        maccsz => AHBDW,
+        fname  => "ram.srec"
+        )
+      port map(
+        rst   => rstn,
+        clk   => clkm,
+        haddr => ddr_haddr(this_ddr_index(6)),
+        hmask => ddr_hmask(this_ddr_index(6)),
+        ahbsi => ddr_ahbsi(6),
+        ahbso => ddr_ahbso(6)
+        );
+
+    mig_ahbram7 : ahbram_sim
+      generic map (
+        hindex => 0,
+        tech   => 0,
+        kbytes => 1000,
+        pipe   => 0,
+        maccsz => AHBDW,
+        fname  => "ram.srec"
+        )
+      port map(
+        rst   => rstn,
+        clk   => clkm,
+        haddr => ddr_haddr(this_ddr_index(7)),
+        hmask => ddr_hmask(this_ddr_index(7)),
+        ahbsi => ddr_ahbsi(7),
+        ahbso => ddr_ahbso(7)
+        );
+
     c0_ddr4_act_n    <= '1';
     c0_ddr4_adr      <= (others => '0');
     c0_ddr4_ba       <= (others => '0');
@@ -746,7 +1103,7 @@ begin
     c0_ddr4_dqs_t    <= (others => 'Z');
     c0_calib_done <= '1';
     clkm          <= not clkm        after 3.2 ns;
-    
+
     c1_ddr4_act_n    <= '1';
     c1_ddr4_adr      <= (others => '0');
     c1_ddr4_ba       <= (others => '0');
@@ -763,7 +1120,7 @@ begin
     c1_ddr4_dqs_t    <= (others => 'Z');
     c1_calib_done <= '1';
     clkm_1          <= not clkm_1        after 3.2 ns;
-    
+
     c2_ddr4_act_n    <= '1';
     c2_ddr4_adr      <= (others => '0');
     c2_ddr4_ba       <= (others => '0');
@@ -780,7 +1137,7 @@ begin
     c2_ddr4_dqs_t    <= (others => 'Z');
     c2_calib_done <= '1';
     clkm_2          <= not clkm_2        after 3.2 ns;
-    
+
     c3_ddr4_act_n    <= '1';
     c3_ddr4_adr      <= (others => '0');
     c3_ddr4_ba       <= (others => '0');
@@ -797,6 +1154,74 @@ begin
     c3_ddr4_dqs_t    <= (others => 'Z');
     c3_calib_done <= '1';
     clkm_3          <= not clkm_3        after 3.2 ns;
+
+    c4_ddr4_act_n    <= '1';
+    c4_ddr4_adr      <= (others => '0');
+    c4_ddr4_ba       <= (others => '0');
+    c4_ddr4_bg       <= (others => '0');
+    c4_ddr4_cke      <= (others => '0');
+    c4_ddr4_odt      <= (others => '0');
+    c4_ddr4_cs_n     <= (others => '0');
+    c4_ddr4_ck_t     <= (others => '0');
+    c4_ddr4_ck_c     <= (others => '0');
+    c4_ddr4_reset_n  <= '1';
+    c4_ddr4_dm_dbi_n <= (others => 'Z');
+    c4_ddr4_dq       <= (others => 'Z');
+    c4_ddr4_dqs_c    <= (others => 'Z');
+    c4_ddr4_dqs_t    <= (others => 'Z');
+    c4_calib_done <= '1';
+    clkm_4          <= not clkm_4        after 4.2 ns;
+
+    c5_ddr4_act_n    <= '1';
+    c5_ddr4_adr      <= (others => '0');
+    c5_ddr4_ba       <= (others => '0');
+    c5_ddr4_bg       <= (others => '0');
+    c5_ddr4_cke      <= (others => '0');
+    c5_ddr4_odt      <= (others => '0');
+    c5_ddr4_cs_n     <= (others => '0');
+    c5_ddr4_ck_t     <= (others => '0');
+    c5_ddr4_ck_c     <= (others => '0');
+    c5_ddr4_reset_n  <= '1';
+    c5_ddr4_dm_dbi_n <= (others => 'Z');
+    c5_ddr4_dq       <= (others => 'Z');
+    c5_ddr4_dqs_c    <= (others => 'Z');
+    c5_ddr4_dqs_t    <= (others => 'Z');
+    c5_calib_done <= '1';
+    clkm_5          <= not clkm_5        after 5.2 ns;
+
+    c6_ddr4_act_n    <= '1';
+    c6_ddr4_adr      <= (others => '0');
+    c6_ddr4_ba       <= (others => '0');
+    c6_ddr4_bg       <= (others => '0');
+    c6_ddr4_cke      <= (others => '0');
+    c6_ddr4_odt      <= (others => '0');
+    c6_ddr4_cs_n     <= (others => '0');
+    c6_ddr4_ck_t     <= (others => '0');
+    c6_ddr4_ck_c     <= (others => '0');
+    c6_ddr4_reset_n  <= '1';
+    c6_ddr4_dm_dbi_n <= (others => 'Z');
+    c6_ddr4_dq       <= (others => 'Z');
+    c6_ddr4_dqs_c    <= (others => 'Z');
+    c6_ddr4_dqs_t    <= (others => 'Z');
+    c6_calib_done <= '1';
+    clkm_6          <= not clkm_6        after 6.2 ns;
+
+--    c7_ddr4_act_n    <= '1';
+--    c7_ddr4_adr      <= (others => '0');
+--    c7_ddr4_ba       <= (others => '0');
+--    c7_ddr4_bg       <= (others => '0');
+--    c7_ddr4_cke      <= (others => '0');
+--    c7_ddr4_odt      <= (others => '0');
+--    c7_ddr4_cs_n     <= (others => '0');
+--    c7_ddr4_ck_t     <= (others => '0');
+--    c7_ddr4_ck_c     <= (others => '0');
+--    c7_ddr4_reset_n  <= '1';
+--    c7_ddr4_dm_dbi_n <= (others => 'Z');
+--    c7_ddr4_dq       <= (others => 'Z');
+--    c7_ddr4_dqs_c    <= (others => 'Z');
+--    c7_ddr4_dqs_t    <= (others => 'Z');
+--    c7_calib_done <= '1';
+--    clkm_7          <= not clkm_7        after 7.2 ns;
 
   -- pragma translate_on
   end generate gen_mig_model;
@@ -1005,7 +1430,11 @@ begin
   sys_clk(0)     <= clkm;
   sys_clk(1)     <= clkm_1;
   sys_clk(2)     <= clkm_2;
-  sys_clk(3)     <= clkm_3; 
+  sys_clk(3)     <= clkm_3;
+  sys_clk(4)     <= clkm_4;
+  sys_clk(5)     <= clkm_5;
+  sys_clk(6)     <= clkm_6;
+--  sys_clk(7)     <= clkm_7;
 
   set_upper_ahbsi : for i in CFG_NMEM_TILE to MAX_NMEM_TILES-1 generate
         ddr_ahbsi(i) <= ahbs_in_none; 
