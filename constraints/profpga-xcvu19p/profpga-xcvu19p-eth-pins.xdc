@@ -4,49 +4,48 @@
 #-----------------------------------------------------------
 #                         ETHERNET
 #-----------------------------------------------------------
-
-# {ta0_eb1_ETH2_NRESET}
-set_property PACKAGE_PIN G13 [get_ports reset_o2]
+# {bb1_eb1_ETH2_NRESET}
+set_property PACKAGE_PIN BF49 [get_ports {reset_o2}]
 set_property IOSTANDARD LVCMOS18 [get_ports reset_o2]
 
-# {ta0_eb1_ETH2_RX_CLK}
-set_property PACKAGE_PIN H10 [get_ports erx_clk]
+# {bb1_eb1_ETH2_RX_CLK}
+set_property PACKAGE_PIN BC60 [get_ports {erx_clk}]
 set_property IOSTANDARD LVCMOS18 [get_ports erx_clk]
 
-# {ta0_eb1_ETH2_TX_CLK_RGMII_SEL1}
-set_property PACKAGE_PIN H13 [get_ports etx_clk]
+# {bb1_eb1_ETH2_TX_CLK_RGMII_SEL1}
+set_property PACKAGE_PIN BE49 [get_ports {etx_clk}]
 set_property IOSTANDARD LVCMOS18 [get_ports etx_clk]
 
-# {ta0_eb1_ETH2_CRS_RGMII_SEL0}
-set_property PACKAGE_PIN B7 [get_ports erx_crs]
+# {bb1_eb1_ETH2_CRS_RGMII_SEL0}
+set_property PACKAGE_PIN BJ37 [get_ports {erx_crs}]
 set_property IOSTANDARD LVCMOS18 [get_ports erx_crs]
 
-# {ta0_eb1_ETH2_RX_DV_RCK}
-set_property PACKAGE_PIN G9 [get_ports erx_dv]
+# {bb1_eb1_ETH2_RX_DV_RCK}
+set_property PACKAGE_PIN BC61 [get_ports {erx_dv}]
 set_property IOSTANDARD LVCMOS18 [get_ports erx_dv]
 
-# {ta0_eb1_ETH2_COL_CLK_MAC_FREQ}
-set_property PACKAGE_PIN A7 [get_ports erx_col]
+# {bb1_eb1_ETH2_COL_CLK_MAC_FREQ}
+set_property PACKAGE_PIN BJ38 [get_ports {erx_col}]
 set_property IOSTANDARD LVCMOS18 [get_ports erx_col]
 
-# {ta0_eb1_ETH2_RX_ER_RXDV_ER}
-set_property PACKAGE_PIN F7 [get_ports erx_er]
+# {bb1_eb1_ETH2_RX_ER_RXDV_ER}
+set_property PACKAGE_PIN BJ40 [get_ports {erx_er}]
 set_property IOSTANDARD LVCMOS18 [get_ports erx_er]
 
-# {ta0_eb1_ETH2_RXD0_RX0}
-set_property PACKAGE_PIN C5 [get_ports erxd[0]]
+# {bb1_eb1_ETH2_RXD0_RX0}
+set_property PACKAGE_PIN BK40 [get_ports {erxd[0]}]
 set_property IOSTANDARD LVCMOS18 [get_ports erxd[0]]
 
-# {ta0_eb1_ETH2_RXD1_RX1}
-set_property PACKAGE_PIN D5 [get_ports erxd[1]]
+# {bb1_eb1_ETH2_RXD1_RX1}
+set_property PACKAGE_PIN BK39 [get_ports {erxd[1]}]
 set_property IOSTANDARD LVCMOS18 [get_ports erxd[1]]
 
-# {ta0_eb1_ETH2_RXD2_RX2}
-set_property PACKAGE_PIN D6 [get_ports erxd[2]]
+# {bb1_eb1_ETH2_RXD2_RX2}
+set_property PACKAGE_PIN BF40 [get_ports {erxd[2]}]
 set_property IOSTANDARD LVCMOS18 [get_ports erxd[2]]
 
-# {ta0_eb1_ETH2_RXD3_RX3}
-set_property PACKAGE_PIN D7 [get_ports erxd[3]]
+# {bb1_eb1_ETH2_RXD3_RX3}
+set_property PACKAGE_PIN BF39 [get_ports {erxd[3]}]
 set_property IOSTANDARD LVCMOS18 [get_ports erxd[3]]
 
 # {ta0_eb1_ETH2_RXD4}
@@ -65,36 +64,36 @@ set_property IOSTANDARD LVCMOS18 [get_ports erxd[3]]
 #set_property PACKAGE_PIN A6 [get_ports erxd[7]]
 #set_property IOSTANDARD LVCMOS18 [get_ports erxd[7]]
 
-# {ta0_eb1_ETH2_TX_EN_TXEN_ER}
-set_property PACKAGE_PIN F1 [get_ports etx_en]
+# {bb1_eb1_ETH2_TX_EN_TXEN_ER}
+set_property PACKAGE_PIN BP38 [get_ports {etx_en}]
 set_property IOSTANDARD LVCMOS18 [get_ports etx_en]
 
-# {ta0_eb1_ETH2_TX_ER}
-set_property PACKAGE_PIN F2 [get_ports etx_er]
+# {bb1_eb1_ETH2_TX_ER}
+set_property PACKAGE_PIN BP37 [get_ports {etx_er}]
 set_property IOSTANDARD LVCMOS18 [get_ports etx_er]
 
-# {ta0_eb1_ETH2_MDC}
-set_property PACKAGE_PIN F4 [get_ports emdc]
+# {bb1_eb1_ETH2_MDC}
+set_property PACKAGE_PIN BL37 [get_ports {emdc}]
 set_property IOSTANDARD LVCMOS18 [get_ports emdc]
 
-# {ta0_eb1_ETH2_MDIO}
-set_property PACKAGE_PIN F5 [get_ports emdio]
+# {bb1_eb1_ETH2_MDIO}
+set_property PACKAGE_PIN BL36 [get_ports {emdio}]
 set_property IOSTANDARD LVCMOS18 [get_ports emdio]
 
-# {ta0_eb1_ETH2_TXD0_TX0}
-set_property PACKAGE_PIN B4 [get_ports etxd[0]]
+# {bb1_eb1_ETH2_TXD0_TX0}
+set_property PACKAGE_PIN BL35 [get_ports {etxd[0]}]
 set_property IOSTANDARD LVCMOS18 [get_ports etxd[0]]
 
-# {ta0_eb1_ETH2_TXD1_TX1}
-set_property PACKAGE_PIN C4 [get_ports etxd[1]]
+# {bb1_eb1_ETH2_TXD1_TX1}
+set_property PACKAGE_PIN BK35 [get_ports {etxd[1]}]
 set_property IOSTANDARD LVCMOS18 [get_ports etxd[1]]
 
-# {ta0_eb1_ETH2_TXD2_TX2}
-set_property PACKAGE_PIN E2 [get_ports etxd[2]]
+# {bb1_eb1_ETH2_TXD2_TX2}
+set_property PACKAGE_PIN BN36 [get_ports {etxd[2]}]
 set_property IOSTANDARD LVCMOS18 [get_ports etxd[2]]
 
-# {ta0_eb1_ETH2_TXD3_TX3}
-set_property PACKAGE_PIN E3 [get_ports etxd[3]]
+# {bb1_eb1_ETH2_TXD3_TX3}
+set_property PACKAGE_PIN BN35 [get_ports {etxd[3]}]
 set_property IOSTANDARD LVCMOS18 [get_ports etxd[3]]
 
 # {ta0_eb1_ETH2_TXD4}
@@ -124,5 +123,3 @@ set_property IOSTANDARD LVCMOS18 [get_ports etxd[3]]
 # {ta0_eb1_ETH2_CLK_TO_MAC}
 #set_property PACKAGE_PIN H15 [get_ports MCLK]
 #set_property IOSTANDARD LVCMOS18 [get_ports MCLK]
-
-
