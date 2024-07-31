@@ -121,18 +121,24 @@ int main(int argc, char * argv[])
 	int ndev;
         int num_multicast_0 = NUM_MULTICAST_0;
         int num_multicast_1 = NUM_MULTICAST_1;
-	struct esp_device *devs = NULL;
+//	struct esp_device *devs = NULL;
 	unsigned coherence;
         long long start, end;
 
         
 
 //    printf("Scanning device tree...\n");
-	ndev = probe(&devs, VENDOR_SLD, SLD_DUMMY, DEV_NAME);
-	if (!ndev) {
+//	ndev = probe(&devs, VENDOR_SLD, SLD_DUMMY, DEV_NAME);
+//	if (!ndev) {
 //		printf("Error: %s device not found!\n", DEV_NAME);
-		exit(EXIT_FAILURE);
-	}
+//		exit(EXIT_FAILURE);
+//	}
+
+    struct esp_device devs[17];
+    ndev = 17;
+    for (int i = 0; i < ndev; i++) {
+        devs[i].addr = 0x60010000 + i * 0x100;
+    }
 
     int mcast_ndests = ndev - 1;
     int dummy_buf_size = TOKENS * BATCH * sizeof(token_t) * (num_multicast_0 + num_multicast_1 + 1 + 1);
@@ -161,7 +167,7 @@ int main(int argc, char * argv[])
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(dummy_buf_size);
 //    printf("\n  memory buffer base-address = %p\n", mem);
-    coherence = ACC_COH_NONE;
+    coherence = ACC_COH_RECALL;
 
     // Initialize input: write floating point hex values (simpler to debug)
 //    init_buf(mem);
