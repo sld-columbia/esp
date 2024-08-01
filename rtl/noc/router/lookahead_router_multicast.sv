@@ -542,7 +542,7 @@ module lookahead_router_multicast
       assign rd_fifo[g_i] = '0;
       assign backpressure_tmp[g_i] = '0;
       assign no_backpressure[g_i] = '1;
-      assign no_backpuressure_old[g_i] = '1;
+      assign no_backpressure_old[g_i] = '1;
       assign forwarding_tail[g_i] = '0;
       assign forwarding_head[g_i] = '0;
       assign forwarding_in_progress[g_i] = '0;
