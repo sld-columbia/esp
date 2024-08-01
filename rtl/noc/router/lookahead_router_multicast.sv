@@ -443,9 +443,10 @@ module lookahead_router_multicast
     end
 
     // Flow control
-    for (g_j = 0; g_j < 5; g_j++) begin
-      assign backpressure_tmp[g_i][g_j] = (enhanc_routing_configuration[g_j] == enhanc_routing_configuration[g_i]) &&
-        (FifoBypassEnable ? stop_in[g_j] : credits[g_j] == '0);
+    for (g_j = 0 ; g_j < 5; g_j++) begin
+      assign backpressure_tmp[g_i][g_j] = ((g_i == g_j) || ((|enhanc_routing_configuration[g_i])
+                 && (enhanc_routing_configuration[g_j] == enhanc_routing_configuration[g_i])))
+                 && (FifoBypassEnable ? stop_in[g_j] : credits[g_j] == '0);
     end
     assign no_backpressure_old[g_i] = FifoBypassEnable ? ~stop_in[g_i] : credits != '0;
     assign no_backpressure[g_i] = ~(|backpressure_tmp[g_i]);
@@ -503,8 +504,10 @@ module lookahead_router_multicast
         end else begin
           if (~forwarding_in_progress[g_i] && no_backpressure_old[g_i]) begin
             data_void_out[g_i] <= 1'b1;
-          end else if (no_backpressure_old[g_i]) begin
+          end else if (no_backpressure[g_i]) begin
             data_void_out[g_i] <= out_unvalid_flit[g_i];
+          end else if (no_backpressure_old[g_i]) begin
+            data_void_out[g_i] <= 1'b1;
           end
         end
       end
@@ -539,6 +542,7 @@ module lookahead_router_multicast
       assign rd_fifo[g_i] = '0;
       assign backpressure_tmp[g_i] = '0;
       assign no_backpressure[g_i] = '1;
+      assign no_backpuressure_old[g_i] = '1;
       assign forwarding_tail[g_i] = '0;
       assign forwarding_head[g_i] = '0;
       assign forwarding_in_progress[g_i] = '0;
