@@ -159,7 +159,7 @@ int main(int argc, char * argv[])
         iowrite32(&devs[i], SELECT_REG, ioread32(&devs[i], DEVID_REG));
         iowrite32(&devs[i], COHERENCE_REG, coherence);
         if (i == source_dev_id)
-            p2p_setup(&devs[i], 1, num_multicast, 0, NULL, 1);
+            p2p_setup(&devs[i], 1, num_multicast, 0, NULL, 0);
         else
             p2p_setup(&devs[i], 0, 0, 1, &devs[source_dev_id], 0);
 
