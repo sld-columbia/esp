@@ -177,7 +177,7 @@ int main(int argc, char * argv[])
     //Alocate and populate page table
     ptable = aligned_malloc(nchunk * sizeof(unsigned *));
     for (i = 0; i < nchunk; i++)
-        ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(unsigned))];
+        ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
 //    printf("  ptable = %p\n", ptable);
 //    printf("  nchunk = %lu\n\n", nchunk);
 

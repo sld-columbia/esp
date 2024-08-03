@@ -462,7 +462,7 @@ module lookahead_router_multicast
 
       unique case (state[g_i])
         kHeadFlit : begin
-          if (grant_valid[g_i] & no_backpressure[g_i]) begin
+          if (grant_valid[g_i] & no_backpressure_old[g_i]) begin
             // First flit of a new packet can be forwarded
             routing_configuration[g_i] = grant[g_i];
             forwarding_in_progress[g_i] = 1'b1;
