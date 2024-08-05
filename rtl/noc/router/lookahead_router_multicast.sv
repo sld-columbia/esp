@@ -288,6 +288,9 @@ module lookahead_router_multicast
         end else begin : gen_transpose_routin_j_eq_i
           assign enhanc_routing_configuration[g_i][g_j] = 1'b0;
         end
+//        assign backpressure_tmp[g_i][g_j] = ((g_i == g_j) || ((|routing_configuration[g_i])
+//                   && (routing_configuration[g_j] == routing_configuration[g_i])))
+//                   && (FifoBypassEnable ? stop_in[g_j] : credits[g_j] == '0);
       end // for gen_transpose_routing
 
       // Arbitration
@@ -462,7 +465,7 @@ module lookahead_router_multicast
 
       unique case (state[g_i])
         kHeadFlit : begin
-          if (grant_valid[g_i] & no_backpressure_old[g_i]) begin
+          if (grant_valid[g_i] & no_backpressure[g_i]) begin
             // First flit of a new packet can be forwarded
             routing_configuration[g_i] = grant[g_i];
             forwarding_in_progress[g_i] = 1'b1;
@@ -541,6 +544,7 @@ module lookahead_router_multicast
       assign saved_routing_configuration[g_i] = '0;
       assign rd_fifo[g_i] = '0;
       assign backpressure_tmp[g_i] = '0;
+//      assign backpressure[g_i] = '0;
       assign no_backpressure[g_i] = '1;
       assign no_backpressure_old[g_i] = '1;
       assign forwarding_tail[g_i] = '0;

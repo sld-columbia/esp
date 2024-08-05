@@ -36,8 +36,8 @@ typedef u64 token_t;
 #define NUM_MULTICAST_1 8
 
 // MCAST Select the source ID
-#define SOURCE_DEV_ID_0 12
-#define SOURCE_DEV_ID_1 3
+//#define SOURCE_DEV_ID_0 12
+//#define SOURCE_DEV_ID_1 3
 
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 20
@@ -148,9 +148,9 @@ int main(int argc, char * argv[])
 
 	unsigned **ptable = NULL;
 	token_t *mem;
-    int dev_id_0[NUM_MULTICAST_0 + 1] = {12, 2, 4, 5, 7, 10, 13, 15};
-    int dev_id_1[NUM_MULTICAST_1 + 1] = {3, 0, 1, 6, 8, 9, 11, 14, 16};
-    int dev_id[NUM_MULTICAST_0 + NUM_MULTICAST_1 + 1 + 1] = {3, 12, 0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16};
+    int dev_id_0[NUM_MULTICAST_0 + 1] = {7, 2, 4, 5, 10, 12, 13, 15};
+    int dev_id_1[NUM_MULTICAST_1 + 1] = {11, 0, 1, 3, 6, 8, 9, 14, 16};
+    int dev_id[NUM_MULTICAST_0 + NUM_MULTICAST_1 + 1 + 1] = {7, 11, 0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 13, 14, 15, 16};
     int i;
 
     // Check if scatter-gather DMA is disabled
@@ -246,7 +246,7 @@ int main(int argc, char * argv[])
     }
 
     end = get_counter();
-//    printf("Total cycles = %lld\n", end - start);
+    printf("Total cycles = %lld\n", end - start);
 
     for (int i = 0; i < num_multicast_0 + num_multicast_1 + 1 + 1; i++) {
         iowrite32(&devs[i], CMD_REG, 0x0);

@@ -28,7 +28,7 @@ typedef u64 token_t;
 
 // User defined registers
 #define TOKENS 512
-#define BATCH 16
+#define BATCH 256
 #define mask 0x0LL
 
 // Control the number of consumers
@@ -200,7 +200,7 @@ int main(int argc, char * argv[])
     }
 
     end = get_counter();
-//    printf("Total cycles = %lld\n", end - start);
+    printf("Total cycles = %lld\n", end - start);
 
     for (int i = 0; i < num_multicast + 1; i++) {
         iowrite32(&devs[i], CMD_REG, 0x0);
@@ -217,7 +217,7 @@ int main(int argc, char * argv[])
         }
         // errors += validate_dummy(&mem[(i + 1) * BATCH * TOKENS]);
         errors += error_increment;
-        printf("Memory Block %d Iterated...\n", i);
+//        printf("Memory Block %d Iterated...\n", i);
         if (!error_increment)
             printf("Memory Block %d PASS\n", i);
         else
