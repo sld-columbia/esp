@@ -16,7 +16,7 @@ package allcaches is
   -- of LLC-coherent devices to 16. This is due to VHDL limitation, but the
   -- following constant can be changed arbitrarily.
   constant NL2_MAX_LOG2  : integer := 4;
-  constant NLLC_MAX_LOG2 : integer := 6;
+  constant NLLC_MAX_LOG2 : integer := 8;
   type cache_attribute_array is array (0 to 2**NL2_MAX_LOG2 - 1) of integer;
   type dma_attribute_array is array (0 to 2**NLLC_MAX_LOG2 - 1) of integer;
 
