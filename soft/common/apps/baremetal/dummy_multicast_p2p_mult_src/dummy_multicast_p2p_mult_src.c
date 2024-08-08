@@ -155,18 +155,18 @@ int main(int argc, char * argv[])
 
     // Check if scatter-gather DMA is disabled
     if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) == 0) {
-//        printf("  -> scatter-gather DMA is disabled. Abort.\n");
+        printf("  -> scatter-gather DMA is disabled. Abort.\n");
         return 0;
     }
 
     if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) < nchunk) {
-//        printf("  -> Not enough TLB entries available. Abort.\n");
+        printf("  -> Not enough TLB entries available. Abort.\n");
         return 0;
     }
 
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(dummy_buf_size);
-//    printf("\n  memory buffer base-address = %p\n", mem);
+    printf("\n  memory buffer base-address = %p\n", mem);
     coherence = ACC_COH_RECALL;
 
     // Initialize input: write floating point hex values (simpler to debug)
@@ -224,7 +224,7 @@ int main(int argc, char * argv[])
     esp_flush(coherence);
 
     // Start accelerator
-//    printf("  Starting multicast to %d accelerators...\n", num_multicast);
+    printf("  Starting multicast to %d accelerators...\n", num_multicast_0 + num_multicast_1);
 
     start = get_counter();
 

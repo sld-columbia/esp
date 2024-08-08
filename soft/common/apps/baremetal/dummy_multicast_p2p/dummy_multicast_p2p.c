@@ -37,7 +37,7 @@ typedef u64 token_t;
 
 // MCAST Select the source ID
 //#define SOURCE_DEV_ID 7
-#define SOURCE_DEV_ID 7
+//#define SOURCE_DEV_ID 7
 
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 20
@@ -99,7 +99,8 @@ int main(int argc, char * argv[])
 	int n, trial, errors = 0;
 	int ndev;
         int num_multicast = NUM_MULTICAST;
-        int source_dev_id = SOURCE_DEV_ID;
+for (int source_dev_id = 0; source_dev_id < num_multicast + 1; source_dev_id++) {
+        //int source_dev_id = SOURCE_DEV_ID;
 //	struct esp_device *devs = NULL;
 	unsigned coherence;
         long long start, end;
@@ -200,14 +201,14 @@ int main(int argc, char * argv[])
     }
 
     end = get_counter();
-    printf("Total cycles = %lld\n", end - start);
+//    printf("Total cycles = %lld\n", end - start);
 
     for (int i = 0; i < num_multicast + 1; i++) {
         iowrite32(&devs[i], CMD_REG, 0x0);
     }
 
-    printf("  Done\n");
-    printf("  Validating...\n\n");
+//    printf("  Done\n");
+//    printf("  Validating...\n\n");
 
     // Validation
     for (int i = 0; i < num_multicast + 1; i++) {
@@ -218,19 +219,20 @@ int main(int argc, char * argv[])
         // errors += validate_dummy(&mem[(i + 1) * BATCH * TOKENS]);
         errors += error_increment;
 //        printf("Memory Block %d Iterated...\n", i);
-        if (!error_increment)
-            printf("Memory Block %d PASS\n", i);
-        else
-            printf("Memory Block %d FAIL\n", i);
+//        if (!error_increment)
+//            printf("Memory Block %d PASS\n", i);
+//        else
+//            printf("Memory Block %d FAIL\n", i);
     }
-    printf("Total Errors %d\n", errors);
+//    printf("Total Errors %d\n", errors);
     if (!errors)
-		printf("PASS\n");
+		printf("Source %d, PASS\n", source_dev_id);
     else
-		printf("FAIL\n");
+		printf("Source %d, FAIL\n", source_dev_id);
 
     aligned_free(ptable);
     aligned_free(mem);
 
+}
 	return 0;
 }
