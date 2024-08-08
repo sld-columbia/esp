@@ -130,6 +130,8 @@ byte_offset_bits = 2
 offset_bits = 4
 little_endian = 1
 invack_cnt_bits = 4
+max_n_llc_bits = 8
+max_n_l2_bits = 4
 
 #
 ### VHDL writer ###
@@ -713,7 +715,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_req_in_data_word_offset  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_req_in_data_valid_words  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_req_in_data_line         : in std_logic_vector(" + str(bits_per_line - 1) + "  downto 0);\n")
-    f.write("      llc_req_in_data_req_id       : in std_logic_vector(3 downto 0);\n")
+    f.write("      llc_req_in_data_req_id       : in std_logic_vector(" + str(max_n_l2_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_req_in_valid             : in std_ulogic;\n")
     f.write("      llc_dma_req_in_data_coh_msg      : in std_logic_vector(2 downto 0);\n")
     f.write("      llc_dma_req_in_data_hprot        : in std_logic_vector(1 downto 0);\n")
@@ -721,12 +723,12 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_req_in_data_line         : in std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
-    f.write("      llc_dma_req_in_data_req_id       : in std_logic_vector(5 downto 0);\n")
+    f.write("      llc_dma_req_in_data_req_id       : in std_logic_vector(" + str(max_n_llc_bits - 1) + " downto 0);\n")
     f.write("      llc_rsp_in_valid             : in std_ulogic;\n")
     f.write("      llc_rsp_in_data_coh_msg      : in std_logic_vector(1 downto 0);\n")
     f.write("      llc_rsp_in_data_addr         : in std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      llc_rsp_in_data_line         : in std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
-    f.write("      llc_rsp_in_data_req_id       : in std_logic_vector(3 downto 0);\n")
+    f.write("      llc_rsp_in_data_req_id       : in std_logic_vector(" + str(max_n_l2_bits - 1) + " downto 0);\n")
     f.write("      llc_mem_rsp_valid            : in std_ulogic;\n")
     f.write("      llc_mem_rsp_data_line        : in std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      llc_rst_tb_valid             : in std_ulogic;\n")
@@ -747,7 +749,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      llc_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      llc_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + "  downto 0);\n")
-    f.write("      llc_rsp_out_data_req_id      : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_rsp_out_data_req_id      : out std_logic_vector(" + str(max_n_l2_bits - 1) + " downto 0);\n")
     f.write("      llc_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_valid            : out std_ulogic;\n")
@@ -755,13 +757,13 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
-    f.write("      llc_dma_rsp_out_data_req_id      : out std_logic_vector(5 downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_req_id      : out std_logic_vector(" + str(max_n_llc_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(dma_word_offset_bits - 1) + " downto 0);\n")
     f.write("      llc_fwd_out_valid            : out std_ulogic;\n")
     f.write("      llc_fwd_out_data_coh_msg     : out std_logic_vector(2 downto 0);\n")
     f.write("      llc_fwd_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
-    f.write("      llc_fwd_out_data_req_id      : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_fwd_out_data_req_id      : out std_logic_vector(" + str(max_n_l2_bits - 1) + " downto 0);\n")
     f.write("      llc_fwd_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_mem_req_valid            : out std_ulogic;\n")
     f.write("      llc_mem_req_data_hwrite      : out std_ulogic;\n")
@@ -938,7 +940,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_fwd_in_valid           : in  std_ulogic;\n")
     f.write("      l2_fwd_in_data_coh_msg    : in  std_logic_vector(2 downto 0);\n")
     f.write("      l2_fwd_in_data_addr       : in  std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
-    f.write("      l2_fwd_in_data_req_id     : in  std_logic_vector(3 downto 0);\n")
+    f.write("      l2_fwd_in_data_req_id     : in  std_logic_vector("+ str(max_n_l2_bits - 1) + " downto 0);\n")
     f.write("      l2_rsp_in_valid           : in  std_ulogic;\n")
     f.write("      l2_rsp_in_data_coh_msg    : in  std_logic_vector(1 downto 0);\n")
     f.write("      l2_rsp_in_data_addr       : in  std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
@@ -971,7 +973,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_req_out_data_line      : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      l2_rsp_out_valid          : out std_ulogic;\n")
     f.write("      l2_rsp_out_data_coh_msg   : out std_logic_vector(1 downto 0);\n")
-    f.write("      l2_rsp_out_data_req_id    : out std_logic_vector(3 downto 0);\n")
+    f.write("      l2_rsp_out_data_req_id    : out std_logic_vector(" + str(max_n_l2_bits - 1) + " downto 0);\n")
     f.write("      l2_rsp_out_data_to_req    : out std_logic_vector(1 downto 0);\n")
     f.write("      l2_rsp_out_data_addr      : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      l2_rsp_out_data_line      : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
