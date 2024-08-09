@@ -28,7 +28,7 @@ typedef u64 token_t;
 
 // User defined registers
 #define TOKENS 512
-#define BATCH 4
+#define BATCH 256
 #define mask 0x0LL
 
 // Control the number of consumers
@@ -124,8 +124,8 @@ int main(int argc, char * argv[])
 	unsigned coherence;
         long long start, end;
 
-for (int it_0 = 0; it_0 < num_multicast_0 + 1; it_0++) {
-    for (int it_1 = 0; it_1 < num_multicast_1 + 1; it_1++) {
+for (int it_0 = 5; it_0 < 8; it_0++) {
+    for (int it_1 = 3; it_1 < 9; it_1++) {
 
     struct esp_device devs[17];
     ndev = 17;
