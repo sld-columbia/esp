@@ -69,8 +69,12 @@ constant nocs_num : integer := 6;
 
 type noc_ctrl_matrix is array (1 to nocs_num) of std_logic_vector(CFG_TILES_NUM-1 downto 0);
 type handshake_vec is array (CFG_TILES_NUM-1 downto 0) of std_logic_vector(3 downto 0);
+type boolean_vec is array (natural range <>) of boolean;
+
+constant is_io_tile : boolean_vec(0 to CFG_TILES_NUM-1) := (io_tile_id => true, others => false);
 
 signal rst_int       : std_logic;
+signal rst_inv       : std_logic;
 signal sys_clk_int   : std_logic_vector(0 to MEM_ID_RANGE_MSB);
 signal cpuerr_vec    : std_logic_vector(0 to CFG_NCPU_TILE-1);
 
@@ -98,7 +102,6 @@ signal dco_freq_sel      : dco_freq_sel_vector;
 
 -- Global NoC reset and clock
 signal tile_clk      : std_logic_vector(CFG_TILES_NUM-1 downto 0);
-signal tile_rstn     : std_logic_vector(CFG_TILES_NUM-1 downto 0);
 
 -- NOC Signals
 signal noc1_data_n_in       : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
@@ -215,6 +218,7 @@ signal noc6_stop_out_tile      : std_logic_vector(CFG_TILES_NUM-1 downto 0);
 begin
 
   rst_int <= rst;
+  rst_inv <= not rst;
   clk_int_gen: for i in 0 to MEM_ID_RANGE_MSB generate
     sys_clk_int(i) <= sys_clk(i);
   end generate clk_int_gen;
@@ -412,17 +416,17 @@ begin
     noc_domain_socket_i : noc_domain_socket
       generic map (
         this_has_token_pm => 0,
-        is_tile_io        => false,
+        is_tile_io        => is_io_tile(i),
         SIMULATION        => SIMULATION,
         ROUTER_PORTS      => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC          => 1)
       port map (
-        rst                     => rst_int,
+        rst                     => rst_inv,
         noc_clk_lock            => '1',
-        tile_rstn               => tile_rstn(i),
+        tile_rstn               => rst_int,
         noc_clk                 => sys_clk_int(0),
         tile_clk                => tile_clk(i),
-        noc_rstn                => rst_int,
+        noc_rstn                => open,
         raw_rstn                => open,
         acc_clk                 => open,
         -- DCO config
@@ -569,7 +573,7 @@ begin
         clk                => sys_clk_int(0),
 	noc_clk            => sys_clk_int(0),
         tile_clk           => tile_clk(i),
-        tile_rstn          => tile_rstn(i),
+        tile_rstn          => open,
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -639,7 +643,7 @@ begin
         clk                => refclk,
         noc_clk            => sys_clk_int(0),
         tile_clk           => tile_clk(i),
-        tile_rstn          => tile_rstn(i),
+        tile_rstn          => open,
         cpuerr             => cpuerr_vec(tile_cpu_id(i)),
         -- Test interface
         tdi                => '0',
@@ -715,7 +719,7 @@ begin
         clk                => refclk,
         noc_clk            => sys_clk_int(0),
         tile_clk           => tile_clk(i),
-        tile_rstn          => tile_rstn(i),
+        tile_rstn          => open,
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -785,7 +789,7 @@ begin
 	clk                => refclk,
 	noc_clk            => sys_clk_int(0),
         tile_clk           => tile_clk(i),
-        tile_rstn          => tile_rstn(i),
+        tile_rstn          => open,
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -866,7 +870,7 @@ begin
 	clk                => sys_clk_int(tile_mem_id(i)),
 	noc_clk            => sys_clk_int(0),
         tile_clk           => tile_clk(i),
-        tile_rstn          => tile_rstn(i),
+        tile_rstn          => open,
         -- DDR controller ports (this_has_ddr -> 1)
 	ddr_ahbsi          => ddr_ahbsi(tile_mem_id(i)),
 	ddr_ahbso          => ddr_ahbso(tile_mem_id(i)),
@@ -936,7 +940,7 @@ begin
           clk                => refclk,
           noc_clk            => sys_clk_int(0),
           tile_clk           => tile_clk(i),
-          tile_rstn          => tile_rstn(i),
+          tile_rstn          => open,
           -- DDR controller ports (disaled in generic ESP top)
           ddr_ahbsi          => open,
           ddr_ahbso          => ahbs_none,
