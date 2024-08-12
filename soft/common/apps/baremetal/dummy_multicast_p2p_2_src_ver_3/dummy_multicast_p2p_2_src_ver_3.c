@@ -124,8 +124,8 @@ int main(int argc, char * argv[])
 	unsigned coherence;
         long long start, end;
 
-for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
-    for (int it_1 = 1; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
+for (int it_0 = 1; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
+    for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
     struct esp_device devs[17];
     ndev = 17;
     for (int i = 0; i < ndev; i++) {
@@ -188,7 +188,7 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
 //    mem = (token_t *) 0x80100020; //for hard coding data
 //    printf("\n  memory buffer base-address = %p\n", mem);
     //coherence = ACC_COH_RECALL;
-    coherence = ACC_COH_NONE;
+    coherence = ACC_COH_RECALL;
 
     // Initialize input: write floating point hex values (simpler to debug)
     init_buf_0(&mem[(dev_id_0[0]) * BATCH * TOKENS]);

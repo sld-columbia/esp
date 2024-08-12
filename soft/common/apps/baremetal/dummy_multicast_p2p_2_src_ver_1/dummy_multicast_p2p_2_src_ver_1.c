@@ -28,7 +28,7 @@ typedef u64 token_t;
 
 // User defined registers
 #define TOKENS 512
-#define BATCH 256
+#define BATCH 1
 #define mask 0x0LL
 
 // Control the number of consumers
@@ -124,8 +124,8 @@ int main(int argc, char * argv[])
 	unsigned coherence;
         long long start, end;
 
-for (int it_0 = 6; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
-    for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
+for (int it_0 = 7; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
+    for (int it_1 = 4; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
 
         if ((it_0 == 5 && it_1 == 6) || (it_0 == 1 && it_1 == 2) || (it_0 == 1 && it_1 == 1) || (it_0 == 3 && it_1 == 3) || (it_0 == 2 && it_1 ==0)) {
             continue;

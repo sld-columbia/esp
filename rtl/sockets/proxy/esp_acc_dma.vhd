@@ -225,6 +225,7 @@ architecture rtl of esp_acc_dma is
   -- P2P MULT SRC MCAST KL
   subtype q_fsm is std_logic_vector(1 downto 0);
   signal q_next, q_state			: q_fsm;
+  signal q_init, q_initialize, q_clear          : std_logic;
   signal next_quadrant				: std_logic;
   signal hdr_gen_init				: std_logic;
   signal hdr_gen        			: std_logic;
@@ -250,7 +251,7 @@ architecture rtl of esp_acc_dma is
   type dma_fsm is (idle, request_header, request_address, request_length,
                    request_data, reply_header, reply_data, config,
                    send_header, rd_handshake, wr_handshake, wait_req_p2p,
-                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request, receive_p2p_length);
+                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request, receive_p2p_length, wait_hdr_gen_p2p);
   signal acc_rst_next : std_ulogic;
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
@@ -792,6 +793,8 @@ end generate tlb_gen;
     hdr_gen_clear <= '0';
     set_p2p_wr_qd <= '0';
     clear_p2p_wr_qd <= '0';
+    q_initialize <= '0';
+    q_clear <= '0';
 
     --TLB
     tlb_wr_address_next := tlb_count;
@@ -967,6 +970,7 @@ end generate tlb_gen;
             dma_next <= wait_for_completion;
             if p2p_mcast_nsrcs = '1' then		--KL not entirely sure about this. When complete uninit header generator -- this should be OK if mult src mcast only for DMA mode.
               hdr_gen_clear <= '1';
+              q_clear <= '1';
             end if;
           end if;
 --        elsif rd_request = '1' then
@@ -1072,7 +1076,7 @@ end generate tlb_gen;
         elsif p2p_req_rcv_empty = '0' then
           p2p_req_rcv_rdreq <= '1';
           if count_n_dest = p2p_mcast_ndests then
-            sample_flits <= '1';
+            --sample_flits <= '1';
             if p2p_mcast_nsrcs = '1' then 
               if hdr_gen = '0' then	--only after first multi src mcast KL
                 hdr_gen_init <= '1';
@@ -1093,15 +1097,21 @@ end generate tlb_gen;
           p2p_rsp_snd_data_in <= header_r;
           p2p_req_rcv_rdreq <= '1';
           if count_n_dest = p2p_mcast_ndests then
-            dma_next <= send_header;
+            dma_next <= wait_hdr_gen_p2p;	--send to wait_hdr_gen_p2p
             if p2p_mcast_nsrcs = '1' then	--multisource multicasting, extend sample flits 1 more cycle
-              sample_flits <= '1';
+              --sample_flits <= '1';
+              q_initialize <= '1';
             end if;
           else
             dma_next <= wait_req_p2p;
           end if;
-
         end if;
+
+      when wait_hdr_gen_p2p =>
+        burst <= '1';
+        p2p_rsp_snd_data_in <= header_r;
+        dma_next <= send_header;
+        sample_flits <= '1';
 
       when send_header =>
         burst <= '1';
@@ -1345,7 +1355,7 @@ end generate tlb_gen;
       q_state <= (others => '0');
       q_next <= (others => '0');
     elsif clk'event and clk = '1' then	-- rising clock edge
-      if hdr_gen_init = '1' then
+      if hdr_gen = '1' and q_init = '0' then
         if p2p_ndest_vec_l(0) = '1' then
           q_state <= "00";
         elsif p2p_ndest_vec_l(1) = '1' then
@@ -1357,6 +1367,7 @@ end generate tlb_gen;
         else
           q_state <= "00";
         end if;
+        --q_initialize <= '1';
       else
         if p2p_ndest_vec_l(to_integer(unsigned(q_state) + "01")) = '1' then
           q_next <= std_logic_vector(unsigned(q_state) + "01");
@@ -1374,10 +1385,11 @@ end generate tlb_gen;
     end if;
   end process q_state_fsm;	--PROBABLY DONT NEED Q_INT AND Q_INT_NEXT**************
 
-  header_generator: process (clk, rst)		-- KL
+  header_state_utilities: process (clk, rst)		-- KL
   begin	-- process
     if rst = '0' then			-- asynchronous reset (active low)
       hdr_gen <= '0';
+      q_init <= '0';
     elsif clk'event and clk = '1' then	-- rising clock edge
       if hdr_gen_init = '1' then
         hdr_gen <= '1';
@@ -1385,8 +1397,14 @@ end generate tlb_gen;
       if hdr_gen_clear = '1' then
         hdr_gen <= '0';
       end if;
+      if q_initialize = '1' then
+        q_init <= '1';
+      end if;
+      if q_clear = '1' then
+        q_init <= '0';
+      end if;
     end if;
-  end process header_generator;
+  end process header_state_utilities;
 
   process (clk, rst)
   begin  -- process

@@ -322,7 +322,7 @@ module lookahead_router_multicast
         if (rst) begin
           granted[g_i] = '0;
         end else begin
-          if (grant_valid[g_i]) begin
+          if (grant_valid[g_i] && no_backpressure_old[g_i]) begin
             granted[g_i] = grant[g_i];
           end else if (forwarding_tail[g_i]) begin
             granted[g_i] = '0;
