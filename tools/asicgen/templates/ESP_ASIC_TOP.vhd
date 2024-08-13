@@ -54,6 +54,9 @@ architecture rtl of ESP_ASIC_TOP is
 
 
   type handshake_vec is array (CFG_TILES_NUM-1 downto 0) of std_logic_vector(3 downto 0);
+  type boolean_vec is array (natural range <>) of boolean;
+
+  constant is_io_tile : boolean_vec(0 to CFG_TILES_NUM-1) := (io_tile_id => true, others => false);
 
   -- NOC Signals
   signal noc1_data_n_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
@@ -500,7 +503,7 @@ begin
     noc_domain_socket_i : noc_domain_socket
       generic map (
         this_has_token_pm => 0,
-        is_tile_io        => false,
+        is_tile_io        => is_io_tile(i),
         SIMULATION        => SIMULATION,
         ROUTER_PORTS      => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC          => 1)
