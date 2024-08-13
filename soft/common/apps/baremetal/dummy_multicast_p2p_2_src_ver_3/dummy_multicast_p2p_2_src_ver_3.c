@@ -28,7 +28,7 @@ typedef u64 token_t;
 
 // User defined registers
 #define TOKENS 512
-#define BATCH 64
+#define BATCH 256
 #define mask 0x0LL
 
 // Control the number of consumers
@@ -124,7 +124,7 @@ int main(int argc, char * argv[])
 	unsigned coherence;
         long long start, end;
 
-for (int it_0 = 1; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
+for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
     struct esp_device devs[17];
     ndev = 17;
@@ -273,7 +273,7 @@ for (int it_0 = 1; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     }
 
 //    printf("  Done\n");
-    printf("  Validating...\n\n");
+//    printf("  Validating...\n\n");
 
     // Validation
     for (int i = 0; i < num_multicast_0; i++) {
@@ -281,22 +281,22 @@ for (int it_0 = 1; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         // errors += validate_dummy(&mem[(i + 1) * BATCH * TOKENS]);
         errors += error_increment;
 //        printf("Memory Block %d Iterated...\n", i + 1);
-        if (!error_increment)
-            printf("Memory Block %d PASS\n", dev_id_0[i + 1]);
-        else
-            printf("Memory Block %d FAIL\n", dev_id_0[i + 1]);
+//        if (!error_increment)
+//            printf("Memory Block %d PASS\n", dev_id_0[i + 1]);
+//        else
+//            printf("Memory Block %d FAIL\n", dev_id_0[i + 1]);
     }
     for (int i = 0; i < num_multicast_1; i++) {
         int error_increment = validate_dummy_1(&mem[(dev_id_1[i + 1]) * BATCH * TOKENS]);
         // errors += validate_dummy(&mem[(i + 1) * BATCH * TOKENS]);
         errors += error_increment;
-        if (!error_increment)
-            printf("Memory Block %d PASS\n", dev_id_1[i + 1]);
-        else
-            printf("Memory Block %d FAIL\n", dev_id_1[i + 1]);
+//        if (!error_increment)
+//            printf("Memory Block %d PASS\n", dev_id_1[i + 1]);
+//        else
+//            printf("Memory Block %d FAIL\n", dev_id_1[i + 1]);
     }
 
-    printf("Total Errors %d for it_0 = %d, it_1 = %d\n", errors, it_0, it_1);
+//    printf("Total Errors %d for it_0 = %d, it_1 = %d\n", errors, it_0, it_1);
     if (!errors)
         printf("PASS for it_0 = %d, it_1 = %d\n", it_0, it_1);
     else

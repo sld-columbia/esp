@@ -28,7 +28,7 @@ typedef u64 token_t;
 
 // User defined registers
 #define TOKENS 512
-#define BATCH 1
+#define BATCH 256
 #define mask 0x0LL
 
 // Control the number of consumers
@@ -124,12 +124,12 @@ int main(int argc, char * argv[])
 	unsigned coherence;
         long long start, end;
 
-for (int it_0 = 7; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
-    for (int it_1 = 4; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
+for (int it_0 = 6; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
+    for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
 
-        if ((it_0 == 5 && it_1 == 6) || (it_0 == 1 && it_1 == 2) || (it_0 == 1 && it_1 == 1) || (it_0 == 3 && it_1 == 3) || (it_0 == 2 && it_1 ==0)) {
-            continue;
-        }
+//        if ((it_0 == 5 && it_1 == 6) || (it_0 == 1 && it_1 == 2) || (it_0 == 1 && it_1 == 1) || (it_0 == 3 && it_1 == 3) || (it_0 == 2 && it_1 ==0)) {
+//            continue;
+//        }
 //if ((it_0 == 3 && it_1 == 7) || (it_0 == 1 && it_1 == 0) || (it_0 ==2 && it_1 ==0) || (it_0 ==3 && it_1 ==0) || (it_0 == 4 && it_1 == 0) || (it_0 == 4 && it_1 == 8) || (it_0 == 5 && it_1 == 0) || (it_0 == 6 && it_1 == 0) || (it_0 == 6 && it_1 == 2) || (it_0 == 6 && it_1 == 7) || (it_0 == 7 && it_1 ==0) || (it_0 == 7 && it_1 == 2) || (it_0 == 7 && it_1 == 4) || (it_0 == 7 && it_1 == 7) || (it_0 == 8 && it_1 == 0)) {
 //continue;
 //}
@@ -193,7 +193,7 @@ for (int it_0 = 7; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     mem = aligned_malloc(dummy_buf_size);
     //printf("\n  memory buffer base-address = %p\n", mem);
     //coherence = ACC_COH_RECALL;
-    coherence = ACC_COH_NONE;    
+    coherence = ACC_COH_RECALL;    
 
     // Initialize input: write floating point hex values (simpler to debug)
     init_buf_0(&mem[(dev_id_0[0]) * BATCH * TOKENS]);
@@ -257,17 +257,17 @@ for (int it_0 = 7; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id[i]], CMD_REG, CMD_MASK_START);
     }
     
-    printf(" Debug checkpoint 1\n");
+//    printf(" Debug checkpoint 1\n");
 
     unsigned done = 0;
 
     while (!done) {
         done = STATUS_MASK_DONE;
-        printf("  Debug checkpoint 2\n");
+//        printf("  Debug checkpoint 2\n");
         for (int i = 0; i < num_multicast_0 + num_multicast_1 + 1 + 1; i++){
             done &= (ioread32(&devs[i], STATUS_REG) & STATUS_MASK_DONE);
         }
-        printf("  Debug checkpoint 3\n");
+//        printf("  Debug checkpoint 3\n");
     }
 
     end = get_counter();

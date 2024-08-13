@@ -28,15 +28,15 @@ typedef u64 token_t;
 
 // User defined registers
 #define TOKENS 512
-#define BATCH 64
+#define BATCH 256
 #define mask 0x0LL
 
 // Control the number of consumers
-#define NUM_MULTICAST_0 4
-#define NUM_MULTICAST_1 11
+#define NUM_MULTICAST_0 6
+#define NUM_MULTICAST_1 9
 
 // MCAST number of iterations = 8 * 9 (num_dest + 1)*(num_dest + 1)
-#define IT 30
+#define IT 54
 
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 20
@@ -124,16 +124,13 @@ int main(int argc, char * argv[])
 	unsigned coherence;
         long long start, end;
 
-for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
+for (int it_0 = 6; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
     struct esp_device devs[17];
     ndev = 17;
     for (int i = 0; i < ndev; i++) {
         devs[i].addr = 0x60010000 + i * 0x100;
     }
-//if (it_0 == 0 && it_1 == 0) {
-//continue;
-//}
         //printf("Scanning device tree...\n");
 //	ndev = probe(&devs, VENDOR_SLD, SLD_DUMMY, DEV_NAME);
 //	if (!ndev) {
@@ -151,8 +148,8 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     token_t *mem;
 
     // Indexes
-    int dev_id_0[NUM_MULTICAST_0 + 1] = {1, 11, 12, 15, 16};
-    int dev_id_1[NUM_MULTICAST_1 + 1] = {0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14};
+    int dev_id_0[NUM_MULTICAST_0 + 1] = {2, 5, 6, 9, 10, 13, 16};
+    int dev_id_1[NUM_MULTICAST_1 + 1] = {0, 1, 3, 4, 7, 8, 11, 12, 15, 14};
     int dev_id[NUM_MULTICAST_0 + NUM_MULTICAST_1 + 1 + 1] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     // Swap indexes
@@ -165,8 +162,8 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     dev_id_1[it_1] = dev_id_1[0]; 
     dev_id_1[0] = int_tmp_1;
 
-    dev_id[int_tmp_0] = dev_id[1];
-    dev_id[1] = int_tmp_0;
+    dev_id[int_tmp_0] = dev_id[2];
+    dev_id[2] = int_tmp_0;
     dev_id[int_tmp_1] = dev_id[0];
     dev_id[0] = int_tmp_1;
 
@@ -174,21 +171,20 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
 
     // Check if scatter-gather DMA is disabled
     if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) == 0) {
-//        printf("  -> scatter-gather DMA is disabled. Abort.\n");
+        printf("  -> scatter-gather DMA is disabled. Abort.\n");
         return 0;
     }
 
     if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) < nchunk) {
-//        printf("  -> Not enough TLB entries available. Abort.\n");
+        printf("  -> Not enough TLB entries available. Abort.\n");
         return 0;
     }
 
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(dummy_buf_size);
-//    mem = (token_t *) 0x80100020; //for hard coding data
-//    printf("\n  memory buffer base-address = %p\n", mem);
-    //coherence = ACC_COH_RECALL;
-    coherence = ACC_COH_NONE;
+    //printf("\n  memory buffer base-address = %p\n", mem);
+    coherence = ACC_COH_RECALL;
+    //coherence = ACC_COH_NONE;
 
     // Initialize input: write floating point hex values (simpler to debug)
     init_buf_0(&mem[(dev_id_0[0]) * BATCH * TOKENS]);
@@ -198,8 +194,8 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     ptable = aligned_malloc(nchunk * sizeof(unsigned *));
     for (i = 0; i < nchunk; i++)
         ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
-//    printf("  ptable = %p\n", ptable);
-//    printf("  nchunk = %lu\n\n", nchunk);
+    //printf("  ptable = %p\n", ptable);
+    //printf("  nchunk = %lu\n\n", nchunk);
 
     for (int i = 0; i < num_multicast_0 + 1; i++) {
         // Configure device
@@ -273,7 +269,7 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     }
 
 //    printf("  Done\n");
-    printf("  Validating...\n\n");
+//    printf("  Validating...\n\n");
 
     // Validation
     for (int i = 0; i < num_multicast_0; i++) {
@@ -281,22 +277,22 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         // errors += validate_dummy(&mem[(i + 1) * BATCH * TOKENS]);
         errors += error_increment;
 //        printf("Memory Block %d Iterated...\n", i + 1);
-        if (!error_increment)
-            printf("Memory Block %d PASS\n", dev_id_0[i + 1]);
-        else
-            printf("Memory Block %d FAIL\n", dev_id_0[i + 1]);
+//        if (!error_increment)
+//            printf("Memory Block %d PASS\n", dev_id_0[i + 1]);
+//        else
+//            printf("Memory Block %d FAIL\n", dev_id_0[i + 1]);
     }
     for (int i = 0; i < num_multicast_1; i++) {
         int error_increment = validate_dummy_1(&mem[(dev_id_1[i + 1]) * BATCH * TOKENS]);
         // errors += validate_dummy(&mem[(i + 1) * BATCH * TOKENS]);
         errors += error_increment;
-        if (!error_increment)
-            printf("Memory Block %d PASS\n", dev_id_1[i + 1]);
-        else
-            printf("Memory Block %d FAIL\n", dev_id_1[i + 1]);
+//        if (!error_increment)
+//            printf("Memory Block %d PASS\n", dev_id_1[i + 1]);
+//        else
+//            printf("Memory Block %d FAIL\n", dev_id_1[i + 1]);
     }
 
-    printf("Total Errors %d for it_0 = %d, it_1 = %d\n", errors, it_0, it_1);
+    //printf("Total Errors %d for it_0 = %d, it_1 = %d\n", errors, it_0, it_1);
     if (!errors)
         printf("PASS for it_0 = %d, it_1 = %d\n", it_0, it_1);
     else
