@@ -110,7 +110,7 @@ int main(int argc, char * argv[])
 //		printf("Error: %s device not found!\n", DEV_NAME);
 //		exit(EXIT_FAILURE);
 //	}
-    for (int source_dev_id = 0; source_dev_id < num_multicast + 1; source_dev_id++) {
+    for (int source_dev_id = 1; source_dev_id < num_multicast + 1; source_dev_id++) {
     struct esp_device devs[17];
     ndev = 17;
     for (int i = 0; i < ndev; i++) {
@@ -142,7 +142,7 @@ int main(int argc, char * argv[])
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(dummy_buf_size);
 //    printf("\n  memory buffer base-address = %p\n", mem);
-    coherence = ACC_COH_RECALL;
+    coherence = ACC_COH_NONE;
 
     // Initialize input: write floating point hex values (simpler to debug)
     init_buf(&mem[source_dev_id * BATCH * TOKENS]);

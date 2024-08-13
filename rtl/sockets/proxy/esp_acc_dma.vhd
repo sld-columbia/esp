@@ -1081,6 +1081,8 @@ end generate tlb_gen;
               if hdr_gen = '0' then	--only after first multi src mcast KL
                 hdr_gen_init <= '1';
               end if;
+            else
+              sample_flits <= '1';	--sample flits here if original mcast
             end if;
           end if;
           dma_next <= receive_p2p_length;
@@ -1097,10 +1099,12 @@ end generate tlb_gen;
           p2p_rsp_snd_data_in <= header_r;
           p2p_req_rcv_rdreq <= '1';
           if count_n_dest = p2p_mcast_ndests then
-            dma_next <= wait_hdr_gen_p2p;	--send to wait_hdr_gen_p2p
-            if p2p_mcast_nsrcs = '1' then	--multisource multicasting, extend sample flits 1 more cycle
+            if p2p_mcast_nsrcs = '1' then	--multisource mcast
               --sample_flits <= '1';
-              q_initialize <= '1';
+              dma_next <= wait_hdr_gen_p2p;	--send to wait_hdr_gen_p2p if multisource multicasting
+              q_initialize <= '1';		--initialize q_state here
+            else
+              dma_next <= send_header;		--original mcast, send header
             end if;
           else
             dma_next <= wait_req_p2p;
