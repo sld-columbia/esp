@@ -104,10 +104,6 @@ end;
 
 architecture rtl of fpga_tile_acc is
 
-
-  -- -- Token-based power management clock for accelerator tile
-  signal acc_clk : std_ulogic;
-
   -- DCO reset -> keeping the logic compliant with the asic flow
   signal tile_rstn_s  : std_ulogic;
   signal tile_clk_s   : std_ulogic;
@@ -164,7 +160,7 @@ begin
       test_if_en => 0)
     port map (
       rstn                => rst,
-      clk                 => acc_clk,
+      clk                 => clk,
       tile_rstn           => tile_rstn_s,
       tdi                 => tdi,
       tdo                 => tdo,
@@ -253,7 +249,7 @@ begin
     port map (
       raw_rstn            => '0',
       tile_rst            => rst,
-      ext_clk             => acc_clk,
+      ext_clk             => clk,
       clk_div             => open,
       tile_clk_out        => tile_clk_s,
       tile_rstn_out       => tile_rstn_s,
