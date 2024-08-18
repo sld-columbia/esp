@@ -54,3 +54,4 @@ restore_waveform.tcl.svcf
 memlib
 hls-work-*
 nimbus.csv
+*.so
