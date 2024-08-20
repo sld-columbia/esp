@@ -48,11 +48,15 @@ static int validate_dummy_0(token_t *mem)
     int i, j;
     int rtn = 0;
     for (j = 0; j < BATCH; j++)
-        for (i = 0; i < TOKENS; i++)
+        for (i = 0; i < TOKENS; i++) {
+            if (i == 0 && j == 0) {
+                printf("%llu\n", mem[0]);
+            }
             if (mem[i + j * TOKENS] != (mask | (token_t) ((2 * BATCH * TOKENS) + (i + j * TOKENS)))) {
 //                printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
                 rtn++;
             }
+}
     return rtn;
 }
 
@@ -61,11 +65,15 @@ static int validate_dummy_1(token_t *mem)
     int i, j;
     int rtn = 0;
     for (j = 0; j < BATCH; j++)
-        for (i = 0; i < TOKENS; i++)
+        for (i = 0; i < TOKENS; i++) {
+            if (i == 0 && j == 0) {
+                printf("%llu\n", mem[0]);
+            }
             if (mem[i + j * TOKENS] != (mask | (token_t) ((BATCH * TOKENS) + (i + j * TOKENS)))) {
                 // printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
                 rtn++;
             }
+}
     return rtn;
 }
 
@@ -83,6 +91,14 @@ static void init_buf_1(token_t *mem)
     for (j = 0; j < BATCH; j++)
         for (i = 0; i < TOKENS; i++)
             mem[i + j * TOKENS] = (mask | (token_t) ((BATCH * TOKENS) + (i + j * TOKENS)));
+}
+
+static void clear_buf(token_t *mem)
+{
+    int i, j;
+    for (j = 0; j < BATCH; j++)
+        for (i = 0; i < TOKENS; i++)
+            mem[i + j * TOKENS] = (mask | (token_t) (0));
 }
 
 void p2p_setup(struct esp_device* dev, int p2p_store, int mcast_ndests, int p2p_load, struct esp_device* p2p_src, int mcast_nsrcs){
@@ -120,12 +136,10 @@ int main(int argc, char * argv[])
 	int ndev;
         int num_multicast_0 = NUM_MULTICAST_0;
         int num_multicast_1 = NUM_MULTICAST_1;
-	struct esp_device *devs = NULL;
+//	struct esp_device *devs = NULL;
 	unsigned coherence;
         long long start, end;
 
-for (int it_0 = 6; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
-    for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
 
 //        if ((it_0 == 5 && it_1 == 6) || (it_0 == 1 && it_1 == 2) || (it_0 == 1 && it_1 == 1) || (it_0 == 3 && it_1 == 3) || (it_0 == 2 && it_1 ==0)) {
 //            continue;
@@ -156,6 +170,31 @@ for (int it_0 = 6; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     unsigned **ptable = NULL;
     token_t *mem;
 
+    int i;
+
+    // Check if scatter-gather DMA is disabled
+    if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) == 0) {
+        printf("  -> scatter-gather DMA is disabled. Abort.\n");
+        return 0;
+    }
+
+    if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) < nchunk) {
+        printf("  -> Not enough TLB entries available. Abort.\n");
+        return 0;
+    }
+
+    // Allocate memory (will be contigous anyway in baremetal)
+    mem = aligned_malloc(dummy_buf_size);
+    //printf("\n  memory buffer base-address = %p\n", mem);
+    coherence = ACC_COH_NONE;
+    //coherence = ACC_COH_NONE;    
+    ptable = aligned_malloc(nchunk * sizeof(unsigned *));
+    for (i = 0; i < nchunk; i++)
+        ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
+
+for (int it_0 = 0; it_0 < num_multicast_0 + 1; it_0++) {
+    for (int it_1 = 0; it_1 < num_multicast_1 + 1; it_1++) {
+
     // Indexes
     int dev_id_0[NUM_MULTICAST_0 + 1] = {0, 4, 5, 7, 10, 12, 13, 15};
     int dev_id_1[NUM_MULTICAST_1 + 1] = {1, 2, 3, 6, 8, 9, 11, 14, 16};
@@ -176,33 +215,12 @@ for (int it_0 = 6; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     dev_id[int_tmp_1] = dev_id[1];
     dev_id[1] = int_tmp_1;
 
-    int i;
-
-    // Check if scatter-gather DMA is disabled
-    if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) == 0) {
-        printf("  -> scatter-gather DMA is disabled. Abort.\n");
-        return 0;
-    }
-
-    if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) < nchunk) {
-        printf("  -> Not enough TLB entries available. Abort.\n");
-        return 0;
-    }
-
-    // Allocate memory (will be contigous anyway in baremetal)
-    mem = aligned_malloc(dummy_buf_size);
-    //printf("\n  memory buffer base-address = %p\n", mem);
-    //coherence = ACC_COH_RECALL;
-    coherence = ACC_COH_RECALL;    
 
     // Initialize input: write floating point hex values (simpler to debug)
     init_buf_0(&mem[(dev_id_0[0]) * BATCH * TOKENS]);
     init_buf_1(&mem[(dev_id_1[0]) * BATCH * TOKENS]);
 
     //Alocate and populate page table
-    ptable = aligned_malloc(nchunk * sizeof(unsigned *));
-    for (i = 0; i < nchunk; i++)
-        ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
     //printf("  ptable = %p\n", ptable);
     //printf("  nchunk = %lu\n\n", nchunk);
 
@@ -309,9 +327,14 @@ for (int it_0 = 6; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     
     errors = 0;
 
-    aligned_free(ptable);
-    aligned_free(mem);
+    for (int k = 0; k < 17; k++) {
+        clear_buf(&mem[(dev_id[k]) * BATCH * TOKENS]);
+    }
+
 }//it1 for loop
 }//it0 for loop
+    aligned_free(ptable);
+    aligned_free(mem);
+
 	return 0;
 }

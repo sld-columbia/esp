@@ -50,50 +50,63 @@ static int validate_dummy_0(token_t *mem)
     int i, j;
     int rtn = 0;
     for (j = 0; j < BATCH; j++)
-        for (i = 0; i < TOKENS; i++)
+        for (i = 0; i < TOKENS; i++) {
+            if (i == 0 && j == 0) {
+                printf("%llu\n", mem[0]);
+            }
             if (mem[i + j * TOKENS] != (mask | (token_t) ((2 * BATCH * TOKENS) + (i + j * TOKENS)))) {
 //                printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
                 rtn++;
             }
+    }
     return rtn;
 }
-
 static int validate_dummy_1(token_t *mem)
 {
     int i, j;
     int rtn = 0;
     for (j = 0; j < BATCH; j++)
-        for (i = 0; i < TOKENS; i++)
+        for (i = 0; i < TOKENS; i++) {
+            if (i == 0 && j == 0) {
+                printf("%llu\n", mem[0]);
+            }
             if (mem[i + j * TOKENS] != (mask | (token_t) ((BATCH * TOKENS) + (i + j * TOKENS)))) {
-                // printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
+//                printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
                 rtn++;
             }
+    }
     return rtn;
 }
-
 static int validate_dummy_2(token_t *mem)
 {
     int i, j;
     int rtn = 0;
     for (j = 0; j < BATCH; j++)
-        for (i = 0; i < TOKENS; i++)
-            if (mem[i + j * TOKENS] != (mask | (token_t) ((3* BATCH * TOKENS) + (i + j * TOKENS)))) {
-                // printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
+        for (i = 0; i < TOKENS; i++) {
+            if (i == 0 && j == 0) {
+                printf("%llu\n", mem[0]);
+            }
+            if (mem[i + j * TOKENS] != (mask | (token_t) ((3 * BATCH * TOKENS) + (i + j * TOKENS)))) {
+//                printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
                 rtn++;
             }
+    }
     return rtn;
 }
-
 static int validate_dummy_3(token_t *mem)
 {
     int i, j;
     int rtn = 0;
     for (j = 0; j < BATCH; j++)
-        for (i = 0; i < TOKENS; i++)
-            if (mem[i + j * TOKENS] != (mask | (token_t) ((4* BATCH * TOKENS) + (i + j * TOKENS)))) {
-                // printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
+        for (i = 0; i < TOKENS; i++) {
+            if (i == 0 && j == 0) {
+                printf("%llu\n", mem[0]);
+            }
+            if (mem[i + j * TOKENS] != (mask | (token_t) ((4 * BATCH * TOKENS) + (i + j * TOKENS)))) {
+//                printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
                 rtn++;
             }
+    }
     return rtn;
 }
 
@@ -127,6 +140,14 @@ static void init_buf_3(token_t *mem)
     for (j = 0; j < BATCH; j++)
         for (i = 0; i < TOKENS; i++)
             mem[i + j * TOKENS] = (mask | (token_t) ((4 * BATCH * TOKENS) + (i + j * TOKENS)));
+}
+
+static void clear_buf(token_t *mem)
+{
+    int i, j;
+    for (j = 0; j < BATCH; j++)
+        for (i = 0; i < TOKENS; i++)
+            mem[i + j * TOKENS] = (mask | (token_t) (999999999));
 }
 
 void p2p_setup(struct esp_device* dev, int p2p_store, int mcast_ndests, int p2p_load, struct esp_device* p2p_src, int mcast_nsrcs){
@@ -166,14 +187,10 @@ int main(int argc, char * argv[])
         int num_multicast_1 = NUM_MULTICAST_1;
         int num_multicast_2 = NUM_MULTICAST_2;
         int num_multicast_3 = NUM_MULTICAST_3;
-	struct esp_device *devs = NULL;
+//	struct esp_device *devs = NULL;
 	unsigned coherence;
         long long start, end;
 
-for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
-    for (int it_1 = 3; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
-        for (int it_2 = 0; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
-            for (int it_3 = 0; it_3 < NUM_MULTICAST_3 + 1; it_3++) {
     struct esp_device devs[17];
     ndev = 17;
     for (int i = 0; i < ndev; i++) {
@@ -194,6 +211,36 @@ for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
 
     unsigned **ptable = NULL;
     token_t *mem;
+
+    int i;
+
+    // Check if scatter-gather DMA is disabled
+    if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) == 0) {
+        printf("  -> scatter-gather DMA is disabled. Abort.\n");
+        return 0;
+    }
+
+    if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) < nchunk) {
+        printf("  -> Not enough TLB entries available. Abort.\n");
+        return 0;
+    }
+    // Allocate memory (will be contigous anyway in baremetal)
+    mem = aligned_malloc(dummy_buf_size);
+    //printf("\n  memory buffer base-address = %p\n", mem);
+    //coherence = ACC_COH_RECALL;
+    coherence = ACC_COH_NONE;
+
+    //Alocate and populate page table
+    ptable = aligned_malloc(nchunk * sizeof(unsigned *));
+    for (i = 0; i < nchunk; i++)
+        ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
+    //printf("  ptable = %p\n", ptable);
+    //printf("  nchunk = %lu\n\n", nchunk);
+
+for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
+    for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
+        for (int it_2 = 0; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
+            for (int it_3 = 0; it_3 < NUM_MULTICAST_3 + 1; it_3++) {
 
     // Indexes
     int dev_id_0[NUM_MULTICAST_0 + 1] = {0, 7, 9, 16};
@@ -220,7 +267,6 @@ for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     dev_id_3[it_3] = dev_id_3[0];
     dev_id_3[0] = int_tmp_3;
 
-
     dev_id[int_tmp_0] = dev_id[0];
     dev_id[0] = int_tmp_0;
     dev_id[int_tmp_1] = dev_id[1];
@@ -230,37 +276,11 @@ for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     dev_id[int_tmp_3] = dev_id[3];
     dev_id[3] = int_tmp_3;
 
-    int i;
-
-    // Check if scatter-gather DMA is disabled
-    if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) == 0) {
-        printf("  -> scatter-gather DMA is disabled. Abort.\n");
-        return 0;
-    }
-
-    if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) < nchunk) {
-        printf("  -> Not enough TLB entries available. Abort.\n");
-        return 0;
-    }
-
-    // Allocate memory (will be contigous anyway in baremetal)
-    mem = aligned_malloc(dummy_buf_size);
-    //printf("\n  memory buffer base-address = %p\n", mem);
-    coherence = ACC_COH_NONE;
-    //coherence = ACC_COH_NONE;
-
     // Initialize input: write floating point hex values (simpler to debug)
     init_buf_0(&mem[(dev_id_0[0]) * BATCH * TOKENS]);
     init_buf_1(&mem[(dev_id_1[0]) * BATCH * TOKENS]);
     init_buf_2(&mem[(dev_id_2[0]) * BATCH * TOKENS]);
     init_buf_3(&mem[(dev_id_3[0]) * BATCH * TOKENS]);
-
-    //Alocate and populate page table
-    ptable = aligned_malloc(nchunk * sizeof(unsigned *));
-    for (i = 0; i < nchunk; i++)
-        ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
-    //printf("  ptable = %p\n", ptable);
-    //printf("  nchunk = %lu\n\n", nchunk);
 
     for (int i = 0; i < num_multicast_0 + 1; i++) {
         // Configure device
@@ -421,11 +441,15 @@ for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     
     errors = 0;
 
-    aligned_free(ptable);
-    aligned_free(mem);
+    for (int k = 0; k < 17; k++) {
+        clear_buf(&mem[dev_id[k] * BATCH * TOKENS]);
+    }
+
 }//it3 for loop
 }//it2 for loop
 }//it1 for loop
 }//it0 for loop
+    aligned_free(ptable);
+    aligned_free(mem);
 	return 0;
 }

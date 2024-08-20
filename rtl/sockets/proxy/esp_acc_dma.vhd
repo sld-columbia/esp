@@ -1387,7 +1387,7 @@ end generate tlb_gen;
         q_state <= q_next;
       end if;
     end if;
-  end process q_state_fsm;	--PROBABLY DONT NEED Q_INT AND Q_INT_NEXT**************
+  end process q_state_fsm;
 
   header_state_utilities: process (clk, rst)		-- KL
   begin	-- process

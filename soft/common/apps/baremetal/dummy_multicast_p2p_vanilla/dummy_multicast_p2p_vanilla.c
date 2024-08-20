@@ -110,7 +110,7 @@ int main(int argc, char * argv[])
 //		printf("Error: %s device not found!\n", DEV_NAME);
 //		exit(EXIT_FAILURE);
 //	}
-    for (int source_dev_id = 1; source_dev_id < num_multicast + 1; source_dev_id++) {
+    for (int source_dev_id = 0; source_dev_id < num_multicast + 1; source_dev_id++) {
     struct esp_device devs[17];
     ndev = 17;
     for (int i = 0; i < ndev; i++) {
