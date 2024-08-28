@@ -98,7 +98,7 @@ entity esp_acc_dma is
     acc_done      : in  std_ulogic;
     flush         : out std_ulogic;
     acc_flush_done: in  std_ulogic;
-    --p2p_wr_qd: out std_logic;
+
     --Monitor signals
     mon_dvfs      : out monitor_dvfs_type;
 	--Direct output of tile status
@@ -222,7 +222,7 @@ architecture rtl of esp_acc_dma is
   signal set_p2p_wr_qd      : std_logic;
   signal clear_p2p_wr_qd    : std_logic;
 
-  -- P2P MULT SRC MCAST KL
+  -- P2P MULT SRC MCAST
   subtype q_fsm is std_logic_vector(1 downto 0);
   signal q_next, q_state			: q_fsm;
   signal q_init, q_initialize, q_clear          : std_logic;
@@ -311,72 +311,71 @@ architecture rtl of esp_acc_dma is
   -----------------------------------------------------------------------------
   -- De-comment signals you wish to debug
   -----------------------------------------------------------------------------
-   attribute mark_debug : string;
-   --attribute mark_debug of dma_rcv_rdreq_int    : signal is "true";
-   --attribute mark_debug of dma_rcv_data_out_int : signal is "true";
-   --attribute mark_debug of dma_rcv_empty_int    : signal is "true";
-   --attribute mark_debug of dma_snd_wrreq_int    : signal is "true";
-   --attribute mark_debug of dma_snd_data_in_int  : signal is "true";
-   --attribute mark_debug of dma_snd_full_int     : signal is "true";
-   --attribute mark_debug of apbi    : signal is "true";
-   --attribute mark_debug of apbo    : signal is "true";
-   --attribute mark_debug of sample    : signal is "true";
-   --attribute mark_debug of readdata  : signal is "true";
-   --attribute mark_debug of irq      : signal is "true";
-   --attribute mark_debug of irqset   : signal is "true";
-   --attribute mark_debug of irq_state: signal is "true";
-   --attribute mark_debug of header                    : signal is "true";
-   --attribute mark_debug of payload_address: signal is "true";
-   --attribute mark_debug of payload_length    : signal is "true";
-   --attribute mark_debug of sample_flits                        : signal is "true";
-   --attribute mark_debug of irq_header                : signal is "true";
-   --attribute mark_debug of interrupt_full            : signal is "true";
-   --attribute mark_debug of interrupt_data_in         : signal is "true";
-   --attribute mark_debug of interrupt_wrreq           : signal is "true";
-   --attribute mark_debug of dma_state : signal is "true";
-   --attribute mark_debug of status : signal is "true";
-   --attribute mark_debug of sample_status : signal is "true";
-   --attribute mark_debug of burst_count                : signal is "true";
-   --attribute mark_debug of increment_burst_count      : signal is "true";
-   --attribute mark_debug of clear_burst_count          : signal is "true";
-   --attribute mark_debug of dma_tran_done        : signal is "true";
-   --attribute mark_debug of dma_tran_header_sent : signal is "true";
-   --attribute mark_debug of dma_tran_start       : signal is "true";
-   --attribute mark_debug of pending_dma_read : signal is "true";
-   --attribute mark_debug of pending_dma_write : signal is "true";
-   --attribute mark_debug of tlb_valid : signal is "true";
-   --attribute mark_debug of tlb_clear : signal is "true";
-   --attribute mark_debug of tlb_empty : signal is "true";
-   --attribute mark_debug of tlb_write : signal is "true";
-   --attribute mark_debug of tlb_wr_address : signal is "true";
-   --attribute mark_debug of dma_address : signal is "true";
-   --attribute mark_debug of dma_length : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_rcv_rdreq          : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_rcv_data_out       : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_rcv_empty          : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_snd_wrreq          : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_snd_data_in        : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_snd_full           : signal is "true";
-   --attribute mark_debug of dma_rcv_rdreq                       : signal is "true";
-   --attribute mark_debug of dma_rcv_data_out                    : signal is "true";
-   --attribute mark_debug of dma_rcv_empty                       : signal is "true";
-   --attribute mark_debug of dma_snd_wrreq                       : signal is "true";
-   --attribute mark_debug of dma_snd_data_in                     : signal is "true";
-   --attribute mark_debug of dma_snd_full                        : signal is "true";
-   --attribute mark_debug of pending_acc_done : signal is "true";
-   --attribute mark_debug of clear_acc_done : signal is "true";
-   --attribute mark_debug of dma_snd_delay : signal is "true";
-   --attribute mark_debug of dma_rcv_delay : signal is "true";
-   --attribute mark_debug of read_burst : signal is "true";
-   --attribute mark_debug of write_burst : signal is "true";
-   --attribute mark_debug of noc_delay : signal is "true";
-   --attribute mark_debug of burst : signal is "true";
-   --attribute mark_debug of acc_idle : signal is "true";
-   --attribute mark_debug of mon_dvfs_ctrl : signal is "true";
-   --attribute mark_debug of rcv_p2p_length : signal is "true";
-   --attribute mark_debug of rcv_p2p_length_in : signal is "true";
-   --attribute mark_debug of skip_wait_p2p_req : signal is "true";
-   --attribute mark_debug of skip_wait_p2p_req_in : signal is "true";
+--   attribute mark_debug : string;
+--   attribute mark_debug of dma_rcv_rdreq_int    : signal is "true";
+--   attribute mark_debug of dma_rcv_data_out_int : signal is "true";
+--   attribute mark_debug of dma_rcv_empty_int    : signal is "true";
+--   attribute mark_debug of dma_snd_wrreq_int    : signal is "true";
+--   attribute mark_debug of dma_snd_data_in_int  : signal is "true";
+--   attribute mark_debug of dma_snd_full_int     : signal is "true";
+--   attribute mark_debug of apbi    : signal is "true";
+--   attribute mark_debug of apbo    : signal is "true";
+--   attribute mark_debug of sample    : signal is "true";
+--   attribute mark_debug of readdata  : signal is "true";
+--   attribute mark_debug of irq      : signal is "true";
+--   attribute mark_debug of irqset   : signal is "true";
+--   attribute mark_debug of irq_state: signal is "true";
+--   attribute mark_debug of header                    : signal is "true";
+--   attribute mark_debug of payload_address: signal is "true";
+--   attribute mark_debug of payload_length    : signal is "true";
+--   attribute mark_debug of sample_flits                        : signal is "true";
+--   attribute mark_debug of irq_header                : signal is "true";
+--   attribute mark_debug of interrupt_full            : signal is "true";
+--   attribute mark_debug of interrupt_data_in         : signal is "true";
+--   attribute mark_debug of interrupt_wrreq           : signal is "true";
+--   attribute mark_debug of dma_state : signal is "true";
+--   attribute mark_debug of status : signal is "true";
+--   attribute mark_debug of sample_status : signal is "true";
+--   attribute mark_debug of burst_count                : signal is "true";
+--   attribute mark_debug of increment_burst_count      : signal is "true";
+--   attribute mark_debug of clear_burst_count          : signal is "true";
+--   attribute mark_debug of dma_tran_done        : signal is "true";
+--   attribute mark_debug of dma_tran_header_sent : signal is "true";
+--   attribute mark_debug of dma_tran_start       : signal is "true";
+--   attribute mark_debug of pending_dma_read : signal is "true";
+--   attribute mark_debug of pending_dma_write : signal is "true";
+--   attribute mark_debug of tlb_valid : signal is "true";
+--   attribute mark_debug of tlb_clear : signal is "true";
+--   attribute mark_debug of tlb_empty : signal is "true";
+--   attribute mark_debug of tlb_write : signal is "true";
+--   attribute mark_debug of tlb_wr_address : signal is "true";
+--   attribute mark_debug of dma_address : signal is "true";
+--   attribute mark_debug of dma_length : signal is "true";
+--   attribute mark_debug of llc_coherent_dma_rcv_rdreq          : signal is "true";
+--   attribute mark_debug of llc_coherent_dma_rcv_data_out       : signal is "true";
+--   attribute mark_debug of llc_coherent_dma_rcv_empty          : signal is "true";
+--   attribute mark_debug of llc_coherent_dma_snd_wrreq          : signal is "true";
+--   attribute mark_debug of llc_coherent_dma_snd_data_in        : signal is "true";
+--   attribute mark_debug of llc_coherent_dma_snd_full           : signal is "true";
+--   attribute mark_debug of dma_rcv_rdreq                       : signal is "true";
+--   attribute mark_debug of dma_rcv_data_out                    : signal is "true";
+--   attribute mark_debug of dma_rcv_empty                       : signal is "true";
+--   attribute mark_debug of dma_snd_wrreq                       : signal is "true";
+--   attribute mark_debug of dma_snd_data_in                     : signal is "true";
+--   attribute mark_debug of dma_snd_full                        : signal is "true";
+--   attribute mark_debug of pending_acc_done : signal is "true";
+--   attribute mark_debug of clear_acc_done : signal is "true";
+--   attribute mark_debug of dma_snd_delay : signal is "true";
+--   attribute mark_debug of dma_rcv_delay : signal is "true";
+--   attribute mark_debug of read_burst : signal is "true";
+--   attribute mark_debug of write_burst : signal is "true";
+--   attribute mark_debug of noc_delay : signal is "true";
+--   attribute mark_debug of burst : signal is "true";
+--   attribute mark_debug of acc_idle : signal is "true";
+--   attribute mark_debug of rcv_p2p_length : signal is "true";
+--   attribute mark_debug of rcv_p2p_length_in : signal is "true";
+--   attribute mark_debug of skip_wait_p2p_req : signal is "true";
+--   attribute mark_debug of skip_wait_p2p_req_in : signal is "true";
 
 begin  -- rtl
 
@@ -499,13 +498,12 @@ end generate tlb_gen;
   p2p_dst_y <= get_origin_y(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
   p2p_dst_x <= get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
   p2p_mcast_ndests <= to_integer(unsigned(bankreg(P2P_REG)(P2P_BIT_MCAST_DESTS + P2P_WIDTH_MCAST_DESTS - 1 downto P2P_BIT_MCAST_DESTS)));
-  p2p_mcast_nsrcs <= bankreg(P2P_REG)(P2P_BIT_MCAST_SRCS);	--KL INDICATE single src mcast or multi src mcast. Boolean
-  --p2p_mcast_nsrcs <= '0';	--KL for testing
+  p2p_mcast_nsrcs <= bankreg(P2P_REG)(P2P_BIT_MCAST_SRCS);	--INDICATE single src mcast or multi src mcast
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
                         p2p_src_index_r, p2p_dst_arr_y, p2p_dst_arr_x, p2p_dst_y, p2p_dst_x,
                         coherence, local_y, local_x, dma_tran_done, q_state)
---, q_state, hdr_gen_init)
+
     variable msg_type : noc_msg_type;
     variable header_v : dma_noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
@@ -598,7 +596,7 @@ end generate tlb_gen;
           mcast_data := create_header_mcast(DMA_NOC_FLIT_SIZE, local_y, local_x,
                                               p2p_dst_arr_y(MAX_MCAST_DESTS - 2 downto 0),
                                               p2p_dst_arr_x(MAX_MCAST_DESTS - 2 downto 0),
-                                              p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type, p2p_mcast_nsrcs);	--CHANGE_KL: added p2p_mcast_nsrcs;
+                                              p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type, p2p_mcast_nsrcs);
 
           p2p_mcast_header_vec <= mcast_data.header_vec;
           p2p_ndest_vec <= mcast_data.quad_count;
@@ -614,7 +612,7 @@ end generate tlb_gen;
  	      mcast_data := create_header_mcast(DMA_NOC_FLIT_SIZE, local_y, local_x,
                                             p2p_dst_arr_y(MAX_MCAST_DESTS - 2 downto 0),
                                             p2p_dst_arr_x(MAX_MCAST_DESTS - 2 downto 0),
-                                            p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type, p2p_mcast_nsrcs);	--CHANGE_KL: added p2p_mcast_nsrcs;
+                                            p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type, p2p_mcast_nsrcs);
         p2p_header_v := mcast_data.header_vec(0);
       end if;
     end if;
@@ -661,10 +659,9 @@ end generate tlb_gen;
         header_r <= header;
         payload_address_r <= payload_address;
         payload_length_r <= payload_length;
-        -- if msg_type = RSP_P2P and skip_wait_p2p_req = '0' then
         if skip_wait_p2p_req = '0' or p2p_mcast_nsrcs = '1' then
 --skip_wait_p2p_req = 1 --> skips receive_p2p_length state and goes to send header from wait_req_p2p state.	
---KL this condition is tied to continue_p2p --> when continuing p2p, doesn't update the header in p2p_header_r. When skip_wait_p2p_req is 1, p2p_header_r is sent, which isn't updated when skip_wait_p2p_req is 1 (or continue p2p = 1); --> for multisource mcast source (writing), headers need to change every quadrant so p2p_mcast_nsrcs = '1' is added to the if statement.
+--this condition is tied to continue_p2p --> when continuing p2p, doesn't update the header in p2p_header_r. When skip_wait_p2p_req is 1, p2p_header_r is sent, which isn't updated when skip_wait_p2p_req is 1 (or continue p2p = 1); --> for multisource mcast source (writing), headers need to change every quadrant so p2p_mcast_nsrcs = '1' is added to the if statement.
           p2p_header_r <= header;
         end if;
       end if;
@@ -788,7 +785,7 @@ end generate tlb_gen;
     word_count_int := to_integer(unsigned(word_count));
     increment_p2p_count <= '0';
     clear_p2p_count <= '0';
-    next_quadrant <= '0';	--KL
+    next_quadrant <= '0';
     hdr_gen_init <= '0';
     hdr_gen_clear <= '0';
     set_p2p_wr_qd <= '0';
@@ -945,7 +942,6 @@ end generate tlb_gen;
         -- 5) If there a wr_request, a write transaction is initiated. Read has
         --    priority over write regardless of P2P configuration.
         if (pending_dma_read or pending_dma_write) = '1' and scatter_gather /= 0 then
---        if ((pending_dma_read = '1' and p2p_wr_qd = '0') or pending_dma_write = '1') and scatter_gather /= 0 then --block dma read while onto other quadrants
           if dma_tran_start = '1' then
             sample_flits <= '1';
             if coherence /= ACC_COH_FULL then
@@ -968,12 +964,11 @@ end generate tlb_gen;
               flush <= '1';
             end if;
             dma_next <= wait_for_completion;
-            if p2p_mcast_nsrcs = '1' then		--KL not entirely sure about this. When complete uninit header generator -- this should be OK if mult src mcast only for DMA mode.
+            if p2p_mcast_nsrcs = '1' then
               hdr_gen_clear <= '1';
               q_clear <= '1';
             end if;
           end if;
---        elsif rd_request = '1' then
         elsif rd_request = '1' and p2p_wr_qd = '0' then	-- added p2p count condition - while mcast to diff quad, block read
           if scatter_gather = 0 then
             sample_flits <= '1';
@@ -1076,9 +1071,8 @@ end generate tlb_gen;
         elsif p2p_req_rcv_empty = '0' then
           p2p_req_rcv_rdreq <= '1';
           if count_n_dest = p2p_mcast_ndests then
-            --sample_flits <= '1';
             if p2p_mcast_nsrcs = '1' then 
-              if hdr_gen = '0' then	--only after first multi src mcast KL
+              if hdr_gen = '0' then	--only after first multi src mcast
                 hdr_gen_init <= '1';
               end if;
             else
@@ -1100,7 +1094,6 @@ end generate tlb_gen;
           p2p_req_rcv_rdreq <= '1';
           if count_n_dest = p2p_mcast_ndests then
             if p2p_mcast_nsrcs = '1' then	--multisource mcast
-              --sample_flits <= '1';
               dma_next <= wait_hdr_gen_p2p;	--send to wait_hdr_gen_p2p if multisource multicasting
               q_initialize <= '1';		--initialize q_state here
             else
@@ -1273,7 +1266,6 @@ end generate tlb_gen;
             clear_word_count <= '1';
             if preamble = PREAMBLE_TAIL and tlb_count = bankreg(PT_NCHUNK_REG) - 1 then
               clear_burst_count <= '1';
---              clear_p2p_count <= '1';	--KL
               clear_tlb_count <= '1';
               tlb_valid <= '1';
               dma_next <= idle;
@@ -1293,7 +1285,6 @@ end generate tlb_gen;
                 dma_tran_done <= '1';
                 dma_next <= running;
                 clear_burst_count <= '1';
---                clear_p2p_count <= '1';--KL
               end if;
             end if;
           end if;
@@ -1353,7 +1344,7 @@ end generate tlb_gen;
     end if;
   end process;
 
-  q_state_fsm: process (clk, rst)		-- KL
+  q_state_fsm: process (clk, rst)
   begin	-- process
     if rst = '0' then			-- asynchronous reset (active low)
       q_state <= (others => '0');
@@ -1371,7 +1362,6 @@ end generate tlb_gen;
         else
           q_state <= "00";
         end if;
-        --q_initialize <= '1';
       else
         if p2p_ndest_vec_l(to_integer(unsigned(q_state) + "01")) = '1' then
           q_next <= std_logic_vector(unsigned(q_state) + "01");

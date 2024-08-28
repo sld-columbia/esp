@@ -10,12 +10,10 @@ create_clock -period 1.600 [get_ports gtrefclk_p]
 set_false_path -to [get_pins -hier -filter { name =~ */reset_sync_*/*/PRE}]
 
 # Recover clock names after elaboration
-set clkm_elab [get_clocks -of_objects [get_nets clkm]]
-set refclk_elab [get_clocks -of_objects [get_nets chip_refclk]]
-set clk125m_elab [get_clocks -of_objects [get_nets -hierarchical clk125m]]
 
 # set_max_delay -from [get_clocks -include_generated_clocks ${refclk_elab}] -to [get_clocks -include_generated_clocks ${clk125m_elab}] 8.000
 # set_max_delay -from [get_clocks -include_generated_clocks ${clk125m_elab}] -to [get_clocks -include_generated_clocks ${refclk_elab}] 8.000
 
-set_clock_groups -asynchronous -group [get_clocks ${clk125m_elab}] -group [get_clocks ${refclk_elab}]
-set_clock_groups -asynchronous -group [get_clocks ${clk125m_elab}] -group [get_clocks ${clkm_elab}]
+set_clock_groups -asynchronous -group [get_clocks [get_clocks -of_objects [get_nets -hierarchical clk125m]]] -group [get_clocks [get_clocks -of_objects [get_nets chip_refclk]]]
+set_clock_groups -asynchronous -group [get_clocks [get_clocks -of_objects [get_nets -hierarchical clk125m]]] -group [get_clocks [get_clocks -of_objects [get_nets clkm]]]
+

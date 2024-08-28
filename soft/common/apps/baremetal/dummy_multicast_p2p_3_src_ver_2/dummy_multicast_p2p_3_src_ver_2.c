@@ -205,7 +205,7 @@ int main(int argc, char * argv[])
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(dummy_buf_size);
     //printf("\n  memory buffer base-address = %p\n", mem);
-    //coherence = ACC_COH_RECALL;
+//    coherence = ACC_COH_NONE;
     coherence = ACC_COH_RECALL;
 
     //Alocate and populate page table
@@ -217,10 +217,13 @@ int main(int argc, char * argv[])
 
 for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     for (int it_1 = 4; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
-        for (int it_2 = 4; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
-//if (coherence == ACC_COH_RECALL && it_0 == 3 && it_1 == 4 && it_2 == 5) {
+        for (int it_2 = 0; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
+//if ((it_0 == 3 && it_1 == 4 && it_2 == 4) || (it_0 == 3 && it_1 == 4 && it_2 == 5) || (it_0 == 3 && it_1 == 5 && it_2 == 5)) {
 //    continue;
 //}
+if ((it_0 == 3 && it_1 == 4 && it_2 == 5) || (it_0 == 3 && it_1 == 4 && it_2 == 4)){
+continue;
+}
     // Indexes
     int dev_id_0[NUM_MULTICAST_0 + 1] = {0, 4, 9, 14};
     int dev_id_1[NUM_MULTICAST_1 + 1] = {1, 5, 7, 10, 12, 15};
@@ -249,7 +252,7 @@ for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     dev_id[2] = int_tmp_2;
 
     // Initialize input: write floating point hex values (simpler to debug)
-//    init_buf_0(&mem[(dev_id_0[0]) * BATCH * TOKENS]);
+    init_buf_0(&mem[(dev_id_0[0]) * BATCH * TOKENS]);
     init_buf_1(&mem[(dev_id_1[0]) * BATCH * TOKENS]);
     init_buf_2(&mem[(dev_id_2[0]) * BATCH * TOKENS]);
 
