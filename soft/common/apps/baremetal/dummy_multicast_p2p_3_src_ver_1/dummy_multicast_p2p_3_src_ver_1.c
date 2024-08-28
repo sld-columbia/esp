@@ -219,9 +219,9 @@ for (int it_0 = 4; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
         for (int it_2 = 0; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
 
-if ((it_0 == 4 && it_1 == 4 && it_2 == 4)){
-continue;
-}
+//if ((it_0 == 4 && it_1 == 4 && it_2 == 4)){
+//continue;
+//}
 
     // Indexes
     int dev_id_0[NUM_MULTICAST_0 + 1] = {0, 4, 7, 9, 14, 16};

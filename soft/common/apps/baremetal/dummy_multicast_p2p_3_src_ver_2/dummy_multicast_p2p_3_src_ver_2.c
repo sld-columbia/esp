@@ -221,9 +221,9 @@ for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
 //if ((it_0 == 3 && it_1 == 4 && it_2 == 4) || (it_0 == 3 && it_1 == 4 && it_2 == 5) || (it_0 == 3 && it_1 == 5 && it_2 == 5)) {
 //    continue;
 //}
-if ((it_0 == 3 && it_1 == 4 && it_2 == 5) || (it_0 == 3 && it_1 == 4 && it_2 == 4)){
-continue;
-}
+//if ((it_0 == 3 && it_1 == 4 && it_2 == 5) || (it_0 == 3 && it_1 == 4 && it_2 == 4)){
+//continue;
+//}
     // Indexes
     int dev_id_0[NUM_MULTICAST_0 + 1] = {0, 4, 9, 14};
     int dev_id_1[NUM_MULTICAST_1 + 1] = {1, 5, 7, 10, 12, 15};

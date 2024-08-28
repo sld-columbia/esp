@@ -326,7 +326,7 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_0[i]], SELECT_REG, ioread32(&devs[dev_id_0[i]], DEVID_REG));
         iowrite32(&devs[dev_id_0[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_0[i]], 1, num_multicast_0, 0, NULL, 0);
+            p2p_setup(&devs[dev_id_0[i]], 1, num_multicast_0, 0, NULL, 1);
         else
             p2p_setup(&devs[dev_id_0[i]], 0, 0, 1, &devs[dev_id_0[0]], 0);
 
@@ -345,7 +345,7 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_1[i]], SELECT_REG, ioread32(&devs[dev_id_1[i]], DEVID_REG));
         iowrite32(&devs[dev_id_1[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_1[i]], 1, num_multicast_1, 0, NULL, 0);
+            p2p_setup(&devs[dev_id_1[i]], 1, num_multicast_1, 0, NULL, 1);
         else
             p2p_setup(&devs[dev_id_1[i]], 0, 0, 1, &devs[dev_id_1[0]], 0);
 
@@ -364,7 +364,7 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_2[i]], SELECT_REG, ioread32(&devs[dev_id_2[i]], DEVID_REG));
         iowrite32(&devs[dev_id_2[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_2[i]], 1, num_multicast_2, 0, NULL, 0);
+            p2p_setup(&devs[dev_id_2[i]], 1, num_multicast_2, 0, NULL, 1);
         else
             p2p_setup(&devs[dev_id_2[i]], 0, 0, 1, &devs[dev_id_2[0]], 0);
 
@@ -383,7 +383,7 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_3[i]], SELECT_REG, ioread32(&devs[dev_id_3[i]], DEVID_REG));
         iowrite32(&devs[dev_id_3[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_3[i]], 1, num_multicast_3, 0, NULL, 0);
+            p2p_setup(&devs[dev_id_3[i]], 1, num_multicast_3, 0, NULL, 1);
         else
             p2p_setup(&devs[dev_id_3[i]], 0, 0, 1, &devs[dev_id_3[0]], 0);
 
@@ -402,7 +402,7 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_4[i]], SELECT_REG, ioread32(&devs[dev_id_4[i]], DEVID_REG));
         iowrite32(&devs[dev_id_4[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_4[i]], 1, num_multicast_4, 0, NULL, 0);
+            p2p_setup(&devs[dev_id_4[i]], 1, num_multicast_4, 0, NULL, 1);
         else
             p2p_setup(&devs[dev_id_4[i]], 0, 0, 1, &devs[dev_id_4[0]], 0);
 
