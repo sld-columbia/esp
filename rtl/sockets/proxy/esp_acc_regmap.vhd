@@ -22,35 +22,32 @@ package esp_acc_regmap is
   constant STATUS_BIT_ERR  : integer range 0 to 31 := 2;
   constant STATUS_BIT_LAST : integer range 0 to 31 := 2;
 
-  -- bank(2)        : SELECT (which accelerator will run in 1 hot encoding)
-  constant SELECT_REG : integer range 0 to MAXREGNUM - 1 := 2;
+  -- bank(2)        : RESERVED - Read only
+  constant DEVID_REG : integer range 0 to MAXREGNUM - 1 := 2;
 
-  -- bank(3)        : RESERVED - Read only
-  constant DEVID_REG : integer range 0 to MAXREGNUM - 1 := 3;
+  -- bank(3)        : PT_ADDRESS (page table bus address)
+  constant PT_ADDRESS_REG : integer range 0 to MAXREGNUM - 1 := 3;
 
-  -- bank(4)        : PT_ADDRESS (page table bus address)
-  constant PT_ADDRESS_REG : integer range 0 to MAXREGNUM - 1 := 4;
+  -- bank(4)        : PT_NCHUNK (number of physical contiguous buffers in memory)
+  constant PT_NCHUNK_REG : integer range 0 to MAXREGNUM - 1 := 4;
 
-  -- bank(5)        : PT_NCHUNK (number of physical contiguous buffers in memory)
-  constant PT_NCHUNK_REG : integer range 0 to MAXREGNUM - 1 := 5;
+  -- bank(5)        : PT_SHIFT (log2(cunk size))
+  constant PT_SHIFT_REG : integer range 0 to MAXREGNUM - 1 := 5;
 
-  -- bank(6)        : PT_SHIFT (log2(cunk size))
-  constant PT_SHIFT_REG : integer range 0 to MAXREGNUM - 1 := 6;
+  -- bank(6)        : PT_NCHUNK_MAX (maximum number of chunks supported) - Read only
+  constant PT_NCHUNK_MAX_REG : integer range 0 to MAXREGNUM - 1 := 6;
 
-  -- bank(7)        : PT_NCHUNK_MAX (maximum number of chunks supported) - Read only
-  constant PT_NCHUNK_MAX_REG : integer range 0 to MAXREGNUM - 1 := 7;
-
-  -- bank(8)        : PT_ADDRESS_EXTENDED (page table bus address MSBs for
+  -- bank(7)        : PT_ADDRESS_EXTENDED (page table bus address MSBs for
   --                  architectures with more than 32 bits of address)
-  constant PT_ADDRESS_EXTENDED_REG : integer range 0 to MAXREGNUM - 1 := 8;
+  constant PT_ADDRESS_EXTENDED_REG : integer range 0 to MAXREGNUM - 1 := 7;
 
-  -- bank(9)        : Type of coherence (None, LLC, Full)
-  constant COHERENCE_REG : integer range 0 to MAXREGNUM - 1 := 9;
+  -- bank(8)        : Type of coherence (None, LLC, Full)
+  constant COHERENCE_REG : integer range 0 to MAXREGNUM - 1 := 8;
 
   -- bank(9)       : P2P_REG (point-to-point configuration)
   -- |31          28|27 24|23 20|19 16|15 12|11  8|7   4|3          3|2          2|1       0|
   -- | MCAST NDESTS |  Y  |  X  |  Y  |  X  |  Y  |  X  | DST_IS_P2P | SRC_IS_P2P | NSRCS-1 |
-  constant P2P_REG : integer range 0 to MAXREGNUM - 1 := 10;
+  constant P2P_REG : integer range 0 to MAXREGNUM - 1 := 9;
   constant P2P_BIT_NSRCS : integer range 0 to 31 := 0;
   constant P2P_WIDTH_NSRCS : integer range 0 to 31 := 2;
   constant P2P_BIT_SRC_IS_P2P : integer range 0 to 31 := 2;
@@ -59,22 +56,29 @@ package esp_acc_regmap is
   constant P2P_BIT_MCAST_DESTS : integer range 0 to 31 := 28;
   constant P2P_WIDTH_MCAST_DESTS : integer range 0 to 31 := 4;
 
-  -- bank(11)       : RESERVED for extra P2P_REG fields if NSRCS > 4
-  constant YX_REG  : integer range 0 to MAXREGNUM - 1 := 11;
-  constant YX_WIDTH_YX : integer := 16;
-  constant YX_BIT_Y : integer range 0 to 31 := 16;
-  constant YX_BIT_X : integer range 0 to 31 := 0;
+  -- bank(10)       : SRC_OFFSET (offset in bytes from beginning of physical buffer)
+  constant SRC_OFFSET_REG : integer range 0 to MAXREGNUM - 1 := 10;
 
-  -- bank(12)       : SRC_OFFSET (offset in bytes from beginning of physical buffer)
-  constant SRC_OFFSET_REG : integer range 0 to MAXREGNUM - 1 := 12;
+  -- bank(11)       : DST_OFFSET (offset in bytes from beginning of physical buffer)
+  constant DST_OFFSET_REG : integer range 0 to MAXREGNUM - 1 := 11;
 
-  -- bank(13)       : DST_OFFSET (offset in bytes from beginning of physical buffer)
-  constant DST_OFFSET_REG : integer range 0 to MAXREGNUM - 1 := 13;
+  -- bank(12)       : SPANDEX_REG
+  constant SPANDEX_REG : integer range 0 to MAXREGNUM - 1 := 12;
 
-  -- bank(14)       : SPANDEX_REG
-  constant SPANDEX_REG : integer range 0 to MAXREGNUM - 1 := 14;
+  -- YX_REGs are used to decode physical tile numbers from a source index,
+  -- as specified by accelerators for P2P transactions
+  -- |31 28|27 24|23 20|19 16|15 12|11  8|7   4|3   0|
+  -- |  Y  |  X  |  Y  |  X  |  Y  |  X  |  Y  |  X  |
 
-  -- bank(15)       : RESERVED
+  -- LSBs of first YX_REG reserved for coordinates of local tile
+  -- bank(13)       :
+  constant YX_REG  : integer range 0 to MAXREGNUM - 1 := 13;
+
+  -- bank(14)       :
+  constant YX_REG_2  : integer range 0 to MAXREGNUM - 1 := 14;
+
+  -- bank(15)       :
+  constant YX_REG_3  : integer range 0 to MAXREGNUM - 1 := 15;
 
   -- bank(16 to 63) : USR (user defined)
 

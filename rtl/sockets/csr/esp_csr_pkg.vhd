@@ -12,8 +12,7 @@ use work.nocpackage.all;
 package esp_csr_pkg is
 
   constant NCPU_TILE_MAX : integer := 16;
-
-  constant ESP_CSR_WIDTH : integer := 17 + NCPU_TILE_MAX * 2 * YX_WIDTH;
+  constant ESP_CSR_WIDTH : integer := 143 + 2 * YX_WIDTH * NCPU_TILE_MAX;
 
   constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
   constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
@@ -31,15 +30,37 @@ package esp_csr_pkg is
   constant ESP_CSR_ACC_COH_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 14;
   constant ESP_CSR_ACC_COH_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 15;
 
+  -- Third party accelerator reset
   constant ESP_CSR_TP_ACC_RST : integer range 0 to 31 := 4;
 
   -- Soft reset
-  constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 5;  -- reserved address
+  constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 5;
 
-  constant ESP_CSR_CPU_LOC_OVR_0_ADDR : integer range 0 to 31 := 6;
-  constant ESP_CSR_CPU_LOC_OVR_1_ADDR : integer range 0 to 31 := 7;
-  constant ESP_CSR_CPU_LOC_OVR_2_ADDR : integer range 0 to 31 := 8;
-  constant ESP_CSR_CPU_LOC_OVR_3_ADDR : integer range 0 to 31 := 9;
+  constant ESP_CSR_DCO_NOC_CFG_ADDR : integer range 0 to 31 := 6;
+  constant ESP_CSR_DCO_NOC_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16;
+  constant ESP_CSR_DCO_NOC_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 34;
+
+  constant ESP_CSR_MDC_SCALER_CFG_ADDR : integer range 0 to 31 := 7;
+  constant ESP_CSR_MDC_SCALER_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 35;
+  constant ESP_CSR_MDC_SCALER_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 45;
+
+  constant ESP_CSR_DDR_CFG0_ADDR : integer range 0 to 31 := 8;
+  constant ESP_CSR_DDR_CFG0_LSB : integer range 0 to ESP_CSR_WIDTH - 1 :=  46;
+  constant ESP_CSR_DDR_CFG0_MSB : integer range 0 to ESP_CSR_WIDTH - 1 :=  77;
+
+  constant ESP_CSR_DDR_CFG1_ADDR : integer range 0 to 31 := 9;
+  constant ESP_CSR_DDR_CFG1_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 78;
+  constant ESP_CSR_DDR_CFG1_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 109;
+
+  constant ESP_CSR_DDR_CFG2_ADDR : integer range 0 to 31 := 10;
+  constant ESP_CSR_DDR_CFG2_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 110;
+  constant ESP_CSR_DDR_CFG2_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 141;
+
+  constant ESP_CSR_CPU_LOC_OVR_ADDR : integer range 0 to 31 := 11;
+  constant ESP_CSR_CPU_LOC_OVR_0_ADDR : integer range 0 to 31 := 12;
+  constant ESP_CSR_CPU_LOC_OVR_1_ADDR : integer range 0 to 31 := 13;
+  constant ESP_CSR_CPU_LOC_OVR_2_ADDR : integer range 0 to 31 := 14;
+  constant ESP_CSR_CPU_LOC_OVR_3_ADDR : integer range 0 to 31 := 15;
   constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16;
   constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16 + NCPU_TILE_MAX * 2 * YX_WIDTH;
 

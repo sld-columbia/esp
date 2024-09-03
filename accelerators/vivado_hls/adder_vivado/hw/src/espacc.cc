@@ -16,6 +16,7 @@ load_data:
     load_ctrl.index = base;
     load_ctrl.length = SIZE_IN_CHUNK;
     load_ctrl.size = SIZE_WORD_T;
+    load_ctrl.user = 0;
 
     for (unsigned i = 0; i < SIZE_IN_CHUNK; i++) {
     	load_label0:for(unsigned j = 0; j < VALUES_PER_WORD; j++) {
@@ -34,6 +35,7 @@ store_data:
     store_ctrl.index = base + base_index;
     store_ctrl.length = SIZE_OUT_CHUNK;
     store_ctrl.size = SIZE_WORD_T;
+    store_ctrl.user = 0;
 
     for (unsigned i = 0; i < SIZE_OUT_CHUNK; i++) {
 	store_label1:for(unsigned j = 0; j < VALUES_PER_WORD; j++) {

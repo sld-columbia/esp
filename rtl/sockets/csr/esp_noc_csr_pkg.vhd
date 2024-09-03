@@ -11,43 +11,23 @@ use work.esp_acc_regmap.all;
 
 package esp_noc_csr_pkg is
 
-  constant ESP_NOC_CSR_WIDTH : integer := 170;
+  constant ESP_NOC_CSR_WIDTH : integer := 44;
 
-  constant ESP_CSR_TILE_ID_NOC_ADDR : integer range 0 to 31 := 16;
+  constant ESP_CSR_TILE_ID_NOC_ADDR : integer range 0 to 31 := 17;
   constant ESP_CSR_TILE_ID_NOC_LSB  : integer range 0 to ESP_NOC_CSR_WIDTH-1 := 0;
   constant ESP_CSR_TILE_ID_NOC_MSB  : integer range 0 to ESP_NOC_CSR_WIDTH-1 := 7;
 
-  constant ESP_CSR_PAD_CFG_ADDR : integer range 0 to 31 := 17;
+  constant ESP_CSR_PAD_CFG_ADDR : integer range 0 to 31 := 18;
   constant ESP_CSR_PAD_CFG_LSB  : integer range 0 to ESP_NOC_CSR_WIDTH-1 := 8;
   constant ESP_CSR_PAD_CFG_MSB  : integer range 0 to ESP_NOC_CSR_WIDTH-1 := 10;
 
-  constant ESP_CSR_DCO_CFG_ADDR : integer range 0 to 31 := 18;
+  constant ESP_CSR_DCO_CFG_ADDR : integer range 0 to 31 := 19;
   constant ESP_CSR_DCO_CFG_LSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 11;
   constant ESP_CSR_DCO_CFG_MSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 34;
 
-  constant ESP_CSR_DCO_NOC_CFG_ADDR : integer range 0 to 31 := 19;
-  constant ESP_CSR_DCO_NOC_CFG_LSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 35;
-  constant ESP_CSR_DCO_NOC_CFG_MSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 53;
-
   constant ESP_CSR_LDO_CFG_ADDR : integer range 0 to 31 := 31;
-  constant ESP_CSR_LDO_CFG_LSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 54;
-  constant ESP_CSR_LDO_CFG_MSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 62;
-
-  constant ESP_CSR_MDC_SCALER_CFG_ADDR : integer range 0 to 31 := 15;
-  constant ESP_CSR_MDC_SCALER_CFG_LSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 63;
-  constant ESP_CSR_MDC_SCALER_CFG_MSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 73;
-
-  constant ESP_CSR_DDR_CFG0_ADDR : integer range 0 to 31 := 12;
-  constant ESP_CSR_DDR_CFG0_LSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 74;
-  constant ESP_CSR_DDR_CFG0_MSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 105;
-
-  constant ESP_CSR_DDR_CFG1_ADDR : integer range 0 to 31 := 13;
-  constant ESP_CSR_DDR_CFG1_LSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 106;
-  constant ESP_CSR_DDR_CFG1_MSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 137;
-
-  constant ESP_CSR_DDR_CFG2_ADDR : integer range 0 to 31 := 14;
-  constant ESP_CSR_DDR_CFG2_LSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 138;
-  constant ESP_CSR_DDR_CFG2_MSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 169;
+  constant ESP_CSR_LDO_CFG_LSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 35;
+  constant ESP_CSR_LDO_CFG_MSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 43;
 
   constant DCO_CFG_LPDDR_CTRL_BITS : integer := 12;
 

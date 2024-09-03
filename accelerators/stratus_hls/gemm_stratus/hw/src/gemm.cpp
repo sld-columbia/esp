@@ -191,7 +191,7 @@ void gemm::load_input()
     			    HLS_DEFINE_PROTOCOL("load-matrix1-info");
     			    dma_info_t dma_info(index_d1_tmp >> WORDS_PER_DMA_LOG,
 						round_up(length1, WORDS_PER_DMA) >> WORDS_PER_DMA_LOG,
-						SIZE_WORD);
+						SIZE_WORD, 0);
     			    this->dma_read_ctrl.put(dma_info);
 
                             // ESP_REPORT_INFO("load m1 %u %u",
@@ -266,7 +266,7 @@ void gemm::load_input()
     			    HLS_DEFINE_PROTOCOL("load-matrix2-info");
 
     			    dma_info_t dma_info(index_m2_dma >> WORDS_PER_DMA_LOG,
-    						round_up(length_m2_dma, WORDS_PER_DMA) >> WORDS_PER_DMA_LOG, SIZE_WORD);
+    						round_up(length_m2_dma, WORDS_PER_DMA) >> WORDS_PER_DMA_LOG, SIZE_WORD, 0);
     			    this->dma_read_ctrl.put(dma_info);
 
     			    // ESP_REPORT_INFO("load m2 %u %u",
@@ -470,7 +470,7 @@ void gemm::store_output()
     			    HLS_DEFINE_PROTOCOL("store-matrix-info");
     			    dma_info_t dma_info(index >> WORDS_PER_DMA_LOG,
 						round_up(length, WORDS_PER_DMA) >> WORDS_PER_DMA_LOG,
-						SIZE_WORD);
+						SIZE_WORD, 0);
     			    this->dma_write_ctrl.put(dma_info);
 
     			    // ESP_REPORT_INFO("STORE index %u length %u",

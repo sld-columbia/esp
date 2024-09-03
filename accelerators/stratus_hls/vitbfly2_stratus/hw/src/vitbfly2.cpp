@@ -52,7 +52,7 @@ void vitbfly2::load_input()
         uint32_t dma_addr = 0;
         //for (uint16_t b = 0; b < /* number of transfers */; b++)
         {
-            dma_info_t dma_info(dma_addr, 6 * 64 / WORDS_PER_DMA, SIZE_BYTE);
+            dma_info_t dma_info(dma_addr, 6 * 64 / WORDS_PER_DMA, SIZE_BYTE, 0);
             // Configure DMA transaction
             this->dma_read_ctrl.put(dma_info);
 
@@ -157,7 +157,7 @@ void vitbfly2::store_output()
 
         this->store_compute_handshake();
 
-        dma_info_t dma_info(dma_addr, 4 * 64 / WORDS_PER_DMA, SIZE_BYTE);
+        dma_info_t dma_info(dma_addr, 4 * 64 / WORDS_PER_DMA, SIZE_BYTE, 0);
         // Configure DMA transaction
 
         this->dma_write_ctrl.put(dma_info);

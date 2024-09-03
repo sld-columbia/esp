@@ -50,7 +50,7 @@ void sort::load_input()
 			{
 				HLS_LOAD_DMA;
 
-				dma_info_t dma_info(index / (DMA_WIDTH / 32), len / (DMA_WIDTH / 32), SIZE_WORD);
+				dma_info_t dma_info(index / (DMA_WIDTH / 32), len / (DMA_WIDTH / 32), SIZE_WORD, 0);
 				index += len;
 				this->dma_read_ctrl.put(dma_info);
 			}
@@ -144,7 +144,7 @@ void sort::store_output()
 			{
 				HLS_STORE_DMA;
 
-				dma_info_t dma_info(index / (DMA_WIDTH / 32), len / (DMA_WIDTH / 32), SIZE_WORD);
+				dma_info_t dma_info(index / (DMA_WIDTH / 32), len / (DMA_WIDTH / 32), SIZE_WORD, 0);
 				index += len;
 				this->dma_write_ctrl.put(dma_info);
 			}

@@ -26,6 +26,7 @@ void dummy::load_input()
     // Config
     uint32_t tokens;
     uint32_t batch;
+    uint32_t source;
     {
         HLS_PROTO("load-config");
 
@@ -34,6 +35,7 @@ void dummy::load_input()
 
         tokens = config.tokens;
         batch = config.batch;
+        source = config.source;
     }
 
     // Load
@@ -46,9 +48,9 @@ void dummy::load_input()
 
             uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
 #if (DMA_WORD_PER_BEAT == 0)
-            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE, source);
 #else
-            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE, source);
 #endif
             offset += len;
 
@@ -111,6 +113,7 @@ void dummy::store_output()
     // Config
     uint32_t tokens;
     uint32_t batch;
+    uint32_t ndests;
     {
         HLS_PROTO("store-config");
 
@@ -119,6 +122,7 @@ void dummy::store_output()
 
         tokens = config.tokens;
         batch = config.batch;
+        ndests = config.ndests;
     }
 
     // Store
@@ -132,9 +136,9 @@ void dummy::store_output()
 
             uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
 #if (DMA_WORD_PER_BEAT == 0)
-            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE, ndests);
 #else
-            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE, ndests);
 #endif
             offset += len;
 

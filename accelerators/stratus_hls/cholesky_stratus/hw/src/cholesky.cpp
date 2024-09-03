@@ -68,7 +68,7 @@ void cholesky::load_input()
                 uint32_t len = rem > rows ? rows : rem;
 		        len = (DMA_WORD_PER_BEAT==2 && !even_rows) ? len+1 : len;
                 //ESP_REPORT_INFO("Load offset: %d, adjusted: %d\n", offset, offset / DMA_WORD_PER_BEAT);
-                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE, 0);
                 offset += (DMA_WORD_PER_BEAT==2 && !even_rows) ? ((ping) ? (len-2) : len) : len;
 
                 this->dma_read_ctrl.put(dma_info);
@@ -128,7 +128,7 @@ void cholesky::load_input()
 				            uint32_t fetch_len = rows;
                 		    fetch_len = (DMA_WORD_PER_BEAT == 2 && !even_rows) ? fetch_len + 1 : fetch_len;
 
-				            dma_info_t dma_info(fetch_offset / DMA_WORD_PER_BEAT, fetch_len / DMA_WORD_PER_BEAT, DMA_SIZE);
+				            dma_info_t dma_info(fetch_offset / DMA_WORD_PER_BEAT, fetch_len / DMA_WORD_PER_BEAT, DMA_SIZE, 0);
                 		    fetch_offset += (DMA_WORD_PER_BEAT == 2 && !even_rows) ? (fetch_ping ? fetch_len : fetch_len - 2) : fetch_len;
                 		    this->dma_read_ctrl.put(dma_info);
 
@@ -263,7 +263,7 @@ void cholesky::store_output()
                 uint32_t len = rem > rows ? rows : rem;
 		        len = (DMA_WORD_PER_BEAT==2 && !even_rows) ? len+1 : len;
                 //ESP_REPORT_INFO("Store offset: %d, adjusted: %d\n", offset, offset / DMA_WORD_PER_BEAT);
-                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE, 0);
                 offset += (DMA_WORD_PER_BEAT==2 && !even_rows) ? (ping ? (len - 2) : len) : len;
 
                 this->dma_write_ctrl.put(dma_info);

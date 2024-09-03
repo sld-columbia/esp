@@ -24,6 +24,9 @@ struct esp_access {
 	uint8_t p2p_store;
 	uint8_t p2p_nsrcs;
 	char p2p_srcs[4][64];
+    uint8_t p2p_mcast_dests;
+    uint8_t ndev_yx_table;
+    char acc_yx_table[14][64];
 	enum accelerator_coherence coherence;
         unsigned int footprint;
         enum contig_alloc_policy alloc_policy;

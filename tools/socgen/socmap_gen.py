@@ -2337,7 +2337,7 @@ def print_asic_top_level(fp_t, fp, soc, esp_config):
         fp.write("    port map (fpga_credit_out(0), fpga_credit_out_int(0), fpga_c_pad_cfg);\n")
       else:
         fp.write("  -- No memory link used\n")
-    elif line.strip() == "-- < I/O Link pads >" :
+    elif line.strip() == "-- < I/O link pads >" :
       if esp_config.has_iolink:
         fp.write("  iolink_data_pad : iopadv generic map (tech => CFG_FABTECH, loc => iolink_data_pad_loc, level => cmos, voltage => x18v, width => CFG_IOLINK_BITS, oepol => 1)\n")
         fp.write("    port map (iolink_data, iolink_data_out_int, iolink_data_oen, iolink_data_in_int, full_pad_cfg(io_tile_id));\n")
