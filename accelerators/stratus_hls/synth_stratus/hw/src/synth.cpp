@@ -180,7 +180,7 @@ void synth::load_input()
 		    HLS_DEFINE_PROTOCOL("load-dma-conf");
 
 		    // Configure DMA transaction
-		    dma_info_t dma_info(index + offset, burst_len, SIZE_WORD);
+		    dma_info_t dma_info(index + offset, burst_len, SIZE_WORD, 0);
 		    this->dma_read_ctrl.put(dma_info);
 		}
         
@@ -368,7 +368,7 @@ void synth::store_output()
 	    HLS_DEFINE_PROTOCOL("store-dma-conf");
         rd_err = rd_errs.read();
 		// Configure DMA transaction
-		dma_info_t dma_info(index + offset, burst_len, SIZE_WORD);
+		dma_info_t dma_info(index + offset, burst_len, SIZE_WORD, 0);
 		this->dma_write_ctrl.put(dma_info);
 		}
         
