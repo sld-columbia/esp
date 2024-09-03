@@ -11,7 +11,8 @@ use work.esp_acc_regmap.all;
 
 package esp_csr_pkg is
 
-  constant ESP_CSR_WIDTH : integer := 17 + CFG_NCPU_TILE * 2 * 3;
+  constant ESP_CSR_8_LSB : integer := 17 + CFG_NCPU_TILE * 2 * 3;
+  constant ESP_CSR_WIDTH : integer := 126 + ESP_CSR_8_LSB;
 
   constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
   constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
@@ -32,6 +33,26 @@ package esp_csr_pkg is
   constant ESP_CSR_CPU_LOC_OVR_ADDR : integer range 0 to 31 := 4;
   constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16;
   constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16 + CFG_NCPU_TILE * 2 * 3;
+
+  constant ESP_CSR_DCO_NOC_CFG_ADDR : integer range 0 to 31 := 7;
+  constant ESP_CSR_DCO_NOC_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := ESP_CSR_8_LSB;
+  constant ESP_CSR_DCO_NOC_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 18 + ESP_CSR_8_LSB;
+
+  constant ESP_CSR_MDC_SCALER_CFG_ADDR : integer range 0 to 31 := 8;
+  constant ESP_CSR_MDC_SCALER_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 19 + ESP_CSR_8_LSB;
+  constant ESP_CSR_MDC_SCALER_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 29 + ESP_CSR_8_LSB;
+
+  constant ESP_CSR_DDR_CFG0_ADDR : integer range 0 to 31 := 9;
+  constant ESP_CSR_DDR_CFG0_LSB : integer range 0 to ESP_CSR_WIDTH - 1 :=  30 + ESP_CSR_8_LSB;
+  constant ESP_CSR_DDR_CFG0_MSB : integer range 0 to ESP_CSR_WIDTH - 1 :=  61 + ESP_CSR_8_LSB;
+
+  constant ESP_CSR_DDR_CFG1_ADDR : integer range 0 to 31 := 10;
+  constant ESP_CSR_DDR_CFG1_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 62 + ESP_CSR_8_LSB;
+  constant ESP_CSR_DDR_CFG1_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 93 + ESP_CSR_8_LSB;
+
+  constant ESP_CSR_DDR_CFG2_ADDR : integer range 0 to 31 := 11;
+  constant ESP_CSR_DDR_CFG2_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 94 + ESP_CSR_8_LSB;
+  constant ESP_CSR_DDR_CFG2_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 125 + ESP_CSR_8_LSB;
 
   -- Soft reset
   constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 5;  -- reserved address
