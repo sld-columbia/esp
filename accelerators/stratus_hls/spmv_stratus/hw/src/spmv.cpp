@@ -107,7 +107,7 @@ void spmv::load_input()
 	{
 	    HLS_LOAD_DMA;
 
-	    dma_info_t dma_info(index_vect, ncols, SIZE_WORD);
+	    dma_info_t dma_info(index_vect, ncols, SIZE_WORD, 0);
 	    this->dma_read_ctrl.put(dma_info);
 	}
 
@@ -136,7 +136,7 @@ void spmv::load_input()
     	{
     	    HLS_LOAD_DMA;
 
-    	    dma_info_t dma_info(index_rows, len_rows, SIZE_WORD);
+    	    dma_info_t dma_info(index_rows, len_rows, SIZE_WORD, 0);
     	    index_rows += len_rows;
     	    this->dma_read_ctrl.put(dma_info);
     	}
@@ -170,7 +170,7 @@ void spmv::load_input()
     	{
     	    HLS_LOAD_DMA;
 
-    	    dma_info_t dma_info(index_vals, len_vals, SIZE_WORD);
+    	    dma_info_t dma_info(index_vals, len_vals, SIZE_WORD, 0);
     	    index_vals += len_vals;
     	    this->dma_read_ctrl.put(dma_info);
     	}
@@ -197,7 +197,7 @@ void spmv::load_input()
     	{
     	    HLS_LOAD_DMA;
 
-    	    dma_info_t dma_info(index_cols, len_cols, SIZE_WORD);
+    	    dma_info_t dma_info(index_cols, len_cols, SIZE_WORD, 0);
     	    index_cols += len_cols;
     	    this->dma_read_ctrl.put(dma_info);
     	}
@@ -235,7 +235,7 @@ void spmv::load_input()
 		{
 		    HLS_LOAD_DMA;
 
-		    dma_info_t dma_info(local_index_vect, 1, SIZE_WORD);
+		    dma_info_t dma_info(local_index_vect, 1, SIZE_WORD, 0);
 		    this->dma_read_ctrl.put(dma_info);
 		}
 
@@ -340,7 +340,7 @@ void spmv::store_output()
     	{
     	    HLS_STORE_DMA;
 
-    	    dma_info_t dma_info(index_out, len_out, SIZE_WORD);
+    	    dma_info_t dma_info(index_out, len_out, SIZE_WORD, 0);
     	    index_out += len_out;
     	    this->dma_write_ctrl.put(dma_info);
     	}

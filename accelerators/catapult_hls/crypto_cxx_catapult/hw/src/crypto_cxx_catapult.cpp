@@ -70,8 +70,8 @@ void CCS_BLOCK(crypto_cxx_catapult)(
     uint32 dma_write_data_length = SHA1_PLM_OUT_SIZE;
 
     // DMA configuration
-    dma_info_t dma_read_info = {0, 0, 0};
-    dma_info_t dma_write_info = {0, 0, 0};
+    dma_info_t dma_read_info = {0, 0, 0, 0};
+    dma_info_t dma_write_info = {0, 0, 0, 0};
 
     // Accelerator configuration
     conf_info_t config;
@@ -121,7 +121,7 @@ void CCS_BLOCK(crypto_cxx_catapult)(
         // - Do some math (ceil) to get the number of data and DMA words given in_bytes
         dma_read_data_index = 0;
         dma_read_data_length = (sha1_in_bytes + 4 - 1) / 4; // ceil(in_bytes / 4)
-        dma_read_info = {dma_read_data_index, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD}; // ceil(dma_read_data_legnth / 2)
+        dma_read_info = {dma_read_data_index, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD, 0}; // ceil(dma_read_data_legnth / 2)
         bool dma_read_ctrl_done = false;
 SHA1_LOAD_CTRL_LOOP:
         do { dma_read_ctrl_done = dma_read_ctrl.nb_write(dma_read_info); } while (!dma_read_ctrl_done);
@@ -171,7 +171,7 @@ SHA1_LOAD_LOOP:
         // - There are 3 DMA-word as output (last 32bits are zeros)
         dma_write_data_index = dma_read_data_length;
         dma_write_data_length = SHA1_PLM_OUT_SIZE;
-        dma_write_info = {(dma_write_data_index + 2 - 1) / 2, (dma_write_data_length + 2 - 1) / 2, SIZE_WORD};
+        dma_write_info = {(dma_write_data_index + 2 - 1) / 2, (dma_write_data_length + 2 - 1) / 2, SIZE_WORD, 0};
         bool dma_write_ctrl_done = false;
 SHA1_STORE_CTRL_LOOP:
         do { dma_write_ctrl_done = dma_write_ctrl.nb_write(dma_write_info); } while (!dma_write_ctrl_done);
@@ -229,7 +229,7 @@ SHA1_STORE_LOOP:
         // - Do some math (ceil) to get the number of data and DMA words given in_bytes
         dma_read_data_index = 0;
         dma_read_data_length = (sha2_in_bytes + 4 - 1) / 4; // ceil(in_bytes / 4)
-        dma_read_info = {dma_read_data_index, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD}; // ceil(dma_read_data_legnth / 2)
+        dma_read_info = {dma_read_data_index, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD, 0}; // ceil(dma_read_data_legnth / 2)
         bool dma_read_ctrl_done = false;
 SHA2_LOAD_CTRL_LOOP:
         do { dma_read_ctrl_done = dma_read_ctrl.nb_write(dma_read_info); } while (!dma_read_ctrl_done);
@@ -279,7 +279,7 @@ SHA2_LOAD_LOOP:
         // - Do some math (ceil) to get the number of data and DMA words given out_bytes
         dma_write_data_index = dma_read_data_length;
         dma_write_data_length = (sha2_out_bytes + 4 - 1) / 4; // ceil(out_bytes / 4)
-        dma_write_info = {(dma_write_data_index + 2 - 1) / 2, (dma_write_data_length + 2 - 1) / 2, SIZE_WORD};
+        dma_write_info = {(dma_write_data_index + 2 - 1) / 2, (dma_write_data_length + 2 - 1) / 2, SIZE_WORD, 0};
         bool dma_write_ctrl_done = false;
 SHA2_STORE_CTRL_LOOP:
         do { dma_write_ctrl_done = dma_write_ctrl.nb_write(dma_write_info); } while (!dma_write_ctrl_done);
@@ -345,7 +345,7 @@ SHA2_STORE_LOOP:
         // - Do some math (ceil) to get the number of data and DMA words given key_bytes
         dma_read_data_index = 0;
         dma_read_data_length = (aes_key_bytes + 4 - 1) / 4; // ceil(aes_key_bytes / 4)
-        dma_read_info = {(dma_read_data_index + 2 - 1) / 2, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD}; // ceil(dma_read_data_legnth / 2)
+        dma_read_info = {(dma_read_data_index + 2 - 1) / 2, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD, 0}; // ceil(dma_read_data_legnth / 2)
         bool dma_read_ctrl_done = false;
 AES_LOAD_KEY_CTRL_LOOP:
         do { dma_read_ctrl_done = dma_read_ctrl.nb_write(dma_read_info); } while (!dma_read_ctrl_done);
@@ -394,7 +394,7 @@ AES_LOAD_KEY_LOOP:
         if (aes_oper_mode == AES_CTR_OPERATION_MODE || aes_oper_mode == AES_CBC_OPERATION_MODE) {
             dma_read_data_index = (aes_key_bytes + 4 - 1) / 4;
             dma_read_data_length = (aes_iv_bytes + 4 - 1) / 4; // ceil(aes_iv_bytes / 4)
-            dma_read_info = {(dma_read_data_index + 2 - 1) / 2, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD}; // ceil(dma_read_data_legnth / 2)
+            dma_read_info = {(dma_read_data_index + 2 - 1) / 2, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD, 0}; // ceil(dma_read_data_legnth / 2)
             bool dma_read_ctrl_done = false;
 AES_LOAD_IV_CTRL_LOOP:
             do { dma_read_ctrl_done = dma_read_ctrl.nb_write(dma_read_info); } while (!dma_read_ctrl_done);
@@ -443,7 +443,7 @@ AES_LOAD_IV_LOOP:
         // - Do some math (ceil) to get the number of data and DMA words given key_bytes
         dma_read_data_index = (aes_key_bytes + 4 - 1) / 4 + (aes_iv_bytes + 4 - 1) / 4;
         dma_read_data_length = (aes_in_bytes + 4 - 1) / 4; // ceil(key_bytes / 4)
-        dma_read_info = {(dma_read_data_index + 2 - 1) / 2, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD}; // ceil(dma_read_data_legnth / 2)
+        dma_read_info = {(dma_read_data_index + 2 - 1) / 2, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD, 0}; // ceil(dma_read_data_legnth / 2)
         dma_read_ctrl_done = false;
 AES_LOAD_INPUT_CTRL_LOOP:
         do { dma_read_ctrl_done = dma_read_ctrl.nb_write(dma_read_info); } while (!dma_read_ctrl_done);
@@ -493,7 +493,7 @@ AES_LOAD_INPUT_LOOP:
         // - Do some math (ceil) to get the number of data and DMA words given out_bytes
         dma_write_data_index = (aes_key_bytes + 4 - 1) / 4 + (aes_iv_bytes + 4 - 1) / 4 + (aes_in_bytes + 4 - 1) / 4;
         dma_write_data_length = (aes_output_bytes + 4 - 1) / 4; // ceil(out_bytes / 4)
-        dma_write_info = {(dma_write_data_index + 2 - 1) / 2, (dma_write_data_length + 2 - 1) / 2, SIZE_WORD};
+        dma_write_info = {(dma_write_data_index + 2 - 1) / 2, (dma_write_data_length + 2 - 1) / 2, SIZE_WORD, 0};
         bool dma_write_ctrl_done = false;
 AES_STORE_CTRL_LOOP:
         do { dma_write_ctrl_done = dma_write_ctrl.nb_write(dma_write_info); } while (!dma_write_ctrl_done);

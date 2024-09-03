@@ -10,7 +10,7 @@
 template <typename T>
 void mriq::dma_read(T array[],  uint32_t dma_index, uint32_t dma_length)
 {
-  dma_info_t dma_info(dma_index, dma_length, DMA_SIZE);
+  dma_info_t dma_info(dma_index, dma_length, DMA_SIZE, 0);
   this -> dma_read_ctrl.put(dma_info);
 
   for(uint16_t i = 0; i < dma_length; i++)
@@ -29,7 +29,7 @@ void mriq::dma_read(T array[],  uint32_t dma_index, uint32_t dma_length)
 template <typename T>
 void mriq::dma_write(T array[], uint32_t dma_index, uint32_t dma_length)
 {
-  dma_info_t dma_info(dma_index, dma_length, DMA_SIZE);
+  dma_info_t dma_info(dma_index, dma_length, DMA_SIZE, 0);
   this -> dma_write_ctrl.put(dma_info);
 
   for(uint16_t i = 0; i < dma_length; i++)

@@ -453,8 +453,8 @@ class NoCFrame(Pmw.ScrolledFrame):
        ((self.soc.TECH != "asic" and self.soc.TECH != "inferred" and self.soc.ESP_EMU_TECH == "none") \
          or tot_mem == 0 or self.soc.cache_en.get() == 1) and \
        (not self.noc.multicast_en.get() or self.noc.dma_noc_width.get() > 128 or \
-       (self.noc.dma_noc_width.get() == 128 and self.noc.max_mcast_dests.get() <= 14) or \
-       (self.noc.dma_noc_width.get() == 64 and self.noc.max_mcast_dests.get() <= 5)):
+       (self.noc.dma_noc_width.get() == 128 and self.noc.max_mcast_dests.get() <= 11) or \
+       (self.noc.dma_noc_width.get() == 64 and self.noc.max_mcast_dests.get() <= 4)):
       # Spandex beta warning
       if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
         string += "INFO: Spandex cache hierarchy is in beta testing\n"
@@ -539,10 +539,10 @@ class NoCFrame(Pmw.ScrolledFrame):
       if ((self.soc.TECH == "asic" or self.soc.TECH == "inferred" or self.soc.ESP_EMU_TECH != "none") \
            and tot_mem >= 1 and self.soc.cache_en.get() == 0):
         string += "ERROR: Caches must be enabled for ASIC design with memory tiles.\n"
-      if (self.noc.multicast_en.get() and self.noc.dma_noc_width.get() == 64 and self.noc.max_mcast_dests.get() > 5):
-        string += "ERROR: 64-bit DMA NoC supports up to 5 multicast destinations.\n"
-      if (self.noc.multicast_en.get() and self.noc.dma_noc_width.get() == 128 and self.noc.max_mcast_dests.get() > 14):
-        string += "ERROR: 128-bit DMA NoC supports up to 14 multicast destinations.\n"
+      if (self.noc.multicast_en.get() and self.noc.dma_noc_width.get() == 64 and self.noc.max_mcast_dests.get() > 4):
+        string += "ERROR: 64-bit DMA NoC supports up to 4 multicast destinations.\n"
+      if (self.noc.multicast_en.get() and self.noc.dma_noc_width.get() == 128 and self.noc.max_mcast_dests.get() > 11):
+        string += "ERROR: 128-bit DMA NoC supports up to 11 multicast destinations.\n"
       if (self.noc.multicast_en.get() and self.noc.dma_noc_width.get() == 32):
         string += "ERROR: 32-bit DMA NoC does not support multicast.\n"
 

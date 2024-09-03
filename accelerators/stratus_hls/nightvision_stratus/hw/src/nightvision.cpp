@@ -56,7 +56,7 @@ void nightvision::load_input()
         for (uint16_t b = 0; b < n_Rows; b++) {
 
             // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
+            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD, 0);
             this->dma_read_ctrl.put(dma_info);
 
             for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA) {
@@ -132,7 +132,7 @@ void nightvision::store_output()
         uint32_t plm_addr = 0;
         for (uint16_t b = 0; b < n_Rows; b++) {
             // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
+            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD, 0);
 
             this->dma_write_ctrl.put(dma_info);
 

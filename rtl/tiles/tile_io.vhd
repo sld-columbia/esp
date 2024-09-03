@@ -59,13 +59,6 @@ entity tile_io is
     dco_cc_sel         : in std_logic_vector(5 downto 0);
     dco_clk_sel        : in std_ulogic;
     dco_en             : in std_ulogic;  
-    -- NoC DCO config
-    dco_noc_freq_sel   : in std_logic_vector(1 downto 0);
-    dco_noc_div_sel    : in std_logic_vector(2 downto 0);
-    dco_noc_fc_sel     : in std_logic_vector(5 downto 0);
-    dco_noc_cc_sel     : in std_logic_vector(5 downto 0);
-    dco_noc_clk_sel    : in std_ulogic;
-    dco_noc_en         : in std_ulogic;  
     -- I/O bus interfaces
     eth0_apbi          : out apb_slv_in_type;
     eth0_apbo          : in  apb_slv_out_type;
@@ -82,6 +75,7 @@ entity tile_io is
     uart_txd           : out std_ulogic;
     uart_ctsn          : in  std_ulogic;
     uart_rtsn          : out std_ulogic;
+    mdcscaler          : out std_logic_vector(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
     -- I/O link
     iolink_data_oen   : out std_logic;
     iolink_data_in    : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
@@ -145,6 +139,14 @@ architecture rtl of tile_io is
   signal dco_clk_lock : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal noc_clk_out_int : std_ulogic;
+
+  -- NoC DCO config
+  signal dco_noc_en       : std_ulogic;
+  signal dco_noc_clk_sel  : std_ulogic;
+  signal dco_noc_cc_sel   : std_logic_vector(5 downto 0);
+  signal dco_noc_fc_sel   : std_logic_vector(5 downto 0);
+  signal dco_noc_div_sel  : std_logic_vector(2 downto 0);
+  signal dco_noc_freq_sel : std_logic_vector(1 downto 0);
 
   -- Bootrom
   component ahbrom is
@@ -305,7 +307,7 @@ architecture rtl of tile_io is
   signal header, header_next : std_logic_vector(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
   -- Tile parameters
-  signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal tile_config_int : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
 
   constant this_local_y           : local_yx                           := tile_y(io_tile_id);
   constant this_local_x           : local_yx                           := tile_x(io_tile_id);
@@ -397,6 +399,13 @@ begin
   end generate no_rst_gen;
 
   tile_rstn_out <= rst;
+
+  dco_noc_freq_sel <= tile_config_int(ESP_CSR_DCO_NOC_CFG_MSB - 0  downto ESP_CSR_DCO_NOC_CFG_MSB - 0  - 1);
+  dco_noc_div_sel  <= tile_config_int(ESP_CSR_DCO_NOC_CFG_MSB - 2  downto ESP_CSR_DCO_NOC_CFG_MSB - 2  - 2);
+  dco_noc_fc_sel   <= tile_config_int(ESP_CSR_DCO_NOC_CFG_MSB - 5  downto ESP_CSR_DCO_NOC_CFG_MSB - 5  - 5);
+  dco_noc_cc_sel   <= tile_config_int(ESP_CSR_DCO_NOC_CFG_MSB - 11 downto ESP_CSR_DCO_NOC_CFG_MSB - 11 - 5);
+  dco_noc_clk_sel  <= tile_config_int(ESP_CSR_DCO_NOC_CFG_LSB + 1);
+  dco_noc_en       <= raw_rstn and tile_config_int(ESP_CSR_DCO_NOC_CFG_LSB);
 
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
@@ -534,6 +543,8 @@ begin
   -----------------------------------------------------------------------------
   -- ETH0 and EDCL Master
   -----------------------------------------------------------------------------
+
+  mdcscaler <= tile_config_int(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB);
 
   onchip_ethernet : if CFG_ETH_EN = 1 and CFG_GRETH = 1 generate
     ahbmo(0)   <= eth0_ahbmo;
@@ -1121,10 +1132,10 @@ begin
   -- CPU (rather than CPU0 only) to boot in single-core mode.
   -- Default CPU ID and routing tables are defined as constants in the generated
   -- socmap, which is based on the ESP configuration file.
-  override_cpu_loc <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB);
+  override_cpu_loc <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB);
   cpu_loc_ovr_gen: for i in 0 to CFG_NCPU_TILE - 1 generate
-    cpu_loc_x(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0 + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0);
-    cpu_loc_y(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH);
+    cpu_loc_x(i) <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0 + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0);
+    cpu_loc_y(i) <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH);
   end generate cpu_loc_ovr_gen;
 
   intreq2noc_1 : intreq2noc
@@ -1242,7 +1253,7 @@ begin
       mon_llc => monitor_cache_none,
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
-      tile_config => tile_config,
+      tile_config => tile_config_int,
       srst => open,
       tp_acc_rst => open,
       apbi => noc_apbi,

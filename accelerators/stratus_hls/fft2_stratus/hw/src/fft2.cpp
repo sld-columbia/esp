@@ -71,10 +71,10 @@ void fft2::load_input()
             uint32_t len = rem > PLM_IN_WORD ? PLM_IN_WORD : rem;
 #if (DMA_WORD_PER_BEAT == 0)
             // data word is wider than NoC links
-            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE, 0);
 #else
             printf("LOAD DMA INFO : rem %u : off = %u , len %u\n", rem, (offset/DMA_WORD_PER_BEAT), (len/DMA_WORD_PER_BEAT));
-            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE, 0);
 #endif
             offset += len;
 
@@ -198,10 +198,10 @@ void fft2::store_output()
             uint32_t len = rem > PLM_OUT_WORD ? PLM_OUT_WORD : rem;
 #if (DMA_WORD_PER_BEAT == 0)
             // data word is wider than NoC links
-            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE, 0);
 #else
             printf("STORE DMA INFO : rem %u : off = %u , len = %u\n", rem, (offset/DMA_WORD_PER_BEAT), (len/DMA_WORD_PER_BEAT));
-            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE, 0);
 #endif
             offset += len;
 
