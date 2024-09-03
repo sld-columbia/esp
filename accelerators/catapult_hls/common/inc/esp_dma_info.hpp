@@ -23,9 +23,11 @@ struct dma_info_t {
     // Length
     uint32_t length;
 
-    // Length
+    // size
     ac_int<3, false> size;
 
+    // User
+    ac_int<5, false> user;
 };
 
 #endif // __ESP_DMA_INFO_HPP__

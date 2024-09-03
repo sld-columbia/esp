@@ -290,8 +290,11 @@ static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *
 #define esp_p2p_set_nsrcs(_dev, _n) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | (P2P_MASK_NSRCS & (_n - 1)), _dev->iomem + P2P_REG)
 #define esp_p2p_set_y(_dev, _n, _y) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)), _dev->iomem + P2P_REG)
 #define esp_p2p_set_x(_dev, _n, _x) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)), _dev->iomem + P2P_REG)
+#define esp_p2p_set_mcast_ndests(_dev, _n) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_MCAST_NDESTS & (_n - 1)) << P2P_SHIFT_MCAST_NDESTS), _dev->iomem + P2P_REG)
+#define esp_yx_reg_set_y(_dev, _y, _n, _i) iowrite32be(ioread32be(_dev->iomem + YX_REG + _n) | (_y << (_i * 2 * YX_WIDTH + YX_WIDTH)), _dev->iomem + YX_REG + _n)
+#define esp_yx_reg_set_x(_dev, _x, _n, _i) iowrite32be(ioread32be(_dev->iomem + YX_REG + _n) | (_x << (_i * 2 * YX_WIDTH)), _dev->iomem + YX_REG + _n)
 
-static long esp_p2p_set_src(struct esp_device *esp, char *src_name, int src_index)
+static long esp_set_src(struct esp_device *esp, char *src_name, int src_index, int is_yx)
 {
 	struct list_head *ele;
 	struct esp_device *dev;
@@ -303,9 +306,14 @@ static long esp_p2p_set_src(struct esp_device *esp, char *src_name, int src_inde
 		if (!strncmp(src_name, dev->dev->kobj.name, strlen(dev->dev->kobj.name))) {
 			unsigned y = esp_get_y(dev);
 			unsigned x = esp_get_x(dev);
-			esp_p2p_set_y(esp, src_index, y);
-			esp_p2p_set_x(esp, src_index, x);
-			spin_unlock(&esp_devices_lock);
+            if (is_yx) {
+                esp_yx_reg_set_y(esp, y, 4 * (src_index / 5), src_index % 5);
+                esp_yx_reg_set_x(esp, x, 4 * (src_index / 5), src_index % 5);
+            } else {
+			    esp_p2p_set_y(esp, src_index, y);
+			    esp_p2p_set_x(esp, src_index, x);
+			}
+            spin_unlock(&esp_devices_lock);
 			dev_dbg(esp->pdev, "P2P source %s on tile %d,%d\n", dev->dev->kobj.name, y, x);
 			return true;
 		}
@@ -323,18 +331,33 @@ static long esp_p2p_init(struct esp_device *esp, struct esp_access *access)
 	esp_p2p_reset(esp);
 
 	for (i = 0; i < access->p2p_nsrcs; i++)
-		if (!esp_p2p_set_src(esp, access->p2p_srcs[i], i))
+		if (!esp_set_src(esp, access->p2p_srcs[i], i, 0))
 			return -ENODEV;
 
 	if (access->p2p_store) {
 		dev_dbg(esp->pdev, "P2P store enabled\n");
 		esp_p2p_enable_dst(esp);
+        esp_p2p_set_mcast_ndests(esp, access->p2p_mcast_dests);
 	}
 
 	if (access->p2p_nsrcs != 0) {
 		esp_p2p_enable_src(esp);
 		esp_p2p_set_nsrcs(esp, access->p2p_nsrcs);
 	}
+
+	return 0;
+}
+
+
+static long esp_yx_table_init(struct esp_device *esp, struct esp_access *access)
+{
+	int i = 0;
+
+	for (i = 1; i <= access->ndev_yx_table; i++) {
+    	if (!esp_set_src(esp, access->acc_yx_table[i-1], i, 1))
+			return -ENODEV;
+
+    }
 
 	return 0;
 }
@@ -383,8 +406,14 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 	}
 
 	rc = esp_p2p_init(esp, access);
-	if (rc)
+	if (rc) {
 		goto out;
+    }
+
+    rc = esp_yx_table_init(esp, access);
+    if (rc) {
+        goto out;
+    }
 
 	esp->coherence = access->coherence;
 	esp->footprint = access->footprint;

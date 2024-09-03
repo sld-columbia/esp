@@ -182,7 +182,7 @@ void conv2d::load_input()
 
 	    dma_info_t dma_info(filters_offset_start_phys >> DMA_WORD_PER_BEAT_LOG2,
 				(n_words_to_load + misaligned + DMA_WORD_PER_BEAT_LOG2) >>
-				DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
+				DMA_WORD_PER_BEAT_LOG2, DMA_SIZE, 0);
 
 #ifndef STRATUS_HLS
 	    ESP_REPORT_INFO("load_input load filters dma_info. offset: %u len %u",
@@ -253,7 +253,7 @@ void conv2d::load_input()
 
 		dma_info_t dma_info(bias_offset_start_phys >> DMA_WORD_PER_BEAT_LOG2,
 				    (n_words_to_load + misaligned + DMA_WORD_PER_BEAT_LOG2) >> DMA_WORD_PER_BEAT_LOG2,
-				    DMA_SIZE);
+				    DMA_SIZE, 0);
 
 #ifndef STRATUS_HLS
 		ESP_REPORT_INFO("load_input load bias dma_info. offset: %u len %u",
@@ -364,7 +364,7 @@ void conv2d::load_input()
 
 			    dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
 						(n_words_to_load + DMA_WORD_PER_BEAT_LOG2) >>
-						DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
+						DMA_WORD_PER_BEAT_LOG2, DMA_SIZE, 0);
 
 #ifndef STRATUS_HLS
 			    ESP_REPORT_INFO("load_input load features dma_info. offset: %u len %u", offset_start, n_words_to_load);
@@ -606,7 +606,7 @@ void conv2d::store_output()
 			
 			dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
 					    (n_words_to_store + DMA_WORD_PER_BEAT_LOG2) >>
-					    DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
+					    DMA_WORD_PER_BEAT_LOG2, DMA_SIZE, 0);
 #ifndef STRATUS_HLS
                         ESP_REPORT_INFO("store dma info. offset: %u len %u",
                         		offset_start, n_words_to_store);

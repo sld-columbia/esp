@@ -62,9 +62,9 @@ void fft::load_input()
         // Configure DMA transaction
 #if (DMA_WORD_PER_BEAT == 0)
         // data word is wider than NoC links
-        dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, length * DMA_BEAT_PER_WORD, DMA_SIZE);
+        dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, length * DMA_BEAT_PER_WORD, DMA_SIZE, 0);
 #else
-        dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, length / DMA_WORD_PER_BEAT, DMA_SIZE);
+        dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, length / DMA_WORD_PER_BEAT, DMA_SIZE, 0);
 #endif
         offset += length;
 
@@ -180,9 +180,9 @@ void fft::store_output()
         // Configure DMA transaction
 #if (DMA_WORD_PER_BEAT == 0)
         // data word is wider than NoC links
-        dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, length * DMA_BEAT_PER_WORD, DMA_SIZE);
+        dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, length * DMA_BEAT_PER_WORD, DMA_SIZE, 0);
 #else
-        dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, length / DMA_WORD_PER_BEAT, DMA_SIZE);
+        dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, length / DMA_WORD_PER_BEAT, DMA_SIZE, 0);
 #endif
         offset += length;
 

@@ -53,6 +53,7 @@ load_data:
         load_ctrl.index = dma_index;
         load_ctrl.length = dma_length;
         load_ctrl.size = SIZE_WORD_T;
+        load_ctrl.user = 0;
 
 #ifndef __SYNTHESIS__
         printf("DMA INFO LOAD: index = %d, length = %d, size = %d \n", dma_index, dma_length, SIZE_WORD_T);
@@ -150,6 +151,7 @@ store_data:
         store_ctrl.index = dma_index;
         store_ctrl.length = dma_length;
         store_ctrl.size = SIZE_WORD_T;//32
+        store_ctrl.user = 0;
 
 #ifndef __SYNTHESIS__
         printf("DMA INFO STORE: index = %d, length = %d, size = %d \n", dma_index, dma_length, SIZE_WORD_T);
