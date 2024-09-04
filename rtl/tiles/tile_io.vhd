@@ -791,7 +791,7 @@ begin
       dest_x := (others => '0');
       for i in 0 to CFG_TILES_NUM - 1 loop
         if tile_irq_type(i) = 1 and
-            tile_apb_irq(i) = to_integer(unsigned(noc_apbi_wirq.pwdata)) - 1 then
+            tile_apb_irq(i) = to_integer(unsigned(noc_apbi_wirq.pwdata)) then
           irq_pwdata_hit := '1';
           dest_y := tile_y(i);
           dest_x := tile_x(i);

@@ -72,14 +72,16 @@ ifneq ("$(CPU_ARCH)", "leon3")
 $(ESP_CFG_BUILD)/riscv.dts: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grlib_config.vhd top.vhd
 	$(QUIET_MAKE)$(MAKE) $(ESP_CFG_BUILD)/socmap.vhd
 
-ARIANE_RV_PLIC_REGMAP_GEN = $(ESP_ROOT)/rtl/cores/ariane/ariane/src/rv_plic/rtl/gen_plic_addrmap.py
+OPENTITAN_PLIC_GEN = $(ESP_ROOT)/rtl/peripherals/interrupt/opentitan/util/topgen.py
+OPENTITAN_TOP_HJSON = $(ESP_ROOT)/rtl/peripherals/interrupt/opentitan/hw/top_earlgrey/data/top_earlgrey.hjson
 
-$(ESP_CFG_BUILD)/plic_regmap.sv: $(ARIANE_RV_PLIC_REGMAP_GEN) $(ESP_CFG_BUILD)/.esp_config
-	$(QUIET_MAKE)$< -t $$(($(NCPU_TILE)*2)) > $@
+$(ESP_CFG_BUILD)/rv_plic: $(OPENTITAN_PLIC_GEN) $(ESP_CFG_BUILD)/.esp_config
+	$(QUIET_MKDIR)mkdir -p $@ \
+	$(QUIET_MAKE)$< -t $(OPENTITAN_TOP_HJSON) --plic-only --plic_srcs=30 --plic_prio=7 --plic_targets=$$(( 2 * $(NCPU_TILE) )) --outdir=$@
 endif
 
 ifeq ("$(CPU_ARCH)", "leon3")
-$(ESP_CFG_BUILD)/plic_regmap.sv:
+$(ESP_CFG_BUILD)/rv_plic:
 
 endif
 

@@ -167,6 +167,6 @@ XMLOGOPT += -UNCLOCKEDSVA
 ifeq ("$(CPU_ARCH)", "ibex")
 INCDIR  += $(IBEX)/vendor/lowrisc_ip/ip/prim/rtl
 VERILOG_IBEX += $(foreach f, $(shell strings $(FLISTS)/ibex_vlog.flist), $(IBEX)/$(f))
-VERILOG_IBEX += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/plic_regmap.sv
+VERILOG_IBEX += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/rv_plic/ip_autogen/rv_plic/rtl/*.sv
 THIRDPARTY_VLOG += $(VERILOG_IBEX)
 endif

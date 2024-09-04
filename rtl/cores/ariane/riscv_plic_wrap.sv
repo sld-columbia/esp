@@ -1,6 +1,10 @@
 // Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
+import top_pkg::*;
+import tlul_pkg::*;
+import prim_mubi_pkg::*;
+
 module riscv_plic_wrap
   # (
      parameter NHARTS = 1,
@@ -23,61 +27,47 @@ module riscv_plic_wrap
 
    localparam int unsigned 	MaxPriority = 7;
 
-   logic [NHARTS-1:0][1:0] 	irq_x;
+   logic [NHARTS-1:0][1:0]     irq_x;
    genvar 			i;
    generate
       for (i = 0; i < NHARTS; i++) begin : remap_eip_targets
-	 assign irq[2 * (i + 1) - 1 : 2 * i] = irq_x[i];
+        assign irq[2 * (i + 1) - 1 : 2 * i] = irq_x[i];
       end
    endgenerate
 
-   REG_BUS #(
-             .ADDR_WIDTH ( 32 ),
-             .DATA_WIDTH ( 32 )
-	     ) reg_bus (clk);
+  tlul_pkg::tl_h2d_t tl_i;
+  tlul_pkg::tl_d2h_t tl_o;
 
-   apb_to_reg i_apb_to_reg
-     (
-      .clk_i     ( clk          ),
-      .rst_ni    ( rstn         ),
-      .penable_i ( plic_penable ),
-      .pwrite_i  ( plic_pwrite  ),
-      .paddr_i   ( plic_paddr   ),
-      .psel_i    ( plic_psel    ),
-      .pwdata_i  ( plic_pwdata  ),
-      .prdata_o  ( plic_prdata  ),
-      .pready_o  ( plic_pready  ),
-      .pslverr_o ( plic_pslverr ),
-      .reg_o     ( reg_bus      )
-      );
+  assign tl_i.a_valid = plic_penable & plic_psel;
+  assign tl_i.a_opcode = plic_pwrite ? tlul_pkg::PutFullData : tlul_pkg::Get;
+  assign tl_i.a_param = 3'b0;
+  assign tl_i.a_size = 2'b10;
+  assign tl_i.a_source = {top_pkg::TL_AIW{1'b0}};
+  assign tl_i.a_address = {6'b0, plic_paddr[25:0]};
+  assign tl_i.a_mask = {top_pkg::TL_DBW{1'b1}};
+  assign tl_i.a_data = plic_pwdata;
+  assign tl_i.a_user.rsvd = '0;
+  assign tl_i.a_user.instr_type = prim_mubi_pkg::MuBi4False;
+  assign tl_i.a_user.cmd_intg = tlul_pkg::get_cmd_intg(tl_i);
+  assign tl_i.a_user.data_intg = tlul_pkg::get_data_intg(plic_pwdata);
+  assign tl_i.d_ready = 1'b1;
 
-   reg_intf::reg_intf_resp_d32 plic_resp;
-   reg_intf::reg_intf_req_a32_d32 plic_req;
+  assign plic_pready = tl_o.d_valid | tl_o.a_ready;
+  assign plic_prdata = tl_o.d_data;
+  assign plic_plsverr = tl_o.d_error;
 
-   assign plic_req.addr  = reg_bus.addr;
-   assign plic_req.write = reg_bus.write;
-   assign plic_req.wdata = reg_bus.wdata;
-   assign plic_req.wstrb = reg_bus.wstrb;
-   assign plic_req.valid = reg_bus.valid;
-
-   assign reg_bus.rdata = plic_resp.rdata;
-   assign reg_bus.error = plic_resp.error;
-   assign reg_bus.ready = plic_resp.ready;
-
-   plic_top
-     #(
-       .N_SOURCE    ( NIRQ_SRCS   ),
-       .N_TARGET    ( 2*NHARTS    ),
-       .MAX_PRIO    ( MaxPriority )
-       ) i_plic
-       (
-	.clk_i         ( clk         ),
-	.rst_ni        ( rstn        ),
-	.req_i         ( plic_req    ),
-	.resp_o        ( plic_resp   ),
-	.le_i          ( '0          ), // 0:level 1:edge
-	.irq_sources_i ( irq_sources ),
-	.eip_targets_o ( irq_x       )
+  rv_plic i_plic
+    (
+	.clk_i           (clk),
+	.rst_ni          (rstn),
+	.tl_i            (tl_i),
+	.tl_o            (tl_o),
+	.intr_src_i      (irq_sources),
+	.alert_rx_i      ('0),
+	.alert_tx_o      (),
+    .irq_o           (irq_x),
+    .irq_id_o        (),
+    .msip_o          ()
 	);
 
 endmodule // riscv_plic_wrap

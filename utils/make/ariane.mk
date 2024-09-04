@@ -221,7 +221,7 @@ XMLOGOPT += -DEFINE WT_DCACHE=1
 ifeq ("$(CPU_ARCH)", "ariane")
 INCDIR += $(ARIANE)/src/common_cells/include
 VERILOG_ARIANE += $(foreach f, $(shell strings $(FLISTS)/ariane_vlog.flist), $(ARIANE)/$(f))
-VERILOG_ARIANE += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/plic_regmap.sv
+VERILOG_ARIANE += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/rv_plic/ip_autogen/rv_plic/rtl/*.sv
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VERILOG_ARIANE += $(foreach f, $(shell strings $(FLISTS)/ariane_fpga_vlog.flist), $(ARIANE)/$(f))
 endif

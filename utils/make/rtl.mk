@@ -8,6 +8,7 @@ INCDIR += $(DESIGN_PATH)/$(GRLIB_CFG_BUILD)
 INCDIR += $(DESIGN_PATH)/$(ESP_CFG_BUILD)
 INCDIR += $(THIRDPARTY_INCDIR)
 INCDIR += $(ESP_ROOT)/rtl/caches/esp-caches/common/defs
+INCDIR += $(ESP_ROOT)/rtl/peripherals/interrupt/opentitan/hw/ip/prim/rtl
 
 ## VHDL Packages
 SIM_VHDL_PKGS += $(SOCKETGEN_VHDL_RTL_PKGS)
@@ -47,6 +48,7 @@ SIM_VHDL_SRCS += $(TOP_VHDL_SIM_SRCS)
 ## Verilog Source
 RTL_TECH_FOLDERS = $(shell ls -d $(ESP_ROOT)/tech/$(TECHLIB)/*/)
 
+VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/opentitan_vlog.flist), $(ESP_ROOT)/rtl/$(f))
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/vlog.flist), $(ESP_ROOT)/rtl/$(f))
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/cores_vlog.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
 
@@ -107,7 +109,7 @@ techmap_flist:
 		(find -L techmap/ -not \( -path techmap/unisim -prune \) -name "*.sv") >> $(ESP_ROOT)/utils/flist/techmap_vlog.flist  ; cd $(ESP_ROOT)/../$(PROJECT_NAME) )
 
 
-check_all_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
+check_all_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/rv_plic techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
 	@echo $(SIM_VHDL_PKGS) > $@.new;
 	@echo $(SIM_VHDL_SRCS) >> $@.new;
 	@echo $(SIM_VLOG_SRCS) >> $@.new;
@@ -133,7 +135,7 @@ check_all_srcs-distclean:
 
 .PHONY: check_all_srcs check_all_srcs-distclean
 
-check_all_rtl_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
+check_all_rtl_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/rv_plic techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
 	@echo $(VHDL_PKGS) > $@.new;
 	@echo $(VHDL_SRCS) >> $@.new;
 	@echo $(VLOG_SRCS) >> $@.new;

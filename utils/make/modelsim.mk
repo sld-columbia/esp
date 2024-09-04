@@ -87,6 +87,11 @@ endif
 		vlib -type directory work; \
 		$(SPACING)vmap work work; \
 	fi; \
+	echo $(SPACES)"### Compile Verilog source files ###"; \
+		for rtl in $(SIM_VLOG_SRCS); do \
+			echo $(SPACES)"$(VLOG) -work work $$rtl"; \
+			$(VLOG) -work work $$rtl || exit; \
+		done; \
 	echo $(SPACES)"### Compile VHDL packages ###"; \
 	for rtl in $(SIM_VHDL_PKGS); do \
 		echo $(SPACES)"$(VCOM) -work work $$rtl"; \
@@ -96,11 +101,6 @@ endif
 		for rtl in $(SIM_VHDL_SRCS); do \
 			echo $(SPACES)"$(VCOM) -work work $$rtl"; \
 			$(VCOM) -work work $$rtl || exit; \
-		done; \
-	echo $(SPACES)"### Compile Verilog source files ###"; \
-		for rtl in $(SIM_VLOG_SRCS); do \
-			echo $(SPACES)"$(VLOG) -work work $$rtl"; \
-			$(VLOG) -work work $$rtl || exit; \
 		done;
 ifneq ("$(wildcard $(ESP_ROOT)/rtl/peripherals/bsg/.git)", "")
 	@echo $(SPACES)"### Compile BSG Verilog source files ###";

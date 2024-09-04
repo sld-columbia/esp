@@ -53,3 +53,6 @@
 [submodule "soft/common/drivers/common/utils/eigen"]
 	path = soft/common/drivers/common/utils/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "rtl/peripherals/interrupt/opentitan"]
+	path = rtl/peripherals/interrupt/opentitan
+	url = https://github.com/sld-columbia/opentitan.git
