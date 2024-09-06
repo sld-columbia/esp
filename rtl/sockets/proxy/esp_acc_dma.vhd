@@ -1172,7 +1172,7 @@ end generate tlb_gen;
             (msg /= RSP_P2P and dma_snd_full_int = '0')) then
           write_burst <= '1';
           bufdout_ready <= '1';
-          if bufdout_valid = '1' and wr_rsp_ready = '1' then -- write if wrise rsp channel is ready
+          if bufdout_valid = '1' and wr_rsp_ready = '1' then 
             if msg = RSP_P2P  then
               p2p_rsp_snd_data_in <= payload_data;
               p2p_rsp_snd_wrreq <= '1';
@@ -1182,7 +1182,7 @@ end generate tlb_gen;
             end if;
 
             -- local accelerator has finished its write burst
-            if burst_count = len and wr_rsp_ready = '1' then
+            if burst_count = len then
               if p2p_count < if_cond_0 then
                 -- burst length is less than what consumer accelerator requested
                 continue_p2p := '1';
@@ -1209,7 +1209,7 @@ end generate tlb_gen;
               end if;--p2p_mcast_nsrcs = '1'
               wr_rsp_valid <= '1';
             -- the amount request by the consumer has been sent, but the accelerator burst is not complete
-            elsif burst_count > conv_std_logic_vector(0, 32) and burst_count = rcv_p2p_length and wr_rsp_ready = '1' then
+            elsif burst_count > conv_std_logic_vector(0, 32) and burst_count = rcv_p2p_length then
               if p2p_mcast_nsrcs = '1' then
                 next_quadrant <= '1';		-- move to the next_quadrant
               end if;

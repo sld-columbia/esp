@@ -27,8 +27,8 @@ typedef u64 token_t;
 #define BATCH_REG 0x44
 
 // User defined registers
-#define TOKENS 512
-#define BATCH 256
+#define TOKENS 12
+#define BATCH 1024
 #define mask 0x0LL
 
 // Control the number of consumers
@@ -205,8 +205,8 @@ int main(int argc, char * argv[])
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(dummy_buf_size);
     //printf("\n  memory buffer base-address = %p\n", mem);
-//    coherence = ACC_COH_NONE;
-    coherence = ACC_COH_RECALL;
+    coherence = ACC_COH_NONE;
+//    coherence = ACC_COH_RECALL;
 
     //Alocate and populate page table
     ptable = aligned_malloc(nchunk * sizeof(unsigned *));
@@ -215,13 +215,13 @@ int main(int argc, char * argv[])
     //printf("  ptable = %p\n", ptable);
     //printf("  nchunk = %lu\n\n", nchunk);
 
-for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
-    for (int it_1 = 4; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
-        for (int it_2 = 0; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
+for (int it_0 = 2; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
+    for (int it_1 = 5; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
+        for (int it_2 = 4; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
 //if ((it_0 == 3 && it_1 == 4 && it_2 == 4) || (it_0 == 3 && it_1 == 4 && it_2 == 5) || (it_0 == 3 && it_1 == 5 && it_2 == 5)) {
 //    continue;
 //}
-//if ((it_0 == 3 && it_1 == 4 && it_2 == 5) || (it_0 == 3 && it_1 == 4 && it_2 == 4)){
+//if ((it_0 == 2 && it_1 == 4 && it_2 == 4) && (it_0 == 2 && it_1 == 5 && it_2 == 4)){
 //continue;
 //}
     // Indexes
@@ -261,7 +261,7 @@ for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_0[i]], SELECT_REG, ioread32(&devs[dev_id_0[i]], DEVID_REG));
         iowrite32(&devs[dev_id_0[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_0[i]], 1, num_multicast_0, 0, NULL, 1);
+            p2p_setup(&devs[dev_id_0[i]], 1, num_multicast_0, 0, NULL, 0);
         else
             p2p_setup(&devs[dev_id_0[i]], 0, 0, 1, &devs[dev_id_0[0]], 0);
 
@@ -280,7 +280,7 @@ for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_1[i]], SELECT_REG, ioread32(&devs[dev_id_1[i]], DEVID_REG));
         iowrite32(&devs[dev_id_1[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_1[i]], 1, num_multicast_1, 0, NULL, 1);
+            p2p_setup(&devs[dev_id_1[i]], 1, num_multicast_1, 0, NULL, 0);
         else
             p2p_setup(&devs[dev_id_1[i]], 0, 0, 1, &devs[dev_id_1[0]], 0);
 
@@ -299,7 +299,7 @@ for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_2[i]], SELECT_REG, ioread32(&devs[dev_id_2[i]], DEVID_REG));
         iowrite32(&devs[dev_id_2[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_2[i]], 1, num_multicast_2, 0, NULL, 1);
+            p2p_setup(&devs[dev_id_2[i]], 1, num_multicast_2, 0, NULL, 0);
         else
             p2p_setup(&devs[dev_id_2[i]], 0, 0, 1, &devs[dev_id_2[0]], 0);
 
@@ -326,17 +326,17 @@ for (int it_0 = 3; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id[i]], CMD_REG, CMD_MASK_START);
     }
     
-//    printf(" Debug checkpoint 1\n");
+    printf(" Debug checkpoint 1\n");
 
     unsigned done = 0;
 
     while (!done) {
         done = STATUS_MASK_DONE;
-//        printf("  Debug checkpoint 2\n");
+        printf("  Debug checkpoint 2\n");
         for (int i = 0; i < num_multicast_0 + num_multicast_1 + num_multicast_2 + 1 + 1 + 1; i++){
             done &= (ioread32(&devs[i], STATUS_REG) & STATUS_MASK_DONE);
         }
-//        printf("  Debug checkpoint 3\n");
+        printf("  Debug checkpoint 3\n");
     }
 
 //    end = get_counter();

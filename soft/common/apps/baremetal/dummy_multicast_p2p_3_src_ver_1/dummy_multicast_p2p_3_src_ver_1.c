@@ -27,7 +27,7 @@ typedef u64 token_t;
 #define BATCH_REG 0x44
 
 // User defined registers
-#define TOKENS 512
+#define TOKENS 12
 #define BATCH 256
 #define mask 0x0LL
 
@@ -205,7 +205,7 @@ int main(int argc, char * argv[])
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(dummy_buf_size);
     //printf("\n  memory buffer base-address = %p\n", mem);
-//    coherence = ACC_COH_RECALL;
+//    coherence = ACC_COH_NONE;
     coherence = ACC_COH_RECALL;
 
     //Alocate and populate page table
@@ -215,7 +215,7 @@ int main(int argc, char * argv[])
     //printf("  ptable = %p\n", ptable);
     //printf("  nchunk = %lu\n\n", nchunk);
 
-for (int it_0 = 4; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
+for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
         for (int it_2 = 0; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
 
