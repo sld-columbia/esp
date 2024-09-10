@@ -85,6 +85,7 @@ if [ ${INSTALL_ARIANE} == 1 ]; then
     git submodule update --init --recursive soft/ariane/opensbi
     git submodule update --init --recursive soft/ariane/riscv-pk
     git submodule update --init --recursive soft/ariane/riscv-tests
+    git submodule update --init --recursive rtl/peripherals/interrupt/opentitan
 fi
 
 if [ ${INSTALL_IBEX} == 1 ]; then
@@ -92,6 +93,7 @@ if [ ${INSTALL_IBEX} == 1 ]; then
     git submodule update --init --recursive soft/ariane/opensbi
     git submodule update --init --recursive soft/ariane/riscv-pk
     git submodule update --init --recursive soft/ariane/riscv-tests
+    git submodule update --init --recursive rtl/peripherals/interrupt/opentitan
 fi
 
 if [ ${INSTALL_ARIANE_LINUX} == 1 ]; then
