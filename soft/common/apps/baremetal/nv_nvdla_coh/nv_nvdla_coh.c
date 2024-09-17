@@ -35,7 +35,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define PLIC_INTACK_OFFSET 0x200004
 
 //IRQ number, get from device tree
-#define NVDLA_IRQ 6
+#define NVDLA_IRQ 5
 
 //number of loop iterations for which nvdla is to be run
 #define N_ITER 3
@@ -320,7 +320,7 @@ int main(int argc, char * argv[])
             iowrite32(dev, 12304, 1);
 
             plic_dev.addr = PLIC_ADDR;
-            while((ioread32(&plic_dev, PLIC_IP_OFFSET) & 0x40) == 0);
+            while((ioread32(&plic_dev, PLIC_IP_OFFSET) (1 << NVDLA_IRQ)) == 0);
             printf("wait\n");
             printf("wait\n");
             printf("wait\n");
@@ -350,7 +350,7 @@ int main(int argc, char * argv[])
 
             /* Validation */
             iowrite32(&plic_dev, PLIC_INTACK_OFFSET, NVDLA_IRQ);
-            iowrite32(&plic_dev, 0x2000, 0x40);
+            iowrite32(&plic_dev, 0x2000, 1 << NVDLA_IRQ);
             iowrite32(&plic_dev, 0x18, 0x2);
             ioread32(&plic_dev, PLIC_INTACK_OFFSET);
             *rst_reg_addr = 0x1;
