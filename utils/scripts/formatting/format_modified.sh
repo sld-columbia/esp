@@ -1,10 +1,18 @@
 #!/bin/bash
 is_github_actions=false
 
+header() {
+	echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
+	echo "*                                               *"
+	echo "*   🚀✨ Welcome to the ESP Format Wizard 🛠️🧙   *"
+	echo "*                                               *"
+	echo "*    📝 Auto-format or check code violations!   *"
+	echo "*                                               *"
+	echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
+	echo ""
+}
+
 usage() {
-    echo "ESP format checker ✨🛠️"
-	echo "Report violations or format files in-place."
-    echo ""
     echo "Usage: $0 [OPTIONS]"
     echo "  -h            Display this help message"
 	echo ""
@@ -76,37 +84,34 @@ assign_flags() {
             return 1
             ;;
     esac
-	return "$flags"
 }
 
 run_formatter() {
 	local file_to_format="$1"
 	local type="$2"
 	local flags="$3"
-	local output
-	
+
+	echo -n " - $(basename "$file_to_format"): "
     case "$type" in
         c | h | cpp | hpp)
-            output=$(clang-format-10 $flags "$file_to_format" 2>&1)
+            clang-format-10 "$flags" "$file_to_format" 2>&1
 			;;
         py)
-            output=$(python3 -m autopep8 $flags "$file_to_format" 2>&1)
+            python3 -m autopep8 "$flags" "$file_to_format" 2>&1
 			;;
         sv | v) 
-            output=$(verible-verilog-format $flags "$file_to_format" 2>&1)
+            verible-verilog-format "$flags" "$file_to_format" 2>&1
 			;;
         vhd)
-            output=$(vsg -f "$file_to_format" $flags 2>&1)
+            vsg -f "$file_to_format" "$flags" 2>&1
 			;;
     esac
 
 	if [ $? -eq 0 ]; then
-		echo -e " \033[32mSUCCESS\033[0m"
+		echo -e "\033[32msuccess\033[0m"
         return 0
     else
-		echo -e " \033[31mFAILED\033[0m"
-        echo "$output" | sed 's/^/  /'
-		echo ""
+		echo -e "\033[31mfailure\033[0m"
         return 1
     fi
 }
@@ -160,7 +165,7 @@ parse_args() {
 	done
  
 	if [ "$all" = true ]; then
-		format_all
+		format_all $action
 	elif [ -n "$file_to_format" ]; then
 		format_file $action $file_to_format
 	else
@@ -172,34 +177,36 @@ parse_args() {
 format_file() {
 	local action="$1"
 	local file_to_format="$2"
+	local type="${file_to_format##*.}"
 
 	if [ ! -f "$file_to_format" ]; then
-		echo "$0: Error: File '$file_to_format' not found." >&2
+		echo "$0: Error: file '$file_to_format' not found." >&2
 		return 1
 	fi
 
-	local type="${file_to_format##*.}"
-	flags=$(assign_flags $action $type)
+	assign_flags $action $type
 
 	case $action in
 		format)
-			echo -n "Formatting $file_to_format..."
+			echo "Start formatting:"
 			;;
 		check)
-			echo -n "Checking $file_to_format..."
+			echo "Start checking:"
 			;;
 	esac
 
 	if run_formatter "$file_to_format" "$type" "$flags"; then
-		echo -e "\U00002728 $action""ing done!"
+		echo "Success: action completed."
 		return 0
 	else
-		echo -e "\u274C $action""ing failed!"
+		echo "Error: action failed."
 		return 1
 	fi	
 }
 
 format_all() {
+	local action="$1"
+
 	if [ "$is_github_actions" = true ]; then
 		modified_files=$(git diff --name-only HEAD^..HEAD \
 			| grep -E '\.(c|h|cpp|hpp|py|v|sv|vhd)$')
@@ -210,48 +217,49 @@ format_all() {
 	fi
 
 	if [ -z "$modified_files" ]; then
-		echo -e "No modified files found."
-		return 0
+		echo "Error: No modified files found."
+		return 1
 	fi
 
 	modified_count=$(echo "$modified_files" | wc -l)
-	echo -e "\U0001F50E Found $modified_count modified files:"
-	echo ""
+	echo -e "Found $modified_count modified file(s):"
 	for file in $modified_files; do
-		echo "   - $file"
+		echo " - $file"
 	done
 	echo ""
+
 	root_dir=$(git rev-parse --show-toplevel)
 	modified_files=$(echo "$modified_files" | sed "s|^|$root_dir/|")
-
 	error_files=""
-	success_files=""
 
+	case $action in
+		format)
+			echo "Start formatting:"
+			;;
+		check)
+			echo "Start checking:"
+			;;
+	esac
+	
 	for file in $modified_files; do
-		case $action in
-			format)
-				echo -n "Formatting $(basename "$file")..."
-				;;
-			check)
-				echo -n "Checking $(basename "$file")..."
-				;;
-		esac
-		
-		if ! format_file "$file" "$action"; then
+		local type="${file##*.}"
+		assign_flags "$action" "$type"
+		if ! run_formatter "$file" "$type" "$flags"; then
 			error_files="$error_files $file"
 		fi
 	done
 
 	echo ""
 	if [ -n "$error_files" ]; then
-		echo -e "\u274C $action""ing failed!"
-		exit 1
+		echo "Error: action failed."
+		return 1
 	else
-		echo -e "\U00002728 $action""ing done!"
-		exit 0
+		echo "Success: action completed."
+		return 0
 	fi
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	header
     parse_args "$@"
 fi
