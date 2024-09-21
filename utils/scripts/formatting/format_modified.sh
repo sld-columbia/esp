@@ -117,92 +117,105 @@ run_formatter() {
 }
 
 parse_args() {
-	while [[ $# -gt 0 ]]; do
-		local arg="$1"
-		case $arg in
-			-f)
-				if [[ -z $2 || $2 == -* ]]; then
-					echo "Option -f requires an argument." >&2
-					usage
-					return 1
-				fi
-				action="format"
-				file_to_format="$2"
-				shift
-				;;
-			-fa)
-				action="format"
-				all=true
-				;;
-			-c)
-				if [[ -z $2 || $2 == -* ]]; then
-					echo "Option -c requires an argument." >&2
-					usage
-					return 1
-				fi
-				action="check"
-				file_to_format="$2"
-				shift
-				;;
-			-ca)
-				action="check"
-				all=true
-				;;
-			-g)
-				is_github_actions=true
-				;;
-			-h|--help)
-				usage
-				return 1
-				;;
-			*)
-				echo "Unknown option: $1" >&2
-				usage
-				return 1
-				;;
-		esac
-		shift
-	done
- 
-	if [ "$all" = true ]; then
-		format_all $action
-	elif [ -n "$file_to_format" ]; then
-		format_file $action $file_to_format
-	else
-		usage
-		return 1
-	fi
+    action=""
+    file_to_format=""
+    all=false
+    is_github_actions=false
+
+    while [[ $# -gt 0 ]]; do
+        local arg="$1"
+        case $arg in
+            -f)
+                if [[ -z $2 || $2 == -* ]]; then
+                    echo "Option -f requires an argument." >&2
+                    usage
+                    return 1
+                fi
+                action="format"
+                file_to_format="$2"
+                shift
+                ;;
+            -fa)
+                action="format"
+                all=true
+                ;;
+            -c)
+                if [[ -z $2 || $2 == -* ]]; then
+                    echo "Option -c requires an argument." >&2
+                    usage
+                    return 1
+                fi
+                action="check"
+                file_to_format="$2"
+                shift
+                ;;
+            -ca)
+                action="check"
+                all=true
+                ;;
+            -g)
+                is_github_actions=true
+                ;;
+            -h|--help)
+                usage
+                return 1
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                usage
+                return 1
+                ;;
+        esac
+        shift
+    done
+
+    if [ "$all" = true ]; then
+        format_all "$action"
+    elif [ -n "$file_to_format" ]; then
+        format_file "$action" "$file_to_format"
+    else
+        usage
+        return 1
+    fi
 }
+
 
 format_file() {
-	local action="$1"
-	local file_to_format="$2"
-	local type="${file_to_format##*.}"
+    local action="$1"
+    local file_to_format="$2"
+    local type="${file_to_format##*.}"
 
-	if [ ! -f "$file_to_format" ]; then
-		echo "$0: Error: file '$file_to_format' not found." >&2
-		return 1
-	fi
+    if [ ! -f "$file_to_format" ]; then
+        echo "$0: Error: file '$file_to_format' not found." >&2
+        return 1
+    fi
 
-	assign_flags $action $type
+    assign_flags "$action" "$type"
+    
+    if [ -z "$flags" ]; then
+        echo "Unknown type: $type" >&2
+        usage
+        return 1
+    fi
 
-	case $action in
-		format)
-			echo "Start formatting:"
-			;;
-		check)
-			echo "Start checking:"
-			;;
-	esac
+    case $action in
+        format)
+            echo "Start formatting:"
+            ;;
+        check)
+            echo "Start checking:"
+            ;;
+    esac
 
-	if run_formatter "$file_to_format" "$type" "$flags"; then
-		echo "Success: action completed."
-		return 0
-	else
-		echo "Error: action failed."
-		return 1
-	fi	
+    if run_formatter "$file_to_format" "$type" "$flags"; then
+        echo "Success: action completed."
+        return 0
+    else
+        echo "Error: action failed."
+        return 1
+    fi
 }
+
 
 format_all() {
 	local action="$1"
