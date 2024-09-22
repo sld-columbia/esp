@@ -4,9 +4,9 @@ is_github_actions=false
 header() {
 	echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
 	echo "*                                               *"
-	echo "*   🚀✨ Welcome to the ESP Format Wizard 🛠️🧙   *"
+	echo "*         🚀✨ ESP Code Formatter 🛠️🧙	        *"
 	echo "*                                               *"
-	echo "*    📝 Auto-format or check code violations!   *"
+	echo "*     Auto-format or check code violations!     *"
 	echo "*                                               *"
 	echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
 	echo ""
@@ -27,6 +27,27 @@ usage() {
 	echo "  $0 -ca                    # Report violations for all modified files"
     echo "  $0 -c myfile.py           # Report violations for myfile.py"
 	echo "  $0 -g -ca                 # Report violations as part of a workflow or hook"
+}
+
+check_formatters() {
+    local formatters=("clang-format-10" "autopep8" "verible-verilog-format" "vsg")
+    local missing_formatters=()
+
+    for formatter in "${formatters[@]}"; do
+        if ! command -v "$formatter" >/dev/null 2>&1; then
+            missing_formatters+=("$formatter")
+        fi
+    done
+
+    if [ "${#missing_formatters[@]}" -ne 0 ]; then
+        echo "Error: The following required tools are not installed or not in your PATH:"
+        for tool in "${missing_formatters[@]}"; do
+            echo "  - $tool"
+        done
+		echo ""
+        echo "Please install the missing tools before proceeding."
+        exit 1
+    fi
 }
 
 assign_flags() {
@@ -274,5 +295,6 @@ format_all() {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 	header
+	check_formatters
     parse_args "$@"
 fi
