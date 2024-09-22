@@ -39,7 +39,7 @@ check_formatters() {
         fi
     done
 
-    if [ "${#missing_formatters[@]}" -ne 0 ]; then
+    if [ "${#missing_formatters[@]}" -gt 0 ]; then
         echo "Error: The following required tools are not installed or not in your PATH:"
         for tool in "${missing_formatters[@]}"; do
             echo "  - $tool"
@@ -61,7 +61,7 @@ assign_flags() {
                     flags="-i"
                     ;;
                 py)
-                    flags="-i -a -a"
+                    flags="-iaaa"
                     ;;
                 sv | v)
                     flags="--inplace --port_declarations_alignment=preserve \
@@ -115,16 +115,16 @@ run_formatter() {
 	echo -n " - $(basename "$file_to_format"): "
     case "$type" in
         c | h | cpp | hpp)
-            clang-format-10 "$flags" "$file_to_format" 2>&1
+            clang-format-10 $flags "$file_to_format" 2>&1
 			;;
         py)
-            python3 -m autopep8 "$flags" "$file_to_format" 2>&1
+            python3 -m autopep8 $flags "$file_to_format" 2>&1
 			;;
         sv | v) 
-            verible-verilog-format "$flags" "$file_to_format" 2>&1
+            verible-verilog-format $flags "$file_to_format" 2>&1
 			;;
         vhd)
-            vsg -f "$file_to_format" "$flags" 2>&1
+            vsg -f "$file_to_format" $flags 2>&1
 			;;
     esac
 
@@ -179,7 +179,7 @@ parse_args() {
                 ;;
             -h|--help)
                 usage
-                return 1
+                return 0
                 ;;
             *)
                 echo "Unknown option: $1" >&2
