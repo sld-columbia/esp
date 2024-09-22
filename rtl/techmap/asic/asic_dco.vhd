@@ -5,7 +5,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 
-entity gf12_dco is
+entity asic_dco is
 
   generic (
     enable_div2 : integer range 0 to 1 := 0);
@@ -23,11 +23,11 @@ entity gf12_dco is
     CLK_DIV2_90 : out std_logic;
     CLK_DIV  : out std_logic);
 
-end entity gf12_dco;
+end entity asic_dco;
 
-architecture rtl of gf12_dco is
+architecture rtl of asic_dco is
 
-  component DCO_GF12_C14 is
+  component DCO_ASIC is
     port (
       RSTN     : in  std_ulogic;
       EXT_CLK  : in  std_logic;
@@ -39,9 +39,9 @@ architecture rtl of gf12_dco is
       FREQ_SEL : in  std_logic_vector(1 downto 0);
       CLK      : out std_logic;
       CLK_DIV  : out std_logic);
-  end component DCO_GF12_C14;
+  end component DCO_ASIC;
 
-  component DCO_LPDDR_GF12_C14 is
+  component DCO_LPDDR is
     port (
       RSTN        : in  std_ulogic;
       EXT_CLK     : in  std_logic;
@@ -55,12 +55,12 @@ architecture rtl of gf12_dco is
       CLK_DIV2    : out std_logic;
       CLK_DIV2_90 : out std_logic;
       CLK_DIV     : out std_logic);
-  end component DCO_LPDDR_GF12_C14;
+  end component DCO_LPDDR;
 
 begin  -- architecture rtl
 
   no_div2: if enable_div2 = 0 generate
-    DCO_GF12_C14_1 : DCO_GF12_C14
+    DCO_1 : DCO_ASIC
       port map (
         RSTN     => RSTN,
         EXT_CLK  => EXT_CLK,
@@ -78,7 +78,7 @@ begin  -- architecture rtl
   end generate no_div2;
 
   with_div2: if enable_div2 /= 0 generate
-    DCO_LPDDR_GF12_C14_1 : DCO_LPDDR_GF12_C14
+    DCO_LPDDR_1 : DCO_LPDDR
       port map (
         RSTN        => RSTN,
         EXT_CLK     => EXT_CLK,

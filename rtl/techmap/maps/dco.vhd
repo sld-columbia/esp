@@ -16,7 +16,7 @@ use work.alldco.all;
 entity dco is
 
   generic (
-    tech : integer;
+    tech : integer := 0;
     enable_div2 : integer range 0 to 1 := 0;
     dlog : integer range 0 to 15 := 10);      -- log2(delay raw reset to lock)
   port (
@@ -63,10 +63,8 @@ begin  -- architecture rtl
     end if;
   end process;
 
-  --gf12_gen : if (tech = gf12) generate
   asic_gen : if (tech = asic) generate
 
-    --x0 : gf12_dco
     x0 : asic_dco
       generic map (
         enable_div2 => enable_div2)
@@ -91,7 +89,6 @@ begin  -- architecture rtl
 
   inferred_gen : if (tech = inferred) generate
 
-    --x0 : gf12_dco
     x0 : behav_dco
       port map (
         RSTN     => rstn,

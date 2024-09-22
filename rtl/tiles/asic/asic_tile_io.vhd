@@ -164,7 +164,7 @@ architecture rtl of asic_tile_io is
   signal ethi : eth_in_type;
   signal etho : eth_out_type;
 
-  -- DVI (TODO: missing part selection for GF12. no instance for now)
+  -- DVI (TODO: missing part selection for ASIC. no instance for now)
   signal dvi_apbi  : apb_slv_in_type;
   signal dvi_apbo  : apb_slv_out_type;
   signal dvi_ahbmi : ahb_mst_in_type;
@@ -438,7 +438,7 @@ begin
     iolink_credit_out <= '0';
   end generate no_iolink;
   -----------------------------------------------------------------------------
-  -- DVI (not available for GF12 for now)
+  -- DVI (not available for ASIC for now)
   -----------------------------------------------------------------------------
   -- To tile
   dvi_apbo  <= apb_none;

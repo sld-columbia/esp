@@ -110,7 +110,6 @@ begin
          port map (clk, address, datain, dataoutx, xenable, xwrite);
   end generate;
 
-  --asicx : if tech = gf12 generate
   asicx : if tech = asic generate
     x0 : asic_syncram generic map (abits, dbits)
       port map (clk, address, datain, dataoutx, xenable, xwrite);

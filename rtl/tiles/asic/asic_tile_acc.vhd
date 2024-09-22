@@ -39,7 +39,7 @@ entity asic_tile_acc is
     this_has_token_pm : integer range 0 to 1 := 0;
     HAS_SYNC          : integer range 0 to 1 := 1;
     ROUTER_PORTS      : ports_vec            := "11111";
-    this_has_dco      : integer range 0 to 1 := 0);
+    this_has_dco      : integer range 0 to 2 := 0);
   port (
     rst                : in  std_ulogic;
     raw_rstn           : in  std_ulogic;
@@ -60,6 +60,7 @@ entity asic_tile_acc is
     dco_fc_sel        : in std_logic_vector(5 downto 0);
     dco_div_sel       : in std_logic_vector(2 downto 0);
     dco_freq_sel      : in std_logic_vector(1 downto 0);
+    LDOCTRL           : in std_logic_vector(7 downto 0);
     -- NoC interface
     noc1_stop_in_tile       : out std_ulogic;
     noc1_stop_out_tile      : in  std_ulogic;
@@ -148,7 +149,6 @@ architecture rtl of asic_tile_acc is
   signal test6_stop_out_s      : std_ulogic;
 
   signal acc_activity : std_ulogic;
-  signal LDOCTRL : std_logic_vector(7 downto 0);
 
 begin
 

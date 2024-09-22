@@ -172,7 +172,6 @@ begin
 		   xwrite, waddress, datain);
   end generate;
 
-  --asicx : if tech = gf12 generate
   asicx : if tech = asic generate
     x0 : asic_syncram_2p generic map (abits, dbits)
       port map (rclk, renable2, raddress, dataoutx,

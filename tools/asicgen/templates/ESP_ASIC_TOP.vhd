@@ -204,6 +204,10 @@ architecture rtl of ESP_ASIC_TOP is
   signal pad_cfg : pad_cfg_array;
   signal full_pad_cfg : pad_cfg_full_array;
 
+  -- LDO Controller
+  type ldo_ctrl_array is array (0 to CFG_TILES_NUM - 1) of std_logic_vector(7 downto 0);
+  signal ldo_ctrl : ldo_ctrl_array;
+
   -- External clocks and reset
   signal reset_int   : std_logic;
   signal ext_clk_int : std_logic;  -- backup tile clock
@@ -601,7 +605,8 @@ begin
         noc6_stop_out           => noc6_stop_out(i),
         -- monitors
         mon_noc                 => mon_noc(i),
-  	  acc_activity            => '0',
+  	acc_activity            => '0',
+        LDOCTRL                 => ldo_ctrl(i),
         -- synchronizers out to tile
         noc1_output_port_tile   => noc1_data_l_out(i),
         noc1_data_void_out_tile => noc1_data_void_out_tile(i),
@@ -820,6 +825,7 @@ begin
           dco_cc_sel              => dco_cc_sel(i),
           dco_clk_sel             => dco_clk_sel(i),
           dco_en                  => dco_en(i),
+          LDOCTRL                 => ldo_ctrl(i),
           -- Noc interface
           noc1_stop_in_tile       => noc1_stop_in_tile(i),
           noc1_stop_out_tile      => noc1_stop_out_tile(i),

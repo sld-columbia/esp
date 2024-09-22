@@ -187,7 +187,6 @@ int main(int argc, char * argv[])
 
 			// Pass common configuration parameters
 
-			iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
 			iowrite32(dev, COHERENCE_REG, coherence);
 
 			iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);

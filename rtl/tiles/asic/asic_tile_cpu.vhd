@@ -40,7 +40,7 @@ entity asic_tile_cpu is
     SIMULATION   : boolean              := false;
     HAS_SYNC     : integer range 0 to 1 := 1;
     ROUTER_PORTS : ports_vec            := "11111";
-    this_has_dco : integer range 0 to 1 := 1);
+    this_has_dco : integer range 0 to 2 := 1);
   port (
     rst                : in  std_ulogic;
     raw_rstn           : in  std_ulogic;

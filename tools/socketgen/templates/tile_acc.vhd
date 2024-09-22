@@ -33,7 +33,7 @@ entity tile_acc is
     this_device        : devid_t              := 0;
     this_irq_type      : integer              := 0;
     this_has_l2        : integer range 0 to 1 := 0;
-    this_has_dco       : integer range 0 to 1 := 0);
+    this_has_dco       : integer range 0 to 2 := 0);
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
@@ -230,20 +230,20 @@ architecture rtl of tile_acc is
 begin
 
   -- DCO Reset synchronizer
-  rst_gen: if this_has_dco /= 0 generate
+  rst_gen: if this_has_dco = 1 generate
     tile_rstn_out : rstgen
       generic map (acthigh => 1, syncin => 0)
       port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
   end generate rst_gen;
 
-  no_rst_gen: if this_has_dco = 0 generate
+  no_rst_gen: if this_has_dco /= 1 generate
     rst <= tile_rst;
   end generate no_rst_gen;
 
   tile_rstn_out <= rst;
 
   -- DCO
-  dco_gen: if this_has_dco /= 0 generate
+  dco_gen: if this_has_dco = 1 generate
 
     dco_i: dco
       generic map (
@@ -267,7 +267,7 @@ begin
     tile_clk <= dco_clk;
   end generate dco_gen;
 
-  no_dco_gen: if this_has_dco = 0 generate
+  no_dco_gen: if this_has_dco /= 1 generate
     tile_clk     <= ext_clk;
     dco_clk_lock <= '1';
     clk_div <= tile_clk;

@@ -1037,6 +1037,7 @@ def acc_gen(out_path, mem_dict):
                 print("\"acc_tb single port %s\" generated!" %(' '.join(map(str, list(mem_dict["acc"][idx].values())))))
     
         else:
+            print("NONE")
             None    
             
     if len(lib_list) > 0:

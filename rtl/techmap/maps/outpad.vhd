@@ -49,9 +49,7 @@ begin
 -- pragma translate_on
 	when slew = 0 else i;
   end generate;
-  --gf12p : if (tech = gf12) generate
   asicp : if (tech = asic) and has_pads(tech) = 1 generate
-    --x0 : gf12_outpad generic map (PAD_TYPE => loc) port map (pad, i, cfgi(2), cfgi(1), cfgi(0));
     x0 : asic_outpad generic map (PAD_TYPE => loc) port map (pad, i, cfgi(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0));
   end generate;
   xcv : if (is_unisim(tech) = 1) generate

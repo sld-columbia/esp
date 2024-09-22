@@ -21,10 +21,6 @@
  * - Michael Schaffner  <schaffer@iis.ee.ethz.ch>
  */
 
-/**
- * Adapted to GF 12 SRAM wrapper GF12_SRAM_SP_256x64
- */
-
 
 module SyncSpRamBeNx64
   #(

@@ -63,9 +63,7 @@ begin
 -- pragma translate_on
 	;
   end generate;
-  --gf12p : if (tech = gf12) generate
   asicp : if (tech = asic) and has_pads(tech) = 1 generate
-    --x0 : gf12_iopad
     x0 : asic_iopad
          generic map (PAD_TYPE => loc) port map (pad, i, oen, o, cfgi(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0));
   end generate;
@@ -118,9 +116,7 @@ begin
 	;
   end generate;
 
-  --gf12p : if (tech = gf12) generate
   asicp : if (tech = asic) and has_pads(tech) = 1 generate
-    --x0 : gf12_iopadien
     x0 : asic_iopadien
          generic map (PAD_TYPE => loc) port map (pad, i, oen, o, ien_i, cfgi(2), cfgi(1), cfgi(0));
   end generate;

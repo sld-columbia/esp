@@ -36,7 +36,7 @@ use work.socmap.all;
 entity tile_slm is
   generic (
     SIMULATION   : boolean := false;
-    this_has_dco : integer range 0 to 1 := 0;
+    this_has_dco : integer range 0 to 2 := 0;
     this_has_ddr : integer range 0 to 1 := 0);
   port (
     raw_rstn           : in  std_ulogic;
@@ -122,12 +122,12 @@ architecture rtl of tile_slm is
   signal dco_clk_div2_int    : std_logic;
   signal dco_clk_div2_90_int : std_logic;
 
-  component DELAY_CELL_GF12_C14 is
+  component DELAY_CELL_ASIC is
     port (
       data_in : in std_logic;
       sel     : in std_Logic_vector(3 downto 0);
       data_out : out std_logic);
-  end component DELAY_CELL_GF12_C14;
+  end component DELAY_CELL_ASIC;
 
   -- Queues (despite their name, for this tile, all queues carry non-coherent requests)
   signal dma_rcv_rdreq              : std_ulogic;
@@ -216,7 +216,7 @@ architecture rtl of tile_slm is
 begin
 
   -- DCO Reset synchronizer
-  rst_gen : if this_has_dco /= 0 generate
+  rst_gen : if this_has_dco = 1 generate
     rst_ddr : if this_has_ddr /= 0 generate
       tile_rstn_out : rstgen
         generic map (acthigh => 1, syncin => 0)
@@ -237,7 +237,7 @@ begin
 
   end generate rst_gen;
 
-  no_rst_gen: if this_has_dco = 0 generate
+  no_rst_gen: if this_has_dco /= 1 generate
     rst <= tile_rst;
     phy_rstn <= tile_rst;
   end generate no_rst_gen;
@@ -245,7 +245,7 @@ begin
   tile_rstn_out <= rst;
 
   -- DCO
-  dco_gen: if this_has_dco /= 0 generate
+  dco_gen: if this_has_dco = 1  generate
 
     dco_i: dco
       generic map (
@@ -270,19 +270,19 @@ begin
 
     clk_delay_asic_gen: if CFG_FABTECH = asic generate
       delay_ddr_gen : if  this_has_ddr /= 0 generate
-        DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
+        DELAY_CELL_ASIC_1: DELAY_CELL_ASIC
           port map (
             data_in  => dco_clk_div2_int,
             sel      => dco_clk_delay_sel(3 downto 0),
             data_out => dco_clk_div2_90_int);
 
-          DELAY_CELL_GF12_C14_2: DELAY_CELL_GF12_C14
+          DELAY_CELL_ASIC_2: DELAY_CELL_ASIC
             port map (
               data_in  => dco_clk_div2_int,
               sel      => dco_clk_delay_sel(7 downto 4),
               data_out => dco_clk_div2_int_delay);
 
-          DELAY_CELL_GF12_C14_3: DELAY_CELL_GF12_C14
+          DELAY_CELL_ASIC_3: DELAY_CELL_ASIC
             port map (
               data_in  => dco_clk,
               sel      => dco_clk_delay_sel(11 downto 8),
@@ -307,7 +307,7 @@ begin
 
   end generate dco_gen;
 
-  no_dco_gen: if this_has_dco = 0 generate
+  no_dco_gen: if this_has_dco /= 1 generate
     clk_div             <= ext_clk;
     dco_clk_int_delay   <= ext_clk;
     tile_clk            <= ext_clk;

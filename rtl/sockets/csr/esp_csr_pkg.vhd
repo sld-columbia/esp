@@ -61,8 +61,8 @@ package esp_csr_pkg is
   constant ESP_CSR_CPU_LOC_OVR_1_ADDR : integer range 0 to 31 := 13;
   constant ESP_CSR_CPU_LOC_OVR_2_ADDR : integer range 0 to 31 := 14;
   constant ESP_CSR_CPU_LOC_OVR_3_ADDR : integer range 0 to 31 := 15;
-  constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16;
-  constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16 + NCPU_TILE_MAX * 2 * YX_WIDTH;
+  constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 142;
+  constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 142 + NCPU_TILE_MAX * 2 * YX_WIDTH;
 
   component esp_tile_csr
     generic (

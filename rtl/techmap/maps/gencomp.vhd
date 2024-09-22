@@ -45,7 +45,6 @@ constant virtex7     : integer := 1;
 constant virtexup    : integer := 2;
 constant virtexu     : integer := 3;
 constant asic        : integer := 4;
---constant gf12        : integer := 4;
 
 
 constant DEFMEMTECH  : integer := inferred;
@@ -123,7 +122,6 @@ constant has_dpram : tech_ability_type :=
 
 constant has_sram64 : tech_ability_type :=
 	(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, asic => 1, others => 0);
-	--(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
 
 constant has_sram128bw : tech_ability_type :=
 	(virtex7 => 1, virtexup => 1, virtexu => 1, others => 0);
@@ -142,7 +140,6 @@ constant has_sram_2pbw : tech_ability_type :=
 
 constant has_srambw : tech_ability_type :=
 	(virtex7 => 1, virtexup => 1, virtexu => 1, asic => 1, others => 0);
-	--(virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
 
 constant has_2pfifo : tech_ability_type :=
         (others => 0);
@@ -167,11 +164,9 @@ constant has_sram_ecc :  tech_ability_type :=
 
 constant padoen_polarity : tech_ability_type :=
         (asic => 1, others => 0);
-        --(gf12 => 1, others => 0);
 
 constant has_pads : tech_ability_type :=
 	(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, asic => 1, others => 0);
-	--(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
 
 constant has_ds_pads : tech_ability_type :=
 	(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, others => 0);
@@ -202,7 +197,6 @@ constant tap_tck_gated : tech_ability_type :=
 
 constant need_extra_sync_reset : tech_ability_type :=
 	(asic => 1, others => 0);
-	--(gf12 => 1, others => 0);
 
 constant is_unisim : tech_ability_type :=
         (virtex7 => 1, virtexup => 1, virtexu => 1, others => 0);
@@ -269,7 +263,6 @@ constant has_pll : tech_ability_type :=
 
 constant has_dco : tech_ability_type :=
      (asic => 1, inferred => 1, others => 0);
---     (gf12 => 1, others => 0);
 
 -- pragma translate_off
 
@@ -281,7 +274,6 @@ constant tech_table :     tech_table_type := (
   inferred  => "inferred  ", virtex7   => "virtex7   ",
   virtexup  => "virtexup  ", virtexu   => "virtexu   ",
   asic      => "asic      ");
---  gf12      => "gf12      ");
 
 -- pragma translate_on
 

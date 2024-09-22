@@ -23,7 +23,7 @@ package tiles_asic_pkg is
       SIMULATION   : boolean;
       HAS_SYNC     : integer range 0 to 1 := 1;
       ROUTER_PORTS : ports_vec;
-      this_has_dco : integer range 0 to 1);
+      this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_ulogic;
       raw_rstn           : in  std_ulogic;
@@ -94,7 +94,7 @@ package tiles_asic_pkg is
       this_has_token_pm : integer range 0 to 1;
       HAS_SYNC : integer range 0 to 1 := 1;
       ROUTER_PORTS      : ports_vec;
-      this_has_dco : integer range 0 to 1);
+      this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_ulogic;
       raw_rstn           : in  std_ulogic;
@@ -114,6 +114,7 @@ package tiles_asic_pkg is
       dco_fc_sel        : in std_logic_vector(5 downto 0);
       dco_div_sel       : in std_logic_vector(2 downto 0);
       dco_freq_sel      : in std_logic_vector(1 downto 0);
+      LDOCTRL           : in std_logic_vector(7 downto 0);
       -- Noc interface
       noc1_stop_in_tile       : out std_ulogic;
       noc1_stop_out_tile      : in  std_ulogic;
@@ -159,7 +160,7 @@ package tiles_asic_pkg is
       SIMULATION   : boolean := false;
       ROUTER_PORTS : ports_vec;
       HAS_SYNC     : integer range 0 to 1 := 1;
-      this_has_dco : integer range 0 to 1 := 0);
+      this_has_dco : integer range 0 to 2 := 0);
     port (
       rst                : in    std_ulogic;
       raw_rstn           : in  std_ulogic;
@@ -332,7 +333,7 @@ package tiles_asic_pkg is
       SIMULATION   : boolean; 
       HAS_SYNC     : integer range 0 to 1 := 1;
       ROUTER_PORTS : ports_vec;
-      this_has_dco : integer range 0 to 1);
+      this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_logic;
       raw_rstn           : in  std_ulogic;
@@ -398,7 +399,7 @@ package tiles_asic_pkg is
       SIMULATION   : boolean := false;
       HAS_SYNC     : integer range 0 to 1 := 1;
       ROUTER_PORTS : ports_vec;
-      this_has_dco : integer range 0 to 1);
+      this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_ulogic;
       raw_rstn           : in  std_ulogic;
@@ -464,7 +465,7 @@ package tiles_asic_pkg is
     generic (
       SIMULATION   : boolean := false;
       ROUTER_PORTS : ports_vec;
-      this_has_dco : integer range 0 to 1;
+      this_has_dco : integer range 0 to 2;
       HAS_SYNC     : integer range 0 to 1 := 1);
     port (
       rst                : in  std_ulogic;

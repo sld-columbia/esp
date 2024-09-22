@@ -116,8 +116,8 @@ module bsg_dmc_wrap
 
    generate
       for (i = 0; i < (dq_data_width_p>>3); i++) begin : dqs_delay_gen
-	 // Delay line (GF12 only)
-	 DELAY_CELL_GF12_C14 dly_line_i
+	 // Delay line (ASIC only)
+	 DELAY_CELL_ASIC dly_line_i
 	       (
 		.DATA_IN(ddr_dqs_p_i[i]),
 		.DATA_OUT(dqs_p_li[i]),

@@ -53,7 +53,7 @@ package tiles_pkg is
   component tile_cpu is
     generic (
       SIMULATION         : boolean              := false;
-      this_has_dco       : integer range 0 to 1 := 0);
+      this_has_dco       : integer range 0 to 2 := 0);
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_ulogic;
@@ -117,7 +117,7 @@ package tiles_pkg is
       this_device        : devid_t              := 0;
       this_irq_type      : integer              := 0;
       this_has_l2        : integer range 0 to 1 := 0;
-      this_has_dco       : integer range 0 to 1 := 0);
+      this_has_dco       : integer range 0 to 2 := 0);
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_ulogic;
@@ -271,7 +271,7 @@ package tiles_pkg is
   component tile_mem is
     generic (
       SIMULATION   : boolean := false;
-      this_has_dco : integer range 0 to 1 := 0;
+      this_has_dco : integer range 0 to 2 := 0;
       this_has_ddr : integer range 0 to 1 := 1);
     port (
       raw_rstn           : in  std_ulogic;
@@ -350,7 +350,7 @@ package tiles_pkg is
   component tile_empty is
     generic (
       SIMULATION   : boolean              := false;
-      this_has_dco : integer range 0 to 1 := 0);
+      this_has_dco : integer range 0 to 2 := 0);
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_logic;
@@ -409,7 +409,7 @@ package tiles_pkg is
   component tile_slm is
     generic (
       SIMULATION   : boolean := false;
-      this_has_dco : integer range 0 to 1 := 0;
+      this_has_dco : integer range 0 to 2 := 0;
       this_has_ddr : integer range 0 to 1 := 0);
     port (
       raw_rstn           : in  std_ulogic;
