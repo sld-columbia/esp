@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#Install bats for testing
+sudo apt-get install bats
+
 # Install vsg
 echo "Installing vhdl-style-guide (vsg)..."
 pip3 install vsg --user
