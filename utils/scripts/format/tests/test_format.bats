@@ -6,7 +6,7 @@ command_exists() {
 
 setup() {
     echo "int main() {int x=5;  printf(\"Hello, World! %d\", x);return 0;}" > test.c
-    echo "def main():print(\"Hello\")" > test.py
+    echo "def main():print(\"Hello\");x=5" > test.py
     echo "module main;reg a; initial begin a=1; end endmodule" > test.sv
     echo "entity main is port (a:in std_logic);end entity main;" > test.vhd
 }
@@ -14,7 +14,6 @@ setup() {
 teardown() {
 	rm -f test.c test.py test.sv test.vhd
 }
-
 
 @test "Check if all required formatters are installed" {
     missing_tools=()
@@ -26,7 +25,7 @@ teardown() {
     done
 
     if ! python3 -m autopep8 --version >/dev/null 2>&1; then
-        missing_tools+=("autopep8 (as Python module)")
+        missing_tools+=("autopep8")
     fi
 
     if [ "${#missing_tools[@]}" -gt 0 ]; then
@@ -48,7 +47,7 @@ teardown() {
 @test "-h option displays help" {
     run ../format.sh -h
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Usage: ../format_modified.sh [OPTIONS]"* ]]
+    [[ "$output" == *"Usage: ../format.sh [OPTIONS]"* ]]
 }
 
 @test "Invalid option returns an error" {
@@ -73,13 +72,14 @@ teardown() {
 @test "Python file is formatted correctly with -f option" {
     run ../format.sh -f test.py
     [ "$status" -eq 0 ]
+	
     run cat test.py
     [ "${lines[0]}" = "def main():" ]
     [ "${lines[1]}" = '    print("Hello")' ]
     [ "${lines[2]}" = "    x = 5" ]
 }
 
-@test "Verilog file is formatted properly" {
+@test "Verilog file is formatted properly with -f option" {
     run ../format.sh -f test.sv
     [ "$status" -eq 0 ]
 
@@ -138,7 +138,6 @@ teardown() {
 }
 
 @test "-ca checks all modified files without making changes" {
-    # Run format.sh with -ca option
     run ../format.sh -ca
     [ "$status" -eq 1 ]
 
@@ -149,8 +148,8 @@ teardown() {
     [ "${lines[0]}" = "def main():print(\"Hello\");x=5" ]
 
     run cat test.sv
-    [ "${lines[0]}" = "module main;reg a; initial begin a = 1; end endmodule" ]
+    [ "${lines[0]}" = "module main;reg a; initial begin a=1; end endmodule" ]
 
     run cat test.vhd
-    [ "${lines[0]}" = "entity main is port (a: in std_logic); end entity main;" ]
+    [ "${lines[0]}" = "entity main is port (a:in std_logic);end entity main;" ]
 }
