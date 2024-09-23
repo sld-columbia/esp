@@ -42,7 +42,7 @@ check_tools() {
     done
 
     if ! python3 -m autopep8 --version >/dev/null 2>&1; then
-        missing_tools+=("autopep8 (as Python module)")
+        missing_tools+=("autopep8")
     fi
 
     if [ "${#missing_tools[@]}" -gt 0 ]; then
