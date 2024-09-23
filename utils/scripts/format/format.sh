@@ -5,9 +5,7 @@ header() {
 	echo ""
 	echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
 	echo "*                                               *"
-	echo "*                                               *"
 	echo "*  🚀✨ Welcome to the ESP code formatter 🛠️🧙   *"
-	echo "*                                               *"
 	echo "*                                               *"
 	echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
 	echo ""
@@ -29,6 +27,7 @@ usage() {
 	echo "  $0 -ca                    # Report violations for all modified files"
     echo "  $0 -c myfile.py           # Report violations for myfile.py"
 	echo "  $0 -g -ca                 # Report violations as part of a workflow or hook"
+	echo ""
 }
 
 check_tools() {
@@ -46,7 +45,7 @@ check_tools() {
     fi
 
     if [ "${#missing_tools[@]}" -gt 0 ]; then
-        echo "Error: The following required tools are not installed or not in your PATH:"
+        echo "Error: The following required tools are not installed or not defined in PATH:"
         for tool in "${missing_tools[@]}" ; do
             echo "  - $tool"
         done
@@ -155,7 +154,7 @@ parse_args() {
         case $arg in
             -f)
                 if [[ -z $2 || $2 == -* ]]; then
-                    echo "Option -f requires an argument." >&2
+                    echo "Option -f requires an argument <file>." >&2
                     usage
                     return 1
                 fi
@@ -169,7 +168,7 @@ parse_args() {
                 ;;
             -c)
                 if [[ -z $2 || $2 == -* ]]; then
-                    echo "Option -c requires an argument." >&2
+                    echo "Option -c requires an argument <file>." >&2
                     usage
                     return 1
                 fi
@@ -236,9 +235,11 @@ format_file() {
     esac
 
     if run_formatter "$file_to_format" "$type" "$flags"; then
+		echo ""
         echo "Success: action completed."
         return 0
     else
+		echo ""
         echo "Error: action failed."
         return 1
     fi
