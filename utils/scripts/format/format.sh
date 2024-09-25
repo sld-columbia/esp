@@ -2,32 +2,32 @@
 is_github_actions=false
 
 header() {
-	echo ""
-	echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
-	echo "*                                               *"
-	echo "*  🚀✨ Welcome to the ESP code formatter 🛠️🧙   *"
-	echo "*                                               *"
-	echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
-	echo ""
+    echo ""
+    echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
+    echo "*                                               *"
+    echo "*  🚀✨ Welcome to the ESP code formatter 🛠️🧙   *"
+    echo "*                                               *"
+    echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
+    echo ""
 }
 
 
 usage() {
     echo "Usage: $0 [OPTIONS]"
     echo "  -h            Display this help message"
-	echo ""
+    echo ""
     echo "  -f <file>     Fix formatting for file <file>"
-	echo "  -c <file>     Check formatting for file <file>"
+    echo "  -c <file>     Check formatting for file <file>"
     echo "  -a            Apply to all"  
-	echo "  -g            Run as Github Actions workflow or pre-push hook"  
+    echo "  -g            Run as Github Actions workflow or pre-push hook"  
     echo ""
     echo "Examples:"
     echo "  $0 -fa                    # Fix all modified files in-place"
     echo "  $0 -f myfile.py           # Fix myfile.py in-place"
-	echo "  $0 -ca                    # Report violations for all modified files"
+    echo "  $0 -ca                    # Report violations for all modified files"
     echo "  $0 -c myfile.py           # Report violations for myfile.py"
-	echo "  $0 -g -ca                 # Report violations as part of a workflow or hook"
-	echo ""
+    echo "  $0 -g -ca                 # Report violations as part of a workflow or hook"
+    echo ""
 }
 
 check_tools() {
@@ -114,31 +114,31 @@ assign_flags() {
 }
 
 run_formatter() {
-	local file_to_format="$1"
-	local type="$2"
-	local flags="$3"
+    local file_to_format="$1"
+    local type="$2"
+    local flags="$3"
 
-	echo -n " - $(basename "$file_to_format"): "
+    echo -n " - $(basename "$file_to_format"): "
     case "$type" in
         c | h | cpp | hpp)
             clang-format-10 $flags "$file_to_format" 2>&1
-			;;
+            ;;
         py)
             python3 -m autopep8 $flags "$file_to_format" 2>&1
-			;;
+            ;;
         sv | v) 
             verible-verilog-format $flags "$file_to_format" 2>&1
-			;;
+            ;;
         vhd)
             vsg -f "$file_to_format" $flags 2>&1
-			;;
+            ;;
     esac
 
-	if [ $? -eq 0 ]; then
-		echo -e "\033[32msuccess\033[0m"
+    if [ $? -eq 0 ]; then
+        echo -e "\033[32msuccess\033[0m"
         return 0
     else
-		echo -e "\033[31mfailure\033[0m"
+        echo -e "\033[31mfailure\033[0m"
         return 1
     fi
 }
@@ -235,11 +235,11 @@ format_file() {
     esac
 
     if run_formatter "$file_to_format" "$type" "$flags"; then
-		echo ""
+        echo ""
         echo "Success: action completed."
         return 0
     else
-		echo ""
+        echo ""
         echo "Error: action failed."
         return 1
     fi
@@ -247,62 +247,62 @@ format_file() {
 
 
 format_all() {
-	local action="$1"
+    local action="$1"
 
-	if [ "$is_github_actions" = true ]; then
-		modified_files=$(git diff --name-only HEAD^..HEAD \
-			| grep -E '\.(c|h|cpp|hpp|py|v|sv|vhd)$')
-	else
-		modified_files=$(git status --porcelain \
-			| grep -E '^ M|^??' \
-			| awk '$2 ~ /\.(c|h|cpp|hpp|py|v|sv|vhd)$/ {print $2}')
-	fi
+    if [ "$is_github_actions" = true ]; then
+        modified_files=$(git diff --name-only HEAD^..HEAD \
+            | grep -E '\.(c|h|cpp|hpp|py|v|sv|vhd)$')
+    else
+        modified_files=$(git status --porcelain \
+            | grep -E '^ M|^??' \
+            | awk '$2 ~ /\.(c|h|cpp|hpp|py|v|sv|vhd)$/ {print $2}')
+    fi
 
-	if [ -z "$modified_files" ]; then
-		echo "Error: No modified files found."
-		return 1
-	fi
+    if [ -z "$modified_files" ]; then
+        echo "Error: No modified files found."
+        return 1
+    fi
 
-	modified_count=$(echo "$modified_files" | wc -l)
-	echo -e "Found $modified_count modified file(s):"
-	for file in $modified_files; do
-		echo " - $file"
-	done
-	echo ""
+    modified_count=$(echo "$modified_files" | wc -l)
+    echo -e "Found $modified_count modified file(s):"
+    for file in $modified_files; do
+        echo " - $file"
+    done
+    echo ""
 
-	root_dir=$(git rev-parse --show-toplevel)
-	modified_files=$(echo "$modified_files" | sed "s|^|$root_dir/|")
-	error_files=""
+    root_dir=$(git rev-parse --show-toplevel)
+    modified_files=$(echo "$modified_files" | sed "s|^|$root_dir/|")
+    error_files=""
 
-	case $action in
-		format)
-			echo "Start formatting:"
-			;;
-		check)
-			echo "Start checking:"
-			;;
-	esac
-	
-	for file in $modified_files; do
-		local type="${file##*.}"
-		assign_flags "$action" "$type"
-		if ! run_formatter "$file" "$type" "$flags"; then
-			error_files="$error_files $file"
-		fi
-	done
+    case $action in
+        format)
+            echo "Start formatting:"
+            ;;
+        check)
+            echo "Start checking:"
+            ;;
+    esac
+    
+    for file in $modified_files; do
+        local type="${file##*.}"
+        assign_flags "$action" "$type"
+        if ! run_formatter "$file" "$type" "$flags"; then
+            error_files="$error_files $file"
+        fi
+    done
 
-	echo ""
-	if [ -n "$error_files" ]; then
-		echo "Error: action failed."
-		return 1
-	else
-		echo "Success: action completed."
-		return 0
-	fi
+    echo ""
+    if [ -n "$error_files" ]; then
+        echo "Error: action failed."
+        return 1
+    else
+        echo "Success: action completed."
+        return 0
+    fi
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-	header
-	check_tools
+    header
+    check_tools
     parse_args "$@"
 fi
