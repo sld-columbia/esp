@@ -320,7 +320,7 @@ int main(int argc, char * argv[])
             iowrite32(dev, 12304, 1);
 
             plic_dev.addr = PLIC_ADDR;
-            while((ioread32(&plic_dev, PLIC_IP_OFFSET) (1 << NVDLA_IRQ)) == 0);
+            while((ioread32(&plic_dev, PLIC_IP_OFFSET) & (1 << NVDLA_IRQ)) == 0);
             printf("wait\n");
             printf("wait\n");
             printf("wait\n");
@@ -349,10 +349,10 @@ int main(int argc, char * argv[])
             printf("  Done\n");
 
             /* Validation */
+            iowrite32(&plic_dev, 0x14, 0x2);
             iowrite32(&plic_dev, PLIC_INTACK_OFFSET, NVDLA_IRQ);
-            iowrite32(&plic_dev, 0x2000, 1 << NVDLA_IRQ);
-            iowrite32(&plic_dev, 0x18, 0x2);
             ioread32(&plic_dev, PLIC_INTACK_OFFSET);
+            iowrite32(&plic_dev, 0x2000, 1 << NVDLA_IRQ);
             *rst_reg_addr = 0x1;
 
             printf("  validating...\n");
