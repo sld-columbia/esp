@@ -11,8 +11,10 @@ solution options defaults
 
 options set /Input/CppStandard c++11
 options set /Input/CompilerFlags "-DCONNECTIONS_ACCURATE_SIM -DCONNECTIONS_NAMING_ORIGINAL -DHLS_CATAPULT"
-options set /Input/SearchPath {/opt/cad/catapult/shared/examples/matchlib/toolkit/include} -append
-options set /Input/SearchPath {/opt/cad/catapult/shared/pkgs/matchlib/cmod/include} -append
+options set /Input/SearchPath {../../../common/matchlib_toolkit/include} -append
+options set /Input/SearchPath {../../../common/matchlib_toolkit/examples/boost_home/} -append
+options set /Input/SearchPath {../../../common/matchlib_toolkit/examples/matchlib/cmod/include} -append
+
 options set /Input/SearchPath "$sfd/../inc/mem_bank" -append
 options set /ComponentLibs/SearchPath "$sfd/../inc/mem_bank" -append
 

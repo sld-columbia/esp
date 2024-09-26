@@ -468,18 +468,10 @@ indent="\ \ \ \ \ \ \ \ "
 
 if [ "$FLOW" == "catapult_hls" ]; then
     cd $ACC_DIR/hw/inc
-    sed -i "s/\/\* <<--nparam-->> \*\//$NPARAMS/g" ${LOWER}_conf_info.hpp
     for key in ${!values[@]}; do
-	if [ $key == $(first_key) ]; then sep=""; else sep=", "; fi
-	sed -i "/\/\* <<--marsh-->> \*\//a ${indent}m &${key};" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--ctor-->> \*\//a ${indent}this->${key} = ${values[$key]};" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--ctor-args-->> \*\//a ${indent}int32_t ${key}${sep}" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--ctor-custom-->> \*\//a ${indent}this->${key} = ${key};" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--sctrc-->> \*\//a ${indent}sc_trace(tf,v.${key}, NAME + \".${key}\");" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--eq-->> \*\//a ${indent}if (${key} != rhs.${key}) return false;" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--assign-->> \*\//a ${indent}${key} = other.${key};" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--print-->> \*\//a ${indent}os << \"${key}\ = \" << conf_info.${key} << \"${sep}\";" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--params-->> \*\//a ${indent}int32_t ${key};" ${LOWER}_conf_info.hpp
+    	if [ $key == $(first_key) ]; then sep=""; else sep=", "; fi
+    	sed -i "/\/\* <<--params-->> \*\//a ${indent}int32_t ${key};" ${LOWER}_conf_info.hpp
+	sed -i "s/\/\* <<--params1-->> \*\//\/\* <<--params1-->> \*\/\n ${indent} ${key} ${sep} \\\\ /" ${LOWER}_conf_info.hpp
     done
 fi
 
