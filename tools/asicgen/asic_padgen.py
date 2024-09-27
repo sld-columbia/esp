@@ -156,7 +156,7 @@ def pad_gen(out_path, pad_dict, valid_pads):
                 None
             else:
                 print_wrap_pad(file, module, macro_name, pad_dir, pad_type)
-            print("\"inout pad %s\" generated!" %(' '.join(map(str, list(pad_dict["io"][idx].values())))))
+                print("\"inout pad %s\" generated!" %(' '.join(map(str, list(pad_dict["io"][idx].values())))))
 
 
 out_path = sys.argv[1]
