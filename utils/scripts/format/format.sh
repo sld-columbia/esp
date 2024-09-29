@@ -1,32 +1,38 @@
 #!/bin/bash
 is_github_actions=false
 
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+BLUE='\033[34m'
+BOLD='\033[1m'
+RESET='\033[0m'
+
 header() {
     echo ""
     echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
     echo "*                                               *"
-    echo "*  🚀✨ Welcome to the ESP code formatter 🛠️🧙   *"
+    echo "*       Welcome to the ESP code formatter!      *"
     echo "*                                               *"
     echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
     echo ""
 }
 
-
 usage() {
-    echo "Usage: $0 [OPTIONS]"
-    echo "  -h            Display this help message"
+    echo -e "${BOLD}Usage: $0 [OPTIONS]${RESET}"
+    echo -e "  ${BOLD}-h${RESET}            Display this help message"
     echo ""
-    echo "  -f <file>     Fix formatting for file <file>"
-    echo "  -c <file>     Check formatting for file <file>"
-    echo "  -a            Apply to all"  
-    echo "  -g            Run as Github Actions workflow or pre-push hook"  
+    echo -e "  ${BOLD}-f <file>${RESET}     Fix formatting for file <file>"
+    echo -e "  ${BOLD}-c <file>${RESET}     Check formatting for file <file>"
+    echo -e "  ${BOLD}-a${RESET}            Apply to all"
+    echo -e "  ${BOLD}-g${RESET}            Run as GitHub Actions workflow or pre-push hook"  
     echo ""
-    echo "Examples:"
-    echo "  $0 -fa                    # Fix all modified files in-place"
-    echo "  $0 -f myfile.py           # Fix myfile.py in-place"
-    echo "  $0 -ca                    # Report violations for all modified files"
-    echo "  $0 -c myfile.py           # Report violations for myfile.py"
-    echo "  $0 -g -ca                 # Report violations as part of a workflow or hook"
+    echo -e "${BOLD}Examples:${RESET}"
+    echo -e "  $0 -fa                    # Fix all modified files in-place"
+    echo -e "  $0 -f myfile.py           # Fix myfile.py in-place"
+    echo -e "  $0 -ca                    # Report violations for all modified files"
+    echo -e "  $0 -c myfile.py           # Report violations for myfile.py"
+    echo -e "  $0 -g -ca                 # Report violations as part of a workflow or hook"
     echo ""
 }
 
@@ -45,12 +51,12 @@ check_tools() {
     fi
 
     if [ "${#missing_tools[@]}" -gt 0 ]; then
-        echo "Error: The following required tools are not installed or not defined in PATH:"
+        echo -e "${RED}${BOLD}Error:${RESET} The following required tools are not installed or not defined in PATH:"
         for tool in "${missing_tools[@]}" ; do
-            echo "  - $tool"
+            echo -e "  ${YELLOW}- $tool${RESET}"
         done
         echo ""
-        echo "Please install the missing tools before proceeding."
+        echo -e "${BOLD}Please install the missing tools before proceeding.${RESET}"
         exit 1
     fi
 }
@@ -117,31 +123,45 @@ run_formatter() {
     local file_to_format="$1"
     local type="$2"
     local flags="$3"
+    local mode="$4"
+    local output
 
-    echo -n " - $(basename "$file_to_format"): "
     case "$type" in
         c | h | cpp | hpp)
-            clang-format-10 $flags "$file_to_format" 2>&1
+            output=$(clang-format-10 $flags "$file_to_format" 2>&1)
             ;;
         py)
-            python3 -m autopep8 $flags "$file_to_format" 2>&1
+            output=$(python3 -m autopep8 $flags "$file_to_format" 2>&1)
             ;;
-        sv | v) 
-            verible-verilog-format $flags "$file_to_format" 2>&1
+        sv | v)
+            output=$(verible-verilog-format $flags "$file_to_format" 2>&1)
             ;;
         vhd)
-            vsg -f "$file_to_format" $flags 2>&1
+            output=$(vsg -f "$file_to_format" $flags 2>&1)
             ;;
     esac
 
-    if [ $? -eq 0 ]; then
-        echo -e "\033[32msuccess\033[0m"
-        return 0
+    if [[ $mode == "format" ]]; then
+        if [[ $? -ne 0 ]] || echo "$output" | grep -qE "warning|error"; then
+            echo -e "$(basename "$file_to_format"): ${RED}${BOLD}Formatting failed!${RESET}"
+            echo "$output"
+            return 1
+        else
+            echo -e "$(basename "$file_to_format"): ${GREEN}${BOLD}Formatting successful!${RESET}"
+            return 0
+        fi
     else
-        echo -e "\033[31mfailure\033[0m"
-        return 1
+        echo "$output"
+        if [[ $? -ne 0 ]] || echo "$output" | grep -qE "warning|error"; then
+            echo -e "$(basename "$file_to_format") check result: ${RED}${BOLD}Formatting issues found!${RESET}"
+            return 1
+        else
+            echo -e "[$(basename "$file_to_format")] check result: ${GREEN}${BOLD}No formatting issues detected!${RESET}"
+            return 0
+        fi
     fi
 }
+
 
 parse_args() {
     action=""
@@ -206,7 +226,6 @@ parse_args() {
     fi
 }
 
-
 format_file() {
     local action="$1"
     local file_to_format="$2"
@@ -234,13 +253,9 @@ format_file() {
             ;;
     esac
 
-    if run_formatter "$file_to_format" "$type" "$flags"; then
-        echo ""
-        echo "Success: action completed."
+    if run_formatter "$file_to_format" "$type" "$flags" "$action"; then
         return 0
     else
-        echo ""
-        echo "Error: action failed."
         return 1
     fi
 }
@@ -259,44 +274,41 @@ format_all() {
     fi
 
     if [ -z "$modified_files" ]; then
-        echo "Error: No modified files found."
+        echo -e "${RED}${BOLD}Error:${RESET} No modified files found. Please check your changes."
         return 1
     fi
 
     modified_count=$(echo "$modified_files" | wc -l)
-    echo -e "Found $modified_count modified file(s):"
+    echo -e "${BOLD}Found $modified_count modified file(s):${RESET}"
     for file in $modified_files; do
-        echo " - $file"
+        echo -e " - ${YELLOW}$file${RESET}"
     done
     echo ""
 
-    root_dir=$(git rev-parse --show-toplevel)
-    modified_files=$(echo "$modified_files" | sed "s|^|$root_dir/|")
-    error_files=""
-
     case $action in
         format)
-            echo "Start formatting:"
+            echo -e "${BLUE}${BOLD}Starting formatting process for modified files...${RESET}"
             ;;
         check)
-            echo "Start checking:"
+            echo -e "${BLUE}${BOLD}Starting formatting check for modified files...${RESET}"
             ;;
     esac
-    
+
+    error_files=""
     for file in $modified_files; do
         local type="${file##*.}"
         assign_flags "$action" "$type"
-        if ! run_formatter "$file" "$type" "$flags"; then
+        if ! run_formatter "$file" "$type" "$flags" "$action"; then
             error_files="$error_files $file"
         fi
     done
 
     echo ""
     if [ -n "$error_files" ]; then
-        echo "Error: action failed."
+        echo -e "${RED}${BOLD}Error:${RESET} One or more actions failed. Please review the errors above."
         return 1
     else
-        echo "Success: action completed."
+        echo -e "${GREEN}${BOLD}Success:${RESET} All actions completed without issues!"
         return 0
     fi
 }
