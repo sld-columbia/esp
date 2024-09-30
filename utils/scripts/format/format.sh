@@ -10,31 +10,40 @@ RESET='\033[0m'
 
 header() {
     echo ""
-    echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
-    echo "*                                               *"
-    echo "*       Welcome to the ESP code formatter!      *"
-    echo "*                                               *"
-    echo "* * * * * * * * * * * * * * * * * * * * * * * * *"
+    echo "    ______    _____    _____  "
+    echo "   |  ____| /  ___ |  |  __  \ "
+    echo "   | |__    | (___    | |__) |"
+    echo "   |  __|   \ ___  \  |  ___/ "
+    echo "   | |____   ____) |  | |     "
+    echo "   |______| |_____/   |_|     "
     echo ""
+    echo "   C O D E  F O R M A T T E R"
+	echo "   ___________________________"
+	echo ""
+	echo ""
+
 }
 
 usage() {
-    echo -e "${BOLD}Usage: $0 [OPTIONS]${RESET}"
-    echo -e "  ${BOLD}-h${RESET}            Display this help message"
+    echo -e "Usage: $0 [OPTIONS]"
+    echo -e "  -h           Display this help message"
     echo ""
-    echo -e "  ${BOLD}-f <file>${RESET}     Fix formatting for file <file>"
-    echo -e "  ${BOLD}-c <file>${RESET}     Check formatting for file <file>"
-    echo -e "  ${BOLD}-a${RESET}            Apply to all"
-    echo -e "  ${BOLD}-g${RESET}            Run as GitHub Actions workflow or pre-push hook"  
+    echo -e "  -f <file>    Fix formatting for file <file>"
+    echo -e "  -c <file>    Check formatting for file <file>"
+    echo -e "  -a           Apply to all"
+    echo -e "  -g           Run as GitHub Actions workflow or pre-push hook"  
     echo ""
-    echo -e "${BOLD}Examples:${RESET}"
+    echo -e "Examples:"
     echo -e "  $0 -fa                    # Fix all modified files in-place"
     echo -e "  $0 -f myfile.py           # Fix myfile.py in-place"
     echo -e "  $0 -ca                    # Report violations for all modified files"
     echo -e "  $0 -c myfile.py           # Report violations for myfile.py"
     echo -e "  $0 -g -ca                 # Report violations as part of a workflow or hook"
     echo ""
+	echo "---"
+	echo ""
 }
+
 
 check_tools() {
     local tools=("clang-format-10" "verible-verilog-format" "vsg")
@@ -51,9 +60,9 @@ check_tools() {
     fi
 
     if [ "${#missing_tools[@]}" -gt 0 ]; then
-        echo -e "${RED}${BOLD}Error:${RESET} The following required tools are not installed or not defined in PATH:"
+        echo -e "${RED}ERROR:${RESET} The following required tools are not installed or not defined in PATH:"
         for tool in "${missing_tools[@]}" ; do
-            echo -e "  ${YELLOW}- $tool${RESET}"
+            echo -e "  - $tool${RESET}"
         done
         echo ""
         echo -e "${BOLD}Please install the missing tools before proceeding.${RESET}"
@@ -107,6 +116,7 @@ assign_flags() {
                 *)
                     echo "Unknown type: $type" >&2
                     usage
+					echo -e "${RED}ERROR:${RESET} Type '$type' is unknown." >&2
                     return 1
                     ;;
             esac
@@ -114,6 +124,7 @@ assign_flags() {
         *)
             echo "Unknown action: $action" >&2
             usage
+			echo -e "${RED}ERROR:${RESET} Action '$action' is unknown." >&2
             return 1
             ;;
     esac
