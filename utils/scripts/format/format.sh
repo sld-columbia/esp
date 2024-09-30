@@ -307,7 +307,8 @@ format_all() {
     fi
 
     if [ -z "$modified_files" ]; then
-        echo "No modified files found. Please check your changes."
+        echo "No modified files found. Stopping."
+		echo ""
         return 0
     fi
 
