@@ -36,13 +36,13 @@ teardown() {
 @test "-f option gracefully handles missing file" {
     run ../format.sh -f missing_file.c
     [ "$status" -eq 1 ]
-    [[ "$output" == *"Error: file 'missing_file.c' not found."* ]]
+    [[ "$output" == *"File 'missing_file.c' not found."* ]]
 }
 
 @test "-c option gracefully handles missing file" {
     run ../format.sh -c missing_file.c
     [ "$status" -eq 1 ]
-    [[ "$output" == *"Error: file 'missing_file.c' not found."* ]]
+    [[ "$output" == *"File 'missing_file.c' not found."* ]]
 }
 @test "-h option displays help" {
     run ../format.sh -h
@@ -53,7 +53,7 @@ teardown() {
 @test "Invalid option returns an error" {
     run ../format.sh -x
     [ "$status" -eq 1 ]
-    [[ "$output" == *"Unknown option: -x"* ]]
+    [[ "$output" == *"Option '-x' is unknown."* ]]
 }
 
 @test "C file is formatted correctly with -f option" {
