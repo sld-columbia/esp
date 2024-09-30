@@ -3,7 +3,7 @@
 FORMAT_SCRIPT="$HOME/esp/utils/scripts/format/format.sh"
 
 if [ ! -f "$FORMAT_SCRIPT" ]; then
-    echo "Error: Formatting script not found"
+    echo "Error: Formatting script not found."
     exit 1
 fi
 
