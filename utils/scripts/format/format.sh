@@ -18,13 +18,13 @@ header() {
     echo "   |______| |_____/   |_|     "
     echo ""
     echo "   C O D E  F O R M A T T E R"
-	echo "   ___________________________"
-	echo ""
+    echo "   ___________________________"
+    echo ""
 
 }
 
 usage() {
-	echo ""
+    echo ""
     echo -e "Usage: $0 [OPTIONS]"
     echo -e "  -h           Display this help message"
     echo ""
@@ -90,8 +90,8 @@ assign_flags() {
                     flags="--fix -c ~/esp/vhdl-style-guide.yaml"
                     ;;
                 *)
-					usage
-					echo ""
+                    usage
+                    echo ""
                     echo -e "${RED}ERROR:${RESET} Type '$type' is unknown." >&2
                     return 1
                     ;;
@@ -114,16 +114,16 @@ assign_flags() {
                     ;;
                 *)
                     usage
-					echo ""
-					echo -e "${RED}ERROR:${RESET} Type '$type' is unknown." >&2
+                    echo ""
+                    echo -e "${RED}ERROR:${RESET} Type '$type' is unknown." >&2
                     return 1
                     ;;
             esac
             ;;
         *)
             usage
-			echo ""
-			echo -e "${RED}ERROR:${RESET} Action '$action' is unknown." >&2
+            echo ""
+            echo -e "${RED}ERROR:${RESET} Action '$action' is unknown." >&2
             return 1
             ;;
     esac
@@ -151,14 +151,14 @@ run_formatter() {
             ;;
     esac
 
-	local status=$?
+    local status=$?
 
     if [[ $action == "format" ]]; then
         if [[ $status -ne 0 ]] || echo "$output" | grep -qE "warning|error"; then
-			echo "___________________________"
-			echo ""
+            echo "___________________________"
+            echo ""
             echo -e " - $(basename "$file_to_format"): ${RED}${BOLD}ERROR${RESET}"
-			echo "$output"
+            echo "$output"
             return 1
         else
             echo -e " - $(basename "$file_to_format"): ${GREEN}${BOLD}SUCCESS${RESET}"
@@ -166,10 +166,10 @@ run_formatter() {
         fi
     else
         if [[ $status -ne 0 ]] || echo "$output" | grep -qE "warning|error"; then
-			echo "___________________________"
-			echo ""
+            echo "___________________________"
+            echo ""
             echo -e "${RED}${BOLD}ERROR${RESET}: File '$(basename "$file_to_format")' has formatting errors. Please fix your changes."
-			echo "$output"
+            echo "$output"
             return 1
         else
             echo -e "${GREEN}${BOLD}SUCCESS${RESET}: No formatting errors found in file '$(basename "$file_to_format")'."
@@ -191,8 +191,8 @@ parse_args() {
             -f)
                 if [[ -z $2 || $2 == -* ]]; then
                     usage
-					echo ""
-					echo -e "${RED}${BOLD}ERROR:${RESET} Option '-f' requires an argument <file>." >&2
+                    echo ""
+                    echo -e "${RED}${BOLD}ERROR:${RESET} Option '-f' requires an argument <file>." >&2
                     return 1
                 fi
                 action="format"
@@ -205,9 +205,9 @@ parse_args() {
                 ;;
             -c)
                 if [[ -z $2 || $2 == -* ]]; then
-					usage
-					echo ""
-					echo -e "${RED}${BOLD}ERROR:${RESET} Option '-c' requires an argument <file>." >&2
+                    usage
+                    echo ""
+                    echo -e "${RED}${BOLD}ERROR:${RESET} Option '-c' requires an argument <file>." >&2
                     return 1
                 fi
                 action="check"
@@ -226,16 +226,16 @@ parse_args() {
                 return 0
                 ;;
             *)
-				usage
-				echo ""
-            	echo -e "${RED}${BOLD}ERROR:${RESET} Option '$1' is unknown." >&2
+                usage
+                echo ""
+                echo -e "${RED}${BOLD}ERROR:${RESET} Option '$1' is unknown." >&2
                 return 1
                 ;;
         esac
         shift
     done
 
-	echo ""
+    echo ""
     if [ "$all" = true ]; then
         format_all "$action"
     elif [ -n "$file_to_format" ]; then
@@ -251,7 +251,7 @@ format_file() {
     local file_to_format="$2"
     local type="${file_to_format##*.}"
 
-	case $action in
+    case $action in
         format)
             echo "Starting formatting process for $(basename $file_to_format) ..."
             ;;
@@ -259,7 +259,7 @@ format_file() {
             echo "Starting formatting check for $(basename $file_to_format) ..."
             ;;
     esac
-	echo ""
+    echo ""
 
     if [ ! -f "$file_to_format" ]; then
         echo -e "${RED}${BOLD}ERROR:${RESET} File '$(basename $file_to_format)' not found." >&2
@@ -274,10 +274,10 @@ format_file() {
     fi
 
     if run_formatter "$file_to_format" "$type" "$flags" "$action"; then
-		echo "Action completed successfully."
+        echo "Action completed successfully."
         return 0
     else
-		echo -e "${RED}${BOLD}ERROR:${RESET} Action failed. Please review the errors above."
+        echo -e "${RED}${BOLD}ERROR:${RESET} Action failed. Please review the errors above."
         return 1
     fi
 }
@@ -286,14 +286,14 @@ format_file() {
 format_all() {
     local action="$1"
 
-	case $action in
+    case $action in
         format)
             echo -e "Starting formatting process for modified files ..."
-			echo ""
+            echo ""
             ;;
         check)
             echo -e "Starting formatting check for modified files ..."
-			echo ""
+            echo ""
             ;;
     esac
 
@@ -318,11 +318,11 @@ format_all() {
     done
     echo ""
 
-	root_dir=$(git rev-parse --show-toplevel)
+    root_dir=$(git rev-parse --show-toplevel)
     modified_files=$(echo "$modified_files" | sed "s|^|$root_dir/|")
 
     error_files=""
-	echo -e "${BOLD}Results:${RESET}"
+    echo -e "${BOLD}Results:${RESET}"
     for file in $modified_files; do
         local type="${file##*.}"
         assign_flags "$action" "$type"
