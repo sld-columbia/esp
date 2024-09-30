@@ -307,8 +307,8 @@ format_all() {
     fi
 
     if [ -z "$modified_files" ]; then
-        echo -e "${RED}${BOLD}ERROR:${RESET} No modified files found. Please check your changes."
-        return 1
+        echo "No modified files found. Please check your changes."
+        return 0
     fi
 
     modified_count=$(echo "$modified_files" | wc -l)
