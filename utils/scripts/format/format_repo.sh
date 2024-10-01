@@ -25,237 +25,285 @@ usage() {
     echo ""
     echo "Options:"
     echo "  -h, --help                 Display this help message"
-    echo ""
     echo "  -t, --type <file type>     Specify the type of files to format."
 	echo ""
-    echo "                             Supported file types:"
-    echo "                             c      - C source files"
-    echo "                             cpp    - C++ source files"
-    echo "                             vhdl   - VHDL source files"
-    echo "                             v      - Verilog source files"
-    echo "                             py     - Python source files"
+    echo "Supported file types:"
+    echo "  c      - C source files"
+    echo "  cpp    - C++ source files"
+    echo "  vhdl   - VHDL source files"
+    echo "  v      - Verilog source files"
+    echo "  py     - Python source files"
     echo ""
 }
 
+check_tools() {
+    local tools=("clang-format-10" "verible-verilog-format" "vsg")
+    local missing_tools=()
 
-is_submodule() {
-  local dir="$1"
-  local gitmodules="$2"
-  local cwd="$3"
-  local rel_dir="${dir#$cwd/}"
+    for tool in "${tools[@]}"; do
+        if ! command -v "$tool" >/dev/null 2>&1; then
+            missing_tools+=("$tool")
+        fi
+    done
 
-  grep -q "\[submodule \"$rel_dir\"\]" "$gitmodules"
-}
-
-
-descend_and_format() {
-  local dir="$1"
-  local gitmodules="$2"
-  local cwd="$3"
-  local format_style="$4"
-
-  "$format_style" "$dir"
-
-  # Traverse all directories under /esp
-  for item in "$dir"/*; do
-    if [[ -d "$item" ]]; then
-      # If directory is a submodule, skip unless its sld-owned, then recurse
-      if is_submodule "$item" "$gitmodules" "$cwd"; then
-		case "$item" in
-			*/rtl/caches/esp-caches|*/accelerators/stratus_hls/common/inc|*/rtl/caches/spandex-caches)
-				descend_and_format "$item" "$gitmodules" "$cwd" "$format_style"
-				;;
-			*)
-				continue
-				;;
-			esac
-        continue
-      fi
-      descend_and_format "$item" "$gitmodules" "$cwd" "$format_style"
+    if ! python3 -m autopep8 --version >/dev/null 2>&1; then
+        missing_tools+=("autopep8")
     fi
-  done
+
+    if [ "${#missing_tools[@]}" -gt 0 ]; then
+        echo -e "${RED}${BOLD}ERROR:${RESET} The following required tools are not installed or not defined in PATH:"
+        for tool in "${missing_tools[@]}" ; do
+            echo -e "  - $tool${RESET}"
+        done
+        echo ""
+        echo -e "${BOLD}Please install the missing tools before proceeding.${RESET}"
+        exit 1
+    fi
 }
 
-# Find all .c and .h files in the current directory
-find_c_h_files() {
-  local dir="$1"
-  for file in "$dir"/*.c "$dir"/*.h; do
-  	local output
-    if [[ -f "$file" ]]; then
-	  echo -n "Formatting $(basename "$file")..."
-      output=$(clang-format-10 -i "$file" 2>&1)
-	  if [ ! $? -eq 0 ]; then
-		echo -e " ${RED}FAILED${NC}"
-		echo "$output" | sed 's/^/  /'
-		echo ""
-        return 1
-      else
-		echo -e " ${GREEN}SUCCESS${NC}"
-		echo ""
-        return 0
-    fi
-    fi
-  done
-}
+# is_submodule() {
+#   local dir="$1"
+#   if grep -q "path = $dir" .gitmodules; then
+#     return 1
+#   else
+#     return 0
+#   fi
+# }
 
-# Find all .cpp and .hpp files in the current directory
-find_cpp_hpp_files() {
-  local dir="$1"
-  for file in "$dir"/*.cpp "$dir"/*.hpp; do
-    if [[ -f "$file" ]]; then
-	  echo -n "Formatting $(basename "$file")..."
-      output=$(clang-format-10 -i "$file" 2>&1)
-	  if [ ! $? -eq 0 ]; then
-		echo -e " ${RED}FAILED${NC}"
-		echo "$output" | sed 's/^/  /'
-		echo ""
-        return 1
-      else
-		echo -e " ${GREEN}SUCCESS${NC}"
-		echo ""
-        return 0
-      fi
-    fi
-  done
-}
+# # is_submodule() {
+# #   local dir="$1"
+# #   local gitmodules="$2"
+# #   local cwd="$3"
+# #   local rel_dir="${dir#$cwd/}"
 
-# Find all .py files in the current directory
-find_py_files() {
-  local dir="$1"
-  local output
-  for file in "$dir"/*.py; do
-    if [[ -f "$file" ]]; then
-	  echo -n "Formatting $(basename "$file")..."
-	  output=$(python3 -m autopep8 -i -a -a "$file" 2>&1)
-	  if [ ! $? -eq 0 ]; then
-		echo -e " ${RED}FAILED${NC}"
-		echo "$output" | sed 's/^/  /'
-		echo ""
-        return 1
-      else
-		echo -e " ${GREEN}SUCCESS${NC}"
-		echo ""
-        return 0
-      fi
-    fi
-  done
-}
+# #   grep -q "\[submodule \"$rel_dir\"\]" "$gitmodules"
+# # }
 
-# Find .v files in the current directory
-find_v_files() {
-  local dir="$1"
-  local output
-  for file in "$dir"/*.v "$dir"/*.sv; do
-    if [[ -f "$file" ]]; then
-	  echo -n "Formatting $(basename "$file")..."
- 	  output=$(verible-verilog-format --inplace --port_declarations_alignment=preserve -assignment_statement_alignment=align --indentation_spaces=4 "$file" 2>&1)
-	  if [ ! $? -eq 0 ]; then
-		echo -e " ${RED}FAILED${NC}"
-		echo "$output" | sed 's/^/  /'
-		echo ""
-        return 1
-      else
-		echo -e " ${GREEN}SUCCESS${NC}"
-		echo ""
-        return 0
-      fi
-	fi
-  done
-}
 
-# Function to find .vhd files in the current directory
-find_vhd_files() {
-  local dir="$1"
-  local output
-  for file in "$dir"/*.vhd; do
-    if [[ -f "$file" ]]; then
-	  echo -n "Formatting $(basename "$file")..."
-	  output=$(vsg -f "$file" --fix -c ~/esp/vhdl-style-guide.yaml -of summary 2>&1)
-	  if [ ! $? -eq 0 ]; then
-		echo -e " ${RED}FAILED${NC}"
-		echo "$output" | sed 's/^/  /'
-		echo ""
-        return 1
-      else
-		echo -e " ${GREEN}SUCCESS${NC}"
-		echo ""
-        return 0
-      fi
-    fi
-  done
-}
+# descend_and_format() 
+#   local dir="$1"
+#   local gitmodules="$2"
+#   local cwd="$3"
+#   local format_style="$4"
+
+#   "$format_style" "$dir"
+
+#   # Traverse all directories under /esp
+#   for item in "$dir"/*; do
+#     if [[ -d "$item" ]]; then
+#       # If directory is a submodule, skip unless its sld-owned, then recurse
+#       if is_submodule "$item" "$gitmodules" "$cwd"; then
+# 		case "$item" in
+# 			*/rtl/caches/esp-caches|*/accelerators/stratus_hls/common/inc|*/rtl/caches/spandex-caches)
+# 				descend_and_format "$item" "$gitmodules" "$cwd" "$format_style"
+# 				;;
+# 			*)
+# 				continue
+# 				;;
+# 			esac
+#         continue
+#       fi
+#       descend_and_format "$item" "$gitmodules" "$cwd" "$format_style"
+#     fi
+#   done
+# }
+
+# # Find all .c and .h files in the current directory
+# find_c_h_files() {
+#   local dir="$1"
+#   for file in "$dir"/*.c "$dir"/*.h; do
+#   	local output
+#     if [[ -f "$file" ]]; then
+# 	  echo -n "Formatting $(basename "$file")..."
+#       output=$(clang-format-10 -i "$file" 2>&1)
+# 	  if [ ! $? -eq 0 ]; then
+# 		echo -e " ${RED}FAILED${NC}"
+# 		echo "$output" | sed 's/^/  /'
+# 		echo ""
+#         return 1
+#       else
+# 		echo -e " ${GREEN}SUCCESS${NC}"
+# 		echo ""
+#         return 0
+#     fi
+#     fi
+#   done
+# }
+
+# # Find all .cpp and .hpp files in the current directory
+# find_cpp_hpp_files() {
+#   local dir="$1"
+#   for file in "$dir"/*.cpp "$dir"/*.hpp; do
+#     if [[ -f "$file" ]]; then
+# 	  echo -n "Formatting $(basename "$file")..."
+#       output=$(clang-format-10 -i "$file" 2>&1)
+# 	  if [ ! $? -eq 0 ]; then
+# 		echo -e " ${RED}FAILED${NC}"
+# 		echo "$output" | sed 's/^/  /'
+# 		echo ""
+#         return 1
+#       else
+# 		echo -e " ${GREEN}SUCCESS${NC}"
+# 		echo ""
+#         return 0
+#       fi
+#     fi
+#   done
+# }
+
+# # Find all .py files in the current directory
+# find_py_files() {
+#   local dir="$1"
+#   local output
+#   for file in "$dir"/*.py; do
+#     if [[ -f "$file" ]]; then
+# 	  echo -n "Formatting $(basename "$file")..."
+# 	  output=$(python3 -m autopep8 -i -a -a "$file" 2>&1)
+# 	  if [ ! $? -eq 0 ]; then
+# 		echo -e " ${RED}FAILED${NC}"
+# 		echo "$output" | sed 's/^/  /'
+# 		echo ""
+#         return 1
+#       else
+# 		echo -e " ${GREEN}SUCCESS${NC}"
+# 		echo ""
+#         return 0
+#       fi
+#     fi
+#   done
+# }
+
+# # Find .v files in the current directory
+# find_v_files() {
+#   local dir="$1"
+#   local output
+#   for file in "$dir"/*.v "$dir"/*.sv; do
+#     if [[ -f "$file" ]]; then
+# 	  echo -n "Formatting $(basename "$file")..."
+#  	  output=$(verible-verilog-format --inplace --port_declarations_alignment=preserve -assignment_statement_alignment=align --indentation_spaces=4 "$file" 2>&1)
+# 	  if [ ! $? -eq 0 ]; then
+# 		echo -e " ${RED}FAILED${NC}"
+# 		echo "$output" | sed 's/^/  /'
+# 		echo ""
+#         return 1
+#       else
+# 		echo -e " ${GREEN}SUCCESS${NC}"
+# 		echo ""
+#         return 0
+#       fi
+# 	fi
+#   done
+# }
+
+# # Function to find .vhd files in the current directory
+# find_vhd_files() {
+#   local dir="$1"
+#   local output
+#   for file in "$dir"/*.vhd; do
+#     if [[ -f "$file" ]]; then
+# 	  echo -n "Formatting $(basename "$file")..."
+# 	  output=$(vsg -f "$file" --fix -c ~/esp/vhdl-style-guide.yaml -of summary 2>&1)
+# 	  if [ ! $? -eq 0 ]; then
+# 		echo -e " ${RED}FAILED${NC}"
+# 		echo "$output" | sed 's/^/  /'
+# 		echo ""
+#         return 1
+#       else
+# 		echo -e " ${GREEN}SUCCESS${NC}"
+# 		echo ""
+#         return 0
+#       fi
+#     fi
+#   done
+# }
 
 # Get cwd and gitmodules
 cwd="$(git rev-parse --show-toplevel)"
 gitmodules="$cwd/.gitmodules"
 
-parse_args() {
-
-    format_style=""
+assign_formatter() {
+    local type="$1"
     
+    case "$type" in
+		c | h | cpp | hpp)
+			flags="-i"
+			extension="c h cpp hpp"
+			formatter="clang-format-10"
+			;;
+		py)
+			flags="-iaaa"
+			extension="py"
+			formatter="python3 -m autopep8"
+			;;
+		sv | v)
+			flags="--inplace --port_declarations_alignment=preserve \
+					--assignment_statement_alignment=align --indentation_spaces=4"
+			extension="sv v"
+			formatter="verible-verilog-format"
+			;;
+		vhd)
+			flags="--fix -c ~/esp/vhdl-style-guide.yaml"
+			extension="vhd"
+			formatter="vsg"
+			;;
+		*)
+			usage
+			echo ""
+			echo -e "${RED}ERROR:${RESET} Type '$type' is unknown." >&2
+			return 1
+			;;
+	esac
+
+}
+
+parse_args() {
     while [[ $# -gt 0 ]]; do
-        case "$1" in
+        local arg="$1"
+        case $arg in
             -t | --type )
-                shift
-                case "$1" in
-                    c )
-                        format_style="find_c_h_files"
-                        ;;
-                    cpp )
-                        format_style="find_cpp_hpp_files"
-                        echo "Starting formatting for C++ files ..."
-                        echo -e "This should be quick! \U0001F680"
-                        ;;
-                    vhdl )
-                        format_style="find_vhd_files"
-                        echo "Starting formatting for VHDL files ..."
-                        echo -e "This may take a while, be patient! \U0001F691"
-                        ;;
-                    v )
-                        format_style="find_v_files"
-                        echo "Starting formatting for Verilog/SystemVerilog files ..."
-                        echo -e "This may take a while, be patient. \U0001F691"
-                        ;;
-                    py )
-                        format_style="find_py_files"
-                        echo "Starting formatting for Python files ..."
-                        echo -e "This should be quick! \U0001F680"
-                        ;;
-                    * )
-                        echo "Invalid formatting option. Valid options include: c, cpp, vhdl, v, py"
-                        usage
-                        exit 1
-                        ;;
-                esac
+				type="$2"
+				if [[ -z $type || $type == -* ]]; then
+                    usage
+                    echo ""
+                    echo -e "${RED}${BOLD}ERROR:${RESET} Option '-t', '--type' requires an argument <file type>." >&2
+                    return 1
+                fi
+				assign_formatter "$type"
+				shift
                 ;;
             -h | --help )
                 usage
-                exit 0
+                return 0
                 ;;
             * )
-                echo "Invalid option: $1"
                 usage
-                exit 1
+                echo ""
+                echo -e "${RED}${BOLD}ERROR:${RESET} Option '$1' is unknown." >&2
+                return 1
                 ;;
         esac
         shift
     done
-    
-    echo ""
-    
-    if [ -z "$format_style" ]; then
-        echo "No format type specified. Use -t to define the file type."
-        usage
-        exit 1
-    fi
+	if [[ -z "$flags" || -z "$extension" || -z "$formatter" ]]; then
+	  usage
+      return 1
+	else
+	  format_all "$flags" "$extension" "$formatter"
+	fi
 }
 
-# Check if format_style is set
-if [ -z "$format_style" ]; then
-  echo "Error: Missing formatting style. Use -t {c, cpp, vhdl, v, py}."
-  usage
-  exit 1
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    header
+    check_tools
+    parse_args "$@"
 fi
+
+# # Check if format_style is set
+# if [ -z "$format_style" ]; then
+#   echo "Error: Missing formatting style. Use -t {c, cpp, vhdl, v, py}."
+#   usage
+#   exit 1
+# fi
 
 # descend_and_format "$cwd" "$gitmodules" "$cwd" "$format_style"
 # echo ""
