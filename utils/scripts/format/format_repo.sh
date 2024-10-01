@@ -64,19 +64,17 @@ check_tools() {
 is_submodule() {
   local dir="$1"
   if grep -q "path = $dir" .gitmodules; then
-    return 1
+	case "$item" in
+		*/rtl/caches/esp-caches/*|*/accelerators/stratus_hls/common/inc/*|*/rtl/caches/spandex-caches/*)
+			return 0
+			;;
+		*)
+			return 1
+			;;
+	esac	
   else
     return 0
   fi
-
-  case "$item" in
-			*/rtl/caches/esp-caches/*|*/accelerators/stratus_hls/common/inc/*|*/rtl/caches/spandex-caches/*)
-				format_all "$item" "$flags" "$cwd" "$format_style"
-				;;
-			*)
-				continue
-				;;
-		esac
 }
 
 cwd="$(git rev-parse --show-toplevel)"
@@ -90,13 +88,10 @@ format_all() {
 
   for item in "$dir"/*; do
     if [[ -d "$item" && ! is_submodule "$item" ]]; then
-		format_all "$item" "$flags" "$extension" "$formatter"
-	else
-		
-    fi
-
-format_directory
-    fi
+		format_directory "$item" "$flags" "$extension" "$formatter"
+	elif [[ -d "$item" ]]; then
+		format_all "$item" "$flags" "$extension" "$formatter"	
+	fi
   done
 }
 
@@ -208,15 +203,3 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     check_tools
     parse_args "$@"
 fi
-
-# # Check if format_style is set
-# if [ -z "$format_style" ]; then
-#   echo "Error: Missing formatting style. Use -t {c, cpp, vhdl, v, py}."
-#   usage
-#   exit 1
-# fi
-
-# descend_and_format "$cwd" "$gitmodules" "$cwd" "$format_style"
-# echo ""
-# echo ""
-# echo -e "✨ Formatting complete!"
