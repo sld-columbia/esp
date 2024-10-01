@@ -68,6 +68,15 @@ is_submodule() {
   else
     return 0
   fi
+
+  case "$item" in
+			*/rtl/caches/esp-caches/*|*/accelerators/stratus_hls/common/inc/*|*/rtl/caches/spandex-caches/*)
+				format_all "$item" "$flags" "$cwd" "$format_style"
+				;;
+			*)
+				continue
+				;;
+		esac
 }
 
 cwd="$(git rev-parse --show-toplevel)"
@@ -80,21 +89,13 @@ format_all() {
   local formatter="$4"
 
   for item in "$dir"/*; do
-    if [[ -d "$item" ]]; then
-      if is_submodule "$item"; then
-		case "$item" in
-			*/rtl/caches/esp-caches/*|*/accelerators/stratus_hls/common/inc/*|*/rtl/caches/spandex-caches/*)
-				format_all "$item" "$flags" "$cwd" "$format_style"
-				;;
-			*)
-				continue
-				;;
-			esac
-      else
+    if [[ -d "$item" && ! is_submodule "$item" ]]; then
+		format_all "$item" "$flags" "$extension" "$formatter"
+	else
+		
+    fi
 
-      fi
-    else
-
+format_directory
     fi
   done
 }
