@@ -61,165 +61,75 @@ check_tools() {
     fi
 }
 
-# is_submodule() {
-#   local dir="$1"
-#   if grep -q "path = $dir" .gitmodules; then
-#     return 1
-#   else
-#     return 0
-#   fi
-# }
+is_submodule() {
+  local dir="$1"
+  if grep -q "path = $dir" .gitmodules; then
+    return 1
+  else
+    return 0
+  fi
+}
 
-# # is_submodule() {
-# #   local dir="$1"
-# #   local gitmodules="$2"
-# #   local cwd="$3"
-# #   local rel_dir="${dir#$cwd/}"
-
-# #   grep -q "\[submodule \"$rel_dir\"\]" "$gitmodules"
-# # }
-
-
-# descend_and_format() 
-#   local dir="$1"
-#   local gitmodules="$2"
-#   local cwd="$3"
-#   local format_style="$4"
-
-#   "$format_style" "$dir"
-
-#   # Traverse all directories under /esp
-#   for item in "$dir"/*; do
-#     if [[ -d "$item" ]]; then
-#       # If directory is a submodule, skip unless its sld-owned, then recurse
-#       if is_submodule "$item" "$gitmodules" "$cwd"; then
-# 		case "$item" in
-# 			*/rtl/caches/esp-caches|*/accelerators/stratus_hls/common/inc|*/rtl/caches/spandex-caches)
-# 				descend_and_format "$item" "$gitmodules" "$cwd" "$format_style"
-# 				;;
-# 			*)
-# 				continue
-# 				;;
-# 			esac
-#         continue
-#       fi
-#       descend_and_format "$item" "$gitmodules" "$cwd" "$format_style"
-#     fi
-#   done
-# }
-
-# # Find all .c and .h files in the current directory
-# find_c_h_files() {
-#   local dir="$1"
-#   for file in "$dir"/*.c "$dir"/*.h; do
-#   	local output
-#     if [[ -f "$file" ]]; then
-# 	  echo -n "Formatting $(basename "$file")..."
-#       output=$(clang-format-10 -i "$file" 2>&1)
-# 	  if [ ! $? -eq 0 ]; then
-# 		echo -e " ${RED}FAILED${NC}"
-# 		echo "$output" | sed 's/^/  /'
-# 		echo ""
-#         return 1
-#       else
-# 		echo -e " ${GREEN}SUCCESS${NC}"
-# 		echo ""
-#         return 0
-#     fi
-#     fi
-#   done
-# }
-
-# # Find all .cpp and .hpp files in the current directory
-# find_cpp_hpp_files() {
-#   local dir="$1"
-#   for file in "$dir"/*.cpp "$dir"/*.hpp; do
-#     if [[ -f "$file" ]]; then
-# 	  echo -n "Formatting $(basename "$file")..."
-#       output=$(clang-format-10 -i "$file" 2>&1)
-# 	  if [ ! $? -eq 0 ]; then
-# 		echo -e " ${RED}FAILED${NC}"
-# 		echo "$output" | sed 's/^/  /'
-# 		echo ""
-#         return 1
-#       else
-# 		echo -e " ${GREEN}SUCCESS${NC}"
-# 		echo ""
-#         return 0
-#       fi
-#     fi
-#   done
-# }
-
-# # Find all .py files in the current directory
-# find_py_files() {
-#   local dir="$1"
-#   local output
-#   for file in "$dir"/*.py; do
-#     if [[ -f "$file" ]]; then
-# 	  echo -n "Formatting $(basename "$file")..."
-# 	  output=$(python3 -m autopep8 -i -a -a "$file" 2>&1)
-# 	  if [ ! $? -eq 0 ]; then
-# 		echo -e " ${RED}FAILED${NC}"
-# 		echo "$output" | sed 's/^/  /'
-# 		echo ""
-#         return 1
-#       else
-# 		echo -e " ${GREEN}SUCCESS${NC}"
-# 		echo ""
-#         return 0
-#       fi
-#     fi
-#   done
-# }
-
-# # Find .v files in the current directory
-# find_v_files() {
-#   local dir="$1"
-#   local output
-#   for file in "$dir"/*.v "$dir"/*.sv; do
-#     if [[ -f "$file" ]]; then
-# 	  echo -n "Formatting $(basename "$file")..."
-#  	  output=$(verible-verilog-format --inplace --port_declarations_alignment=preserve -assignment_statement_alignment=align --indentation_spaces=4 "$file" 2>&1)
-# 	  if [ ! $? -eq 0 ]; then
-# 		echo -e " ${RED}FAILED${NC}"
-# 		echo "$output" | sed 's/^/  /'
-# 		echo ""
-#         return 1
-#       else
-# 		echo -e " ${GREEN}SUCCESS${NC}"
-# 		echo ""
-#         return 0
-#       fi
-# 	fi
-#   done
-# }
-
-# # Function to find .vhd files in the current directory
-# find_vhd_files() {
-#   local dir="$1"
-#   local output
-#   for file in "$dir"/*.vhd; do
-#     if [[ -f "$file" ]]; then
-# 	  echo -n "Formatting $(basename "$file")..."
-# 	  output=$(vsg -f "$file" --fix -c ~/esp/vhdl-style-guide.yaml -of summary 2>&1)
-# 	  if [ ! $? -eq 0 ]; then
-# 		echo -e " ${RED}FAILED${NC}"
-# 		echo "$output" | sed 's/^/  /'
-# 		echo ""
-#         return 1
-#       else
-# 		echo -e " ${GREEN}SUCCESS${NC}"
-# 		echo ""
-#         return 0
-#       fi
-#     fi
-#   done
-# }
-
-# Get cwd and gitmodules
 cwd="$(git rev-parse --show-toplevel)"
 gitmodules="$cwd/.gitmodules"
+
+format_all() {
+  local dir="$1"
+  local flags="$2"
+  local extension="$3"
+  local formatter="$4"
+
+  for item in "$dir"/*; do
+    if [[ -d "$item" ]]; then
+      if is_submodule "$item"; then
+		case "$item" in
+			*/rtl/caches/esp-caches/*|*/accelerators/stratus_hls/common/inc/*|*/rtl/caches/spandex-caches/*)
+				format_all "$item" "$flags" "$cwd" "$format_style"
+				;;
+			*)
+				continue
+				;;
+			esac
+      else
+
+      fi
+    else
+
+    fi
+  done
+}
+
+
+format_directory(){
+  local dir="$1"
+  local flags="$2"
+  local extension="$3"
+  local formatter="$4"
+
+  local output
+  for file in "$dir"/*.vhd; do
+    if [[ -f "$file" ]]; then
+	  echo -n "Formatting $(basename "$file")..."
+	  output=$("$formatter" "$flags" "$file" 2>&1)
+	  
+	  local status=$?
+
+		if [[ $status -ne 0 ]] || echo "$output" | grep -qE "warning|error"; then
+				echo "___________________________"
+				echo ""
+				echo -e " - $(basename "$file_to_format"): ${RED}${BOLD}ERROR${RESET}"
+				echo "$output"
+				return 1
+		else
+			echo -e " - $(basename "$file_to_format"): ${GREEN}${BOLD}SUCCESS${RESET}"
+			return 0
+		fi
+    fi
+  done
+
+}
+
+
 
 assign_formatter() {
     local type="$1"
@@ -288,7 +198,7 @@ parse_args() {
 	  usage
       return 1
 	else
-	  format_all "$flags" "$extension" "$formatter"
+	  format_all "$cwd" "$flags" "$extension" "$formatter"
 	fi
 }
 
