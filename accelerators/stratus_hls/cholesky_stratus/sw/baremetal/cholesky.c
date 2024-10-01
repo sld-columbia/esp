@@ -139,7 +139,6 @@ int main(int argc, char * argv[])
             #include "data.h"
 
             // Pass common configuration parameters
-            iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
             iowrite32(dev, COHERENCE_REG, coherence);
 
 #ifndef __sparc

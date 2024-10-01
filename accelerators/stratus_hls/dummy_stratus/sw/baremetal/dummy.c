@@ -117,7 +117,6 @@ int main(int argc, char * argv[])
 	printf("  Generate random input...\n");
 	init_buf(mem);
 
-	iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
 	iowrite32(dev, COHERENCE_REG, ACC_COH_NONE);
 	iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
 	iowrite32(dev, PT_NCHUNK_REG, NCHUNK);

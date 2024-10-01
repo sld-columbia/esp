@@ -41,8 +41,6 @@ int main(int argc, char * argv[])
 
 
 		// Configure device
-		iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
-
 		iowrite32(dev, COUNTER_TICKS_REG, test_ticks);
 
 		// Start accelerator

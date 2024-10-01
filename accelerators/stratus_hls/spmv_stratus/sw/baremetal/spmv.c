@@ -270,7 +270,6 @@ int main(int argc, char * argv[])
 			printf("Input ready\n");
 
 			// Configure device
-			iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
 			iowrite32(dev, COHERENCE_REG, coherence);
 
 			if (scatter_gather) {

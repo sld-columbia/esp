@@ -152,7 +152,6 @@ void setup_fft(struct esp_device *dev, fft_token_t *gold_fft, fft_token_t *mem_f
 	#endif
 	//fft_init_buf(mem_fft, gold_fft);
 	// Pass common configuration parameters
-	iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
 	iowrite32(dev, COHERENCE_REG, ACC_COH_NONE);
 
 	iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);

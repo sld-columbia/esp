@@ -155,8 +155,6 @@ void setup_viterbi(struct esp_device *dev, vit_token_t *gold_vit, vit_token_t *m
     init_buf(mem_vit, gold_vit);
 
     // Pass common configuration parameters
-
-    iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
     iowrite32(dev, COHERENCE_REG, ACC_COH_NONE);
 
     iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);

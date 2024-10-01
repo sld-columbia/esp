@@ -123,7 +123,6 @@ int main(int argc, char * argv[])
 
     for (int i = 0; i < mcast_ndests + 1; i++) {
         // Configure device
-        iowrite32(&devs[i], SELECT_REG, ioread32(&devs[i], DEVID_REG));
         iowrite32(&devs[i], COHERENCE_REG, coherence);
         if (i == 0)
             p2p_setup(&devs[i], 1, mcast_ndests, 0, NULL);
