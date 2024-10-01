@@ -26,7 +26,7 @@ usage() {
     echo "Options:"
     echo "  -h, --help                 Display this help message"
     echo "  -t, --type <file type>     Specify the type of files to format."
-	echo ""
+    echo ""
     echo "Supported file types:"
     echo "  c      - C source files"
     echo "  cpp    - C++ source files"
@@ -63,22 +63,19 @@ check_tools() {
 
 is_submodule() {
   local dir="$1"
-  if grep -q "path = $dir" .gitmodules; then
-	case "$item" in
-		*/rtl/caches/esp-caches/*|*/accelerators/stratus_hls/common/inc/*|*/rtl/caches/spandex-caches/*)
-			return 0
-			;;
-		*)
-			return 1
-			;;
-	esac	
-  else
-    return 0
-  fi
+  local submodule_paths
+
+  submodule_paths=$(git config --file "$cwd"/.gitmodules --get-regexp path | awk '{print $2}')
+
+  for submodule in $submodule_paths; do
+    if [[ "$dir" == *"$submodule"* ]]; then
+      return 1
+    fi
+  done
+  return 0
 }
 
 cwd="$(git rev-parse --show-toplevel)"
-gitmodules="$cwd/.gitmodules"
 
 format_all() {
   local dir="$1"
@@ -87,79 +84,75 @@ format_all() {
   local formatter="$4"
 
   for item in "$dir"/*; do
-    if [[ -d "$item" && ! is_submodule "$item" ]]; then
-		format_directory "$item" "$flags" "$extension" "$formatter"
-	elif [[ -d "$item" ]]; then
-		format_all "$item" "$flags" "$extension" "$formatter"	
-	fi
+    echo "$item"
+    if [[ -d "$item" ]]; then
+        if ! is_submodule "$item"; then
+			echo " Skipping git submodule"
+		else
+			format_all "$item" "$flags" "$extension" "$formatter"
+		fi
+    else
+		format_file "$item" "$flags" "$extension" "$formatter"
+    fi
   done
 }
 
-
-format_directory(){
-  local dir="$1"
+format_file(){
+  local file="$1"
   local flags="$2"
   local extension="$3"
   local formatter="$4"
 
   local output
-  for file in "$dir"/*.vhd; do
-    if [[ -f "$file" ]]; then
-	  echo -n "Formatting $(basename "$file")..."
-	  output=$("$formatter" "$flags" "$file" 2>&1)
-	  
-	  local status=$?
+  if [[ -f "$file" ]]; then
+        echo " Formatting $(basename "$file")..."
+        # output=$("$formatter" $flags "$file" 2>&1)
+        # local status=$?
 
-		if [[ $status -ne 0 ]] || echo "$output" | grep -qE "warning|error"; then
-				echo "___________________________"
-				echo ""
-				echo -e " - $(basename "$file_to_format"): ${RED}${BOLD}ERROR${RESET}"
-				echo "$output"
-				return 1
-		else
-			echo -e " - $(basename "$file_to_format"): ${GREEN}${BOLD}SUCCESS${RESET}"
-			return 0
-		fi
+        # if [[ $status -ne 0 ]] || echo "$output" | grep -qE "warning|error"; then
+        #     echo "___________________________"
+        #     echo ""
+        #     echo -e " - $(basename "$file"): ${RED}${BOLD}ERROR${RESET}"
+        #     echo "$output"
+        #     return 1
+        # else
+        #     echo -e " - $(basename "$file"): ${GREEN}${BOLD}SUCCESS${RESET}"
+        # fi
     fi
-  done
-
 }
-
-
 
 assign_formatter() {
     local type="$1"
     
     case "$type" in
-		c | h | cpp | hpp)
-			flags="-i"
-			extension="c h cpp hpp"
-			formatter="clang-format-10"
-			;;
-		py)
-			flags="-iaaa"
-			extension="py"
-			formatter="python3 -m autopep8"
-			;;
-		sv | v)
-			flags="--inplace --port_declarations_alignment=preserve \
-					--assignment_statement_alignment=align --indentation_spaces=4"
-			extension="sv v"
-			formatter="verible-verilog-format"
-			;;
-		vhd)
-			flags="--fix -c ~/esp/vhdl-style-guide.yaml"
-			extension="vhd"
-			formatter="vsg"
-			;;
-		*)
-			usage
-			echo ""
-			echo -e "${RED}ERROR:${RESET} Type '$type' is unknown." >&2
-			return 1
-			;;
-	esac
-
+        c | h | cpp | hpp)
+            flags="-i"
+            extension="c h cpp hpp"
+            formatter="clang-format-10"
+            ;;
+        py)
+            flags="-iaaa"
+            extension="py"
+            formatter="python3 -m autopep8"
+            ;;
+        sv | v)
+            flags="--inplace --port_declarations_alignment=preserve \
+                    --assignment_statement_alignment=align --indentation_spaces=4"
+            extension="sv v"
+            formatter="verible-verilog-format"
+            ;;
+        vhd)
+            flags="--fix -c ~/esp/vhdl-style-guide.yaml"
+            extension="vhd"
+            formatter="vsg"
+            ;;
+        *)
+            usage
+            echo ""
+            echo -e "${RED}ERROR:${RESET} Type '$type' is unknown." >&2
+            return 1
+            ;;
+    esac
 }
 
 parse_args() {
@@ -167,15 +160,15 @@ parse_args() {
         local arg="$1"
         case $arg in
             -t | --type )
-				type="$2"
-				if [[ -z $type || $type == -* ]]; then
+                type="$2"
+                if [[ -z $type || $type == -* ]]; then
                     usage
                     echo ""
                     echo -e "${RED}${BOLD}ERROR:${RESET} Option '-t', '--type' requires an argument <file type>." >&2
                     return 1
                 fi
-				assign_formatter "$type"
-				shift
+                assign_formatter "$type"
+                shift
                 ;;
             -h | --help )
                 usage
@@ -190,16 +183,16 @@ parse_args() {
         esac
         shift
     done
-	if [[ -z "$flags" || -z "$extension" || -z "$formatter" ]]; then
-	  usage
+    if [[ -z "$flags" || -z "$extension" || -z "$formatter" ]]; then
+      usage
       return 1
-	else
-	  format_all "$cwd" "$flags" "$extension" "$formatter"
-	fi
+    else
+      format_all "$cwd" "$flags" "$extension" "$formatter"
+    fi
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     header
     check_tools
-    parse_args "$@"
+    parse_args "$@" >> "output.txt"
 fi
