@@ -118,14 +118,14 @@ format_file() {
         if [[ " ${extension[*]} " == *" $file_extension "* ]]; then
             echo ""
             echo -e "${BOLD}${BLUE}INFO:${RESET} Formatting file - $(basename "$file")"
-            output=$("$formatter" $flags "$file" 2>&1)
+            output=$($formatter $flags "$file" 2>&1)
             local status=$?
             if [[ $status -ne 0 ]] || echo "$output" | grep -qE "warning|error"; then
                 echo -n -e "${RED}${BOLD}ERROR${RESET}:"
                 echo "$output"
                 return 1
             else
-                echo -e " - $(basename "$file"): ${GREEN}${BOLD}SUCCESS${RESET}"
+                echo -n -e "${GREEN}${BOLD}SUCCESS${RESET}:"
             fi
         fi
     fi
