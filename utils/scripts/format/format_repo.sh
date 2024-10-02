@@ -66,13 +66,17 @@ check_tools() {
 is_submodule() {
     local dir="$1"
     local submodule_paths
+    local resolved_path
 
     submodule_paths=$(git config --file "$cwd"/.gitmodules --get-regexp path | awk '{print $2}')
 
-    if [[ "$dir" == *"rtl/caches/esp-caches"* || 
-          "$dir" == *"rtl/caches/spandex-caches"* || 
-          "$dir" == *"accelerators/stratus_hls/common/inc/"* ]]; then
-        return 0
+    if [[ -L "$dir" ]]; then
+        resolved_path=$(readlink -f "$dir")
+        for submodule in $submodule_paths; do
+            if [[ "$resolved_path" == *"$submodule"* ]]; then
+                return 1
+            fi
+        done
     fi
 
     for submodule in $submodule_paths; do
@@ -80,6 +84,13 @@ is_submodule() {
             return 1
         fi
     done
+
+    if [[ "$dir" == *"rtl/caches/esp-caches"* || 
+          "$dir" == *"rtl/caches/spandex-caches"* || 
+          "$dir" == *"accelerators/stratus_hls/common/inc/"* ]]; then
+        return 0
+    fi
+
     return 0
 }
 
@@ -117,7 +128,7 @@ format_file() {
 
         if [[ " ${extension[*]} " == *" $file_extension "* ]]; then
             echo ""
-            echo -e "${BOLD}${BLUE}INFO:${RESET} Formatting file - $(basename "$file")"
+            echo -e "${BOLD}${BLUE}INFO:${RESET} Formatting file - $file"
             output=$($formatter $flags "$file" 2>&1)
             local status=$?
             if [[ $status -ne 0 ]] || echo "$output" | grep -qE "warning|error"; then
@@ -125,7 +136,7 @@ format_file() {
                 echo "$output"
                 return 1
             else
-                echo -n -e "${GREEN}${BOLD}SUCCESS${RESET}:"
+                echo -e " - $(basename "$file"): ${GREEN}${BOLD}SUCCESS${RESET}"
             fi
         fi
     fi
@@ -198,15 +209,14 @@ parse_args() {
       usage
       return 1
     else
-      echo -e "Starting formatting process for ${extension[*]} files..."
+      echo -e "${BOLD}${BLUE}INFO:${RESET} Starting formatting process for ${extension[*]} files..."
       format_all "$cwd" "$flags" "$extension" "$formatter"
-	  echo ""
-      echo -e "Formatting process completed."
+      echo -e "${BOLD}${GREEN}INFO:${RESET} Formatting process completed."
     fi
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     header
     check_tools
-    parse_args "$@"
+    parse_args "$@" > "output.txt"
 fi
