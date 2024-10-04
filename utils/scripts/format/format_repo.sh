@@ -68,6 +68,7 @@ is_submodule() {
     local submodule_paths
     local resolved_path
 
+	dir=$(realpath "$dir")
     submodule_paths=$(git config --file "$cwd"/.gitmodules --get-regexp path | awk '{print $2}')
 
     if [[ -L "$dir" ]]; then
@@ -79,20 +80,21 @@ is_submodule() {
         done
     fi
 
+    if [[ "$dir" == *"rtl/caches/esp-caches"* || 
+          "$dir" == *"rtl/caches/spandex-caches"* || 
+          "$dir" == *"accelerators/stratus_hls/common/inc"* ]]; then
+        return 0
+    fi
+
     for submodule in $submodule_paths; do
         if [[ "$dir" == *"$submodule"* ]]; then
             return 1
         fi
     done
 
-    if [[ "$dir" == *"rtl/caches/esp-caches"* || 
-          "$dir" == *"rtl/caches/spandex-caches"* || 
-          "$dir" == *"accelerators/stratus_hls/common/inc/"* ]]; then
-        return 0
-    fi
-
     return 0
 }
+
 
 cwd="$(git rev-parse --show-toplevel)"
 
@@ -218,5 +220,5 @@ parse_args() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     header
     check_tools
-    parse_args "$@" > "output.txt"
+    parse_args "$@"
 fi
