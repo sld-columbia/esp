@@ -27,8 +27,8 @@ typedef u64 token_t;
 #define BATCH_REG 0x44
 
 // User defined registers
-#define TOKENS 12
-#define BATCH 256
+#define TOKENS 16
+#define BATCH 1024
 #define mask 0x0LL
 
 // Control the number of consumers
@@ -127,18 +127,16 @@ static void clear_buf(token_t *mem)
             mem[i + j * TOKENS] = (mask | (token_t) (999999));
 }
 
-void p2p_setup(struct esp_device* dev, int p2p_store, int mcast_ndests, int p2p_load, struct esp_device* p2p_src, int mcast_nsrcs){
+void p2p_setup(struct esp_device* dev, int p2p_store, int mcast_ndests, int p2p_load, struct esp_device* p2p_src){
     esp_p2p_reset(dev);
     if (p2p_store) {
         esp_p2p_enable_dst(dev);
         esp_p2p_set_mcast_ndests(dev, mcast_ndests);
-        esp_p2p_set_mcast_nsrcs(dev, mcast_nsrcs);
     }
     if (p2p_load) {
         esp_p2p_enable_src(dev);
         esp_p2p_set_y(dev, 0, esp_get_y(p2p_src));
         esp_p2p_set_x(dev, 0, esp_get_x(p2p_src));
-        esp_p2p_set_mcast_nsrcs(dev, mcast_nsrcs);
     }
 }
 
@@ -205,21 +203,30 @@ int main(int argc, char * argv[])
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(dummy_buf_size);
     //printf("\n  memory buffer base-address = %p\n", mem);
-//    coherence = ACC_COH_NONE;
-    coherence = ACC_COH_RECALL;
+    coherence = ACC_COH_NONE;
+//    coherence = ACC_COH_RECALL;
 
     //Alocate and populate page table
     ptable = aligned_malloc(nchunk * sizeof(unsigned *));
-    for (i = 0; i < nchunk; i++)
+    for (i = 0; i < nchunk; i++) {
         ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
-    //printf("  ptable = %p\n", ptable);
-    //printf("  nchunk = %lu\n\n", nchunk);
+        printf("  ptable[i] = %p\n", ptable[i]);
+    }
+    printf("  ptable = %p\n", ptable);
+    printf("  nchunk = %lu\n\n", nchunk);
 
 for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
         for (int it_2 = 0; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
 
-//if ((it_0 == 4 && it_1 == 4 && it_2 == 4)){
+//if ((it_0 == 0 && it_1 == 0 && it_2 == 3) || (it_0 == 2 && it_1 == 1 && it_2 == 0) || (it_0 == 1 && it_1 == 1 && it_2 == 3) || (it_0 == 2 && it_1 == 2 && it_2 == 1)){
+//continue;
+//}
+//if ((it_0 == 2 && it_1 == 2 && it_2 == 1)) {
+//continue;
+//}
+
+//if ((it_0 == 0 && it_1 ==1 && it_2 == 0) || (it_0 == 1 && it_1 == 1 && it_2 ==0)) {
 //continue;
 //}
 
@@ -260,9 +267,9 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_0[i]], SELECT_REG, ioread32(&devs[dev_id_0[i]], DEVID_REG));
         iowrite32(&devs[dev_id_0[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_0[i]], 1, num_multicast_0, 0, NULL, 1);
+            p2p_setup(&devs[dev_id_0[i]], 1, num_multicast_0, 0, NULL);
         else
-            p2p_setup(&devs[dev_id_0[i]], 0, 0, 1, &devs[dev_id_0[0]], 0);
+            p2p_setup(&devs[dev_id_0[i]], 0, 0, 1, &devs[dev_id_0[0]]);
 
         iowrite32(&devs[dev_id_0[i]], PT_ADDRESS_REG, (unsigned long) ptable);
         iowrite32(&devs[dev_id_0[i]], PT_NCHUNK_REG, nchunk);
@@ -279,9 +286,9 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_1[i]], SELECT_REG, ioread32(&devs[dev_id_1[i]], DEVID_REG));
         iowrite32(&devs[dev_id_1[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_1[i]], 1, num_multicast_1, 0, NULL, 1);
+            p2p_setup(&devs[dev_id_1[i]], 1, num_multicast_1, 0, NULL);
         else
-            p2p_setup(&devs[dev_id_1[i]], 0, 0, 1, &devs[dev_id_1[0]], 0);
+            p2p_setup(&devs[dev_id_1[i]], 0, 0, 1, &devs[dev_id_1[0]]);
 
         iowrite32(&devs[dev_id_1[i]], PT_ADDRESS_REG, (unsigned long) ptable);
         iowrite32(&devs[dev_id_1[i]], PT_NCHUNK_REG, nchunk);
@@ -298,9 +305,9 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_2[i]], SELECT_REG, ioread32(&devs[dev_id_2[i]], DEVID_REG));
         iowrite32(&devs[dev_id_2[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_2[i]], 1, num_multicast_2, 0, NULL, 1);
+            p2p_setup(&devs[dev_id_2[i]], 1, num_multicast_2, 0, NULL);
         else
-            p2p_setup(&devs[dev_id_2[i]], 0, 0, 1, &devs[dev_id_2[0]], 0);
+            p2p_setup(&devs[dev_id_2[i]], 0, 0, 1, &devs[dev_id_2[0]]);
 
         iowrite32(&devs[dev_id_2[i]], PT_ADDRESS_REG, (unsigned long) ptable);
         iowrite32(&devs[dev_id_2[i]], PT_NCHUNK_REG, nchunk);

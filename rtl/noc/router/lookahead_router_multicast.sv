@@ -133,6 +133,14 @@ module lookahead_router_multicast
   logic [4:0][4:0] final_routing_request;  // ri lint_check_waive NOT_READ
   logic [4:0][4:0] next_hop_routing;
 
+  //forking arbiter logic
+  logic [4:0][4:0] case_b, case_c, non_forking_req, new_final_routing_request, granted_req;
+  logic [4:0][2:0] routing_sum_vertical_b, routing_sum_vertical_c;
+  logic [4:0][2:0] routing_sum_horizontal_initial;
+  logic [4:0] forking_input_initial, non_forking_req_OR;
+  logic [4:0] forking_input_a, forking_input_c, conflict_output_b, conflict_output_c, grant_fork, grant_fork_arbiter;
+  logic grant_valid_fork;
+
   logic [4:0][3:0] transp_final_routing_request;
 
   logic [4:0][4:0] enhanc_routing_configuration;
@@ -167,6 +175,8 @@ module lookahead_router_multicast
 
   logic [4:0] forwarding_tail;
   logic [4:0] forwarding_head;
+  logic [4:0] forwarding_tail_input;
+//  logic [4:0] forwarding_head_input;
   logic [4:0] forwarding_in_progress;
   logic [4:0] insert_lookahead_routing;
   logic [4:0] sample_routing_config;
@@ -252,6 +262,16 @@ module lookahead_router_multicast
       assign final_routing_request[g_i] = in_valid_head[g_i] ? fifo_head[g_i].header.routing :
                                             saved_routing_request[g_i];
 
+      assign routing_sum_horizontal_initial[g_i] = final_routing_request[g_i][0] + final_routing_request[g_i][1] + final_routing_request[g_i][2] + final_routing_request[g_i][3] + final_routing_request[g_i][4];
+      assign forking_input_initial[g_i] = routing_sum_horizontal_initial[g_i][2] | routing_sum_horizontal_initial[g_i][1];
+      assign non_forking_req[g_i] = ~forking_input_initial[g_i];
+
+      assign granted_req[g_i] = {5{grant_fork_arbiter[g_i]}} & final_routing_request[g_i];
+      assign new_final_routing_request[g_i] = case_c[g_i] | granted_req[g_i] | non_forking_req[g_i];
+
+      assign forwarding_tail_input[g_i] = fifo_head[g_i].header.preamble.tail & ~in_unvalid_flit[g_i];	// is there a way to match backpressure to this?
+      assign grant_fork_arbiter[g_i] = grant_valid_fork & grant_fork[g_i];
+
       // AckNack: stop data at input port if FIFO is full
       // CreditBased: send credits when reading from the input FIFO
       assign stop_out[g_i] =  FifoBypassEnable ? full[g_i] :
@@ -269,10 +289,68 @@ module lookahead_router_multicast
       assign rd_fifo_or[g_i] = '0;
       assign wr_fifo[g_i] = '0;
       assign in_valid_head[g_i] = 1'b0;
-
+      assign granted_req[g_i] = '0;
+      assign new_final_routing_request[g_i] = '0;
+      assign routing_sum_horizontal_initial[g_i] = '0;
+      assign forking_input_initial[g_i] = '0;
+      assign forwarding_tail_input[g_i] = 1'b0;
+      assign grant_fork_arbiter[g_i] = 1'b0;
+      assign non_forking_req[g_i] = '0;
     end // if (Ports[g_i])
 
   end  // for gen_input_fifo
+
+  always_comb begin
+    for (int i = 0; i < 5; i++) begin
+      forking_input_a[i] = forking_input_initial[i];
+      for (int j = 0; j < 5; j++) begin
+        if ((noc::int2noc_port(i) != input_direction[j]) && forwarding_in_progress[j]) begin
+          forking_input_a[i] &= ~(final_routing_request[i][j] & forking_input_initial[i]);
+        end//end if
+      end//end j for
+      case_b[i] = final_routing_request[i] & {5{forking_input_a[i]}};
+    end//end i for
+    
+    for (int i = 0; i < 5; i++) begin
+      routing_sum_vertical_b[i] = case_b[0][i] + case_b[1][i] + case_b[2][i] + case_b[3][i] + case_b[4][i];
+      conflict_output_b[i] = routing_sum_vertical_b[i][2] | routing_sum_vertical_b[i][1];
+    end//end i for
+    
+    for (int i = 0; i < 5; i++) begin
+      for (int j = 0; j < 5; j++) begin
+        if (conflict_output_b[j]) begin
+          case_b[i] &= {5{~(case_b[i][j] & non_forking_req_OR[j])}};
+        end//end if
+      end//end j for
+      case_c[i] = case_b[i];
+    end//end i for
+
+    for (int i = 0; i < 5; i++) begin
+      routing_sum_vertical_c[i] = case_c[0][i] + case_c[1][i] + case_c[2][i] + case_c[3][i] + case_c[4][i];
+      conflict_output_c[i] = routing_sum_vertical_c[i][2] | routing_sum_vertical_c[i][1];
+    end//end i for
+
+    for (int i = 0; i < 5; i++) begin
+      for (int j = 0; j < 5; j++) begin
+        if (conflict_output_c[j]) begin
+          case_c[i] &= {5{~case_c[i][j]}};
+          forking_input_c[i] |= case_b[i][j];
+        end//end if
+      end//end j for
+    end//end i for
+  end//end always_comb
+
+
+
+router_fork_arbiter fork_arbiter_i (
+  .clk(clk),
+  .rst(rst),
+  .request(forking_input_c),
+  .forwarding_head(in_valid_head),
+  .forwarding_tail(forwarding_tail_input),
+  .grant(grant_fork),
+  .grant_valid(grant_valid_fork)
+);  
 
   //////////////////////////////////////////////////////////////////////////////
   // Output crossbar and arbitration
@@ -290,15 +368,15 @@ module lookahead_router_multicast
     end // for gen_transpose_routing
 
     if (Ports[g_i]) begin : gen_output_port_enabled
-
+      assign non_forking_req_OR[g_i] = non_forking_req[0][g_i] | non_forking_req[1][g_i] | non_forking_req[2][g_i] | non_forking_req[3][g_i] | non_forking_req[4][g_i];
       for (g_j = 0; g_j < 5; g_j++) begin : gen_transpose_routing
         // transpose current routing request for easier accesss, but
         // allow routing only to output port different from input port
         if (g_j < g_i) begin : gen_transpose_routin_j_lt_i
-          assign transp_final_routing_request[g_i][g_j] = final_routing_request[g_j][g_i];
+          assign transp_final_routing_request[g_i][g_j] = new_final_routing_request[g_j][g_i];
           assign enhanc_routing_configuration[g_i][g_j] = routing_configuration[g_i][g_j];
         end else if (g_j > g_i) begin : gen_transpose_routin_j_gt_i
-          assign transp_final_routing_request[g_i][g_j-1] = final_routing_request[g_j][g_i];
+          assign transp_final_routing_request[g_i][g_j-1] = new_final_routing_request[g_j][g_i];
           assign enhanc_routing_configuration[g_i][g_j] = routing_configuration[g_i][g_j-1];
         end else begin : gen_transpose_routin_j_eq_i
           assign enhanc_routing_configuration[g_i][g_j] = 1'b0;
@@ -501,8 +579,8 @@ module lookahead_router_multicast
 
         kHeadFlit : begin
           routing_configuration[g_i] = saved_routing_configuration[g_i];
-          if (((transp_grant[input_direction[g_i]] & final_routing_request[input_direction[g_i]]) ==
-                final_routing_request[input_direction[g_i]]) & no_backpressure[g_i]) begin
+          if (((transp_grant[input_direction[g_i]] & new_final_routing_request[input_direction[g_i]]) ==
+                new_final_routing_request[input_direction[g_i]]) & no_backpressure[g_i]) begin
             // First flit of a new packet can be forwarded
             forwarding_in_progress[g_i] = 1'b1;
             if (~data_out_crossbar[g_i].header.preamble.tail) begin
@@ -581,7 +659,7 @@ module lookahead_router_multicast
       assign saved_routing_configuration[g_i] = '0;
       assign rd_fifo[g_i] = '0;
       assign backpressure_tmp[g_i] = '0;
-//      assign backpressure[g_i] = '0;
+      assign non_forking_req_OR[g_i] = '0;
       assign no_backpressure[g_i] = '1;
       assign no_backpressure_old[g_i] = '1;
       assign forwarding_tail[g_i] = '0;

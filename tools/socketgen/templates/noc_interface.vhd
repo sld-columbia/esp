@@ -202,9 +202,6 @@ end;
   signal dma_write_ctrl_data_index  : std_logic_vector(31 downto 0);
   signal dma_write_ctrl_data_length : std_logic_vector(31 downto 0);
   signal dma_write_ctrl_data_size   : std_logic_vector(2 downto 0);
-  signal dma_write_rsp_valid        : std_ulogic;
-  signal dma_write_rsp_ready        : std_ulogic;
-  signal dma_write_rsp_data         : std_logic;
   signal dma_read_chnl_valid        : std_ulogic;
   signal dma_read_chnl_ready        : std_ulogic;
   signal dma_read_chnl_data         : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -260,9 +257,6 @@ end;
   attribute keep of dma_write_chnl_valid : signal is "true";
   attribute keep of dma_write_chnl_ready : signal is "true";
   attribute keep of dma_write_chnl_data : signal is "true";
-  attribute keep of dma_write_rsp_valid : signal is "true";
-  attribute keep of dma_write_rsp_ready : signal is "true";
-  attribute keep of dma_write_rsp_data : signal is "true";
   attribute keep of acc_done : signal is "true";
   attribute keep of flush : signal is "true";
 
@@ -388,9 +382,6 @@ begin
       bufdout_ready                 => dma_write_chnl_ready,
       bufdout_data                  => dma_write_chnl_data,
       bufdout_valid                 => dma_write_chnl_valid,
-      wr_rsp_ready                  => dma_write_rsp_ready,
-      wr_rsp_data                   => dma_write_rsp_data,
-      wr_rsp_valid                  => dma_write_rsp_valid,
       acc_done                      => acc_done,
       flush                         => flush,
       acc_flush_done                => acc_flush_done,

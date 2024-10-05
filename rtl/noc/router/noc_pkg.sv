@@ -7,7 +7,7 @@ package noc;
   //
 
   // Queues
-  parameter int unsigned PortQueueDepth = 4;
+  parameter int unsigned PortQueueDepth = 5;
 
   // Coordinates
   parameter int unsigned xMax = 8;

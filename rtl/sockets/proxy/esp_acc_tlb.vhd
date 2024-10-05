@@ -88,8 +88,7 @@ entity esp_acc_tlb is
     tlb_wr_address       : in  std_logic_vector((log2xx(tlb_entries) -1) downto 0);
     tlb_datain           : in  std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
     dma_address          : out std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
-    dma_length           : out std_logic_vector(31 downto 0);
-    p2p_wr_qd            : in std_logic
+    dma_length           : out std_logic_vector(31 downto 0)
 );
 
 end esp_acc_tlb;
@@ -166,14 +165,14 @@ begin  -- tlb
   -- TODO: without scatter-gather we only support 32-bits physical address and data width
   no_scatter_gather: if scatter_gather = 0 generate
     dma_address <= (rd_index(29 downto 0) & "00") + bankreg(SRC_OFFSET_REG)
-                   when rd_request = '1' and p2p_wr_qd = '0' else
+                   when rd_request = '1' else
                    (wr_index(29 downto 0) & "00") + bankreg(DST_OFFSET_REG);
     dma_length_int  <= (rd_length(29 downto 0) & "00")
-                   when rd_request = '1' and p2p_wr_qd = '0' else
+                   when rd_request = '1' else
                    (wr_length(29 downto 0) & "00");
     dma_tran_start <= '1';
-    pending_dma_read <= rd_request and (not p2p_wr_qd);
-    pending_dma_write <= wr_request and ((rd_request nor p2p_wr_qd) or p2p_wr_qd);
+    pending_dma_read <= rd_request;
+    pending_dma_write <= wr_request and (not rd_request);
     tlb_empty_int <= '0';
   end generate no_scatter_gather;
 
@@ -189,10 +188,10 @@ begin  -- tlb
   chunk_size_in  <= left_shift(one_sig, chunk_shift);
   dma_offset_mask_in <= not left_shift(fff_sig, chunk_shift);
   vaddress_in <= (rd_index(31 - DMA_OFFSET_BITS downto 0) & address_pad_lsb) + bankreg(SRC_OFFSET_REG)
-                   when rd_request = '1' and p2p_wr_qd = '0' else
+                   when rd_request = '1' else
                  (wr_index(31 - DMA_OFFSET_BITS downto 0) & address_pad_lsb) + bankreg(DST_OFFSET_REG);
   remaining_length_in <= (rd_length(31 - DMA_OFFSET_BITS downto 0) & address_pad_lsb)
-                   when rd_request = '1' and p2p_wr_qd = '0' else
+                   when rd_request = '1' else
                          (wr_length(31 - DMA_OFFSET_BITS downto 0) & address_pad_lsb);
   -- Stage 1 input
   chunk_index_in <= right_shift(vaddress, chunk_shift);
@@ -241,7 +240,7 @@ begin  -- tlb
         end if;
       when tlb_s0 =>
         -- Priority is always read first
-        if rd_request = '1' and p2p_wr_qd = '0' then
+        if rd_request = '1' then
           dma_read_start <= '1';
           pt_fsm_sample_0 <= '1';
           if src_is_p2p = '0' then

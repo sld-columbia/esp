@@ -63,8 +63,6 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 #define P2P_SHIFT_SRCS_Y(_n) (7 + _n * 6)
 #define P2P_SHIFT_SRCS_X(_n) (4 + _n * 6)
 #define P2P_SHIFT_MCAST_NDESTS 28
-#define P2P_SHIFT_MCAST_NSRCS 27	//KL
-#define P2P_MASK_MCAST_NSRCS 0x1	//KL
 
 /* bank(11)       : RESERVED */
 #define YX_REG 0x2c

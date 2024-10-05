@@ -84,9 +84,6 @@ entity esp_acc_dma is
     bufdin_ready  : in  std_ulogic;
     bufdin_data   : out std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
     bufdin_valid  : out std_ulogic;
-    wr_rsp_ready  : in  std_ulogic;
-    wr_rsp_data   : out std_logic;
-    wr_rsp_valid  : out std_ulogic;
     wr_request    : in  std_ulogic;
     wr_index      : in  std_logic_vector(31 downto 0);
     wr_length     : in  std_logic_vector(31 downto 0);
@@ -211,26 +208,6 @@ architecture rtl of esp_acc_dma is
   signal count_n_dest         : integer range 0 to MAX_MCAST_DESTS - 1;
   signal p2p_mcast_ndests     : integer range 0 to MAX_MCAST_DESTS - 1;
 
-  signal p2p_mcast_nsrcs      : std_ulogic;
-  signal p2p_ndest_vec        : std_logic_vector(0 to 3);
-  signal p2p_ndest_vec_l      : std_logic_vector(0 to 3);
-  signal p2p_mcast_header_vec : dma_noc_flit_vector(0 to 3);
-  signal p2p_mcast_header_vec_l : dma_noc_flit_vector(0 to 3);
-  signal p2p_filled_quadrants : integer range 0 to 4;
-  signal p2p_filled_quadrants_l : integer range 0 to 4;
-  signal p2p_wr_qd          : std_logic;
-  signal set_p2p_wr_qd      : std_logic;
-  signal clear_p2p_wr_qd    : std_logic;
-
-  -- P2P MULT SRC MCAST
-  subtype q_fsm is std_logic_vector(1 downto 0);
-  signal q_next, q_state			: q_fsm;
-  signal q_init, q_initialize, q_clear          : std_logic;
-  signal next_quadrant				: std_logic;
-  signal hdr_gen_init				: std_logic;
-  signal hdr_gen        			: std_logic;
-  signal hdr_gen_clear  			: std_logic;
-
   -- IRQ
   signal irq      : std_ulogic;
   signal irqset   : std_ulogic;
@@ -251,7 +228,7 @@ architecture rtl of esp_acc_dma is
   type dma_fsm is (idle, request_header, request_address, request_length,
                    request_data, reply_header, reply_data, config,
                    send_header, rd_handshake, wr_handshake, wait_req_p2p,
-                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request, receive_p2p_length, wait_hdr_gen_p2p);
+                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request, receive_p2p_length);
   signal acc_rst_next : std_ulogic;
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
@@ -422,8 +399,7 @@ begin  -- rtl
         tlb_wr_address       => tlb_wr_address,
         tlb_datain           => tlb_wr_data,
         dma_address          => dma_address,
-        dma_length           => dma_length,
-        p2p_wr_qd            => p2p_wr_qd
+        dma_length           => dma_length
 );
 
 end generate tlb_gen;
@@ -498,11 +474,10 @@ end generate tlb_gen;
   p2p_dst_y <= get_origin_y(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
   p2p_dst_x <= get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
   p2p_mcast_ndests <= to_integer(unsigned(bankreg(P2P_REG)(P2P_BIT_MCAST_DESTS + P2P_WIDTH_MCAST_DESTS - 1 downto P2P_BIT_MCAST_DESTS)));
-  p2p_mcast_nsrcs <= bankreg(P2P_REG)(P2P_BIT_MCAST_SRCS);	--INDICATE single src mcast or multi src mcast
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
                         p2p_src_index_r, p2p_dst_arr_y, p2p_dst_arr_x, p2p_dst_y, p2p_dst_x,
-                        coherence, local_y, local_x, dma_tran_done, q_state)
+                        coherence, local_y, local_x, dma_tran_done)
 
     variable msg_type : noc_msg_type;
     variable header_v : dma_noc_flit_type;
@@ -515,17 +490,11 @@ end generate tlb_gen;
     variable is_p2p : std_ulogic;
     variable p2p_src_x, p2p_src_y : local_yx;
     variable p2p_header_v : dma_noc_flit_type;
-    variable mcast_data : mcast_type;
-    variable p2p_filled_quad : unsigned(2 downto 0);
   begin  -- process make_packet
 
     is_p2p := '0';
     len_tmp := (others => '0');
     offset := (others => '0');
-
-    p2p_mcast_header_vec <= (others => (others => '0'));
-    p2p_ndest_vec <= (others => '0');
-    p2p_filled_quadrants <= 0;   
 
     if tlb_empty = '1' then
       -- fetch page table
@@ -591,30 +560,10 @@ end generate tlb_gen;
       p2p_header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
       p2p_header_v(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_HEADER;
     else
-      if p2p_mcast_nsrcs = '1' then       --multiple source multicasting
-        if hdr_gen = '0' then	--first time running
-          mcast_data := create_header_mcast(DMA_NOC_FLIT_SIZE, local_y, local_x,
-                                              p2p_dst_arr_y(MAX_MCAST_DESTS - 2 downto 0),
-                                              p2p_dst_arr_x(MAX_MCAST_DESTS - 2 downto 0),
-                                              p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type, p2p_mcast_nsrcs);
-
-          p2p_mcast_header_vec <= mcast_data.header_vec;
-          p2p_ndest_vec <= mcast_data.quad_count;
-  
-          p2p_filled_quad := (others => '0');
-          for i in 0 to 3 loop	--determine first and last filled quadrants
-            p2p_filled_quad := p2p_filled_quad + ("00" & mcast_data.quad_count(i));
-          end loop;
-          p2p_filled_quadrants <= to_integer(p2p_filled_quad);
-        end if;
-        p2p_header_v := p2p_mcast_header_vec_l(to_integer(unsigned(q_state)));
-      else	--single source multicasting; same as before
- 	      mcast_data := create_header_mcast(DMA_NOC_FLIT_SIZE, local_y, local_x,
-                                            p2p_dst_arr_y(MAX_MCAST_DESTS - 2 downto 0),
-                                            p2p_dst_arr_x(MAX_MCAST_DESTS - 2 downto 0),
-                                            p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type, p2p_mcast_nsrcs);
-        p2p_header_v := mcast_data.header_vec(0);
-      end if;
+      p2p_header_v := create_header_mcast(DMA_NOC_FLIT_SIZE, local_y, local_x,
+                                    p2p_dst_arr_y(MAX_MCAST_DESTS - 2 downto 0),
+                                    p2p_dst_arr_x(MAX_MCAST_DESTS - 2 downto 0),
+                                    p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type);
     end if;
 
     header_v := (others => '0');
@@ -650,16 +599,12 @@ end generate tlb_gen;
       p2p_src_index_r <= 0;
       tlb_count <= (others => '0');
       word_count <= (others => '0');
-      p2p_wr_qd <= '0';
-      p2p_mcast_header_vec_l <= (others => (others => '0'));
-      p2p_ndest_vec_l <= (others => '0');
-      p2p_filled_quadrants_l <= 0;
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_r <= header;
         payload_address_r <= payload_address;
         payload_length_r <= payload_length;
-        if skip_wait_p2p_req = '0' or p2p_mcast_nsrcs = '1' then
+        if skip_wait_p2p_req = '0' then
 --skip_wait_p2p_req = 1 --> skips receive_p2p_length state and goes to send header from wait_req_p2p state.	
 --this condition is tied to continue_p2p --> when continuing p2p, doesn't update the header in p2p_header_r. When skip_wait_p2p_req is 1, p2p_header_r is sent, which isn't updated when skip_wait_p2p_req is 1 (or continue p2p = 1); --> for multisource mcast source (writing), headers need to change every quadrant so p2p_mcast_nsrcs = '1' is added to the if statement.
           p2p_header_r <= header;
@@ -705,17 +650,6 @@ end generate tlb_gen;
         else
           p2p_src_index_r <= p2p_src_index_r + 1;
         end if;
-      end if;
-      if set_p2p_wr_qd = '1' then
-        p2p_wr_qd <= '1';
-      end if;
-      if clear_p2p_wr_qd = '1' then
-        p2p_wr_qd <= '0';
-      end if;
-      if hdr_gen = '0' then
-        p2p_mcast_header_vec_l <= p2p_mcast_header_vec;
-        p2p_ndest_vec_l <= p2p_ndest_vec;
-        p2p_filled_quadrants_l <= p2p_filled_quadrants;
       end if;
     end if;
   end process;
@@ -767,7 +701,6 @@ end generate tlb_gen;
     variable word_count_int : integer;
     variable continue_p2p : std_ulogic;
     variable p2p_length_v : std_logic_vector(31 downto 0);
-    variable if_cond_0, if_cond_1 : std_logic_vector(31 downto 0);
 
   begin  -- process dma_roundtrip
 
@@ -785,13 +718,6 @@ end generate tlb_gen;
     word_count_int := to_integer(unsigned(word_count));
     increment_p2p_count <= '0';
     clear_p2p_count <= '0';
-    next_quadrant <= '0';
-    hdr_gen_init <= '0';
-    hdr_gen_clear <= '0';
-    set_p2p_wr_qd <= '0';
-    clear_p2p_wr_qd <= '0';
-    q_initialize <= '0';
-    q_clear <= '0';
 
     --TLB
     tlb_wr_address_next := tlb_count;
@@ -851,38 +777,12 @@ end generate tlb_gen;
     clear_acc_done <= '0';
     flush <= '0';
 
-    wr_rsp_data <= '0';
-    wr_rsp_valid <= '0';
-
     -- Default DVFS controller info
     dma_snd_delay <= '0';
     dma_rcv_delay <= '0';
     read_burst <= '0';
     write_burst <= '0';
     burst <= '0';
-
-    if p2p_mcast_nsrcs = '1' and hdr_gen = '1' then
-      case p2p_filled_quadrants_l is
-        when 0 =>
-          if_cond_0 := (others => '0');
-          if_cond_1 := (others => '0');
-        when 1 => 
-          if_cond_0 := rcv_p2p_length;
-          if_cond_1 := len;
-        when 2 =>
-          if_cond_0 := rcv_p2p_length(30 downto 0) & '0';
-          if_cond_1 := len(30 downto 0) & '0';
-        when 3 =>
-          if_cond_0 := (rcv_p2p_length(30 downto 0) & '0') + rcv_p2p_length;
-          if_cond_1 := (len(30 downto 0) & '0') + len;
-        when 4 =>
-          if_cond_0 := rcv_p2p_length(29 downto 0) & "00";
-          if_cond_1 := len(29 downto 0) & "00";
-      end case;
-    else
-      if_cond_0 := rcv_p2p_length;
-      if_cond_1 := len;
-    end if;
 
     case dma_state is
       when idle =>
@@ -964,12 +864,8 @@ end generate tlb_gen;
               flush <= '1';
             end if;
             dma_next <= wait_for_completion;
-            if p2p_mcast_nsrcs = '1' then
-              hdr_gen_clear <= '1';
-              q_clear <= '1';
-            end if;
           end if;
-        elsif rd_request = '1' and p2p_wr_qd = '0' then	-- added p2p count condition - while mcast to diff quad, block read
+        elsif rd_request = '1' then 
           if scatter_gather = 0 then
             sample_flits <= '1';
           end if;
@@ -1071,13 +967,7 @@ end generate tlb_gen;
         elsif p2p_req_rcv_empty = '0' then
           p2p_req_rcv_rdreq <= '1';
           if count_n_dest = p2p_mcast_ndests then
-            if p2p_mcast_nsrcs = '1' then 
-              if hdr_gen = '0' then	--only after first multi src mcast
-                hdr_gen_init <= '1';
-              end if;
-            else
-              sample_flits <= '1';	--sample flits here if original mcast
-            end if;
+            sample_flits <= '1';
           end if;
           dma_next <= receive_p2p_length;
         end if;
@@ -1093,22 +983,11 @@ end generate tlb_gen;
           p2p_rsp_snd_data_in <= header_r;
           p2p_req_rcv_rdreq <= '1';
           if count_n_dest = p2p_mcast_ndests then
-            if p2p_mcast_nsrcs = '1' then	--multisource mcast
-              dma_next <= wait_hdr_gen_p2p;	--send to wait_hdr_gen_p2p if multisource multicasting
-              q_initialize <= '1';		--initialize q_state here
-            else
-              dma_next <= send_header;		--original mcast, send header
-            end if;
+            dma_next <= send_header;		--original mcast, send header
           else
             dma_next <= wait_req_p2p;
           end if;
         end if;
-
-      when wait_hdr_gen_p2p =>
-        burst <= '1';
-        p2p_rsp_snd_data_in <= header_r;
-        dma_next <= send_header;
-        sample_flits <= '1';
 
       when send_header =>
         burst <= '1';
@@ -1172,7 +1051,7 @@ end generate tlb_gen;
             (msg /= RSP_P2P and dma_snd_full_int = '0')) then
           write_burst <= '1';
           bufdout_ready <= '1';
-          if bufdout_valid = '1' and wr_rsp_ready = '1' then 
+          if bufdout_valid = '1' then 
             if msg = RSP_P2P  then
               p2p_rsp_snd_data_in <= payload_data;
               p2p_rsp_snd_wrreq <= '1';
@@ -1183,59 +1062,30 @@ end generate tlb_gen;
 
             -- local accelerator has finished its write burst
             if burst_count = len then
-              if p2p_count < if_cond_0 then
+              if p2p_count < rcv_p2p_length then
                 -- burst length is less than what consumer accelerator requested
                 continue_p2p := '1';
-                if p2p_mcast_nsrcs = '1' then
-                  wr_rsp_data <= '1';
-                  set_p2p_wr_qd <= '1';
-                  increment_p2p_count <= '1';
-                else
-                  wr_rsp_data <= '0';
-                  clear_p2p_wr_qd <= '1';
-                end if;
               else
                 -- burst length matches what consumer accelerator requested
                 continue_p2p := '0';
                 clear_p2p_count <= '1';
-                wr_rsp_data <= '0';
-                clear_p2p_wr_qd <= '1';
               end if;--p2p count < rcv_p2p_length
               clear_burst_count <= '1';
               dma_tran_done <= '1';
               dma_next <= running;
-              if p2p_mcast_nsrcs = '1' then
-                next_quadrant <= '1';
-              end if;--p2p_mcast_nsrcs = '1'
-              wr_rsp_valid <= '1';
             -- the amount request by the consumer has been sent, but the accelerator burst is not complete
             elsif burst_count > conv_std_logic_vector(0, 32) and burst_count = rcv_p2p_length then
-              if p2p_mcast_nsrcs = '1' then
-                next_quadrant <= '1';		-- move to the next_quadrant
-              end if;
-              if (p2p_count = if_cond_1) then
-                continue_p2p := '0';
+              continue_p2p := '0';
+              if (p2p_count = len) then
                 --if burst completes, go back to idle
                 dma_next <= running;
                 dma_tran_done <='1';
                 clear_p2p_count <='1';
-                wr_rsp_data <= '0';
-                clear_p2p_wr_qd <= '1';
               else
                 --otherwise wait for another request from the consumer
-                if p2p_mcast_nsrcs = '1' then
-                  wr_rsp_data <= '1';
-                  set_p2p_wr_qd <= '1';
-                  continue_p2p := '1';
-                else
-                  wr_rsp_data <= '0';
-                  clear_p2p_wr_qd <= '1';
-                  continue_p2p := '0';
-                end if;
                 increment_p2p_count <= '1';
                 dma_next <= wait_req_p2p;
               end if;	--p2p_count = len
-              wr_rsp_valid <= '1';
               clear_burst_count <= '1';
             else
               increment_burst_count <= '1';
@@ -1265,6 +1115,7 @@ end generate tlb_gen;
             increment_burst_count <= '1';
             clear_word_count <= '1';
             if preamble = PREAMBLE_TAIL and tlb_count = bankreg(PT_NCHUNK_REG) - 1 then
+--              clear_p2p_count <= '1';
               clear_burst_count <= '1';
               clear_tlb_count <= '1';
               tlb_valid <= '1';
@@ -1285,6 +1136,7 @@ end generate tlb_gen;
                 dma_tran_done <= '1';
                 dma_next <= running;
                 clear_burst_count <= '1';
+--                clear_p2p_count <= '1';
               end if;
             end if;
           end if;
@@ -1343,62 +1195,6 @@ end generate tlb_gen;
       rcv_p2p_length <= rcv_p2p_length_in;
     end if;
   end process;
-
-  q_state_fsm: process (clk, rst)
-  begin	-- process
-    if rst = '0' then			-- asynchronous reset (active low)
-      q_state <= (others => '0');
-      q_next <= (others => '0');
-    elsif clk'event and clk = '1' then	-- rising clock edge
-      if hdr_gen = '1' and q_init = '0' then
-        if p2p_ndest_vec_l(0) = '1' then
-          q_state <= "00";
-        elsif p2p_ndest_vec_l(1) = '1' then
-          q_state <= "01";
-        elsif p2p_ndest_vec_l(2) = '1' then
-          q_state <= "10";
-        elsif p2p_ndest_vec_l(3) = '1' then
-          q_state <= "11";
-        else
-          q_state <= "00";
-        end if;
-      else
-        if p2p_ndest_vec_l(to_integer(unsigned(q_state) + "01")) = '1' then
-          q_next <= std_logic_vector(unsigned(q_state) + "01");
-        elsif p2p_ndest_vec_l(to_integer(unsigned(q_state) + "10")) = '1' then
-          q_next <= std_logic_vector(unsigned(q_state) + "10");
-        elsif p2p_ndest_vec_l(to_integer(unsigned(q_state) + "11")) = '1' then
-          q_next <= std_logic_vector(unsigned(q_state) + "11");
-        else
-          q_next <= q_state;
-        end if;
-      end if;
-      if next_quadrant = '1' then
-        q_state <= q_next;
-      end if;
-    end if;
-  end process q_state_fsm;
-
-  header_state_utilities: process (clk, rst)		-- KL
-  begin	-- process
-    if rst = '0' then			-- asynchronous reset (active low)
-      hdr_gen <= '0';
-      q_init <= '0';
-    elsif clk'event and clk = '1' then	-- rising clock edge
-      if hdr_gen_init = '1' then
-        hdr_gen <= '1';
-      end if;
-      if hdr_gen_clear = '1' then
-        hdr_gen <= '0';
-      end if;
-      if q_initialize = '1' then
-        q_init <= '1';
-      end if;
-      if q_clear = '1' then
-        q_init <= '0';
-      end if;
-    end if;
-  end process header_state_utilities;
 
   process (clk, rst)
   begin  -- process

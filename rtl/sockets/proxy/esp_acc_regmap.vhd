@@ -48,8 +48,8 @@ package esp_acc_regmap is
   constant COHERENCE_REG : integer range 0 to MAXREGNUM - 1 := 9;
 
   -- bank(10)       : P2P_REG (point-to-point configuration)
-  -- |31          28|27         27|26 24|23 21|20 18|17 15|14 12|11  9|8   5|4   2|2          2|1          1|0       0|
-  -- | MCAST NDESTS | MCAST NSRCS |  Y  |  X  |  Y  |  X  |  Y  |  X  |  Y  |  X  | DST_IS_P2P | SRC_IS_P2P | NSRCS-1 |
+  -- |31          28|27 25|24 22|21 19|18 16|15 13|12 10|9   7|6   4|3          3|2          2|1       0|
+  -- | MCAST NDESTS |  Y  |  X  |  Y  |  X  |  Y  |  X  |  Y  |  X  | DST_IS_P2P | SRC_IS_P2P | NSRCS-1 |
   constant P2P_REG : integer range 0 to MAXREGNUM - 1 := 10;
   constant P2P_BIT_NSRCS : integer range 0 to 31 := 0;
   constant P2P_WIDTH_NSRCS : integer range 0 to 31 := 2;
@@ -58,8 +58,6 @@ package esp_acc_regmap is
   constant P2P_BIT_SRCS_YX : integer range 0 to 31 := 4;
   constant P2P_BIT_MCAST_DESTS : integer range 0 to 31 := 28;
   constant P2P_WIDTH_MCAST_DESTS : integer range 0 to 31 := 4;
-  constant P2P_WIDTH_MCAST_SRCS : integer range 0 to 31 := 1;
-  constant P2P_BIT_MCAST_SRCS : integer range 0 to 31 := 27;
 
   -- bank(11)       : RESERVED for extra P2P_REG fields if NSRCS > 4
   constant YX_REG  : integer range 0 to MAXREGNUM - 1 := 11;
