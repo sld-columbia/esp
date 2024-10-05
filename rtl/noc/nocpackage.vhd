@@ -911,8 +911,8 @@ function create_header_mcast (
         if local_y = remote_y(i) and local_x = remote_x(i) then
           routing := "10000";
         end if;
-        header(NEXT_ROUTING_WIDTH-1 downto 0) := header(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
       end if;	--if i <= mcast_ndests
+      header(NEXT_ROUTING_WIDTH-1 downto 0) := header(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
     end loop;
     return header;
   end create_header_mcast;
