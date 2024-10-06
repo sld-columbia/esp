@@ -165,7 +165,7 @@ module lookahead_router_multicast
   logic [4:0] empty;
   logic [4:0] wr_fifo;
 
-  noc::noc_port_t [4:0] input_direction;
+  noc::noc_port_t [4:0] input_direction, saved_input_direction;
 
   noc::credits_t credits;
 
@@ -304,7 +304,7 @@ module lookahead_router_multicast
     for (int i = 0; i < 5; i++) begin
       forking_input_a[i] = forking_input_initial[i];
       for (int j = 0; j < 5; j++) begin
-        if ((noc::int2noc_port(i) != input_direction[j]) && forwarding_in_progress[j]) begin
+        if ((noc::int2noc_port(i) != saved_input_direction[j]) && saved_input_direction[j]) begin	// this causes combinational loop
           forking_input_a[i] &= ~(final_routing_request[i][j] & forking_input_initial[i]);
         end//end if
       end//end j for
@@ -384,6 +384,7 @@ router_fork_arbiter fork_arbiter_i (
       end // for gen_transpose_routing
 
       assign input_direction[g_i] = noc::get_direction(enhanc_routing_configuration[g_i]);
+      assign saved_input_direction[g_i] = noc::get_direction(saved_routing_configuration[g_i]);
 
       // Arbitration
       router_arbiter arbiter_i (
@@ -677,6 +678,7 @@ router_fork_arbiter fork_arbiter_i (
       assign state[g_i] = kReservePort;
       assign sample_routing_config[g_i] = '0;
       assign input_direction[g_i] = noc::kNorthPort;
+      assign saved_input_direction[g_i] = noc::kNorthPort;
     end // block: gen_output_port_enabled
 
   end // for gen_output_control
