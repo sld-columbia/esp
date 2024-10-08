@@ -144,6 +144,7 @@ module lookahead_router_multicast
   logic [4:0][3:0] transp_final_routing_request;
 
   logic [4:0][4:0] enhanc_routing_configuration;
+  logic [4:0][4:0] saved_enhanc_routing_configuration;
 
   logic [4:0][3:0] routing_configuration;
   logic [4:0][3:0] saved_routing_configuration;
@@ -264,7 +265,7 @@ module lookahead_router_multicast
 
       assign routing_sum_horizontal_initial[g_i] = final_routing_request[g_i][0] + final_routing_request[g_i][1] + final_routing_request[g_i][2] + final_routing_request[g_i][3] + final_routing_request[g_i][4];
       assign forking_input_initial[g_i] = routing_sum_horizontal_initial[g_i][2] | routing_sum_horizontal_initial[g_i][1];
-      assign non_forking_req[g_i] = ~forking_input_initial[g_i];
+      assign non_forking_req[g_i] = {5{~forking_input_initial[g_i]}} & final_routing_request[g_i];
 
       assign granted_req[g_i] = {5{grant_fork_arbiter[g_i]}} & final_routing_request[g_i];
       assign new_final_routing_request[g_i] = case_c[g_i] | granted_req[g_i] | non_forking_req[g_i];
@@ -331,6 +332,7 @@ module lookahead_router_multicast
     end//end i for
 
     for (int i = 0; i < 5; i++) begin
+      forking_input_c[i] = '0;
       for (int j = 0; j < 5; j++) begin
         if (conflict_output_c[j]) begin
           case_c[i] &= {5{~case_c[i][j]}};
@@ -375,16 +377,19 @@ router_fork_arbiter fork_arbiter_i (
         if (g_j < g_i) begin : gen_transpose_routin_j_lt_i
           assign transp_final_routing_request[g_i][g_j] = new_final_routing_request[g_j][g_i];
           assign enhanc_routing_configuration[g_i][g_j] = routing_configuration[g_i][g_j];
+          assign saved_enhanc_routing_configuration[g_i][g_j] = saved_routing_configuration[g_i][g_j];
         end else if (g_j > g_i) begin : gen_transpose_routin_j_gt_i
           assign transp_final_routing_request[g_i][g_j-1] = new_final_routing_request[g_j][g_i];
           assign enhanc_routing_configuration[g_i][g_j] = routing_configuration[g_i][g_j-1];
+          assign saved_enhanc_routing_configuration[g_i][g_j] = saved_routing_configuration[g_i][g_j-1];
         end else begin : gen_transpose_routin_j_eq_i
           assign enhanc_routing_configuration[g_i][g_j] = 1'b0;
+          assign saved_enhanc_routing_configuration[g_i][g_j] = 1'b0;
         end
       end // for gen_transpose_routing
 
       assign input_direction[g_i] = noc::get_direction(enhanc_routing_configuration[g_i]);
-      assign saved_input_direction[g_i] = noc::get_direction(saved_routing_configuration[g_i]);
+      assign saved_input_direction[g_i] = noc::get_direction(saved_enhanc_routing_configuration[g_i]);
 
       // Arbitration
       router_arbiter arbiter_i (
@@ -426,11 +431,19 @@ router_fork_arbiter fork_arbiter_i (
 
       // Sample current routing configuration
       always_ff @(posedge clk) begin
-        if (forwarding_in_progress[g_i] | sample_routing_config[g_i]) begin
-          saved_routing_configuration[g_i] <= routing_configuration[g_i];
+        if (rst) begin
+          saved_routing_configuration[g_i] <= '0;
+        end 
+        else begin
+          if ((forwarding_in_progress[g_i] & ~forwarding_tail[g_i]) | sample_routing_config[g_i]) begin
+            saved_routing_configuration[g_i] <= routing_configuration[g_i];
+//            saved_enhanc_routing_configuration[g_i] <= enhanc_routing_configuration[g_i];
+          end
+          else if (forwarding_tail[g_i]) begin
+            saved_routing_configuration[g_i] <= 'h0;
+//            saved_enhanc_routing_configuration[g_i] <= '0;
+          end
         end
-        else if (forwarding_tail[g_i])
-          saved_routing_configuration[g_i] <= 'h0;
       end
 
       // Set to overwrite routing info only on the head flit
@@ -675,6 +688,7 @@ router_fork_arbiter fork_arbiter_i (
       assign fifo_head_temp[g_i][4] = '0;
       assign current_routing[g_i] = '0 ;
       assign enhanc_routing_configuration[g_i] = '0;
+      assign saved_enhanc_routing_configuration[g_i] = '0;
       assign state[g_i] = kReservePort;
       assign sample_routing_config[g_i] = '0;
       assign input_direction[g_i] = noc::kNorthPort;

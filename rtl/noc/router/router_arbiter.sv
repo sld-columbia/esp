@@ -152,25 +152,22 @@ module router_fork_arbiter
    );
 
   logic grant_locked;
-  logic [4:0] forwarding_head_input, forwarding_tail_input;
-  logic forwarding_head_or, forwarding_tail_or;
+  logic forwarding_head_input, forwarding_tail_input;
   // Lock current grant for flit between head and tail, tail included
   always_ff @(posedge clk) begin
     if (rst) begin
       grant_locked <= 1'b0;
     end else begin
-      if (|forwarding_tail_or) begin
+      if (forwarding_tail_input) begin
         grant_locked <= 1'b0;
-      end else if (|forwarding_head_or) begin
+      end else if (forwarding_head_input) begin
         grant_locked <= 1'b1;
       end
     end
   end
 
-  assign forwarding_head_input = grant & forwarding_head;
-  assign forwarding_head_or = |forwarding_head_input;
-  assign forwarding_tail_input = grant & forwarding_tail;
-  assign forwarding_tail_or = |forwarding_tail_input;
+  assign forwarding_head_input = |(grant & forwarding_head);
+  assign forwarding_tail_input = |(grant & forwarding_tail);
 
   assign grant_valid = |request & ~grant_locked;
 
@@ -190,7 +187,7 @@ module router_fork_arbiter
   always_ff @(posedge clk) begin
     if (rst) begin
       priority_mask <= InitialPriority;
-    end else if (forwarding_tail) begin
+    end else if (forwarding_tail_input) begin
       priority_mask <= priority_mask_next;
     end
   end
