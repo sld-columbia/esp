@@ -6,10 +6,6 @@ sudo apt-get install bats
 # Install vsg
 echo "Installing vhdl-style-guide (vsg)..."
 pip3 install vsg --user
-if ! grep -q "$HOME/.local/bin" ~/.bashrc; then
-    export PATH="$PATH:$HOME/.local/bin"
-    source ~/.bashrc
-fi
 echo "vsg installed and PATH updated."
 
 # Install clang-format-10
@@ -34,10 +30,6 @@ rm verible-v0.0-3545-ge4028f19-linux-static-x86_64.tar.gz
 sudo mv verible-v0.0-3545-ge4028f19/bin/* /usr/local/bin/
 rm -r verible-v0.0-3545-ge4028f19
 echo "Verible installed and configured."
-
-echo ""
-echo "Reloading bash configuration..."
-source ~/.bashrc
 
 echo ""
 echo "All formatter tools installed successfully!"
