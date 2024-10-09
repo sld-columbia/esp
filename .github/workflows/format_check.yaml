@@ -34,15 +34,15 @@ jobs:
 
       - name: Install formatting tools
         run: |
-          cd $GITHUB_WORKSPACE/utils/scripts/format/tools
+          cd utils/scripts/format/tools
           ./install.sh
 
       - name: Navigate to formatting scripts directory and run format check
         run: |
-          cd $GITHUB_WORKSPACE/utils/scripts/format
+          cd utils/scripts/format
           echo "Current directory: $(pwd)"
           if ! ./format.sh -g -ca; then
             echo "Code format check failed. Please fix the formatting issues by running the formatting script."
             exit 1
           fi
-        working-directory: $GITHUB_WORKSPACE/utils/scripts/format
+        working-directory: utils/scripts/format
