@@ -15,7 +15,7 @@ jobs:
     env:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      PATH: ${{ runner.env.HOME }}/.local/bin:${{ runner.env.PATH }}  # Add the local user path to PATH globally
+      PATH: ${{ HOME }}/.local/bin:${{ PATH }}
 
     container:
       image: columbiasld/esp:ubuntu18-small
