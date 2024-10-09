@@ -350,5 +350,6 @@ format_all() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     header
     check_tools
+	cd ~/esp/utils/scripts/format
     parse_args "$@"
 fi
