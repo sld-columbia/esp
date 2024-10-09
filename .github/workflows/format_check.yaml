@@ -15,12 +15,13 @@ jobs:
     env:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      PATH: ${{ runner.env.HOME }}/.local/bin:${{ runner.env.PATH }}  # Add the local user path to PATH globally
 
     container:
       image: columbiasld/esp:ubuntu18-small
       credentials:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        username: ${{ env.DOCKER_USERNAME }}
+        password: ${{ env.DOCKER_PASSWORD }}
 
     steps:
       - name: Checkout code
@@ -30,13 +31,11 @@ jobs:
         run: |
           cd utils/scripts/format/tools
           ./install.sh
-          echo 'export PATH="$PATH:/home/espuser/.local/bin/"' >> ~/.bashrc
-          . ~/.bashrc
 
       - name: Navigate to formatting scripts directory and run format check
         run: |
           cd utils/scripts/format
           if ! ./format.sh -g -ca; then
-            echo "Code format check failed. Please fix the formatting issues by re-running the formatting script."
+            echo "Code format check failed. Please fix the formatting issues by running the formatting script."
             exit 1
           fi
