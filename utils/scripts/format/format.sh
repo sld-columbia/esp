@@ -297,7 +297,7 @@ format_all() {
     esac
 
     if [ "$is_github_actions" = true ]; then
-	    cd ./esp
+	    cd ~/esp
         modified_files=$(git diff --name-only HEAD^..HEAD \
             | grep -E '\.(c|h|cpp|hpp|py|v|sv|vhd)$')
     else
