@@ -34,15 +34,15 @@ jobs:
 
       - name: Install formatting tools
         run: |
-          cd utils/scripts/format/tools
+          run: |
           ./install.sh
+        working-directory: ./utils/scripts/format/tools
 
       - name: Navigate to formatting scripts directory and run format check
         run: |
-          cd utils/scripts/format
           echo "Current directory: $(pwd)"
           if ! ./format.sh -g -ca; then
             echo "Code format check failed. Please fix the formatting issues by running the formatting script."
             exit 1
           fi
-        working-directory: utils/scripts/format
+        working-directory: ./utils/scripts/format
