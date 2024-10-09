@@ -1,6 +1,6 @@
 #!/bin/bash
-root_dir=$(git rev-parse --show-toplevel)
 is_github_actions=false
+root_dir=$(git rev-parse --show-toplevel)
 
 RED='\033[31m'
 GREEN='\033[32m'
@@ -235,6 +235,7 @@ parse_args() {
     done
 
     echo ""
+	cd $root_dir
     if [ "$all" = true ]; then
         format_all "$action"
     elif [ -n "$file_to_format" ]; then
@@ -348,5 +349,6 @@ format_all() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     header
     check_tools
+	cd "$root_dir"
     parse_args "$@"
 fi
