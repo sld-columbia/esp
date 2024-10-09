@@ -34,9 +34,6 @@ jobs:
       - name: Navigate to formatting scripts directory and run format check
         run: |
           cd utils/scripts/format
-          echo "Current directory: $(pwd)"
-          echo "Contents of directory:"
-          ls -la
           if ! ./format.sh -g -ca; then
             echo "Code format check failed. Please fix the formatting issues by running the formatting script."
             exit 1
