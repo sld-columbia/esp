@@ -15,7 +15,6 @@ jobs:
     env:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      PATH: ${{ HOME }}/.local/bin:${{ PATH }}
 
     container:
       image: columbiasld/esp:ubuntu18-small
@@ -31,6 +30,7 @@ jobs:
         run: |
           cd utils/scripts/format/tools
           ./install.sh
+          export PATH="$PATH:/home/espuser/.local/bin/"
 
       - name: Navigate to formatting scripts directory and run format check
         run: |
