@@ -1,5 +1,8 @@
 #!/bin/bash
 is_github_actions=false
+root_dir=$(git rev-parse --show-toplevel)
+cd "$root_dir/utils/scripts/format" || { echo "Failed to change to format directory"; exit 1; }
+
 
 RED='\033[31m'
 GREEN='\033[32m'
@@ -296,9 +299,7 @@ format_all() {
             ;;
     esac
 
-	ls -alF
     if [ "$is_github_actions" = true ]; then
-	    cd ~/esp
         modified_files=$(git diff --name-only HEAD^..HEAD \
             | grep -E '\.(c|h|cpp|hpp|py|v|sv|vhd)$')
     else
@@ -320,7 +321,6 @@ format_all() {
     done
     echo ""
 
-	root_dir=$(git rev-parse --show-toplevel)
     modified_files=$(echo "$modified_files" | sed "s|^|$root_dir/|")
 
     error_files=""
