@@ -57,7 +57,7 @@ teardown() {
 }
 
 @test "C file is formatted correctly with -f option" {
-    run ../format.sh -f test.c
+    run ../format.sh -f ~/esp/utils/scripts/format/tests/test.c
     [ "$status" -eq 0 ]
 
     run cat test.c
@@ -70,7 +70,7 @@ teardown() {
 }
 
 @test "Python file is formatted correctly with -f option" {
-    run ../format.sh -f test.py
+    run ../format.sh -f ~/esp/utils/scripts/format/tests/test.py
     [ "$status" -eq 0 ]
 	
     run cat test.py
@@ -80,7 +80,7 @@ teardown() {
 }
 
 @test "Verilog file is formatted properly with -f option" {
-    run ../format.sh -f test.sv
+    run ../format.sh -f ~/esp/utils/scripts/format/tests/test.sv
     [ "$status" -eq 0 ]
 
     run cat test.sv
@@ -93,7 +93,7 @@ teardown() {
 }
 
 @test "VHDL file is formatted correctly with -f option" {
-    run ../format.sh -f test.vhd
+    run ../format.sh -f ~/esp/utils/scripts/format/tests/test.vhd
     [ "$status" -eq 0 ]
 
     run cat test.vhd
@@ -107,7 +107,7 @@ teardown() {
 @test "-fa formats all modified files" {
     run ../format.sh -fa
     [ "$status" -eq 0 ]
-
+	
     run cat test.c
     [ "${lines[0]}" = "int main()" ]
     [ "${lines[1]}" = "{" ]
