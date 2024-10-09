@@ -296,6 +296,7 @@ format_all() {
             ;;
     esac
 
+	ls -alF
     if [ "$is_github_actions" = true ]; then
 	    cd ~/esp
         modified_files=$(git diff --name-only HEAD^..HEAD \
