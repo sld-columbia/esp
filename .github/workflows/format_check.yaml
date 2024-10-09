@@ -25,17 +25,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
+      
+      - name: Set directory ownership
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+
+      - name: Configure Git
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
       - name: Install formatting tools
         run: |
-          cd ~/esp/utils/scripts/format/tools
+          cd $GITHUB_WORKSPACE/utils/scripts/format/tools
           ./install.sh
 
       - name: Navigate to formatting scripts directory and run format check
         run: |
-          cd ~/esp/utils/scripts/format
+          cd $GITHUB_WORKSPACE/utils/scripts/format
           echo "Current directory: $(pwd)"
           if ! ./format.sh -g -ca; then
             echo "Code format check failed. Please fix the formatting issues by running the formatting script."
             exit 1
           fi
+        working-directory: $GITHUB_WORKSPACE/utils/scripts/format

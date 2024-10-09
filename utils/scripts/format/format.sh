@@ -1,6 +1,5 @@
 #!/bin/bash
 is_github_actions=false
-root_dir=$(git rev-parse --show-toplevel)
 
 RED='\033[31m'
 GREEN='\033[32m'
@@ -325,6 +324,7 @@ format_all() {
     done
     echo ""
 
+	root_dir=$(git rev-parse --show-toplevel)
     modified_files=$(echo "$modified_files" | sed "s|^|$root_dir/|")
 
     error_files=""
@@ -350,6 +350,5 @@ format_all() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     header
     check_tools
-	cd ~/esp/utils/scripts/format
     parse_args "$@"
 fi
