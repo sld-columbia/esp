@@ -297,6 +297,7 @@ format_all() {
             ;;
     esac
 
+	pwd
 	if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         echo -e "${RED}${BOLD}ERROR:${RESET} Not a git repository. Ensure that this script is run in a valid Git environment."
         return 1
