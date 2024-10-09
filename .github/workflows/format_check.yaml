@@ -30,7 +30,8 @@ jobs:
         run: |
           cd utils/scripts/format/tools
           ./install.sh
-          export PATH="$PATH:$HOME/.local/bin"
+          echo 'export PATH="$PATH:/home/espuser/.local/bin/"' >> ~/.bashrc
+          . ~/.bashrc
 
       - name: Navigate to formatting scripts directory and run format check
         run: |
