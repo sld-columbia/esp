@@ -29,7 +29,7 @@ jobs:
       - name: Install formatting tools
         run: |
           cd utils/scripts/format/tools
-          ./install
+          ./install.sh
           export PATH="$PATH:$HOME/.local/bin"
 
       - name: Navigate to formatting scripts directory and run format check
