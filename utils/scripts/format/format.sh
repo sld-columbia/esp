@@ -1,4 +1,5 @@
 #!/bin/bash
+root_dir=$(git rev-parse --show-toplevel)
 is_github_actions=false
 
 RED='\033[31m'
@@ -322,7 +323,6 @@ format_all() {
     done
     echo ""
 
-    root_dir=$(git rev-parse --show-toplevel)
     modified_files=$(echo "$modified_files" | sed "s|^|$root_dir/|")
 
     error_files=""
