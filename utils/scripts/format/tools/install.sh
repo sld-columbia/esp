@@ -6,7 +6,8 @@ sudo apt-get install bats
 # Install vsg
 echo "Installing vhdl-style-guide (vsg)..."
 pip3 install vsg --user
-echo "vsg installed and PATH updated."
+sudo mv "$HOME"/.local/bin/vsg /usr/local/bin/vsg
+echo "vsg installed."
 
 # Install clang-format-10
 echo ""
