@@ -1,0 +1,41 @@
+name: Post-push Format Checker
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+      - scripts
+
+jobs:
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+    container:
+      image: columbiasld/esp:ubuntu18-small
+      credentials:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Install formatting tools
+        run: |
+          cd utils/scripts/format/tools
+          ./install
+          export PATH="$PATH:$HOME/.local/bin"
+
+      - name: Navigate to formatting scripts directory and run format check
+        run: |
+          cd utils/scripts/format
+          if ! ./format.sh -g -ca; then
+            echo "Code format check failed. Please fix the formatting issues by re-running the formatting script."
+            exit 1
+          fi
