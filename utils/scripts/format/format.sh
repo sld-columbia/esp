@@ -295,6 +295,11 @@ format_all() {
             ;;
     esac
 
+	if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        echo -e "${RED}${BOLD}ERROR:${RESET} Not a git repository. Ensure that this script is run in a valid Git environment."
+        return 1
+    fi
+
     if [ "$is_github_actions" = true ]; then
         modified_files=$(git diff --name-only HEAD^..HEAD \
             | grep -E '\.(c|h|cpp|hpp|py|v|sv|vhd)$')
