@@ -28,12 +28,12 @@ jobs:
 
       - name: Install formatting tools
         run: |
-          cd utils/scripts/format/tools
+          cd $GITHUB_WORKSPACE/utils/scripts/format/tools
           ./install.sh
 
       - name: Navigate to formatting scripts directory and run format check
         run: |
-          cd utils/scripts/format
+          cd $GITHUB_WORKSPACE/utils/scripts/format
           if ! ./format.sh -g -ca; then
             echo "Code format check failed. Please fix the formatting issues by running the formatting script."
             exit 1
