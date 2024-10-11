@@ -153,21 +153,25 @@ module router_fork_arbiter
 
   logic grant_locked;
   logic forwarding_head_input, forwarding_tail_input;
+  logic [4:0] saved_grant;
   // Lock current grant for flit between head and tail, tail included
   always_ff @(posedge clk) begin
     if (rst) begin
       grant_locked <= 1'b0;
+      saved_grant <= '0;
     end else begin
       if (forwarding_tail_input) begin
         grant_locked <= 1'b0;
+        saved_grant <= '0;
       end else if (forwarding_head_input) begin
         grant_locked <= 1'b1;
+        saved_grant <= grant;
       end
     end
   end
 
   assign forwarding_head_input = |(grant & forwarding_head);
-  assign forwarding_tail_input = |(grant & forwarding_tail);
+  assign forwarding_tail_input = |(saved_grant & forwarding_tail);
 
   assign grant_valid = |request & ~grant_locked;
 

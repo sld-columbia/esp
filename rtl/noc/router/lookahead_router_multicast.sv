@@ -134,11 +134,11 @@ module lookahead_router_multicast
   logic [4:0][4:0] next_hop_routing;
 
   //forking arbiter logic
-  logic [4:0][4:0] case_b, case_c, non_forking_req, new_final_routing_request, granted_req;
-  logic [4:0][2:0] routing_sum_vertical_b, routing_sum_vertical_c;
+  logic [4:0][4:0] case_a, case_b, case_c, non_forking_req, new_final_routing_request, granted_req;
+  logic [4:0][2:0] routing_sum_vertical_a, routing_sum_vertical_b;
   logic [4:0][2:0] routing_sum_horizontal_initial;
   logic [4:0] forking_input_initial, non_forking_req_OR;
-  logic [4:0] forking_input_a, forking_input_c, conflict_output_b, conflict_output_c, grant_fork, grant_fork_arbiter;
+  logic [4:0] forking_input_a, forking_input_c, conflict_output_a, conflict_output_b, grant_fork, grant_fork_arbiter;
   logic grant_valid_fork;
 
   logic [4:0][3:0] transp_final_routing_request;
@@ -177,7 +177,6 @@ module lookahead_router_multicast
   logic [4:0] forwarding_tail;
   logic [4:0] forwarding_head;
   logic [4:0] forwarding_tail_input;
-//  logic [4:0] forwarding_head_input;
   logic [4:0] forwarding_in_progress;
   logic [4:0] insert_lookahead_routing;
   logic [4:0] sample_routing_config;
@@ -305,21 +304,22 @@ module lookahead_router_multicast
     for (int i = 0; i < 5; i++) begin
       forking_input_a[i] = forking_input_initial[i];
       for (int j = 0; j < 5; j++) begin
-        if ((noc::int2noc_port(i) != saved_input_direction[j]) && saved_input_direction[j]) begin	// this causes combinational loop
+        if ((noc::int2noc_port(i) != saved_input_direction[j]) && forwarding_in_progress[j]) begin
           forking_input_a[i] &= ~(final_routing_request[i][j] & forking_input_initial[i]);
         end//end if
       end//end j for
-      case_b[i] = final_routing_request[i] & {5{forking_input_a[i]}};
+      case_a[i] = final_routing_request[i] & {5{forking_input_a[i]}};
+      case_b[i] = case_a[i];
     end//end i for
     
     for (int i = 0; i < 5; i++) begin
-      routing_sum_vertical_b[i] = case_b[0][i] + case_b[1][i] + case_b[2][i] + case_b[3][i] + case_b[4][i];
-      conflict_output_b[i] = routing_sum_vertical_b[i][2] | routing_sum_vertical_b[i][1];
+      routing_sum_vertical_a[i] = case_a[0][i] + case_a[1][i] + case_a[2][i] + case_a[3][i] + case_a[4][i];
+      conflict_output_a[i] = routing_sum_vertical_a[i][2] | routing_sum_vertical_a[i][1];
     end//end i for
     
     for (int i = 0; i < 5; i++) begin
       for (int j = 0; j < 5; j++) begin
-        if (conflict_output_b[j]) begin
+        if (conflict_output_a[j]) begin
           case_b[i] &= {5{~(case_b[i][j] & non_forking_req_OR[j])}};
         end//end if
       end//end j for
@@ -327,14 +327,14 @@ module lookahead_router_multicast
     end//end i for
 
     for (int i = 0; i < 5; i++) begin
-      routing_sum_vertical_c[i] = case_c[0][i] + case_c[1][i] + case_c[2][i] + case_c[3][i] + case_c[4][i];
-      conflict_output_c[i] = routing_sum_vertical_c[i][2] | routing_sum_vertical_c[i][1];
+      routing_sum_vertical_b[i] = case_b[0][i] + case_b[1][i] + case_b[2][i] + case_b[3][i] + case_b[4][i];
+      conflict_output_b[i] = routing_sum_vertical_b[i][2] | routing_sum_vertical_b[i][1];
     end//end i for
 
     for (int i = 0; i < 5; i++) begin
       forking_input_c[i] = '0;
       for (int j = 0; j < 5; j++) begin
-        if (conflict_output_c[j]) begin
+        if (conflict_output_b[j]) begin
           case_c[i] &= {5{~case_c[i][j]}};
           forking_input_c[i] |= case_b[i][j];
         end//end if
@@ -436,12 +436,11 @@ router_fork_arbiter fork_arbiter_i (
         end 
         else begin
           if ((forwarding_in_progress[g_i] & ~forwarding_tail[g_i]) | sample_routing_config[g_i]) begin
+//          if (forwarding_in_progress[g_i] | sample_routing_config[g_i]) begin
             saved_routing_configuration[g_i] <= routing_configuration[g_i];
-//            saved_enhanc_routing_configuration[g_i] <= enhanc_routing_configuration[g_i];
           end
           else if (forwarding_tail[g_i]) begin
             saved_routing_configuration[g_i] <= 'h0;
-//            saved_enhanc_routing_configuration[g_i] <= '0;
           end
         end
       end
@@ -593,15 +592,15 @@ router_fork_arbiter fork_arbiter_i (
 
         kHeadFlit : begin
           routing_configuration[g_i] = saved_routing_configuration[g_i];
-          if (((transp_grant[input_direction[g_i]] & new_final_routing_request[input_direction[g_i]]) ==
-                new_final_routing_request[input_direction[g_i]]) & no_backpressure[g_i]) begin
+//          if (((transp_grant[input_direction[g_i]] & final_routing_request[input_direction[g_i]]) ==
+//                final_routing_request[input_direction[g_i]]) & no_backpressure[g_i]) begin
             // First flit of a new packet can be forwarded
             forwarding_in_progress[g_i] = 1'b1;
             if (~data_out_crossbar[g_i].header.preamble.tail) begin
               // Non-single-flit packet; expecting more payload flit
               new_state[g_i] = kPayloadFlits;
             end
-          end
+//          end
         end
 
         kPayloadFlits : begin
