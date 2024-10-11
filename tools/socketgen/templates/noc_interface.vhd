@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -39,16 +39,10 @@ use std.textio.all;
     cache_tile_id  : cache_attribute_array;
     cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-    has_l2         : integer := 1;
-    has_dvfs       : integer := 1;
-    has_pll        : integer;
-    extra_clk_buf  : integer);
+    has_l2         : integer := 1);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
-    refclk    : in  std_ulogic;
-    pllbypass : in  std_ulogic;
-    pllclk    : out std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
     tile_id   : in  integer range 0 to CFG_TILES_NUM - 1;
@@ -61,40 +55,40 @@ use std.textio.all;
     apbi      : in apb_slv_in_type;
     apbo      : out apb_slv_out_type;
     pready    : out std_ulogic;
-
+	acc_activity : out std_ulogic;
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
-    coherence_req_data_in      : out noc_flit_type;
+    coherence_req_data_in      : out coh_noc_flit_type;
     coherence_req_full         : in  std_ulogic;
     -- NoC plane coherence forward
     coherence_fwd_rdreq        : out std_ulogic;
-    coherence_fwd_data_out     : in  noc_flit_type;
+    coherence_fwd_data_out     : in  coh_noc_flit_type;
     coherence_fwd_empty        : in  std_ulogic;
     -- Noc plane coherence response
     coherence_rsp_rcv_rdreq    : out std_ulogic;
-    coherence_rsp_rcv_data_out : in  noc_flit_type;
+    coherence_rsp_rcv_data_out : in  coh_noc_flit_type;
     coherence_rsp_rcv_empty    : in  std_ulogic;
     coherence_rsp_snd_wrreq    : out std_ulogic;
-    coherence_rsp_snd_data_in  : out noc_flit_type;
+    coherence_rsp_snd_data_in  : out coh_noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
     coherence_fwd_snd_wrreq    : out std_ulogic;
-    coherence_fwd_snd_data_in  : out noc_flit_type;
+    coherence_fwd_snd_data_in  : out coh_noc_flit_type;
     coherence_fwd_snd_full     : in  std_ulogic;
     -- NoC plane MEM2DEV
     dma_rcv_rdreq     : out std_ulogic;
-    dma_rcv_data_out  : in  noc_flit_type;
+    dma_rcv_data_out  : in  dma_noc_flit_type;
     dma_rcv_empty     : in  std_ulogic;
     -- NoC plane DEV2MEM
     dma_snd_wrreq     : out std_ulogic;
-    dma_snd_data_in   : out noc_flit_type;
+    dma_snd_data_in   : out dma_noc_flit_type;
     dma_snd_full      : in  std_ulogic;
     -- NoC plane LLC-coherent MEM2DEV
     coherent_dma_rcv_rdreq     : out std_ulogic;
-    coherent_dma_rcv_data_out  : in  noc_flit_type;
+    coherent_dma_rcv_data_out  : in  dma_noc_flit_type;
     coherent_dma_rcv_empty     : in  std_ulogic;
     -- NoC plane LLC-coherent DEV2MEM
     coherent_dma_snd_wrreq     : out std_ulogic;
-    coherent_dma_snd_data_in   : out noc_flit_type;
+    coherent_dma_snd_data_in   : out dma_noc_flit_type;
     coherent_dma_snd_full      : in  std_ulogic;
     -- Noc plane miscellaneous (tile -> NoC)
     interrupt_wrreq   : out std_ulogic;
@@ -104,13 +98,13 @@ use std.textio.all;
     interrupt_ack_rdreq    : out std_ulogic;
     interrupt_ack_data_out : in  misc_noc_flit_type;
     interrupt_ack_empty    : in  std_ulogic;
-    mon_dvfs_in       : in  monitor_dvfs_type;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
     mon_dvfs          : out monitor_dvfs_type;
     -- Coherence
-    coherence         : in integer range 0 to 3);
+    coherence         : in integer range 0 to 3;
+    tp_acc_rst        : in std_ulogic);
 
 end;
 
@@ -183,16 +177,16 @@ end;
   signal dma_address          : addr_t;
   signal dma_ready            : std_ulogic;
   signal dma_rcv_rdreq_int    : std_ulogic;
-  signal dma_rcv_data_out_int : noc_flit_type;
+  signal dma_rcv_data_out_int : dma_noc_flit_type;
   signal dma_rcv_empty_int    : std_ulogic;
   signal dma_snd_wrreq_int    : std_ulogic;
-  signal dma_snd_data_in_int  : noc_flit_type;
+  signal dma_snd_data_in_int  : dma_noc_flit_type;
   signal dma_snd_full_int     : std_ulogic;
   signal dma_rcv_ready        : std_ulogic;
-  signal dma_rcv_data         : noc_flit_type;
+  signal dma_rcv_data         : dma_noc_flit_type;
   signal dma_rcv_valid        : std_ulogic;
   signal dma_snd_valid        : std_ulogic;
-  signal dma_snd_data         : noc_flit_type;
+  signal dma_snd_data         : dma_noc_flit_type;
   signal dma_snd_ready        : std_ulogic;
 
   -- Accelerator signals
@@ -210,17 +204,16 @@ end;
   signal dma_write_ctrl_data_size   : std_logic_vector(2 downto 0);
   signal dma_read_chnl_valid        : std_ulogic;
   signal dma_read_chnl_ready        : std_ulogic;
-  signal dma_read_chnl_data         : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal dma_read_chnl_data         : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
   signal dma_write_chnl_valid       : std_ulogic;
   signal dma_write_chnl_ready       : std_ulogic;
-  signal dma_write_chnl_data        : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal dma_write_chnl_data        : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
   signal acc_done                   : std_ulogic;
   signal flush                      : std_ulogic;
   signal acc_flush_done             : std_ulogic;
   -- Register control, interrupt and monitor signals
-  signal pllclk_int        : std_ulogic;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
-
+  
   constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV - 1) := (
     others => 0);
 
@@ -266,7 +259,6 @@ end;
   attribute keep of dma_write_chnl_data : signal is "true";
   attribute keep of acc_done : signal is "true";
   attribute keep of flush : signal is "true";
-  attribute keep of pllclk_int : signal is "true";
 
 begin
 
@@ -348,7 +340,6 @@ begin
   esp_acc_dma_1 : esp_acc_dma
     generic map (
       tech               => tech,
-      extra_clk_buf      => extra_clk_buf,
       mem_num            => mem_num,
       mem_info           => mem_info,
       io_y               => io_y,
@@ -360,15 +351,10 @@ begin
       rdonly_reg_mask    => rdonly_reg_mask,
       exp_registers      => exp_registers,
       scatter_gather     => scatter_gather,
-      tlb_entries        => tlb_entries,
-      has_dvfs           => has_dvfs,
-      has_pll            => has_pll)
+      tlb_entries        => tlb_entries)
     port map (
       rst                           => rst,
       clk                           => clk,
-      refclk                        => refclk,
-      pllbypass                     => pllbypass,
-      pllclk                        => pllclk_int,
       local_y                       => local_y,
       local_x                       => local_x,
       paddr                         => paddr,
@@ -399,7 +385,6 @@ begin
       acc_done                      => acc_done,
       flush                         => flush,
       acc_flush_done                => acc_flush_done,
-      mon_dvfs_in                   => mon_dvfs_in,
       mon_dvfs                      => mon_dvfs_feedthru,
       llc_coherent_dma_rcv_rdreq    => coherent_dma_rcv_rdreq,
       llc_coherent_dma_rcv_data_out => coherent_dma_rcv_data_out,
@@ -420,7 +405,8 @@ begin
       dma_snd_full                  => dma_snd_full_int,
       interrupt_wrreq               => interrupt_wrreq,
       interrupt_data_in             => interrupt_data_in,
-      interrupt_full                => interrupt_full
+      interrupt_full                => interrupt_full,
+	  acc_activity					=> acc_activity
       );
 
   pready <= '1';
@@ -454,7 +440,7 @@ begin
       dma_snd_valid        <= '0';
     end if;
 
-    if coherence = ACC_COH_NONE then
+    if coherence /= ACC_COH_FULL then
       dma_rcv_rdreq        <= dma_rcv_rdreq_int;
       dma_snd_wrreq        <= dma_snd_wrreq_int;
     else
@@ -464,7 +450,7 @@ begin
 
   end process coherence_model_select;
 
-  mon_acc.clk   <= pllclk_int; pllclk <= pllclk_int;
+  mon_acc.clk   <= clk;
   mon_acc.go    <= bank(CMD_REG)(0);
   mon_acc.run   <= bank(STATUS_REG)(STATUS_BIT_RUN);
   mon_acc.done  <= bank(STATUS_REG)(STATUS_BIT_DONE);

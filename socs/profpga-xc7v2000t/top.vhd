@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 ------------------------------------------------------------------------------
@@ -400,9 +400,6 @@ signal cpuerr : std_ulogic;
 signal chip_rst : std_ulogic;
 signal sys_clk : std_logic_vector(0 to 1);
 signal chip_refclk : std_ulogic := '0';
-signal chip_pllbypass : std_logic_vector(CFG_TILES_NUM-1 downto 0);
-signal chip_pllclk : std_ulogic;
-
 
 attribute keep of clkm : signal is true;
 attribute keep of clkm_2 : signal is true;
@@ -1019,7 +1016,6 @@ begin
   chip_rst <= rstn;
   sys_clk(0) <= clkm;
   sys_clk(1) <= clkm_2;
-  chip_pllbypass <= (others => '0');
 
   esp_1: esp
     generic map (
@@ -1028,7 +1024,6 @@ begin
       rst           => chip_rst,
       sys_clk       => sys_clk(0 to MEM_ID_RANGE_MSB),
       refclk        => chip_refclk,
-      pllbypass     => chip_pllbypass,
       uart_rxd      => uart_rxd_int,
       uart_txd      => uart_txd_int,
       uart_ctsn     => uart_ctsn_int,

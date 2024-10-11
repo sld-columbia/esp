@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -55,7 +55,7 @@ architecture rtl of apb2jtag is
   constant reg_a2j_pindex : integer range 0 to NAPBSLV - 1 := 0;
   constant reg_a2j_paddr  : integer range 0 to 4095        := 16#100#;
   constant reg_a2j_pmask  : integer range 0 to 4095        := 16#FFF#;
-  constant invld_flit : std_logic_vector(NOC_FLIT_SIZE+8 downto 0) := conv_std_logic_vector(5, NOC_FLIT_SIZE+8);
+  constant invld_flit : std_logic_vector(MAX_NOC_FLIT_SIZE+8 downto 0) := conv_std_logic_vector(5, MAX_NOC_FLIT_SIZE+9);
   signal this_paddr, this_pmask : integer range 0 to 4095;
   signal this_pirq              : integer range 0 to 15;
 
@@ -113,7 +113,7 @@ begin
 
   demux_i : demux_1to6_vs
     generic map (
-      SZ => NOC_FLIT_SIZE+9)
+      SZ => MAX_NOC_FLIT_SIZE+9)
     port map (
       data_in => trace_in,
       sel     => en_fifo_in,
@@ -133,7 +133,7 @@ begin
 
     async_fifo_01 : inferred_async_fifo
       generic map (
-        g_data_width => NOC_FLIT_SIZE+9,
+        g_data_width => MAX_NOC_FLIT_SIZE+9,
         g_size       => 200)
       port map (
         rst_wr_n_i => rst,
@@ -150,7 +150,7 @@ begin
   end generate GEN_FIFOS_apb2jtag;
 
   mux_6to1_1 : mux_6to1
-    generic map(sz => NOC_FLIT_SIZE+9)
+    generic map(sz => MAX_NOC_FLIT_SIZE+9)
     port map(
       sel => req_flit,
       A   => tracein1(5),
@@ -164,7 +164,7 @@ begin
   piso_in <= fifo_out when load_invld = '0' else invld_flit;
 
   piso0 : piso_jtag
-    generic map(sz        => NOC_FLIT_SIZE+9,
+    generic map(sz        => MAX_NOC_FLIT_SIZE+9,
                 shift_dir => 1)
     port map(
       rst      => rst,

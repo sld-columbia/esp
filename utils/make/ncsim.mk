@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -107,7 +107,7 @@ incisive/ncsim.in:
 	@echo set pack_assert_off { std_logic_arith numeric_std } >> $@
 	@echo set intovf_severity_level {ignore} >> $@
 
-ncsim-compile: socketgen check_all_srcs soft incisive/ncready incisive/ncsim.in
+ncsim-compile: socketgen check_all_srcs soft incisive/ncready incisive/ncsim.in iolink-txt-files
 	@for dat in $(DAT_SRCS); do \
 		cp $$dat incisive; \
 	done; \

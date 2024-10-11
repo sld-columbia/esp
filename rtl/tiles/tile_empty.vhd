@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
@@ -41,60 +41,56 @@ entity tile_empty is
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_logic;
-    clk                : in  std_logic;
-    refclk             : in  std_ulogic;
-    pllbypass          : in  std_ulogic;
-    pllclk             : out std_ulogic;
-    dco_clk            : out std_ulogic;
-    dco_rstn           : out std_ulogic;
-    -- Pads configuration
-    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
+    ext_clk            : in  std_ulogic;
+    clk_div            : out std_ulogic;
+    tile_clk_out       : out std_ulogic;
+    tile_rstn_out          : out std_ulogic;
+    -- DCO config
+    dco_freq_sel       : in std_logic_vector(1 downto 0);
+    dco_div_sel        : in std_logic_vector(2 downto 0);
+    dco_fc_sel         : in std_logic_vector(5 downto 0);
+    dco_cc_sel         : in std_logic_vector(5 downto 0);
+    dco_clk_sel        : in std_ulogic;
+    dco_en             : in std_ulogic;
     -- NoC
-    local_x            : out local_yx;
-    local_y            : out local_yx;
-    noc1_mon_noc_vec   : in monitor_noc_type;
-    noc2_mon_noc_vec   : in monitor_noc_type;
-    noc3_mon_noc_vec   : in monitor_noc_type;
-    noc4_mon_noc_vec   : in monitor_noc_type;
-    noc5_mon_noc_vec   : in monitor_noc_type;
-    noc6_mon_noc_vec   : in monitor_noc_type;
-    test1_output_port   : in noc_flit_type;
+    test1_output_port   : in coh_noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
-    test2_output_port   : in noc_flit_type;
+    test2_output_port   : in coh_noc_flit_type;
     test2_data_void_out : in std_ulogic;
     test2_stop_in       : in std_ulogic;
-    test3_output_port   : in noc_flit_type;
+    test3_output_port   : in coh_noc_flit_type;
     test3_data_void_out : in std_ulogic;
     test3_stop_in       : in std_ulogic;
-    test4_output_port   : in noc_flit_type;
+    test4_output_port   : in dma_noc_flit_type;
     test4_data_void_out : in std_ulogic;
     test4_stop_in       : in std_ulogic;
     test5_output_port   : in misc_noc_flit_type;
     test5_data_void_out : in std_ulogic;
     test5_stop_in       : in std_ulogic;
-    test6_output_port   : in noc_flit_type;
+    test6_output_port   : in dma_noc_flit_type;
     test6_data_void_out : in std_ulogic;
     test6_stop_in       : in std_ulogic;
-    test1_input_port    : out noc_flit_type;
+    test1_input_port    : out coh_noc_flit_type;
     test1_data_void_in  : out std_ulogic;
     test1_stop_out      : out std_ulogic;
-    test2_input_port    : out noc_flit_type;
+    test2_input_port    : out coh_noc_flit_type;
     test2_data_void_in  : out std_ulogic;
     test2_stop_out      : out std_ulogic;
-    test3_input_port    : out noc_flit_type;
+    test3_input_port    : out coh_noc_flit_type;
     test3_data_void_in  : out std_ulogic;
     test3_stop_out      : out std_ulogic;
-    test4_input_port    : out noc_flit_type;
+    test4_input_port    : out dma_noc_flit_type;
     test4_data_void_in  : out std_ulogic;
     test4_stop_out      : out std_ulogic;
     test5_input_port    : out misc_noc_flit_type;
     test5_data_void_in  : out std_ulogic;
     test5_stop_out      : out std_ulogic;
-    test6_input_port    : out noc_flit_type;
+    test6_input_port    : out dma_noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
-    mon_dvfs_out       : out monitor_dvfs_type);
+    mon_noc             : in  monitor_noc_vector(1 to 6);
+    mon_dvfs_out        : out monitor_dvfs_type);
 
 end;
 
@@ -104,14 +100,9 @@ architecture rtl of tile_empty is
   signal rst : std_ulogic;
 
   -- DCO
-  signal dco_en       : std_ulogic;
-  signal dco_clk_sel  : std_ulogic;
-  signal dco_cc_sel   : std_logic_vector(5 downto 0);
-  signal dco_fc_sel   : std_logic_vector(5 downto 0);
-  signal dco_div_sel  : std_logic_vector(2 downto 0);
-  signal dco_freq_sel : std_logic_vector(1 downto 0);
   signal dco_clk_lock : std_ulogic;
-  signal dco_clk_int  : std_ulogic;
+  signal dco_clk      : std_ulogic;
+  signal tile_clk     : std_ulogic;
 
   -- Queues
   signal apb_rcv_rdreq    : std_ulogic;
@@ -127,7 +118,6 @@ architecture rtl of tile_empty is
 
   -- Mon
   signal mon_dvfs_int         : monitor_dvfs_type;
-  signal mon_noc              : monitor_noc_vector(1 to 6);
 
   attribute keep              : string;
 
@@ -148,23 +138,18 @@ architecture rtl of tile_empty is
 
 begin
 
-  local_x <= this_local_x;
-  local_y <= this_local_y;
-
   -- DCO Reset synchronizer
-  dco_clk <= dco_clk_int;
-
   rst_gen: if this_has_dco /= 0 generate
-    tile_rstn : rstgen
+    tile_rstn_out : rstgen
       generic map (acthigh => 1, syncin => 0)
-      port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
+      port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
   end generate rst_gen;
 
   no_rst_gen: if this_has_dco = 0 generate
     rst <= tile_rst;
   end generate no_rst_gen;
 
-  dco_rstn <= rst;
+  tile_rstn_out <= rst;
 
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
@@ -177,37 +162,32 @@ begin
                                         -- before tile_io.
       port map (
         rstn     => raw_rstn,
-        ext_clk  => refclk,
+        ext_clk  => ext_clk,
         en       => dco_en,
         clk_sel  => dco_clk_sel,
         cc_sel   => dco_cc_sel,
         fc_sel   => dco_fc_sel,
         div_sel  => dco_div_sel,
         freq_sel => dco_freq_sel,
-        clk      => dco_clk_int,
-        clk_div  => pllclk,
+        clk      => dco_clk,
+        clk_div  => clk_div,
         lock     => dco_clk_lock);
 
-    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  - 1);
-    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  - 2);
-    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
-    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
-    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
-    dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
-
+    tile_clk <= dco_clk;
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco = 0 generate
-    pllclk       <= '0';
-    dco_clk_int  <= refclk;
+    clk_div       <= '0';
+    tile_clk  <= ext_clk;
     dco_clk_lock <= '1';
   end generate no_dco_gen;
+
+  tile_clk_out <= tile_clk;
 
   -----------------------------------------------------------------------------
   -- Tile parameters
   -----------------------------------------------------------------------------
   tile_id                <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
-  pad_cfg                <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
 
   this_csr_pindex        <= tile_csr_pindex(tile_id);
   this_csr_pconfig       <= fixed_apbo_pconfig(this_csr_pindex);
@@ -237,13 +217,12 @@ begin
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
-      clk              => clk,
+      clk              => tile_clk,
       local_y          => this_local_y,
       local_x          => this_local_x,
       apbi             => apbi,
       apbo             => apbo,
       pready           => '1',
-      dvfs_transient   => '0',
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,
       apb_snd_full     => apb_snd_full,
@@ -253,26 +232,19 @@ begin
 
   --Monitors
   mon_dvfs_int.vf        <= (others => '0');
-  mon_dvfs_int.clk       <= clk;
+  mon_dvfs_int.clk       <= tile_clk;
   mon_dvfs_int.acc_idle  <= '0';
   mon_dvfs_int.traffic   <= '0';
   mon_dvfs_int.burst     <= '0';
   mon_dvfs_int.transient <= '0';
   mon_dvfs_out           <= mon_dvfs_int;
 
-  mon_noc(1) <= noc1_mon_noc_vec;
-  mon_noc(2) <= noc2_mon_noc_vec;
-  mon_noc(3) <= noc3_mon_noc_vec;
-  mon_noc(4) <= noc4_mon_noc_vec;
-  mon_noc(5) <= noc5_mon_noc_vec;
-  mon_noc(6) <= noc6_mon_noc_vec;
-
   --Memory mapped registers
  empty_tile_csr : esp_tile_csr
     generic map(
       pindex => 0)
    port map(
-     clk => clk,
+     clk => tile_clk,
      rstn => rst,
      pconfig => this_csr_pconfig,
      mon_ddr => monitor_ddr_none,
@@ -284,6 +256,7 @@ begin
      mon_dvfs => mon_dvfs_int,
      tile_config => tile_config,
      srst => open,
+     tp_acc_rst => open,
      apbi => apbi,
      apbo => apbo(0)
    );
@@ -298,7 +271,7 @@ begin
       tech => CFG_FABTECH)
     port map (
       rst                        => rst,
-      clk                        => clk,
+      clk                        => tile_clk,
       apb_snd_wrreq              => apb_snd_wrreq,
       apb_snd_data_in            => apb_snd_data_in,
       apb_snd_full               => apb_snd_full,

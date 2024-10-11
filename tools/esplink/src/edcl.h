@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2023 Columbia University, System Level Design Group
+// Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #include <stdio.h>
 #include <string.h>
@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #include <le.h>
 

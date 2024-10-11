@@ -28,6 +28,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
 use work.allpads.all;
+use work.esp_noc_csr_pkg.all;
 
 entity outpad is
   generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
@@ -38,6 +39,7 @@ end;
 
 architecture rtl of outpad is
 signal padx, gnd, vcc : std_ulogic;
+signal cfg : std_logic_vector(2 downto 0);
 begin
   gnd <= '0'; vcc <= '1';
   gen0 : if has_pads(tech) = 0 generate
@@ -47,8 +49,10 @@ begin
 -- pragma translate_on
 	when slew = 0 else i;
   end generate;
-  gf12p : if (tech = gf12) generate
-    x0 : gf12_outpad generic map (PAD_TYPE => loc) port map (pad, i, cfgi(2), cfgi(1), cfgi(0));
+  --gf12p : if (tech = gf12) generate
+  asicp : if (tech = asic) and has_pads(tech) = 1 generate
+    --x0 : gf12_outpad generic map (PAD_TYPE => loc) port map (pad, i, cfgi(2), cfgi(1), cfgi(0));
+    x0 : asic_outpad generic map (PAD_TYPE => loc) port map (pad, i, cfgi(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0));
   end generate;
   xcv : if (is_unisim(tech) = 1) generate
     x0 : unisim_outpad generic map (level, slew, voltage, strength) port map (pad, i);

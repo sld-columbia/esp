@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -34,6 +34,12 @@ package nocpackage is
   -- |reserved|
   --
 
+  -- Header with 2 destinations
+  -- |W+1        W|W-1     W-3|W-4     W-6|W-7     W-9|W-10   W-12|W-13   W-15|W-16   W-18|W-19  W-20|W-21     W-25|W-26       5|4   0|
+  -- |  PREAMBLE  |   Src Y   |   Src X   |   Dst1 Y  |   Dst1 X  |   Dst1 Y  |   Dst1 X  |   Valid  |  Msg. type  |   Reserved |LEWSN|
+
+
+
   constant HEADER_ROUTE_L : natural := 4;
   constant HEADER_ROUTE_E : natural := 3;
   constant HEADER_ROUTE_W : natural := 2;
@@ -45,21 +51,36 @@ package nocpackage is
   constant MSG_TYPE_WIDTH      : natural := 5;
   constant RESERVED_WIDTH      : natural := 8;
   constant NEXT_ROUTING_WIDTH  : natural := 5;
-  constant NOC_FLIT_SIZE       : natural := PREAMBLE_WIDTH + ARCH_BITS;
+  constant COH_NOC_FLIT_SIZE       : natural := PREAMBLE_WIDTH + COH_NOC_WIDTH;
+  constant DMA_NOC_FLIT_SIZE       : natural := PREAMBLE_WIDTH + DMA_NOC_WIDTH;
   constant MISC_NOC_FLIT_SIZE  : natural := PREAMBLE_WIDTH + 32;
+  constant ARCH_NOC_FLIT_SIZE  : natural := PREAMBLE_WIDTH + ARCH_BITS;
+  constant MAX_NOC_FLIT_SIZE  : natural := PREAMBLE_WIDTH + MAX_NOC_WIDTH;
 
-  subtype local_yx is std_logic_vector(2 downto 0);
+  subtype local_yx is std_logic_vector(YX_WIDTH-1 downto 0);
   subtype noc_preamble_type is std_logic_vector(PREAMBLE_WIDTH-1 downto 0);
   subtype noc_msg_type is std_logic_vector(MSG_TYPE_WIDTH-1 downto 0);
-  subtype noc_flit_type is std_logic_vector(NOC_FLIT_SIZE-1 downto 0);
+  subtype coh_noc_flit_type is std_logic_vector(COH_NOC_FLIT_SIZE-1 downto 0);
+  subtype dma_noc_flit_type is std_logic_vector(DMA_NOC_FLIT_SIZE-1 downto 0);
+  subtype arch_noc_flit_type is std_logic_vector(ARCH_NOC_FLIT_SIZE-1 downto 0);
   subtype misc_noc_flit_type is std_logic_vector(33 downto 0);
+  subtype max_noc_flit_type is std_logic_vector(MAX_NOC_FLIT_SIZE downto 0);
   subtype reserved_field_type is std_logic_vector(RESERVED_WIDTH-1 downto 0);
   subtype ports_vec is std_logic_vector(4 downto 0);
 
-  type noc_flit_vector is array (natural range <>) of noc_flit_type;
+  type coh_noc_flit_vector is array (natural range <>) of coh_noc_flit_type;
+  type dma_noc_flit_vector is array (natural range <>) of dma_noc_flit_type;
   type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
+  type arch_noc_flit_vector is array (natural range <>) of arch_noc_flit_type;
 
-  constant noc_flit_pad : std_logic_vector(NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE - 1 downto 0) := (others => '0');
+  --Rather than define seaprate functions for interacting with each NoC width,
+  --we make them take the max width and then pad the inputs to fill.
+  constant coh_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - COH_NOC_FLIT_SIZE downto 0) := (others => '0');
+  constant dma_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - DMA_NOC_FLIT_SIZE downto 0) := (others => '0');
+  constant misc_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE downto 0) := (others => '0');
+  constant arch_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - ARCH_NOC_FLIT_SIZE downto 0) := (others => '0');
+
+  type dest_arr is array (natural range <>) of local_yx;
 
   -- Preamble encoding
   constant PREAMBLE_HEADER : noc_preamble_type := "10";
@@ -154,6 +175,7 @@ package nocpackage is
   constant RSP_REG_RD   : noc_msg_type := "11101";
   constant RSP_AHB_RD   : noc_msg_type := "11110";
   constant INTERRUPT    : noc_msg_type := "11111";
+  constant DVFS_MSG     : noc_msg_type := "00000";
 
   constant ROUTE_NOC3 : std_logic_vector(1 downto 0) := "01";
   constant ROUTE_NOC4 : std_logic_vector(1 downto 0) := "10";
@@ -172,6 +194,7 @@ package nocpackage is
   constant ROUTER_DEPTH : integer := 4;
 
   type yx_vec is array (natural range <>) of std_logic_vector(2 downto 0);
+  type routing_vec is array (natural range <>) of std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
 
   type tile_mem_info is record
     x     : local_yx;
@@ -210,16 +233,16 @@ package nocpackage is
       depth : integer;
       width : integer);
     port (
-      clk         : in  std_logic;
-      rst         : in  std_logic;
-      rdreq       : in  std_logic;
-      wrreq       : in  std_logic;
-      data_in     : in  std_logic_vector(width-1 downto 0);
-      empty       : out std_logic;
-      full        : out std_logic;
-      atleast_4slots  : out std_logic;
-      exactly_3slots  : out std_logic;
-      data_out    : out std_logic_vector(width-1 downto 0));
+      clk            : in  std_logic;
+      rst            : in  std_logic;
+      rdreq          : in  std_logic;
+      wrreq          : in  std_logic;
+      data_in        : in  std_logic_vector(width-1 downto 0);
+      empty          : out std_logic;
+      full           : out std_logic;
+      atleast_4slots : out std_logic;
+      exactly_3slots : out std_logic;
+      data_out       : out std_logic_vector(width-1 downto 0));
   end component;
 
   component fifo3
@@ -240,7 +263,7 @@ package nocpackage is
 
   component inferred_async_fifo
     generic (
-      g_data_width : natural := NOC_FLIT_SIZE;
+      g_data_width : natural := COH_NOC_FLIT_SIZE;
       g_size       : natural := 6);
     port (
       rst_wr_n_i : in  std_logic := '1';
@@ -255,6 +278,30 @@ package nocpackage is
       rd_empty_o : out std_logic);
   end component;
 
+  component noc32_synchronizers is
+    port (
+      noc_rstn  : in std_ulogic;
+      tile_rstn : in std_ulogic;
+      noc_clk   : in std_ulogic;
+      tile_clk  : in std_ulogic;
+      -- NoC out to synchronizers
+      output_port   : in  misc_noc_flit_type;
+      data_void_out : in  std_ulogic;
+      stop_in       : out std_ulogic;
+      -- synchronizers to NoC in
+      input_port   : out misc_noc_flit_type;
+      data_void_in : out std_ulogic;
+      stop_out     : in  std_ulogic;
+      -- synchronizers out to tile
+      output_port_tile   : out  misc_noc_flit_type;
+      data_void_out_tile : out  std_ulogic;
+      stop_in_tile       : in  std_ulogic;
+      -- tile to synchronizers in
+      input_port_tile   : in  misc_noc_flit_type;
+      data_void_in_tile : in  std_ulogic;
+      stop_out_tile     : out  std_ulogic);
+  end component noc32_synchronizers;
+
   component sync_noc_set
     generic (
       PORTS     : std_logic_vector(4 downto 0);
@@ -266,60 +313,60 @@ package nocpackage is
       rst_tile           : in  std_logic;
       CONST_local_x      : in  std_logic_vector(2 downto 0);
       CONST_local_y      : in  std_logic_vector(2 downto 0);
-      noc1_data_n_in     : in  noc_flit_type;
-      noc1_data_s_in     : in  noc_flit_type;
-      noc1_data_w_in     : in  noc_flit_type;
-      noc1_data_e_in     : in  noc_flit_type;
-      noc1_input_port    : in  noc_flit_type;
+      noc1_data_n_in     : in  coh_noc_flit_type;
+      noc1_data_s_in     : in  coh_noc_flit_type;
+      noc1_data_w_in     : in  coh_noc_flit_type;
+      noc1_data_e_in     : in  coh_noc_flit_type;
+      noc1_input_port    : in  coh_noc_flit_type;
       noc1_data_void_in  : in  std_logic_vector(4 downto 0);
       noc1_stop_in       : in  std_logic_vector(4 downto 0);
-      noc1_data_n_out    : out noc_flit_type;
-      noc1_data_s_out    : out noc_flit_type;
-      noc1_data_w_out    : out noc_flit_type;
-      noc1_data_e_out    : out noc_flit_type;
-      noc1_output_port   : out noc_flit_type;
+      noc1_data_n_out    : out coh_noc_flit_type;
+      noc1_data_s_out    : out coh_noc_flit_type;
+      noc1_data_w_out    : out coh_noc_flit_type;
+      noc1_data_e_out    : out coh_noc_flit_type;
+      noc1_output_port   : out coh_noc_flit_type;
       noc1_data_void_out : out std_logic_vector(4 downto 0);
       noc1_stop_out      : out std_logic_vector(4 downto 0);
-      noc2_data_n_in     : in  noc_flit_type;
-      noc2_data_s_in     : in  noc_flit_type;
-      noc2_data_w_in     : in  noc_flit_type;
-      noc2_data_e_in     : in  noc_flit_type;
-      noc2_input_port    : in  noc_flit_type;
+      noc2_data_n_in     : in  coh_noc_flit_type;
+      noc2_data_s_in     : in  coh_noc_flit_type;
+      noc2_data_w_in     : in  coh_noc_flit_type;
+      noc2_data_e_in     : in  coh_noc_flit_type;
+      noc2_input_port    : in  coh_noc_flit_type;
       noc2_data_void_in  : in  std_logic_vector(4 downto 0);
       noc2_stop_in       : in  std_logic_vector(4 downto 0);
-      noc2_data_n_out    : out noc_flit_type;
-      noc2_data_s_out    : out noc_flit_type;
-      noc2_data_w_out    : out noc_flit_type;
-      noc2_data_e_out    : out noc_flit_type;
-      noc2_output_port   : out noc_flit_type;
+      noc2_data_n_out    : out coh_noc_flit_type;
+      noc2_data_s_out    : out coh_noc_flit_type;
+      noc2_data_w_out    : out coh_noc_flit_type;
+      noc2_data_e_out    : out coh_noc_flit_type;
+      noc2_output_port   : out coh_noc_flit_type;
       noc2_data_void_out : out std_logic_vector(4 downto 0);
       noc2_stop_out      : out std_logic_vector(4 downto 0);
-      noc3_data_n_in     : in  noc_flit_type;
-      noc3_data_s_in     : in  noc_flit_type;
-      noc3_data_w_in     : in  noc_flit_type;
-      noc3_data_e_in     : in  noc_flit_type;
-      noc3_input_port    : in  noc_flit_type;
+      noc3_data_n_in     : in  coh_noc_flit_type;
+      noc3_data_s_in     : in  coh_noc_flit_type;
+      noc3_data_w_in     : in  coh_noc_flit_type;
+      noc3_data_e_in     : in  coh_noc_flit_type;
+      noc3_input_port    : in  coh_noc_flit_type;
       noc3_data_void_in  : in  std_logic_vector(4 downto 0);
       noc3_stop_in       : in  std_logic_vector(4 downto 0);
-      noc3_data_n_out    : out noc_flit_type;
-      noc3_data_s_out    : out noc_flit_type;
-      noc3_data_w_out    : out noc_flit_type;
-      noc3_data_e_out    : out noc_flit_type;
-      noc3_output_port   : out noc_flit_type;
+      noc3_data_n_out    : out coh_noc_flit_type;
+      noc3_data_s_out    : out coh_noc_flit_type;
+      noc3_data_w_out    : out coh_noc_flit_type;
+      noc3_data_e_out    : out coh_noc_flit_type;
+      noc3_output_port   : out coh_noc_flit_type;
       noc3_data_void_out : out std_logic_vector(4 downto 0);
       noc3_stop_out      : out std_logic_vector(4 downto 0);
-      noc4_data_n_in     : in  noc_flit_type;
-      noc4_data_s_in     : in  noc_flit_type;
-      noc4_data_w_in     : in  noc_flit_type;
-      noc4_data_e_in     : in  noc_flit_type;
-      noc4_input_port    : in  noc_flit_type;
+      noc4_data_n_in     : in  dma_noc_flit_type;
+      noc4_data_s_in     : in  dma_noc_flit_type;
+      noc4_data_w_in     : in  dma_noc_flit_type;
+      noc4_data_e_in     : in  dma_noc_flit_type;
+      noc4_input_port    : in  dma_noc_flit_type;
       noc4_data_void_in  : in  std_logic_vector(4 downto 0);
       noc4_stop_in       : in  std_logic_vector(4 downto 0);
-      noc4_data_n_out    : out noc_flit_type;
-      noc4_data_s_out    : out noc_flit_type;
-      noc4_data_w_out    : out noc_flit_type;
-      noc4_data_e_out    : out noc_flit_type;
-      noc4_output_port   : out noc_flit_type;
+      noc4_data_n_out    : out dma_noc_flit_type;
+      noc4_data_s_out    : out dma_noc_flit_type;
+      noc4_data_w_out    : out dma_noc_flit_type;
+      noc4_data_e_out    : out dma_noc_flit_type;
+      noc4_output_port   : out dma_noc_flit_type;
       noc4_data_void_out : out std_logic_vector(4 downto 0);
       noc4_stop_out      : out std_logic_vector(4 downto 0);
       noc5_data_n_in     : in  misc_noc_flit_type;
@@ -336,18 +383,18 @@ package nocpackage is
       noc5_output_port   : out misc_noc_flit_type;
       noc5_data_void_out : out std_logic_vector(4 downto 0);
       noc5_stop_out      : out std_logic_vector(4 downto 0);
-      noc6_data_n_in     : in  noc_flit_type;
-      noc6_data_s_in     : in  noc_flit_type;
-      noc6_data_w_in     : in  noc_flit_type;
-      noc6_data_e_in     : in  noc_flit_type;
-      noc6_input_port    : in  noc_flit_type;
+      noc6_data_n_in     : in  dma_noc_flit_type;
+      noc6_data_s_in     : in  dma_noc_flit_type;
+      noc6_data_w_in     : in  dma_noc_flit_type;
+      noc6_data_e_in     : in  dma_noc_flit_type;
+      noc6_input_port    : in  dma_noc_flit_type;
       noc6_data_void_in  : in  std_logic_vector(4 downto 0);
       noc6_stop_in       : in  std_logic_vector(4 downto 0);
-      noc6_data_n_out    : out noc_flit_type;
-      noc6_data_s_out    : out noc_flit_type;
-      noc6_data_w_out    : out noc_flit_type;
-      noc6_data_e_out    : out noc_flit_type;
-      noc6_output_port   : out noc_flit_type;
+      noc6_data_n_out    : out dma_noc_flit_type;
+      noc6_data_s_out    : out dma_noc_flit_type;
+      noc6_data_w_out    : out dma_noc_flit_type;
+      noc6_data_e_out    : out dma_noc_flit_type;
+      noc6_output_port   : out dma_noc_flit_type;
       noc6_data_void_out : out std_logic_vector(4 downto 0);
       noc6_stop_out      : out std_logic_vector(4 downto 0);
       noc1_mon_noc_vec   : out monitor_noc_type;
@@ -372,42 +419,74 @@ package nocpackage is
 
   function get_origin_y (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return local_yx;
 
   function get_origin_x (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return local_yx;
 
   function get_destination_y (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return local_yx;
 
   function get_destination_x (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return local_yx;
 
   function get_msg_type (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return noc_msg_type;
 
   function get_preamble (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return noc_preamble_type;
 
   function get_reserved_field (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return reserved_field_type;
 
   function get_unused_msb_field (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
+    return std_ulogic;
+
+  function get_origin_y_misc (
+    flit : misc_noc_flit_type)
+    return local_yx;
+
+  function get_origin_x_misc (
+    flit : misc_noc_flit_type)
+    return local_yx;
+
+  function get_destination_y_misc (
+    flit : misc_noc_flit_type)
+    return local_yx;
+
+  function get_destination_x_misc (
+    flit : misc_noc_flit_type)
+    return local_yx;
+
+  function get_msg_type_misc (
+    flit : misc_noc_flit_type)
+    return noc_msg_type;
+
+  function get_preamble_misc (
+    flit : misc_noc_flit_type)
+    return noc_preamble_type;
+
+  function get_reserved_field_misc (
+    flit : misc_noc_flit_type)
+    return reserved_field_type;
+
+  function get_unused_msb_field_misc (
+    flit : misc_noc_flit_type)
     return std_ulogic;
 
   function is_gets (
@@ -420,28 +499,40 @@ package nocpackage is
 
   function create_header (
     constant flit_sz : integer;
+    local_y          : local_yx;
+    local_x          : local_yx;
+    remote_y         : local_yx;
+    remote_x         : local_yx;
+    msg_type         : noc_msg_type;
+    reserved         : reserved_field_type)
+    return std_logic_vector;
+
+  function create_header_mcast (
+    constant flit_sz  : integer;
     local_y           : local_yx;
     local_x           : local_yx;
-    remote_y          : local_yx;
-    remote_x          : local_yx;
-    msg_type          : noc_msg_type;
-    reserved          : reserved_field_type)
+    remote_y_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_x_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_y_comb     : local_yx;
+    remote_x_comb     : local_yx;
+    mcast_ndests      : integer;
+    msg_type          : noc_msg_type)
     return std_logic_vector;
 
   function narrow_to_large_flit (
     narrow_flit : misc_noc_flit_type)
-    return noc_flit_type;
+    return arch_noc_flit_type;
 
   function large_to_narrow_flit (
-    large_flit : noc_flit_type)
+    large_flit : arch_noc_flit_type)
     return misc_noc_flit_type;
 
   function set_router_ports (
-    constant TECH : integer;
+    constant TECH     : integer;
     constant CFG_XLEN : integer;
     constant CFG_YLEN : integer;
-    constant local_x : local_yx;
-    constant local_y : local_yx)
+    constant local_x  : local_yx;
+    constant local_y  : local_yx)
     return ports_vec;
 
   -- IRQ snd packet (Header + 2 flits):
@@ -512,7 +603,7 @@ package body nocpackage is
 
   function get_origin_y (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return local_yx is
     variable ret : local_yx;
   begin  -- get_origin_y
@@ -523,7 +614,7 @@ package body nocpackage is
 
   function get_origin_x (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return local_yx is
     variable ret : local_yx;
   begin  -- get_origin_x
@@ -534,7 +625,7 @@ package body nocpackage is
 
   function get_destination_y (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return local_yx is
     variable ret : local_yx;
   begin  -- get_destination_y
@@ -545,7 +636,7 @@ package body nocpackage is
 
   function get_destination_x (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return local_yx is
     variable ret : local_yx;
   begin  -- get_destination_x
@@ -556,7 +647,7 @@ package body nocpackage is
 
   function get_msg_type (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return noc_msg_type is
     variable msg : noc_msg_type;
   begin
@@ -568,7 +659,7 @@ package body nocpackage is
 
   function get_preamble (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return noc_preamble_type is
     variable ret : noc_preamble_type;
   begin
@@ -578,7 +669,7 @@ package body nocpackage is
 
   function get_reserved_field (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return reserved_field_type is
     variable ret : reserved_field_type;
   begin
@@ -589,7 +680,7 @@ package body nocpackage is
 
   function get_unused_msb_field (
     constant flit_sz : integer;
-    flit : noc_flit_type)
+    flit : max_noc_flit_type)
     return std_ulogic is
     variable ret : std_ulogic;
   begin
@@ -597,6 +688,84 @@ package body nocpackage is
     return ret;
   end get_unused_msb_field;
 
+  function get_origin_y_misc (
+    flit : misc_noc_flit_type)
+    return local_yx is
+    variable ret : local_yx;
+  begin  -- get_origin_y
+    ret := (others => '0');
+    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - YX_WIDTH + 2 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - YX_WIDTH);
+    return ret;
+  end get_origin_y_misc;
+
+  function get_origin_x_misc (
+    flit : misc_noc_flit_type)
+    return local_yx is
+    variable ret : local_yx;
+  begin  -- get_origin_x
+    ret := (others => '0');
+    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH + 2 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH);
+    return ret;
+  end get_origin_x_misc;
+
+  function get_destination_y_misc (
+    flit : misc_noc_flit_type)
+    return local_yx is
+    variable ret : local_yx;
+  begin  -- get_destination_y
+    ret := (others => '0');
+    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH + 2 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH);
+    return ret;
+  end get_destination_y_misc;
+
+  function get_destination_x_misc (
+    flit : misc_noc_flit_type)
+    return local_yx is
+    variable ret : local_yx;
+  begin  -- get_destination_x
+    ret := (others => '0');
+    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH + 2 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH);
+    return ret;
+  end get_destination_x_misc;
+
+  function get_msg_type_misc (
+    flit : misc_noc_flit_type)
+    return noc_msg_type is
+    variable msg : noc_msg_type;
+  begin
+    msg := (others => '0');
+    msg := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
+                MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH);
+    return msg;
+  end get_msg_type_misc;
+
+  function get_preamble_misc (
+    flit : misc_noc_flit_type)
+    return noc_preamble_type is
+    variable ret : noc_preamble_type;
+  begin
+    ret := flit(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
+    return ret;
+  end get_preamble_misc;
+
+  function get_reserved_field_misc (
+    flit : misc_noc_flit_type)
+    return reserved_field_type is
+    variable ret : reserved_field_type;
+  begin
+    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
+                MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH);
+    return ret;
+  end get_reserved_field_misc;
+
+  function get_unused_msb_field_misc (
+    flit : misc_noc_flit_type)
+    return std_ulogic is
+    variable ret : std_ulogic;
+  begin
+    ret := flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH - 1);
+    return ret;
+  end get_unused_msb_field_misc;
 
   function is_gets (
     msg : noc_msg_type)
@@ -622,14 +791,14 @@ package body nocpackage is
 
   function create_header (
     constant flit_sz : integer;
-    local_y           : local_yx;
-    local_x           : local_yx;
-    remote_y          : local_yx;
-    remote_x          : local_yx;
-    msg_type          : noc_msg_type;
-    reserved          : reserved_field_type)
+    local_y          : local_yx;
+    local_x          : local_yx;
+    remote_y         : local_yx;
+    remote_x         : local_yx;
+    msg_type         : noc_msg_type;
+    reserved         : reserved_field_type)
     return std_logic_vector is
-    variable header : std_logic_vector(flit_sz - 1 downto 0);
+    variable header                            : std_logic_vector(flit_sz - 1 downto 0);
     variable go_left, go_right, go_up, go_down : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
   begin  -- create_header
     header := (others => '0');
@@ -673,21 +842,100 @@ package body nocpackage is
     return header;
   end create_header;
 
+function create_header_mcast (
+    constant flit_sz  : integer;
+    local_y           : local_yx;
+    local_x           : local_yx;
+    remote_y_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_x_arr      : yx_vec(MAX_MCAST_DESTS - 2 downto 0);
+    remote_y_comb     : local_yx;
+    remote_x_comb     : local_yx;
+    mcast_ndests      : integer;
+    msg_type          : noc_msg_type)
+    return std_logic_vector is
+    variable header : std_logic_vector(flit_sz - 1 downto 0);
+    variable go_right, go_left, go_up, go_down, routing: std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
+    variable remote_y, remote_x : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
+    constant RESERVED_OFFSET_MCAST : integer := flit_sz - PREAMBLE_WIDTH - NEXT_ROUTING_WIDTH - MSG_TYPE_WIDTH
+                                                - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MAX_MCAST_DESTS;
+  begin  -- create_header_ndest
+
+    header := (others => '0');
+
+    remote_y := (others => (others => '0'));
+    remote_x := (others => (others => '0'));
+    remote_y(MAX_MCAST_DESTS - 2 downto 0) := remote_y_arr;
+    remote_x(MAX_MCAST_DESTS - 2 downto 0) := remote_x_arr;
+    remote_y(mcast_ndests) := remote_y_comb;
+    remote_x(mcast_ndests) := remote_x_comb;
+
+    header(flit_sz - 1 downto
+           flit_sz - PREAMBLE_WIDTH) := PREAMBLE_HEADER;
+    header(flit_sz - PREAMBLE_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - YX_WIDTH) := local_y;
+    header(flit_sz - PREAMBLE_WIDTH - YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH) := local_x;
+    header(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH) := remote_y(0);
+    header(flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := remote_x(0);
+    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
+    for i in 1 to MAX_MCAST_DESTS - 1 loop
+      header(flit_sz - PREAMBLE_WIDTH - (4+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST - 1 downto
+             flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST) := remote_y(i);
+      header(flit_sz - PREAMBLE_WIDTH - (5+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST - 1 downto
+             flit_sz - PREAMBLE_WIDTH - (6+2*(i-1))*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_OFFSET_MCAST) := remote_x(i);
+    end loop;
+
+
+    for i in 0 to MAX_MCAST_DESTS - 1 loop
+      header(flit_sz - PREAMBLE_WIDTH - (1 + MAX_MCAST_DESTS) * 2 * YX_WIDTH - MSG_TYPE_WIDTH
+             - MAX_MCAST_DESTS - RESERVED_OFFSET_MCAST + i) := '1';
+      if i <= mcast_ndests then
+          if local_x < remote_x(i) then
+            go_right := "01000";
+          else
+            go_right := "10111";
+          end if;
+
+          if local_x > remote_x(i) then
+            go_left := "00100";
+          else
+            go_left := "11011";
+          end if;
+
+          if local_y < remote_y(i) then
+            routing := "01110" and go_left and go_right;
+          else
+            routing := "01101" and go_left and go_right;
+          end if;
+
+          if local_y = remote_y(i) and local_x = remote_x(i) then
+            routing := "10000";
+          end if;
+      end if;
+      header(NEXT_ROUTING_WIDTH-1 downto 0) := header(NEXT_ROUTING_WIDTH-1 downto 0) or routing;
+    end loop;
+
+    return header;
+  end create_header_mcast;
+
   function narrow_to_large_flit (
     narrow_flit : misc_noc_flit_type)
-    return noc_flit_type is
-    variable ret : noc_flit_type;
+    return arch_noc_flit_type is
+    variable ret : arch_noc_flit_type;
     variable preamble : noc_preamble_type;
   begin
     ret := (others => '0');
-    preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & narrow_flit);
+    preamble := get_preamble(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & narrow_flit);
 
     if preamble = PREAMBLE_HEADER or preamble = PREAMBLE_1FLIT then
-      ret(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH) :=
+      ret(ARCH_NOC_FLIT_SIZE - 1 downto ARCH_NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH) :=
         narrow_flit(MISC_NOC_FLIT_SIZE - 1 downto NEXT_ROUTING_WIDTH);
       ret(NEXT_ROUTING_WIDTH - 1 downto 0) := narrow_flit(NEXT_ROUTING_WIDTH - 1 downto 0);
     else
-      ret(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) :=
+      ret(ARCH_NOC_FLIT_SIZE - 1 downto ARCH_NOC_FLIT_SIZE - PREAMBLE_WIDTH) :=
         narrow_flit(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
       ret(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) :=
         narrow_flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
@@ -697,21 +945,21 @@ package body nocpackage is
   end narrow_to_large_flit;
 
   function large_to_narrow_flit (
-    large_flit : noc_flit_type)
+    large_flit : arch_noc_flit_type)
     return misc_noc_flit_type is
-    variable ret : misc_noc_flit_type;
+    variable ret      : misc_noc_flit_type;
     variable preamble : noc_preamble_type;
   begin
     ret := (others => '0');
-    preamble := get_preamble(NOC_FLIT_SIZE, large_flit);
+    preamble := get_preamble(ARCH_NOC_FLIT_SIZE, arch_noc_flit_pad & large_flit);
 
     if preamble = PREAMBLE_HEADER or preamble = PREAMBLE_1FLIT then
       ret(MISC_NOC_FLIT_SIZE - 1 downto NEXT_ROUTING_WIDTH) :=
-        large_flit(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH);
+        large_flit(ARCH_NOC_FLIT_SIZE - 1 downto ARCH_NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH);
       ret(NEXT_ROUTING_WIDTH - 1 downto 0) := large_flit(NEXT_ROUTING_WIDTH - 1 downto 0);
     else
       ret(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) :=
-        large_flit(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH);
+        large_flit(ARCH_NOC_FLIT_SIZE - 1 downto ARCH_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
       ret(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) :=
         large_flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
     end if;
@@ -725,11 +973,11 @@ package body nocpackage is
 -- This function will go to top and ROUTER_PORTS will be passed through parameter
 
   function set_router_ports (
-    constant TECH : integer;
+    constant TECH     : integer;
     constant CFG_XLEN : integer;
     constant CFG_YLEN : integer;
-    constant local_x : local_yx;
-    constant local_y : local_yx)
+    constant local_x  : local_yx;
+    constant local_y  : local_yx)
     return ports_vec is
     variable ports : ports_vec;
   begin

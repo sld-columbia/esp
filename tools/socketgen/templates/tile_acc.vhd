@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
@@ -33,90 +33,76 @@ entity tile_acc is
     this_device        : devid_t              := 0;
     this_irq_type      : integer              := 0;
     this_has_l2        : integer range 0 to 1 := 0;
-    this_has_dvfs      : integer range 0 to 1 := 0;
-    this_has_pll       : integer range 0 to 1 := 0;
-    this_has_dco       : integer range 0 to 1 := 0;
-    this_extra_clk_buf : integer range 0 to 1 := 0);
+    this_has_dco       : integer range 0 to 1 := 0);
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
-    refclk             : in  std_ulogic;
-    pllbypass          : in  std_ulogic;
-    pllclk             : out std_ulogic;
-    dco_clk            : out std_ulogic;
-    dco_rstn           : out std_ulogic;
-    -- Pads configuration
-    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
+    ext_clk            : in  std_ulogic;
+    clk_div            : out std_ulogic;
+    tile_clk_out       : out std_ulogic;
+    tile_rstn_out      : out std_ulogic;
+    -- DCO config
+    dco_freq_sel       : in std_logic_vector(1 downto 0);
+    dco_div_sel        : in std_logic_vector(2 downto 0);
+    dco_fc_sel         : in std_logic_vector(5 downto 0);
+    dco_cc_sel         : in std_logic_vector(5 downto 0);
+    dco_clk_sel        : in std_ulogic;
+    dco_en             : in std_ulogic;
     -- NOC
-    local_x             : out local_yx;
-    local_y             : out local_yx;
-    noc1_mon_noc_vec    : in monitor_noc_type;
-    noc2_mon_noc_vec    : in monitor_noc_type;
-    noc3_mon_noc_vec    : in monitor_noc_type;
-    noc4_mon_noc_vec    : in monitor_noc_type;
-    noc5_mon_noc_vec    : in monitor_noc_type;
-    noc6_mon_noc_vec    : in monitor_noc_type;
-    test1_output_port   : in noc_flit_type;
+    test1_output_port   : in coh_noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
-    test2_output_port   : in noc_flit_type;
+    test2_output_port   : in coh_noc_flit_type;
     test2_data_void_out : in std_ulogic;
     test2_stop_in       : in std_ulogic;
-    test3_output_port   : in noc_flit_type;
+    test3_output_port   : in coh_noc_flit_type;
     test3_data_void_out : in std_ulogic;
     test3_stop_in       : in std_ulogic;
-    test4_output_port   : in noc_flit_type;
+    test4_output_port   : in dma_noc_flit_type;
     test4_data_void_out : in std_ulogic;
     test4_stop_in       : in std_ulogic;
     test5_output_port   : in misc_noc_flit_type;
     test5_data_void_out : in std_ulogic;
     test5_stop_in       : in std_ulogic;
-    test6_output_port   : in noc_flit_type;
+    test6_output_port   : in dma_noc_flit_type;
     test6_data_void_out : in std_ulogic;
     test6_stop_in       : in std_ulogic;
-    test1_input_port    : out noc_flit_type;
+    test1_input_port    : out coh_noc_flit_type;
     test1_data_void_in  : out std_ulogic;
     test1_stop_out      : out std_ulogic;
-    test2_input_port    : out noc_flit_type;
+    test2_input_port    : out coh_noc_flit_type;
     test2_data_void_in  : out std_ulogic;
     test2_stop_out      : out std_ulogic;
-    test3_input_port    : out noc_flit_type;
+    test3_input_port    : out coh_noc_flit_type;
     test3_data_void_in  : out std_ulogic;
     test3_stop_out      : out std_ulogic;
-    test4_input_port    : out noc_flit_type;
+    test4_input_port    : out dma_noc_flit_type;
     test4_data_void_in  : out std_ulogic;
     test4_stop_out      : out std_ulogic;
     test5_input_port    : out misc_noc_flit_type;
     test5_data_void_in  : out std_ulogic;
     test5_stop_out      : out std_ulogic;
-    test6_input_port    : out noc_flit_type;
+    test6_input_port    : out dma_noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
-    mon_dvfs_in         : in  monitor_dvfs_type;
     --Monitor signals
+    mon_noc             : in  monitor_noc_vector(1 to 6);
     mon_acc             : out monitor_acc_type;
     mon_cache           : out monitor_cache_type;
-    mon_dvfs            : out monitor_dvfs_type
+    mon_dvfs            : out monitor_dvfs_type;
+	acc_activity		: out std_ulogic
     );
 
 end;
 
 architecture rtl of tile_acc is
 
-  signal clk_feedthru : std_ulogic;
-  signal dvfs_clk     : std_ulogic;
-
   -- Tile synchronous reset
   signal rst          : std_ulogic;
 
   -- DCO
-  signal dco_clk_int  : std_ulogic;
-  signal dco_en       : std_ulogic;
-  signal dco_clk_sel  : std_ulogic;
-  signal dco_cc_sel   : std_logic_vector(5 downto 0);
-  signal dco_fc_sel   : std_logic_vector(5 downto 0);
-  signal dco_div_sel  : std_logic_vector(2 downto 0);
-  signal dco_freq_sel : std_logic_vector(1 downto 0);
+  signal tile_clk  : std_ulogic;
+  signal dco_clk  : std_ulogic;
   signal dco_clk_lock : std_ulogic;
 
   -- BUS
@@ -127,34 +113,33 @@ architecture rtl of tile_acc is
   signal mon_dvfs_int   : monitor_dvfs_type;
   signal mon_cache_int  : monitor_cache_type;
   signal mon_acc_int    : monitor_acc_type;
-  signal mon_noc        : monitor_noc_vector(1 to 6);
 
   signal coherence_req_wrreq        : std_ulogic;
-  signal coherence_req_data_in      : noc_flit_type;
+  signal coherence_req_data_in      : coh_noc_flit_type;
   signal coherence_req_full         : std_ulogic;
   signal coherence_fwd_rdreq        : std_ulogic;
-  signal coherence_fwd_data_out     : noc_flit_type;
+  signal coherence_fwd_data_out     : coh_noc_flit_type;
   signal coherence_fwd_empty        : std_ulogic;
   signal coherence_rsp_rcv_rdreq    : std_ulogic;
-  signal coherence_rsp_rcv_data_out : noc_flit_type;
+  signal coherence_rsp_rcv_data_out : coh_noc_flit_type;
   signal coherence_rsp_rcv_empty    : std_ulogic;
   signal coherence_rsp_snd_wrreq    : std_ulogic;
-  signal coherence_rsp_snd_data_in  : noc_flit_type;
+  signal coherence_rsp_snd_data_in  : coh_noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
   signal coherence_fwd_snd_wrreq    : std_ulogic;
-  signal coherence_fwd_snd_data_in  : noc_flit_type;
+  signal coherence_fwd_snd_data_in  : coh_noc_flit_type;
   signal coherence_fwd_snd_full     : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
-  signal dma_rcv_data_out           : noc_flit_type;
+  signal dma_rcv_data_out           : dma_noc_flit_type;
   signal dma_rcv_empty              : std_ulogic;
   signal dma_snd_wrreq              : std_ulogic;
-  signal dma_snd_data_in            : noc_flit_type;
+  signal dma_snd_data_in            : dma_noc_flit_type;
   signal dma_snd_full               : std_ulogic;
   signal coherent_dma_rcv_rdreq     : std_ulogic;
-  signal coherent_dma_rcv_data_out  : noc_flit_type;
+  signal coherent_dma_rcv_data_out  : dma_noc_flit_type;
   signal coherent_dma_rcv_empty     : std_ulogic;
   signal coherent_dma_snd_wrreq     : std_ulogic;
-  signal coherent_dma_snd_data_in   : noc_flit_type;
+  signal coherent_dma_snd_data_in   : dma_noc_flit_type;
   signal coherent_dma_snd_full      : std_ulogic;
   signal interrupt_wrreq            : std_ulogic;
   signal interrupt_data_in          : misc_noc_flit_type;
@@ -186,6 +171,8 @@ architecture rtl of tile_acc is
 
   signal this_local_y : local_yx;
   signal this_local_x : local_yx;
+
+  signal tp_acc_rst : std_ulogic;
 
   constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := (
     0 => '1',                           -- CSRs
@@ -242,21 +229,18 @@ architecture rtl of tile_acc is
   
 begin
 
-  local_x <= this_local_x;
-  local_y <= this_local_y;
-
   -- DCO Reset synchronizer
   rst_gen: if this_has_dco /= 0 generate
-    tile_rstn : rstgen
+    tile_rstn_out : rstgen
       generic map (acthigh => 1, syncin => 0)
-      port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
+      port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
   end generate rst_gen;
 
   no_rst_gen: if this_has_dco = 0 generate
     rst <= tile_rst;
   end generate no_rst_gen;
 
-  dco_rstn <= rst;
+  tile_rstn_out <= rst;
 
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
@@ -269,43 +253,32 @@ begin
                                         -- before tile_io.
       port map (
         rstn     => raw_rstn,
-        ext_clk  => refclk,
+        ext_clk  => ext_clk,
         en       => dco_en,
         clk_sel  => dco_clk_sel,
         cc_sel   => dco_cc_sel,
         fc_sel   => dco_fc_sel,
         div_sel  => dco_div_sel,
         freq_sel => dco_freq_sel,
-        clk      => dco_clk_int,
-        clk_div  => pllclk,
+        clk      => dco_clk,
+        clk_div  => clk_div,
         lock     => dco_clk_lock);
 
-    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 0  downto ESP_CSR_DCO_CFG_MSB - 4 - 0  - 1);
-    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 2  downto ESP_CSR_DCO_CFG_MSB - 4 - 2  - 2);
-    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 5  downto ESP_CSR_DCO_CFG_MSB - 4 - 5  - 5);
-    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 11 downto ESP_CSR_DCO_CFG_MSB - 4 - 11 - 5);
-    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
-    dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
-
-    -- PLL reference clock comes from DCO
-    dvfs_clk <= dco_clk_int;
-    dco_clk <= dco_clk_int;
+    tile_clk <= dco_clk;
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco = 0 generate
-    dco_clk      <= refclk;
+    tile_clk     <= ext_clk;
     dco_clk_lock <= '1';
-    -- clk_feedthru is generated by PLL if present, or connected to refclk
-    pllclk <= clk_feedthru;
-    -- PLL reference clock comes form refclk pin
-    dvfs_clk <= refclk;
+    clk_div <= tile_clk;
   end generate no_dco_gen;
+
+  tile_clk_out <= tile_clk;
 
   -----------------------------------------------------------------------------
   -- Tile parameters
   -----------------------------------------------------------------------------
   tile_id          <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
-  pad_cfg          <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
 
   this_pindex      <= tile_apb_idx(tile_id);
   this_paddr       <= tile_apb_paddr(tile_id);
@@ -357,13 +330,12 @@ begin
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
-      clk              => clk_feedthru,
+      clk              => tile_clk,
       local_y          => this_local_y,
       local_x          => this_local_x,
       apbi             => apbi,
       apbo             => apbo,
       pready           => pready_noc,
-      dvfs_transient   => mon_dvfs_int.transient,
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,
       apb_snd_full     => apb_snd_full,
@@ -377,19 +349,12 @@ begin
   mon_cache <= mon_cache_int;
   mon_acc   <= mon_acc_int;
 
-  mon_noc(1) <= noc1_mon_noc_vec;
-  mon_noc(2) <= noc2_mon_noc_vec;
-  mon_noc(3) <= noc3_mon_noc_vec;
-  mon_noc(4) <= noc4_mon_noc_vec;
-  mon_noc(5) <= noc5_mon_noc_vec;
-  mon_noc(6) <= noc6_mon_noc_vec;
-
   -- Memory mapped registers
   acc_tile_csr : esp_tile_csr
     generic map(
       pindex  => 0)
     port map(
-      clk => clk_feedthru,
+      clk => tile_clk,
       rstn => rst,
       pconfig => this_csr_pconfig,
       mon_ddr => monitor_ddr_none,
@@ -401,6 +366,7 @@ begin
       mon_dvfs => mon_dvfs_int,
       tile_config => tile_config,
       srst => open,
+      tp_acc_rst => tp_acc_rst,
       apbi => apbi,
       apbo => apbo(0)
     );
@@ -410,7 +376,7 @@ begin
       tech => CFG_FABTECH)
     port map (
       rst                        => rst,
-      clk                        => clk_feedthru,
+      clk                        => tile_clk,
       coherence_req_wrreq        => coherence_req_wrreq,
       coherence_req_data_in      => coherence_req_data_in,
       coherence_req_full         => coherence_req_full,

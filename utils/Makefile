@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ##########################
@@ -39,9 +39,9 @@ include $(ESP_ROOT)/utils/make/design.mk
 
 ### NoC flit-width (not including head and tail bits)
 ifneq ($(findstring ariane, $(CPU_ARCH)),)
-NOC_WIDTH = 64
+ARCH_BITS = 64
 else
-NOC_WIDTH = 32
+ARCH_BITS = 32
 endif
 
 
@@ -141,6 +141,9 @@ include $(ESP_ROOT)/utils/make/ncsim.mk
 ### Genus Targets
 include $(ESP_ROOT)/utils/make/genus.mk
 
+
+### Asic Integration Targets
+include $(ESP_ROOT)/utils/make/asicgen.mk
 
 ### FPGA Deploy targets ###
 include $(ESP_ROOT)/utils/make/fpga.mk

@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -63,9 +63,11 @@ begin  -- architecture rtl
     end if;
   end process;
 
-  gf12_gen : if (tech = gf12) generate
+  --gf12_gen : if (tech = gf12) generate
+  asic_gen : if (tech = asic) generate
 
-    x0 : gf12_dco
+    --x0 : gf12_dco
+    x0 : asic_dco
       generic map (
         enable_div2 => enable_div2)
       port map (
@@ -80,6 +82,27 @@ begin  -- architecture rtl
         CLK      => clk_int,
         CLK_DIV2    => clk_div2,
         CLK_DIV2_90 => clk_div2_90,
+        CLK_DIV  => clk_div);
+
+    clk <= clk_int;
+    lock <= count(dlog);
+
+  end generate;
+
+  inferred_gen : if (tech = inferred) generate
+
+    --x0 : gf12_dco
+    x0 : behav_dco
+      port map (
+        RSTN     => rstn,
+        EXT_CLK  => ext_clk,
+        EN       => en,
+        CLK_SEL  => clk_sel,
+        CC_SEL   => cc_sel,
+        FC_SEL   => fc_sel,
+        DIV_SEL  => div_sel,
+        FREQ_SEL => freq_sel,
+        CLK      => clk_int,
         CLK_DIV  => clk_div);
 
     clk <= clk_int;

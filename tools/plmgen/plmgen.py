@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
@@ -331,7 +331,7 @@ class memory():
         fd.write("//\n")
         fd.write("// Created with the ESP Memory Generator\n")
         fd.write("//\n")
-        fd.write("// Copyright (c) 2011-2023 Columbia University, System Level Design Group\n")
+        fd.write("// Copyright (c) 2011-2024 Columbia University, System Level Design Group\n")
         fd.write("// SPDX-License-Identifier: Apache-2.0\n")
         fd.write("//\n")
         fd.write("// @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
@@ -586,8 +586,11 @@ class memory():
         fd.write("        for (hh = 0; hh < " + str(self.hhbanks) + "; hh = hh + 1) begin : gen_wires_hhbanks\n")
         fd.write("\n")
         fd.write("          " + self.bank_type.name + " bank_i(\n")
-        fd.write("              .CLK(CLK)")
         for p in range(0, self.bank_type.ports):
+            if p == 0:
+                fd.write("              .CLK" + str(p) + "(CLK)")
+            else:
+                fd.write(",\n              .CLK" + str(p) + "(CLK)")
             fd.write(",\n              .CE"  + str(p) + "(bank_CE[d][h][v][hh]["  + str(p) + "])")
             fd.write(",\n              .A"   + str(p) + "(bank_A[d][h][v][hh]["   + str(p) + "])")
             fd.write(",\n              .D"   + str(p) + "(bank_D[d][h][v][hh]["   + str(p) + "])")
@@ -682,7 +685,7 @@ class memory():
         fd.write("//\n")
         fd.write("// Created with the ESP Memory Generator\n")
         fd.write("//\n")
-        fd.write("// Copyright (c) 2011-2023 Columbia University, System Level Design Group\n")
+        fd.write("// Copyright (c) 2011-2024 Columbia University, System Level Design Group\n")
         fd.write("// SPDX-License-Identifier: Apache-2.0\n")
         fd.write("//\n")
         fd.write("// @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
@@ -889,7 +892,7 @@ class memory():
         fd.write("\n")
         fd.write("  // Memory instance\n")
         fd.write("  " + self.name + " dut (\n")
-        fd.write("    .CLK(CLK)")
+        fd.write("              .CLK(CLK)")
         for i in range(0, self.write_interfaces):
             fd.write(",\n    .CE" + str(i) + "(CE" + str(i) + ")")
             fd.write(",\n    .A" + str(i) + "(A" + str(i) + ")")
@@ -915,7 +918,7 @@ class memory():
         fd.write("//\n")
         fd.write("// Created with the ESP Memory Generator\n")
         fd.write("//\n")
-        fd.write("// Copyright (c) 2011-2023 Columbia University, System Level Design Group\n")
+        fd.write("// Copyright (c) 2011-2024 Columbia University, System Level Design Group\n")
         fd.write("// SPDX-License-Identifier: Apache-2.0\n")
         fd.write("//\n")
         fd.write("// @author Paolo Mantovani <paolo@cs.columbia.edu>\n")

@@ -1,13 +1,14 @@
 `timescale 1 ps / 1 ps
 // Copyright (c) 2014-2021, Columbia University
-module BRAM_2048x8( CLK, A0, D0, Q0, WE0, WEM0, CE0, A1, D1, Q1, WE1, WEM1, CE1 );
-	input CLK;
+module BRAM_2048x8( CLK0, A0, D0, Q0, WE0, WEM0, CE0, CLK1, A1, D1, Q1, WE1, WEM1, CE1 );
+	input CLK0;
 	input [10:0] A0;
 	input [7:0] D0;
 	output [7:0] Q0;
 	input WE0;
 	input [7:0] WEM0;
 	input CE0;
+	input CLK1;
 	input [10:0] A1;
 	input [7:0] D1;
 	output [7:0] Q1;
@@ -46,8 +47,8 @@ module BRAM_2048x8( CLK, A0, D0, Q0, WE0, WEM0, CE0, A1, D1, Q1, WE1, WEM1, CE1 
 		.DOPB(DOPB_float),
 		.ADDRA(A0_tmp),
 		.ADDRB(A1_tmp),
-		.CLKA(CLK),
-		.CLKB(CLK),
+		.CLKA(CLK0),
+		.CLKB(CLK1),
 		.DIA(D0_tmp),
 		.DIB(D1_tmp),
 		.DIPA(1'b0),

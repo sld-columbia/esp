@@ -44,7 +44,9 @@ constant inferred    : integer := 0;
 constant virtex7     : integer := 1;
 constant virtexup    : integer := 2;
 constant virtexu     : integer := 3;
-constant gf12        : integer := 4;
+constant asic        : integer := 4;
+--constant gf12        : integer := 4;
+
 
 constant DEFMEMTECH  : integer := inferred;
 constant DEFPADTECH  : integer := inferred;
@@ -120,7 +122,8 @@ constant has_dpram : tech_ability_type :=
 	(virtex7 => 1, virtexup => 1, virtexu => 1, others => 0);
 
 constant has_sram64 : tech_ability_type :=
-	(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
+	(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, asic => 1, others => 0);
+	--(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
 
 constant has_sram128bw : tech_ability_type :=
 	(virtex7 => 1, virtexup => 1, virtexu => 1, others => 0);
@@ -138,7 +141,8 @@ constant has_sram_2pbw : tech_ability_type :=
         (others => 0);
 
 constant has_srambw : tech_ability_type :=
-	(virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
+	(virtex7 => 1, virtexup => 1, virtexu => 1, asic => 1, others => 0);
+	--(virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
 
 constant has_2pfifo : tech_ability_type :=
         (others => 0);
@@ -162,10 +166,12 @@ constant has_sram_ecc :  tech_ability_type :=
         (virtex7 => 1, virtexup => 1, virtexu => 1, others => 0);
 
 constant padoen_polarity : tech_ability_type :=
-        (gf12 => 1, others => 0);
+        (asic => 1, others => 0);
+        --(gf12 => 1, others => 0);
 
 constant has_pads : tech_ability_type :=
-	(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
+	(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, asic => 1, others => 0);
+	--(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
 
 constant has_ds_pads : tech_ability_type :=
 	(inferred => 0, virtex7 => 1, virtexup => 1, virtexu => 1, others => 0);
@@ -195,7 +201,8 @@ constant tap_tck_gated : tech_ability_type :=
         (others => 0);
 
 constant need_extra_sync_reset : tech_ability_type :=
-	(gf12 => 1, others => 0);
+	(asic => 1, others => 0);
+	--(gf12 => 1, others => 0);
 
 constant is_unisim : tech_ability_type :=
         (virtex7 => 1, virtexup => 1, virtexu => 1, others => 0);
@@ -261,7 +268,8 @@ constant has_pll : tech_ability_type :=
      (virtex7 => 1, virtexup => 1, virtexu => 1,  others => 0);
 
 constant has_dco : tech_ability_type :=
-     (gf12 => 1, others => 0);
+     (asic => 1, inferred => 1, others => 0);
+--     (gf12 => 1, others => 0);
 
 -- pragma translate_off
 
@@ -269,10 +277,11 @@ subtype tech_description is string(1 to 10);
 
 type tech_table_type is array (0 to NTECH) of tech_description;
 -------------------------------------------------------------------------------
-constant tech_table : tech_table_type := (
+constant tech_table :     tech_table_type := (
   inferred  => "inferred  ", virtex7   => "virtex7   ",
   virtexup  => "virtexup  ", virtexu   => "virtexu   ",
-  gf12      => "gf12      ");
+  asic      => "asic      ");
+--  gf12      => "gf12      ");
 
 -- pragma translate_on
 
@@ -1177,6 +1186,16 @@ component clkrand is
   );
 end component;
 
+component clkdiv1234 is
+  port(
+    rstn     :  in  std_ulogic;
+    clkin    :  in  std_ulogic;
+    clk_div1 :  out std_ulogic;
+    clk_div2 :  out std_ulogic;
+    clk_div3 :  out std_ulogic;
+    clk_div4 :  out std_ulogic
+  );
+end component;
 
 ---------------------------------------------------------------------------
 -- DDR registers and PHY

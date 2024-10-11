@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
@@ -37,30 +37,30 @@ entity tile_mem is
   generic (
     SIMULATION   : boolean := false;
     this_has_dco : integer range 0 to 1 := 0;
-    this_has_ddr : integer range 0 to 1 := 1;
-    dco_rst_cfg  : std_logic_vector(30 downto 0) := (others => '0'));
+    this_has_ddr : integer range 0 to 1 := 1);
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
-    refclk             : in  std_ulogic;
-    clk                : in  std_ulogic;
-    pllbypass          : in  std_ulogic;
-    pllclk             : out std_ulogic;
-    dco_clk            : out std_ulogic;
-    -- DDR controller ports (this_has_ddr -> 1)
+    ext_clk            : in  std_ulogic;
+    clk_div            : out std_ulogic;
+    tile_clk_out       : out std_ulogic;
+    -- DCO config
+    dco_freq_sel       : in std_logic_vector(1 downto 0);
+    dco_div_sel        : in std_logic_vector(2 downto 0);
+    dco_fc_sel         : in std_logic_vector(5 downto 0);
+    dco_cc_sel         : in std_logic_vector(5 downto 0);
+    dco_clk_sel        : in std_ulogic;
+    dco_en             : in std_ulogic;  
+    dco_clk_delay_sel  : in std_logic_vector(11 downto 0);
     dco_clk_div2       : out std_ulogic;
     dco_clk_div2_90    : out std_ulogic;
-    dco_rstn           : out std_ulogic;
+    tile_rstn_out          : out std_ulogic;
     phy_rstn           : out std_ulogic;
     ddr_ahbsi          : out ahb_slv_in_type;
     ddr_ahbso          : in  ahb_slv_out_type;
-    ddr_cfg0           : out std_logic_vector(31 downto 0);
-    ddr_cfg1           : out std_logic_vector(31 downto 0);
-    ddr_cfg2           : out std_logic_vector(31 downto 0);
-    mem_id             : out integer range 0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1;
     -- FPGA proxy memory link (this_has_ddr -> 0)
-    fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
-    fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);
+    fpga_data_in       : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
+    fpga_data_out      : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     fpga_oen           : out std_ulogic;
     fpga_valid_in      : in  std_ulogic;
     fpga_valid_out     : out std_ulogic;
@@ -68,56 +68,47 @@ entity tile_mem is
     fpga_clk_out       : out std_ulogic;
     fpga_credit_in     : in  std_ulogic;
     fpga_credit_out    : out std_ulogic;
-    -- Pads configuration
-    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
-    local_x            : out local_yx;
-    local_y            : out local_yx;
-    noc1_mon_noc_vec   : in monitor_noc_type;
-    noc2_mon_noc_vec   : in monitor_noc_type;
-    noc3_mon_noc_vec   : in monitor_noc_type;
-    noc4_mon_noc_vec   : in monitor_noc_type;
-    noc5_mon_noc_vec   : in monitor_noc_type;
-    noc6_mon_noc_vec   : in monitor_noc_type;
-    test1_output_port   : in noc_flit_type;
+    test1_output_port   : in coh_noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
-    test2_output_port   : in noc_flit_type;
+    test2_output_port   : in coh_noc_flit_type;
     test2_data_void_out : in std_ulogic;
     test2_stop_in       : in std_ulogic;
-    test3_output_port   : in noc_flit_type;
+    test3_output_port   : in coh_noc_flit_type;
     test3_data_void_out : in std_ulogic;
     test3_stop_in       : in std_ulogic;
-    test4_output_port   : in noc_flit_type;
+    test4_output_port   : in dma_noc_flit_type;
     test4_data_void_out : in std_ulogic;
     test4_stop_in       : in std_ulogic;
     test5_output_port   : in misc_noc_flit_type;
     test5_data_void_out : in std_ulogic;
     test5_stop_in       : in std_ulogic;
-    test6_output_port   : in noc_flit_type;
+    test6_output_port   : in dma_noc_flit_type;
     test6_data_void_out : in std_ulogic;
     test6_stop_in       : in std_ulogic;
-    test1_input_port    : out noc_flit_type;
+    test1_input_port    : out coh_noc_flit_type;
     test1_data_void_in  : out std_ulogic;
     test1_stop_out      : out std_ulogic;
-    test2_input_port    : out noc_flit_type;
+    test2_input_port    : out coh_noc_flit_type;
     test2_data_void_in  : out std_ulogic;
     test2_stop_out      : out std_ulogic;
-    test3_input_port    : out noc_flit_type;
+    test3_input_port    : out coh_noc_flit_type;
     test3_data_void_in  : out std_ulogic;
     test3_stop_out      : out std_ulogic;
-    test4_input_port    : out noc_flit_type;
+    test4_input_port    : out dma_noc_flit_type;
     test4_data_void_in  : out std_ulogic;
     test4_stop_out      : out std_ulogic;
     test5_input_port    : out misc_noc_flit_type;
     test5_data_void_in  : out std_ulogic;
     test5_stop_out      : out std_ulogic;
-    test6_input_port    : out noc_flit_type;
+    test6_input_port    : out dma_noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
-    mon_mem            : out monitor_mem_type;
-    mon_cache          : out monitor_cache_type;
-    mon_dvfs           : out monitor_dvfs_type);
+    mon_noc             : in  monitor_noc_vector(1 to 6);
+    mon_mem             : out monitor_mem_type;
+    mon_cache           : out monitor_cache_type;
+    mon_dvfs            : out monitor_dvfs_type);
 end;
 
 
@@ -127,19 +118,13 @@ architecture rtl of tile_mem is
   signal rst : std_ulogic;
 
   -- DCO
-  signal dco_en       : std_ulogic;
-  signal dco_clk_sel  : std_ulogic;
-  signal dco_cc_sel   : std_logic_vector(5 downto 0);
-  signal dco_fc_sel   : std_logic_vector(5 downto 0);
-  signal dco_div_sel  : std_logic_vector(2 downto 0);
-  signal dco_freq_sel : std_logic_vector(1 downto 0);
   signal dco_clk_lock : std_ulogic;
-  signal dco_clk_int  : std_ulogic;
+  signal dco_clk      : std_ulogic;
+  signal tile_clk      : std_ulogic;
 
   -- Delay line for DDR ui_clk delay
   signal dco_clk_div2_int    : std_logic;
   signal dco_clk_div2_90_int : std_logic;
-  signal dco_clk_delay_sel   : std_logic_vector(3 downto 0);
   component DELAY_CELL_GF12_C14 is
     port (
       data_in : in std_logic;
@@ -152,36 +137,36 @@ architecture rtl of tile_mem is
 
   -- Queues
   signal coherence_req_rdreq        : std_ulogic;
-  signal coherence_req_data_out     : noc_flit_type;
+  signal coherence_req_data_out     : coh_noc_flit_type;
   signal coherence_req_empty        : std_ulogic;
   signal coherence_fwd_wrreq        : std_ulogic;
-  signal coherence_fwd_data_in      : noc_flit_type;
+  signal coherence_fwd_data_in      : coh_noc_flit_type;
   signal coherence_fwd_full         : std_ulogic;
   signal coherence_rsp_snd_wrreq    : std_ulogic;
-  signal coherence_rsp_snd_data_in  : noc_flit_type;
+  signal coherence_rsp_snd_data_in  : coh_noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
   signal coherence_rsp_rcv_rdreq    : std_ulogic;
-  signal coherence_rsp_rcv_data_out : noc_flit_type;
+  signal coherence_rsp_rcv_data_out : coh_noc_flit_type;
   signal coherence_rsp_rcv_empty    : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
-  signal dma_rcv_data_out           : noc_flit_type;
+  signal dma_rcv_data_out           : dma_noc_flit_type;
   signal dma_rcv_empty              : std_ulogic;
   signal dma_snd_wrreq              : std_ulogic;
-  signal dma_snd_data_in            : noc_flit_type;
+  signal dma_snd_data_in            : dma_noc_flit_type;
   signal dma_snd_full               : std_ulogic;
   signal dma_snd_atleast_4slots     : std_ulogic;
   signal dma_snd_exactly_3slots     : std_ulogic;
   signal coherent_dma_rcv_rdreq     : std_ulogic;
-  signal coherent_dma_rcv_data_out  : noc_flit_type;
+  signal coherent_dma_rcv_data_out  : dma_noc_flit_type;
   signal coherent_dma_rcv_empty     : std_ulogic;
   signal coherent_dma_snd_wrreq     : std_ulogic;
-  signal coherent_dma_snd_data_in   : noc_flit_type;
+  signal coherent_dma_snd_data_in   : dma_noc_flit_type;
   signal coherent_dma_snd_full      : std_ulogic;
   signal coherent_dma_snd_atleast_4slots : std_ulogic;
   signal coherent_dma_snd_exactly_3slots : std_ulogic;
   -- These requests are delivered through NoC5 (32 bits always)
   -- however, the proxy that handles expects a flit size in
-  -- accordance with ARCH_BITS. Hence we need to pad and move
+  -- accordance with CFG_MEM_LINK_BITS. Hence we need to pad and move
   -- header info and preamble to the right bit position
   signal remote_ahbs_rcv_rdreq      : std_ulogic;
   signal remote_ahbs_rcv_data_out   : misc_noc_flit_type;
@@ -191,10 +176,10 @@ architecture rtl of tile_mem is
   signal remote_ahbs_snd_full       : std_ulogic;
   -- Extended remote_ahbs_* signals that
   signal remote_ahbm_rcv_rdreq      : std_ulogic;
-  signal remote_ahbm_rcv_data_out   : noc_flit_type;
+  signal remote_ahbm_rcv_data_out   : arch_noc_flit_type;
   signal remote_ahbm_rcv_empty      : std_ulogic;
   signal remote_ahbm_snd_wrreq      : std_ulogic;
-  signal remote_ahbm_snd_data_in    : noc_flit_type;
+  signal remote_ahbm_snd_data_in    : arch_noc_flit_type;
   signal remote_ahbm_snd_full       : std_ulogic;
   --
   signal apb_rcv_rdreq              : std_ulogic;
@@ -207,10 +192,10 @@ architecture rtl of tile_mem is
   -- LLC/FPGA-based memory link
   signal llc_ext_req_ready : std_ulogic;
   signal llc_ext_req_valid : std_ulogic;
-  signal llc_ext_req_data  : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal llc_ext_req_data  : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   signal llc_ext_rsp_ready : std_ulogic;
   signal llc_ext_rsp_valid : std_ulogic;
-  signal llc_ext_rsp_data  : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal llc_ext_rsp_data  : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
 
 
   -- Bus
@@ -228,7 +213,6 @@ architecture rtl of tile_mem is
   signal mon_mem_int    : monitor_mem_type;
   signal mon_cache_int  : monitor_cache_type;
   signal mon_dvfs_int   : monitor_dvfs_type;
-  signal mon_noc        : monitor_noc_vector(1 to 6);
   signal mon_ddr        : monitor_ddr_type;
 
   -- Soft reset
@@ -265,13 +249,10 @@ architecture rtl of tile_mem is
 
 begin
 
-  local_x <= this_local_x;
-  local_y <= this_local_y;
-
   -- DCO Reset synchronizer
   rst_gen: if this_has_dco /= 0 generate
     rst_ddr: if this_has_ddr /= 0 generate
-      tile_rstn : rstgen
+      tile_rstn_out : rstgen
         generic map (acthigh => 1, syncin => 0)
         port map (tile_rst, dco_clk_div2_90_int, dco_clk_lock, rst, open);
 
@@ -282,9 +263,9 @@ begin
     end generate rst_ddr;
 
     rst_mem: if this_has_ddr = 0 generate
-      tile_rstn : rstgen
+      tile_rstn_out : rstgen
         generic map (acthigh => 1, syncin => 0)
-        port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
+        port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
       phy_rstn <= rst;
     end generate rst_mem;
 
@@ -295,7 +276,7 @@ begin
     phy_rstn <= tile_rst;
   end generate no_rst_gen;
 
-  dco_rstn <= rst;
+  tile_rstn_out <= rst;
 
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
@@ -308,68 +289,53 @@ begin
                                         -- before tile_io.
       port map (
         rstn     => raw_rstn,
-        ext_clk  => refclk,
+        ext_clk  => ext_clk,
         en       => dco_en,
         clk_sel  => dco_clk_sel,
         cc_sel   => dco_cc_sel,
         fc_sel   => dco_fc_sel,
         div_sel  => dco_div_sel,
         freq_sel => dco_freq_sel,
-        clk      => dco_clk_int,
+        clk      => dco_clk,
         clk_div2 => dco_clk_div2_int,
         clk_div2_90 => open,
-        clk_div  => pllclk,
+        clk_div  => clk_div,
         lock     => dco_clk_lock);
 
-    clk_delay_gf12_gen: if CFG_FABTECH = gf12 generate
+
+    clk_delay_asic_gen: if CFG_FABTECH = asic and this_has_ddr /= 0 generate
       DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
         port map (
           data_in  => dco_clk_div2_int,
-          sel      => dco_clk_delay_sel,
+          sel      => dco_clk_delay_sel(3 downto 0),
           data_out => dco_clk_div2_90_int);
-    end generate clk_delay_gf12_gen;
 
-    noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
+      tile_clk <= dco_clk_div2_90_int;
+    end generate clk_delay_asic_gen;
+
+    noc_clk_delay_gen: if this_has_ddr = 0 generate
       dco_clk_div2_90_int <= dco_clk_div2_int;
+      tile_clk <= dco_clk;
     end generate noc_clk_delay_gen;
 
   end generate dco_gen;
 
-
-  -- DCO runtime reconfiguration
-  dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  - 1);
-  dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  - 2);
-  dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
-  dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
-  dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
-  dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
-
   no_dco_gen: if this_has_dco = 0 generate
-    pllclk              <= '0';
-    dco_clk_int         <= refclk;
+    clk_div             <= ext_clk;
+    tile_clk            <= ext_clk;
     dco_clk_lock        <= '1';
     dco_clk_div2_int    <= '0';
     dco_clk_div2_90_int <= '0';
   end generate no_dco_gen;
 
-  dco_clk         <= dco_clk_int;
   dco_clk_div2    <= dco_clk_div2_int;
   dco_clk_div2_90 <= dco_clk_div2_90_int;
-
-  -- DDR Controller configuration
-  ddr_cfg0 <= tile_config(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
-  ddr_cfg1 <= tile_config(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
-  ddr_cfg2 <= tile_config(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
-
-  dco_clk_delay_sel <= tile_config(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_MSB - 3);
+  tile_clk_out    <= tile_clk;
 
   -----------------------------------------------------------------------------
   -- Tile parameters
   -----------------------------------------------------------------------------
   tile_id           <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
-  pad_cfg           <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
-
-  mem_id            <= this_mem_id;
 
   this_mem_id       <= tile_mem_id(tile_id);
   this_ddr_hindex   <= ddr_hindex(this_mem_id);
@@ -395,7 +361,7 @@ begin
                  rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
                  nahbm   => maxahbm, nahbs => maxahbs,
                  cfgmask => 0)
-    port map (rst, clk, ahbmi, ahbmo, ahbsi, ahbso);
+    port map (rst, tile_clk, ahbmi, ahbmo, ahbsi, ahbso);
   end generate ahb_bus_gen;
 
   no_ahb_bus_gen: if this_has_ddr = 0 generate
@@ -450,7 +416,7 @@ begin
   -- DVFS monitor
   mon_dvfs_int.vf        <= "1000";         --run at highest frequency always
   mon_dvfs_int.transient <= '0';
-  mon_dvfs_int.clk       <= clk;
+  mon_dvfs_int.clk       <= tile_clk;
   mon_dvfs_int.acc_idle  <= '0';
   mon_dvfs_int.traffic   <= '0';
   mon_dvfs_int.burst     <= '0';
@@ -458,7 +424,7 @@ begin
   mon_dvfs <= mon_dvfs_int;
 
   -- Memory access monitor
-  mon_mem_int.clk              <= clk;
+  mon_mem_int.clk              <= tile_clk;
   mon_mem_int.coherent_req     <= coherence_req_rdreq;
   mon_mem_int.coherent_fwd     <= coherence_fwd_wrreq;
   mon_mem_int.coherent_rsp_rcv <= coherence_rsp_rcv_rdreq;
@@ -472,14 +438,7 @@ begin
 
   mon_cache <= mon_cache_int;
 
-  mon_noc(1) <= noc1_mon_noc_vec;
-  mon_noc(2) <= noc2_mon_noc_vec;
-  mon_noc(3) <= noc3_mon_noc_vec;
-  mon_noc(4) <= noc4_mon_noc_vec;
-  mon_noc(5) <= noc5_mon_noc_vec;
-  mon_noc(6) <= noc6_mon_noc_vec;
-
-  mon_ddr.clk <= clk;
+  mon_ddr.clk <= tile_clk;
   detect_ddr_access : process(ahbsi)
   begin
     if this_has_ddr = 1 then
@@ -496,10 +455,9 @@ begin
   --Memory mapped registers
   mem_tile_csr : esp_tile_csr
     generic map(
-      pindex      => 0,
-      dco_rst_cfg => dco_rst_cfg)
+      pindex      => 0)
     port map(
-      clk => clk,
+      clk => tile_clk,
       rstn => rst,
       pconfig => this_csr_pconfig,
       mon_ddr => mon_ddr,
@@ -511,6 +469,7 @@ begin
       mon_dvfs => mon_dvfs_int,
       tile_config => tile_config,
       srst => srst,
+      tp_acc_rst => open,
       apbi => apbi,
       apbo => apbo(0)
     );
@@ -525,17 +484,18 @@ begin
     -- Hendle CPU coherent requests and accelerator non-coherent DMA
     noc2ahbmst_1 : noc2ahbmst
       generic map (
-        tech        => CFG_FABTECH,
-        hindex      => 0,
-        axitran     => GLOB_CPU_AXI,
-        little_end  => GLOB_CPU_RISCV,
-        eth_dma     => 0,
-        narrow_noc  => 0,
-        cacheline   => CFG_DLINE,
-        l2_cache_en => CFG_L2_ENABLE)
+        tech                => CFG_FABTECH,
+        hindex              => 0,
+        axitran             => GLOB_CPU_AXI,
+        little_end          => GLOB_CPU_RISCV,
+        eth_dma             => 0,
+        narrow_noc          => 0,
+        cacheline           => CFG_DLINE,
+        l2_cache_en         => CFG_L2_ENABLE,
+        this_coh_flit_size  => COH_NOC_FLIT_SIZE)
       port map (
         rst                       => rst,
-        clk                       => clk,
+        clk                       => tile_clk,
         local_y                   => this_local_y,
         local_x                   => this_local_x,
         ahbmi                     => ahbmi,
@@ -572,17 +532,18 @@ begin
     -- Handle JTAG or EDCL requests to memory as well as ETH DMA
     noc2ahbmst_2 : noc2ahbmst
       generic map (
-        tech        => CFG_FABTECH,
-        hindex      => 1,
-        axitran     => 0,
-        little_end  => 0,
-        eth_dma     => 1,               -- Exception for fixed 32-bits DMA
-        narrow_noc  => 0,
-        cacheline   => 1,
-        l2_cache_en => 0)
+        tech                => CFG_FABTECH,
+        hindex              => 1,
+        axitran             => 0,
+        little_end          => 0,
+        eth_dma             => 1,               -- Exception for fixed 32-bits DMA
+        narrow_noc          => 0,
+        cacheline           => 1,
+        l2_cache_en         => 0,
+        this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
         rst                       => rst,
-        clk                       => clk,
+        clk                       => tile_clk,
         local_y                   => this_local_y,
         local_x                   => this_local_x,
         ahbmi                     => ahbmi,
@@ -614,17 +575,18 @@ begin
     -- Handle accelerators non-coherent DMA
     noc2ahbmst_1 : noc2ahbmst
       generic map (
-        tech        => CFG_FABTECH,
-        hindex      => 0,
-        axitran     => GLOB_CPU_AXI,
-        little_end  => GLOB_CPU_RISCV,
-        eth_dma     => 0,
-        narrow_noc  => 0,
-        cacheline   => CFG_DLINE,
-        l2_cache_en => CFG_L2_ENABLE)
+        tech                => CFG_FABTECH,
+        hindex              => 0,
+        axitran             => GLOB_CPU_AXI,
+        little_end          => GLOB_CPU_RISCV,
+        eth_dma             => 0,
+        narrow_noc          => 0,
+        cacheline           => CFG_DLINE,
+        l2_cache_en         => CFG_L2_ENABLE,
+        this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
         rst                       => rst,
-        clk                       => clk,
+        clk                       => tile_clk,
         local_y                   => this_local_y,
         local_x                   => this_local_x,
         ahbmi                     => ahbmi,
@@ -678,7 +640,7 @@ begin
         cache_x       => cache_x)
       port map (
         rst                        => llc_rstn,
-        clk                        => clk,
+        clk                        => tile_clk,
         local_y                    => this_local_y,
         local_x                    => this_local_x,
         pconfig                    => this_llc_pconfig,
@@ -728,7 +690,7 @@ begin
     -- This option is only supported with the ESP cache hierarchy enabled
     mem2ext_1: mem2ext
       port map (
-        clk               => clk,
+        clk               => tile_clk,
         rstn              => rst,
         local_y           => this_local_y,
         local_x           => this_local_x,
@@ -774,17 +736,18 @@ begin
     -- Handle JTAG or EDCL requests to memory
     noc2ahbmst_2 : noc2ahbmst
       generic map (
-        tech        => CFG_FABTECH,
-        hindex      => 1,
-        axitran     => 0,
-        little_end  => 0,
-        eth_dma     => 0,
-        narrow_noc  => 0,
-        cacheline   => 1,
-        l2_cache_en => 0)
+        tech                => CFG_FABTECH,
+        hindex              => 1,
+        axitran             => 0,
+        little_end          => 0,
+        eth_dma             => 0,
+        narrow_noc          => 0,
+        cacheline           => 1,
+        l2_cache_en         => 0,
+        this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
         rst                       => rst,
-        clk                       => clk,
+        clk                       => tile_clk,
         local_y                   => this_local_y,
         local_x                   => this_local_x,
         ahbmi                     => ahbmi,
@@ -832,13 +795,12 @@ begin
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
-      clk              => clk,
+      clk              => tile_clk,
       local_y          => this_local_y,
       local_x          => this_local_x,
       apbi             => apbi,
       apbo             => apbo,
       pready           => '1',
-      dvfs_transient   => '0',
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,
       apb_snd_full     => apb_snd_full,
@@ -856,7 +818,7 @@ begin
       tech => CFG_FABTECH)
     port map (
       rst                        => rst,
-      clk                        => clk,
+      clk                        => tile_clk,
       coherence_req_rdreq        => coherence_req_rdreq,
       coherence_req_data_out     => coherence_req_data_out,
       coherence_req_empty        => coherence_req_empty,

@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -18,7 +18,7 @@ library unisim;
 use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.sldacc.all;
 use work.tile.all;
 use work.nocpackage.all;
@@ -49,7 +49,7 @@ entity EPOCHS0_TOP is
     clk_div_acc0    : out   std_logic;
     clk_div_acc1    : out   std_logic;
     -- FPGA proxy memory link
-    fpga_data       : inout std_logic_vector(4 * 64 - 1 downto 0);
+    fpga_data       : inout std_logic_vector(4 * CFG_MEM_LINK_BITS - 1 downto 0);
     fpga_valid_in   : in    std_logic_vector(3 downto 0);
     fpga_valid_out  : out   std_logic_vector(3 downto 0);
     fpga_clk_in     : in    std_logic_vector(3 downto 0);
@@ -170,52 +170,52 @@ architecture rtl of EPOCHS0_TOP is
   type handshake_vec is array (CFG_TILES_NUM-1 downto 0) of std_logic_vector(3 downto 0);
 
   -- NOC Signals
-  signal noc1_data_n_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_s_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_w_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_e_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_n_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_s_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_w_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_e_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc1_data_void_in  : handshake_vec;
   signal noc1_stop_in       : handshake_vec;
-  signal noc1_data_n_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_s_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_w_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc1_data_e_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_n_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_s_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_w_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc1_data_e_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc1_data_void_out : handshake_vec;
   signal noc1_stop_out      : handshake_vec;
-  signal noc2_data_n_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_s_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_w_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_e_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_n_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_s_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_w_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_e_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc2_data_void_in  : handshake_vec;
   signal noc2_stop_in       : handshake_vec;
-  signal noc2_data_n_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_s_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_w_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc2_data_e_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_n_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_s_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_w_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc2_data_e_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc2_data_void_out : handshake_vec;
   signal noc2_stop_out      : handshake_vec;
-  signal noc3_data_n_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_s_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_w_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_e_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_n_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_s_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_w_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_e_in     : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc3_data_void_in  : handshake_vec;
   signal noc3_stop_in       : handshake_vec;
-  signal noc3_data_n_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_s_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_w_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc3_data_e_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_n_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_s_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_w_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc3_data_e_out    : coh_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc3_data_void_out : handshake_vec;
   signal noc3_stop_out      : handshake_vec;
-  signal noc4_data_n_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_s_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_w_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_e_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_n_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_s_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_w_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_e_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc4_data_void_in  : handshake_vec;
   signal noc4_stop_in       : handshake_vec;
-  signal noc4_data_n_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_s_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_w_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc4_data_e_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_n_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_s_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_w_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc4_data_e_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc4_data_void_out : handshake_vec;
   signal noc4_stop_out      : handshake_vec;
   signal noc5_data_n_in     : misc_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
@@ -230,23 +230,23 @@ architecture rtl of EPOCHS0_TOP is
   signal noc5_data_e_out    : misc_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc5_data_void_out : handshake_vec;
   signal noc5_stop_out      : handshake_vec;
-  signal noc6_data_n_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_s_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_w_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_e_in     : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_n_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_s_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_w_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_e_in     : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc6_data_void_in  : handshake_vec;
   signal noc6_stop_in       : handshake_vec;
-  signal noc6_data_n_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_s_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_w_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
-  signal noc6_data_e_out    : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_n_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_s_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_w_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+  signal noc6_data_e_out    : dma_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
   signal noc6_data_void_out : handshake_vec;
   signal noc6_stop_out      : handshake_vec;
 
   -- Global NoC reset and clock
-  signal sys_clk  : std_ulogic;
-  signal sys_rstn : std_ulogic;
-  signal sys_clk_lock : std_ulogic;
+  signal noc_clk  : std_ulogic;
+  signal noc_rstn : std_ulogic;
+  signal noc_clk_lock : std_ulogic;
 
   -- I/O for PADS
   constant pad_fixed_cfg : std_logic_vector(19 - (ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB + 1) downto 0) := (others => '0');
@@ -271,8 +271,8 @@ architecture rtl of EPOCHS0_TOP is
 
   -- FPGA proxy
   signal fpga_oen            : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-  signal fpga_data_in        : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
-  signal fpga_data_out       : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+  signal fpga_data_in        : std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
+  signal fpga_data_out       : std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
   signal fpga_valid_in_int   : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_valid_out_int  : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_clk_in_int     : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -281,16 +281,16 @@ architecture rtl of EPOCHS0_TOP is
   signal fpga_credit_out_int : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
 
   -- Use thsese signals to swap pads connection based on pin location
-  signal fpga_oen_swap        : std_logic_vector(4 * 64 - 1 downto 0);
-  signal fpga_data_in_swap    : std_logic_vector(4 * 64 - 1 downto 0);
-  signal fpga_data_out_swap   : std_logic_vector(4 * 64 - 1 downto 0);
+  signal fpga_oen_swap        : std_logic_vector(4 * CFG_MEM_LINK_BITS - 1 downto 0);
+  signal fpga_data_in_swap    : std_logic_vector(4 * CFG_MEM_LINK_BITS - 1 downto 0);
+  signal fpga_data_out_swap   : std_logic_vector(4 * CFG_MEM_LINK_BITS - 1 downto 0);
   signal fpga_valid_in_swap   : std_logic_vector(3 downto 0);
   signal fpga_valid_out_swap  : std_logic_vector(3 downto 0);
   signal fpga_clk_in_swap     : std_logic_vector(3 downto 0);
   signal fpga_clk_out_swap    : std_logic_vector(3 downto 0);
   signal fpga_credit_in_swap  : std_logic_vector(3 downto 0);
   signal fpga_credit_out_swap : std_logic_vector(3 downto 0);
-  signal fpga_data_pad_cfg    : std_logic_vector(4 * 64 * 20 - 1 downto 0);
+  signal fpga_data_pad_cfg    : std_logic_vector(4 * CFG_MEM_LINK_BITS * 20 - 1 downto 0);
   signal fpga_c_pad_cfg       : std_logic_vector(4 * 20 - 1 downto 0);
 
   -- Ethernet signals
@@ -594,10 +594,10 @@ begin
     fpga_oen_swap(192 + i) <= fpga_oen(2);  -- 2
     fpga_oen_swap(128 + i) <= fpga_oen(3);  -- 3
     -- data pad cfg
-    fpga_data_pad_cfg(0 * 64 * 20 + (i+1) * 20 - 1 downto 0 * 64 * 20 + i * 20) <= full_pad_cfg(mem_tile_id(0));  -- 0
-    fpga_data_pad_cfg(1 * 64 * 20 + (i+1) * 20 - 1 downto 1 * 64 * 20 + i * 20) <= full_pad_cfg(mem_tile_id(1));  -- 1
-    fpga_data_pad_cfg(3 * 64 * 20 + (i+1) * 20 - 1 downto 3 * 64 * 20 + i * 20) <= full_pad_cfg(mem_tile_id(2));  -- 2
-    fpga_data_pad_cfg(2 * 64 * 20 + (i+1) * 20 - 1 downto 2 * 64 * 20 + i * 20) <= full_pad_cfg(mem_tile_id(3));  -- 3
+    fpga_data_pad_cfg(0 * CFG_MEM_LINK_BITS * 20 + (i+1) * 20 - 1 downto 0 * CFG_MEM_LINK_BITS * 20 + i * 20) <= full_pad_cfg(mem_tile_id(0));  -- 0
+    fpga_data_pad_cfg(1 * CFG_MEM_LINK_BITS * 20 + (i+1) * 20 - 1 downto 1 * CFG_MEM_LINK_BITS * 20 + i * 20) <= full_pad_cfg(mem_tile_id(1));  -- 1
+    fpga_data_pad_cfg(3 * CFG_MEM_LINK_BITS * 20 + (i+1) * 20 - 1 downto 3 * CFG_MEM_LINK_BITS * 20 + i * 20) <= full_pad_cfg(mem_tile_id(2));  -- 2
+    fpga_data_pad_cfg(2 * CFG_MEM_LINK_BITS * 20 + (i+1) * 20 - 1 downto 2 * CFG_MEM_LINK_BITS * 20 + i * 20) <= full_pad_cfg(mem_tile_id(3));  -- 3
   end generate fpga_pad_wires_gen;
   -- clock and credit pad cfg
   fpga_c_pad_cfg(19 downto 0)  <= full_pad_cfg(mem_tile_id(0));  -- 0
@@ -607,7 +607,7 @@ begin
   -- End of chip-specific pad mapping
   -----------------------------------------------------------------------------
 
-  fpga_data_pad : iopadvvv generic map (tech => CFG_FABTECH, loc => fpga_data_pad_loc, level => cmos, voltage => x18v, width => 4*64, oepol => 1)
+  fpga_data_pad : iopadvvv generic map (tech => CFG_FABTECH, loc => fpga_data_pad_loc, level => cmos, voltage => x18v, width => 4*CFG_MEM_LINK_BITS, oepol => 1)
     port map (fpga_data, fpga_data_out_swap, fpga_oen_swap, fpga_data_in_swap, fpga_data_pad_cfg);
   fpga_valid_in_pad : inpadv generic map (loc => fpga_valid_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4)
     port map (fpga_valid_in, fpga_valid_in_swap);
@@ -821,8 +821,8 @@ begin
           this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,
-          sys_clk            => sys_clk,
-          sys_clk_lock       => '1',
+          noc_clk            => noc_clk,
+          noc_clk_lock       => '1',
           ext_clk            => ext_clk_int(i),
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),
@@ -916,8 +916,8 @@ begin
           this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,
-          sys_clk            => sys_clk,
-          sys_clk_lock       => '1',
+          noc_clk            => noc_clk,
+          noc_clk_lock       => '1',
           ext_clk            => ext_clk_int(i),
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),
@@ -1006,16 +1006,18 @@ begin
 -- pragma translate_on
       tile_acc_i : asic_tile_acc
         generic map (
+          SIMULATION         => SIMULATION,
           this_hls_conf => tile_design_point(i),
           this_device   => tile_device(i),
           this_irq_type => tile_irq_type(i),
           this_has_l2   => tile_has_l2(i),
+          this_has_token_pm  => tile_has_tdvfs(i),
           ROUTER_PORTS  => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
           this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,
-          sys_clk            => sys_clk,
-          sys_clk_lock       => '1',
+          noc_clk            => noc_clk,
+          noc_clk_lock       => '1',
           ext_clk            => ext_clk_int(i),
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),
@@ -1107,10 +1109,10 @@ begin
           this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,       -- from I/O PAD reset
-          sys_rstn_out       => sys_rstn,        -- NoC reset out (unused; connect other tiles directly to reset PAD)
-          sys_clk_out        => sys_clk,         -- NoC clock out
-          sys_clk            => sys_clk,         -- NoC clock in
-          sys_clk_lock_out   => sys_clk_lock,     -- NoC DCO lock
+          noc_rstn_out       => noc_rstn,        -- NoC reset out (unused; connect other tiles directly to reset PAD)
+          noc_clk_out        => noc_clk,         -- NoC clock out
+          noc_clk            => noc_clk,         -- NoC clock in
+          noc_clk_lock_out   => noc_clk_lock,     -- NoC DCO lock
           ext_clk_noc        => ext_clk_noc_int, -- backup NoC clock
           clk_div_noc        => clk_div_noc_int,
           ext_clk            => ext_clk_int(i),  -- backup clock (fixed)
@@ -1247,12 +1249,12 @@ begin
           this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,
-          sys_clk            => sys_clk,
-          sys_clk_lock       => '1',
+          noc_clk            => noc_clk,
+          noc_clk_lock       => '1',
           ext_clk            => ext_clk_int(i),
           clk_div            => clk_div_int(i),
-          fpga_data_in       => fpga_data_in((tile_mem_id(i) + 1) * (ARCH_BITS) - 1 downto tile_mem_id(i) * (ARCH_BITS)),
-          fpga_data_out      => fpga_data_out((tile_mem_id(i) + 1) * (ARCH_BITS) - 1 downto tile_mem_id(i) * (ARCH_BITS)),
+          fpga_data_in       => fpga_data_in((tile_mem_id(i) + 1) * (CFG_MEM_LINK_BITS) - 1 downto tile_mem_id(i) * (CFG_MEM_LINK_BITS)),
+          fpga_data_out      => fpga_data_out((tile_mem_id(i) + 1) * (CFG_MEM_LINK_BITS) - 1 downto tile_mem_id(i) * (CFG_MEM_LINK_BITS)),
           fpga_oen           => fpga_oen(tile_mem_id(i)),
           fpga_valid_in      => fpga_valid_in_int(tile_mem_id(i)),
           fpga_valid_out     => fpga_valid_out_int(tile_mem_id(i)),
@@ -1346,8 +1348,8 @@ begin
           this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,
-          sys_clk            => sys_clk,
-          sys_clk_lock       => '1',
+          noc_clk            => noc_clk,
+          noc_clk_lock       => '1',
           ext_clk            => ext_clk_int(i),
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),

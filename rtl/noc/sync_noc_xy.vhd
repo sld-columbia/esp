@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -12,29 +12,28 @@ use work.nocpackage.all;
 entity sync_noc_xy is
   generic (
     PORTS     : std_logic_vector(4 downto 0);
---    local_x   : std_logic_vector(2 downto 0);
---    local_y   : std_logic_vector(2 downto 0);
-    HAS_SYNC  : integer range 0 to 1 := 0);
+    HAS_SYNC  : integer range 0 to 1 := 0;
+    this_noc_flit_size : integer range 32 to 1026;
+    DEST_SIZE : integer := 1);
   port (
     clk           : in  std_logic;
     clk_tile      : in  std_logic;
     rst           : in  std_logic;
     rst_tile      : in  std_logic;
---    CONST_PORTS   : in  std_logic_vector(4 downto 0);
     CONST_local_x : in  std_logic_vector(2 downto 0);
     CONST_local_y : in  std_logic_vector(2 downto 0);
-    data_n_in     : in  noc_flit_type; 
-    data_s_in     : in  noc_flit_type;
-    data_w_in     : in  noc_flit_type;
-    data_e_in     : in  noc_flit_type;
-    input_port    : in  noc_flit_type;
+    data_n_in     : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
+    data_s_in     : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
+    data_w_in     : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
+    data_e_in     : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
+    input_port    : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
     data_void_in  : in  std_logic_vector(4 downto 0);
     stop_in       : in  std_logic_vector(4 downto 0);
-    data_n_out    : out noc_flit_type;
-    data_s_out    : out noc_flit_type;
-    data_w_out    : out noc_flit_type;
-    data_e_out    : out noc_flit_type;
-    output_port   : out noc_flit_type;
+    data_n_out    : out std_logic_vector(this_noc_flit_size - 1 downto 0);
+    data_s_out    : out std_logic_vector(this_noc_flit_size - 1 downto 0);
+    data_w_out    : out std_logic_vector(this_noc_flit_size - 1 downto 0);
+    data_e_out    : out std_logic_vector(this_noc_flit_size - 1 downto 0);
+    output_port   : out std_logic_vector(this_noc_flit_size - 1 downto 0);
     data_void_out : out std_logic_vector(4 downto 0);
     stop_out      : out std_logic_vector(4 downto 0);
     -- Monitor output. Can be left unconnected
@@ -50,15 +49,13 @@ architecture mesh of sync_noc_xy is
       flow_control : integer;
       width        : integer;
       depth        : integer;
-      ports        : std_logic_vector(4 downto 0)
---      localx       : std_logic_vector(2 downto 0);
---      localy       : std_logic_vector(2 downto 0)
+      ports        : std_logic_vector(4 downto 0);
+      DEST_SIZE	   : integer
     );
 
     port (
       clk           : in  std_logic;
       rst           : in  std_logic;
---      CONST_ports   : in  std_logic_vector(4 downto 0);
       CONST_localx  : in  std_logic_vector(2 downto 0);
       CONST_localy  : in  std_logic_vector(2 downto 0);
       data_n_in     : in  std_logic_vector(width-1 downto 0);
@@ -79,17 +76,17 @@ architecture mesh of sync_noc_xy is
 
   signal fwd_ack	  : std_logic;
   signal fwd_req	  : std_logic;
-  signal fwd_chnl_data	  : noc_flit_type;
+  signal fwd_chnl_data	  : std_logic_vector(this_noc_flit_size - 1 downto 0);
   signal fwd_chnl_stop	  : std_logic;
 
   signal rev_ack	  : std_logic;
   signal rev_req	  : std_logic;
-  signal rev_chnl_data	  : noc_flit_type;
+  signal rev_chnl_data	  : std_logic_vector(this_noc_flit_size - 1 downto 0);
   signal rev_chnl_stop	  : std_logic;
 
-  signal sync_output_port   : noc_flit_type;
+  signal sync_output_port   : std_logic_vector(this_noc_flit_size - 1 downto 0);
   signal sync_data_void_out : std_logic;
-  signal sync_input_port    : noc_flit_type;
+  signal sync_input_port    : std_logic_vector(this_noc_flit_size - 1 downto 0);
   signal sync_data_void_in  : std_logic;
   signal sync_stop_in 	    : std_logic;
   signal sync_stop_out 	    : std_logic;
@@ -122,16 +119,13 @@ architecture mesh of sync_noc_xy is
     router_ij: router
         generic map (
           flow_control => FLOW_CONTROL,
-          width        => NOC_FLIT_SIZE,
+          width        => this_noc_flit_size,
           depth        => ROUTER_DEPTH,
-          ports        => PORTS
---          localx       => local_x,
---          localy       => local_y
-        )
+          ports        => PORTS,
+          DEST_SIZE    => DEST_SIZE)
       port map (
           clk           => clk,
           rst           => rst,
---          CONST_ports   => CONST_PORTS,
           CONST_localx  => CONST_local_x,
           CONST_localy  => CONST_local_y,
           data_n_in     => data_n_in,
@@ -171,14 +165,6 @@ architecture mesh of sync_noc_xy is
     output_port <= sync_output_port;
     data_void_out(4) <= sync_data_void_out;
     stop_out(4) <= sync_stop_out;
-    fwd_ack <= '0';
-    fwd_req <= '0';
-    fwd_chnl_stop <= '0';
-    rev_ack <= '0';
-    rev_req <= '0';
-    rev_chnl_stop <= '0';
-    fwd_chnl_data <= (others => '0');
-    rev_chnl_data <= (others => '0');
 
   end generate no_synchronizers;
 
@@ -190,7 +176,7 @@ architecture mesh of sync_noc_xy is
       sync_data_void_in <= fwd_rd_empty_o when sync_stop_out = '0' else '1';
       inferred_async_fifo_1: inferred_async_fifo
         generic map (
-          g_data_width => NOC_FLIT_SIZE,
+          g_data_width => this_noc_flit_size,
           g_size       => 8)
         port map (
           rst_wr_n_i => rst_tile,
@@ -210,7 +196,7 @@ architecture mesh of sync_noc_xy is
       data_void_out(4) <= rev_rd_empty_o;-- when stop_in = '0' else '1';
       inferred_async_fifo_2: inferred_async_fifo
         generic map (
-          g_data_width => NOC_FLIT_SIZE,
+          g_data_width => this_noc_flit_size,
           g_size       => 8)
         port map (
           rst_wr_n_i   => rst,

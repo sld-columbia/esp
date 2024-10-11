@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -41,16 +41,10 @@ use std.textio.all;
     cache_tile_id  : cache_attribute_array;
     cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-    has_l2         : integer := 1;
-    has_dvfs       : integer := 1;
-    has_pll        : integer;
-    extra_clk_buf  : integer);
+    has_l2         : integer := 1);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
-    refclk    : in  std_ulogic;
-    pllbypass : in  std_ulogic;
-    pllclk    : out std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
     tile_id   : in  integer range 0 to CFG_TILES_NUM - 1;
@@ -66,37 +60,37 @@ use std.textio.all;
 
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
-    coherence_req_data_in      : out noc_flit_type;
+    coherence_req_data_in      : out coh_noc_flit_type;
     coherence_req_full         : in  std_ulogic;
     -- NoC plane coherence forward
     coherence_fwd_rdreq        : out std_ulogic;
-    coherence_fwd_data_out     : in  noc_flit_type;
+    coherence_fwd_data_out     : in  coh_noc_flit_type;
     coherence_fwd_empty        : in  std_ulogic;
     -- Noc plane coherence response
     coherence_rsp_rcv_rdreq    : out std_ulogic;
-    coherence_rsp_rcv_data_out : in  noc_flit_type;
+    coherence_rsp_rcv_data_out : in  coh_noc_flit_type;
     coherence_rsp_rcv_empty    : in  std_ulogic;
     coherence_rsp_snd_wrreq    : out std_ulogic;
-    coherence_rsp_snd_data_in  : out noc_flit_type;
+    coherence_rsp_snd_data_in  : out coh_noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
     coherence_fwd_snd_wrreq    : out std_ulogic;
-    coherence_fwd_snd_data_in  : out noc_flit_type;
+    coherence_fwd_snd_data_in  : out coh_noc_flit_type;
     coherence_fwd_snd_full     : in  std_ulogic;
     -- NoC plane MEM2DEV
     dma_rcv_rdreq     : out std_ulogic;
-    dma_rcv_data_out  : in  noc_flit_type;
+    dma_rcv_data_out  : in  dma_noc_flit_type;
     dma_rcv_empty     : in  std_ulogic;
     -- NoC plane DEV2MEM
     dma_snd_wrreq     : out std_ulogic;
-    dma_snd_data_in   : out noc_flit_type;
+    dma_snd_data_in   : out dma_noc_flit_type;
     dma_snd_full      : in  std_ulogic;
     -- NoC plane LLC-coherent MEM2DEV
     coherent_dma_rcv_rdreq     : out std_ulogic;
-    coherent_dma_rcv_data_out  : in  noc_flit_type;
+    coherent_dma_rcv_data_out  : in  dma_noc_flit_type;
     coherent_dma_rcv_empty     : in  std_ulogic;
     -- NoC plane LLC-coherent DEV2MEM
     coherent_dma_snd_wrreq     : out std_ulogic;
-    coherent_dma_snd_data_in   : out noc_flit_type;
+    coherent_dma_snd_data_in   : out dma_noc_flit_type;
     coherent_dma_snd_full      : in  std_ulogic;
     -- Noc plane miscellaneous (tile -> NoC)
     interrupt_wrreq   : out std_ulogic;
@@ -106,13 +100,14 @@ use std.textio.all;
     interrupt_ack_rdreq    : out std_ulogic;
     interrupt_ack_data_out : in  misc_noc_flit_type;
     interrupt_ack_empty    : in  std_ulogic;
-    mon_dvfs_in       : in  monitor_dvfs_type;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
     mon_dvfs          : out monitor_dvfs_type;
     -- Coherence
-    coherence         : in integer range 0 to 3);
+	acc_activity	  : out std_ulogic;	
+    coherence         : in integer range 0 to 3;
+    tp_acc_rst        : in  std_ulogic);
 
 end;
 
@@ -143,19 +138,20 @@ end;
   signal acc_current, acc_next : acc_state_t;
 
   -- DVFS (unused for now)
-  signal pllclk_int        : std_ulogic;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
 
   constant nofb_mem_info : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1);
 
   -- NoC plane MEM2DEV
   signal dma_rcv_rdreq_int    : std_ulogic;
-  signal dma_rcv_data_out_int : noc_flit_type;
+  signal dma_rcv_data_out_int : dma_noc_flit_type;
   signal dma_rcv_empty_int    : std_ulogic;
   -- NoC plane DEV2MEM
   signal dma_snd_wrreq_int    : std_ulogic;
-  signal dma_snd_data_in_int  : noc_flit_type;
+  signal dma_snd_data_in_int  : dma_noc_flit_type;
   signal dma_snd_full_int     : std_ulogic;
+
+  signal acc_rstn             : std_ulogic;
 
 begin
 
@@ -178,20 +174,23 @@ begin
   coherence_fwd_snd_wrreq <= '0';
   coherence_fwd_snd_data_in <= (others => '0');
 
+  acc_rstn <= rst and not tp_acc_rst;
+
   -- <<accelerator_instance>>
 
   -- <<axi_unused>>
 
   axi2noc_1: axislv2noc
     generic map (
-      tech             => tech,
-      nmst             => 1,
-      retarget_for_dma => 1,
-      mem_axi_port     => 0,
-      mem_num          => CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE,
-      mem_info         => nofb_mem_info,
-      slv_y            => io_y,
-      slv_x            => io_x)
+      tech                  => tech,
+      nmst                  => 1,
+      retarget_for_dma      => 1,
+      mem_axi_port          => 0,
+      mem_num               => CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE,
+      mem_info              => nofb_mem_info,
+      this_noc_flit_size    => DMA_NOC_FLIT_SIZE,
+      slv_y                 => io_y,
+      slv_x                 => io_x)
     port map (
       rst                        => rst,
       clk                        => clk,
@@ -367,20 +366,16 @@ begin
 
   end process;
 
-
-  mon_acc.clk   <= pllclk_int;
+  mon_acc.clk   <= clk;
   mon_acc.go    <= acc_go;
   mon_acc.run   <= acc_run;
   mon_acc.done  <= acc_done;
   mon_acc.burst <= mosi(0).w.valid or mosi(0).r.ready;
-
-  -- No DVFS on this tile for now
-  pllclk_int <= refclk;
-  pllclk <= pllclk_int;
-
   mon_dvfs      <= monitor_dvfs_none;
   mon_cache     <= monitor_cache_none;
 
   mon_dvfs_feedthru.transient <= '0';
+
+  acc_activity <= acc_run;
 
 end rtl;

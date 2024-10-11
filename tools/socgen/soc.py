@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 from tkinter import *
@@ -55,9 +55,9 @@ class Components():
         for item in dp_info:
           if re.match(r'dma[1-9]+', item, re.M|re.I):
             dp_dma_width = int(item.replace("dma", ""))
-            if dp_dma_width != DMA_WIDTH:
-              skip = True
-              break;
+            #if dp_dma_width != DMA_WIDTH:
+            #  skip = True
+            #  break;
         if skip:
           continue
         self.POINTS[acc.upper()].append(dp)
@@ -68,13 +68,13 @@ class Components():
     dirs = get_immediate_subdirectories(acc_dir)
     dirs = sorted(dirs, key=str.upper)
     for acc in dirs:
-      cpu_support = False
-      with open(acc_dir + "/" + acc + "/" + acc + ".hosts") as f:
+      dma_support = False
+      with open(acc_dir + "/" + acc + "/" + acc + ".dma_widths") as f:
         for line in f:
-          if line.find(str(CPU_ARCH)) != -1:
-            cpu_support = True
+          if line.find(str(DMA_WIDTH)) != -1:
+            dma_support = True
 
-      if cpu_support == True:
+      if dma_support == True:
         self.POINTS[acc.upper()] = []
         with open(acc_dir + "/" + acc + "/vendor") as f:
           vendor = f.readline().strip()
@@ -93,7 +93,7 @@ class SoC_Config():
   IP_ADDR = ""
   TECH = "virtex7"
   FPGA_BOARD = "xilinx-vc707-xc7vx485t"
-  DMA_WIDTH = 32
+  ARCH_BITS = 32
 
   def changed(self, *args): 
     if self.cache_impl.get() == "ESP RTL":
@@ -107,6 +107,10 @@ class SoC_Config():
     else:
       self.cache_rtl.set(0)
       self.cache_spandex.set(1)
+    if self.clk_str.get() == 2:
+      self.sync_en.set(0)
+    else:
+      self.sync_en.set(1)
 
   def update_list_of_ips(self):
     self.list_of_ips = tuple(self.IPs.EMPTY) + tuple(self.IPs.PROCESSORS) + tuple(self.IPs.MISC) + tuple(self.IPs.MEM) + tuple(self.IPs.SLM) + tuple(self.IPs.ACCELERATORS)
@@ -142,6 +146,10 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     self.CPU_ARCH.set(item[2])
+    if item[2] == "ariane":
+        self.ARCH_BITS = 64
+    else:
+        self.ARCH_BITS = 32
     # CPU count (skip this info while rebuilding SoC config)
     line = fp.readline()
     # Scatter-gather
@@ -158,8 +166,22 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     cols = int(item[2])
+    line = fp.readline()
+    item = line.split()
+    self.noc.coh_noc_width.set(int(item[2]))
+    line = fp.readline()
+    item = line.split()
+    self.noc.dma_noc_width.set(int(item[2]))
     self.noc.create_topology(self.noc.top, rows, cols)
     # CONFIG_CPU_CACHES = L2_SETS L2_WAYS LLC_SETS LLC_WAYS
+    line = fp.readline()
+    if line.find("CONFIG_MULTICAST_NOC_EN = y") != -1:
+      self.noc.multicast_en.set(1)
+    else:
+      self.noc.multicast_en.set(0)
+    line = fp.readline()
+    item = line.split()
+    self.noc.max_mcast_dests.set(int(item[2]))
     line = fp.readline()
     if line.find("CONFIG_CACHE_EN = y") != -1:
       self.cache_en.set(1)
@@ -193,6 +215,10 @@ class SoC_Config():
     item = line.split()
     self.acc_l2_sets.set(int(item[2]))
     self.acc_l2_ways.set(int(item[3]))
+    # CONFIG_CACHE_LINE_SIZE = CACHE_LINE_BITS
+    line = fp.readline()
+    item = line.split()
+    self.cache_line_size.set(int(item[2]))
     # CONFIG_SLM_KBYTES
     line = fp.readline()
     item = line.split()
@@ -215,6 +241,13 @@ class SoC_Config():
       self.iolink_en.set(1)
     else:
       self.iolink_en.set(0)
+    line = fp.readline()
+    item = line.split()
+    self.iolink_width.set(int(item[2]))
+    # Mem Link
+    line = fp.readline()
+    item = line.split()
+    self.mem_link_width.set(int(item[2]))
     # SVGA
     line = fp.readline()
     if line.find("CONFIG_SVGA_EN = y") != -1:
@@ -228,6 +261,14 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     self.dsu_eth = item[2]
+    # Advanced config
+    line = fp.readline()
+    item = line.split()
+    self.clk_str.set(int(item[2]))
+    if self.clk_str.get() == 2:
+        self.sync_en.set(0)
+    else:
+        self.sync_en.set(1)
     # Monitors
     line = fp.readline()
     if line.find("CONFIG_MON_DDR = y") != -1:
@@ -262,37 +303,19 @@ class SoC_Config():
         tokens = line.split(' ')
         if len(tokens) > 1:
           tile.ip_type.set(tokens[4])
-          tile.clk_region.set(int(tokens[5]))
-          tile.has_pll.set(int(tokens[6]))
-          tile.has_clkbuf.set(int(tokens[7]))
           if tokens[3] == "cpu" and self.cache_en.get() == 1:
             tile.has_l2.set(1)
           if tokens[3] == "slm":
-            tile.has_ddr.set(tokens[8])
+            tile.has_ddr.set(tokens[5])
           if tokens[3] == "acc":
-            tile.point.set(tokens[8])
-            tile.has_l2.set(tokens[9])
-            tile.vendor = tokens[10]
+            tile.point.set(tokens[5])
+            tile.has_l2.set(tokens[6])
+            tile.has_tdvfs.set(tokens[7])
+            tile.vendor = tokens[8]
     # DVFS (skip whether it has it or not; we know that already)
     line = fp.readline()
     line = fp.readline()
     item = line.split();
-    vf_points = int(item[2])
-    self.noc.vf_points = vf_points
-    # Power annotation
-    for y in range(0, self.noc.rows):
-      for x in range(0, self.noc.cols):
-        line = fp.readline().replace("\n","")
-        tile = self.noc.topology[y][x]
-        if len(line) == 0:
-          return
-        tokens = line.split(' ')
-        tile.create_characterization(self, self.noc.vf_points)
-        if tile.ip_type.get() == tokens[2]:
-          for vf in range(self.noc.vf_points):
-            tile.energy_values.vf_points[vf].voltage = float(tokens[3 + vf * 3])
-            tile.energy_values.vf_points[vf].frequency = float(tokens[3 + vf * 3 + 1])
-            tile.energy_values.vf_points[vf].energy = float(tokens[3 + vf * 3 + 2])
     return 0
 
   def write_config(self, dsu_ip, dsu_eth):
@@ -307,6 +330,13 @@ class SoC_Config():
       fp.write("#CONFIG_HAS_SG is not set\n")
     fp.write("CONFIG_NOC_ROWS = " + str(self.noc.rows) + "\n")
     fp.write("CONFIG_NOC_COLS = " + str(self.noc.cols) + "\n")
+    fp.write("CONFIG_COH_NOC_WIDTH = " + str(self.noc.coh_noc_width.get()) + "\n")
+    fp.write("CONFIG_DMA_NOC_WIDTH = " + str(self.noc.dma_noc_width.get()) + "\n")
+    if self.noc.multicast_en.get() == 1:
+      fp.write("CONFIG_MULTICAST_NOC_EN = y\n")
+    else:
+      fp.write("#CONFIG_MULTICAST_NOC_EN is not set\n")
+    fp.write("CONFIG_MAX_MCAST_DESTS = " + str(self.noc.max_mcast_dests.get()) + "\n")
     if self.cache_en.get() == 1:
       fp.write("CONFIG_CACHE_EN = y\n")
     else:
@@ -321,6 +351,7 @@ class SoC_Config():
       fp.write("#CONFIG_CACHE_SPANDEX is not set\n")
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
+    fp.write("CONFIG_CACHE_LINE_SIZE = " + str(self.cache_line_size.get()) + "\n")
     fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n")
     if self.jtag_en.get() == 1:
       fp.write("CONFIG_JTAG_EN = y\n")
@@ -334,6 +365,8 @@ class SoC_Config():
       fp.write("CONFIG_IOLINK_EN = y\n")
     else:
       fp.write("#CONFIG_IOLINK_EN is not set\n")
+    fp.write("CONFIG_IOLINK_WIDTH = " + str(self.iolink_width.get()) + "\n")
+    fp.write("CONFIG_MEM_LINK_WIDTH = " + str(self.mem_link_width.get()) + "\n")
     if self.svga_en.get() == 1:
       fp.write("CONFIG_SVGA_EN = y\n")
     else:
@@ -343,6 +376,7 @@ class SoC_Config():
       self.dsu_eth = dsu_eth
     fp.write("CONGIG_DSU_IP = " + self.dsu_ip + "\n")
     fp.write("CONGIG_DSU_ETH = " + self.dsu_eth + "\n")
+    fp.write("CONFIG_CLK_STR = " + str(self.clk_str.get()) + "\n")
     if self.noc.monitor_ddr.get() == 1:
       fp.write("CONFIG_MON_DDR = y\n")
     else:
@@ -404,16 +438,6 @@ class SoC_Config():
           fp.write("empty")
         # Selected accelerator or tile type repeated
         fp.write(" " + selection)
-        # Clock region info
-        try:
-          clk_region = tile.clk_region.get()
-          fp.write(" " + str(clk_region))
-          if clk_region != 0:
-            has_dvfs = True;
-        except:
-          fp.write(" " + str(0))
-        fp.write(" " + str(tile.has_pll.get()))
-        fp.write(" " + str(tile.has_clkbuf.get()))
         # SLM tile configuration
         if is_slm:
           fp.write(" " + str(tile.has_ddr.get()))
@@ -421,6 +445,9 @@ class SoC_Config():
         if is_accelerator:
           fp.write(" " + str(tile.point.get()))
           fp.write(" " + str(tile.has_l2.get()))
+          fp.write(" " + str(tile.has_tdvfs.get()))
+          if tile.has_tdvfs.get():
+            has_dvfs = True
           fp.write(" " + str(tile.vendor))
         fp.write("\n")
         i += 1
@@ -428,21 +455,6 @@ class SoC_Config():
       fp.write("CONFIG_HAS_DVFS = y\n")
     else:
       fp.write("#CONFIG_HAS_DVFS is not set\n")
-    fp.write("CONFIG_VF_POINTS = " + str(self.noc.vf_points) + "\n")
-    for y in range(self.noc.rows):
-      for x in range(self.noc.cols):
-        tile = self.noc.topology[y][x]
-        selection = tile.ip_type.get()
-        fp.write("POWER_" + str(y) + "_" + str(x) + " = ")
-        fp.write(selection + " ")
-        if self.IPs.ACCELERATORS.count(selection) == 0:
-          for vf in range(self.noc.vf_points):
-            fp.write(str(0) + " " + str(0) + " " + str(0) + " ")
-          fp.write("\n")
-        else:
-          for vf in range(self.noc.vf_points):
-            fp.write(str(tile.energy_values.vf_points[vf].voltage) + " " + str(tile.energy_values.vf_points[vf].frequency) + " " + str(tile.energy_values.vf_points[vf].energy) + " ")
-          fp.write("\n")
 
   def check_cfg(self, line, token, end):
     line = line[line.find(token)+len(token):]
@@ -453,8 +465,9 @@ class SoC_Config():
   def set_IP(self):
     self.IP_ADDR = str(int('0x' + self.dsu_ip[:2], 16)) + "." + str(int('0x' + self.dsu_ip[2:4], 16)) + "." + str(int('0x' + self.dsu_ip[4:6], 16)) + "." + str(int('0x' + self.dsu_ip[6:], 16))
 
-  def __init__(self, DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, temporary):
-    self.DMA_WIDTH = DMA_WIDTH
+  def __init__(self, ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, temporary):
+    self.ARCH_BITS = ARCH_BITS
+    self.TECH_TYPE = TECH_TYPE
     self.TECH = TECH
     self.LINUX_MAC = LINUX_MAC
     self.LEON3_STACK = LEON3_STACK
@@ -476,16 +489,22 @@ class SoC_Config():
     self.llc_ways = IntVar()
     self.acc_l2_sets = IntVar()
     self.acc_l2_ways = IntVar()
+    self.cache_line_size = IntVar()
     # SLM
     self.slm_kbytes = IntVar()
     # Peripherals
     self.jtag_en = IntVar()
     self.eth_en = IntVar()
     self.iolink_en = IntVar()
+    self.iolink_width = IntVar()
+    self.mem_link_width = IntVar()
     self.svga_en = IntVar()
     # Debug Link
     self.dsu_ip = ""
     self.dsu_eth = ""
+    # Advanced Configuration
+    self.clk_str = IntVar()
+    self.sync_en = IntVar()
 
     # Define whether SGMII has to be used or not: it is not used for ProFPGA boards
     if self.FPGA_BOARD.find("profpga") != -1:
@@ -512,5 +531,5 @@ class SoC_Config():
     self.set_IP()
 
     # Discover components
-    self.IPs = Components(self.TECH, self.DMA_WIDTH, self.CPU_ARCH.get())
+    self.IPs = Components(self.TECH, self.noc.dma_noc_width.get(), self.CPU_ARCH.get())
     self.update_list_of_ips()

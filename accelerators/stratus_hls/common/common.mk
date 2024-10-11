@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ### Some pretty aliases ###
@@ -60,8 +60,19 @@ TARGET_NAME = $(COMPONENT)
 endif
 
 # Memory wrappers
+ifeq ("$(TECH_TYPE)","asic")
+ifneq ("$(TECH)", "inferred")
+MEMGEN = $(ESP_ROOT)/tools/asicgen/asic_plmgen.py
+MEMTECH = $(ESP_ROOT)/rtl/techmap/asic/mem
+else
 MEMGEN = $(ESP_ROOT)/tools/plmgen/plmgen.py
 MEMTECH = $(ESP_ROOT)/rtl/techmap/$(TECH)/mem
+endif
+else
+MEMGEN = $(ESP_ROOT)/tools/plmgen/plmgen.py
+MEMTECH = $(ESP_ROOT)/rtl/techmap/$(TECH)/mem
+endif
+
 MEMGEN_OUT = $(ESP_ROOT)/tech/$(TECH)/memgen/$(TARGET_NAME)
 
 ifneq ("$(ACCELERATOR)","")

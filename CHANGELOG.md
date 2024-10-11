@@ -7,6 +7,84 @@ Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Calendar Versioning](https://calver.org/) with format
 `YYYY.MINOR.MICRO`.
 
+## [2024.2.0]
+
+### Added
+
+- **Architecture**
+  - Multicast NoC for enhanced accelerator P2P communication
+  - Support for token-based DVFS mechanism over the NoC
+  - New NoC domain CSRs
+  - Implementation of BlitzCoin DVFS algorithm
+
+- **ASIC Design**
+  - Pad integration flow (#227)
+  - Clock-strategy selection from GUI (#227)
+  - Automatic generation of top level (#227)
+
+### Improved
+
+- **Architecture**
+  - Flexible P2P commmunication for mismatched burst lengths
+  - Add a CSR for resetting third-party accelerators
+  - Deprecate old DVFS mechansim and cleanup clock hierarchy
+
+- **Accelerator Design Flows**
+  - Stratus HLS: Add ability to synthesize accelerators for inferred tech
+
+- **Infrastructure**
+  - Bump modelsim support to 2023.2 DE
+  - Improve GUI messaging
+
+### Fixed
+
+- **ASIC Design**
+  - Fix multiport handling in memory integration flow (#227)
+
+- **Infrastructure**
+  - Various fixes for new proFPGA xcvu19p board
+
+## [2024.1.0]
+
+### Added
+
+- **Architecture**
+  - Configurable NoC width for DMA and coherence planes (#215)
+  - Configurable cache line size (#215)
+
+- **ASIC Design**
+  - New memory integration flow for ASIC techonologies (#196)
+
+- **Accelerators**
+  - Catapult SystemC Flow
+    - _MAC_ example accelerator
+  - Catapult C++ Flow
+    - 3-in-1 _Cryptography_ accelerator with SHA1, SHA2, and AES engines
+
+- **Infrastructure**
+  - Support for proFPGA xcvu19p board
+  - Python utility for preloading simulation memory
+  - Script for selectively installing submodules
+
+### Improved
+- **Architecture**
+  - SystemVerilog implementation of NoC router (#194)
+  - IOLink: make width flexible, fix warnings, and automatically generate required text files for simulation
+
+- **Infrastructure**
+  - ESPLink: timeout and retry transactions in case of dropped packets
+  - Move to Vivado version 2023.2
+  - Move to proFPGA tools version 2021A
+
+- **Software**
+  - Updates to ESP Monitors API
+
+### Fixed
+
+- **Architecture**
+  - Robust SSH/SCP to designs with the Ariane core and caches enabled
+  - P2P accelerator communication with LLC-coherent and coherent DMA selected
+
 ## [2023.1.0]
 
 ### Added

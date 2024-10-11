@@ -6,9 +6,17 @@ all: help
 
 ### Global design variables ###
 DESIGN_PATH = $(PWD)
-ESP_ROOT = $(realpath ../../)
 
-TECHLIB  = inferred
+ifneq ("$(shell basename $(PWD))", "esp_asic_generic")
+ESP_ROOT = $(realpath ../esp)
+include $(ESP_ROOT)/tools/asicgen/asic_defs.sh
+else
+ESP_ROOT = $(realpath ../../)
+DIRTECH_NAME = inferred
+endif
+
+TECHLIB  = $(DIRTECH_NAME)
+TECH_TYPE = asic
 FPGA_TECHLIB = virtex7
 BOARD    = profpga-xc7v2000t-esp_asic_generic
 DESIGN   = $(BOARD)
@@ -20,6 +28,7 @@ USE_OPENSBI ?= 0
 OVR_TECHLIB ?=
 ifneq ("$(OVR_TECHLIB)", "")
 TECHLIB = $(OVR_TECHLIB)
+TECH_TYPE = fpga
 endif
 
 ### Chip-specific configuration ####
@@ -37,6 +46,11 @@ SIMTOP = testbench
 
 # Compile flags
 ifneq ("$(OVR_TECHLIB)", "")
+VCOMOPT +=
+VLOGOPT +=
+XMLOGOPT +=
+NCLOGOPT +=
+else ifeq ($(TECHLIB),inferred)
 VCOMOPT +=
 VLOGOPT +=
 XMLOGOPT +=

@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
@@ -44,18 +44,28 @@ entity tile_io is
   port (
     raw_rstn           : in  std_ulogic;  -- active low raw reset (connect to DCO if present)
     tile_rst           : in  std_ulogic;  -- active low tile reset synch on clk
-    clk                : in  std_ulogic;  -- tile clock (connect to external clock or DCO clock)
-    refclk_noc         : in  std_ulogic;  -- NoC DCO external backup clock
-    pllclk_noc         : out std_ulogic;  -- NoC DCO test out clock
-    refclk             : in  std_ulogic;  -- tile DCO external backup clock
-    pllbypass          : in  std_ulogic;  -- unused
-    pllclk             : out std_ulogic;  -- tile DCO test out clock
-    dco_clk            : out std_ulogic;  -- tile clock (if DCO is present)
-    dco_rstn           : out std_ulogic;  -- tile reset output (if DCO is present)
-    local_x            : out local_yx;
-    local_y            : out local_yx;
-    -- Ethernet MDC Scaler configuration
-    mdcscaler          : out integer range 0 to 2047;
+    ext_clk_noc        : in  std_ulogic;  -- NoC DCO external backup clock
+    clk_div_noc        : out std_ulogic;  -- NoC DCO test out clock
+    ext_clk            : in  std_ulogic;  -- tile DCO external backup clock
+    clk_div            : out std_ulogic;  -- tile DCO test out clock
+    tile_clk_out       : out std_ulogic;  -- tile clock (if DCO is present)
+    tile_rstn_out          : out std_ulogic;  -- tile reset output (if DCO is present)
+    noc_clk_out        : out std_ulogic;  -- NoC clock out (if DCO is present)
+    noc_clk_lock       : out std_ulogic;  -- NoC DCO lock
+    -- DCO config
+    dco_freq_sel       : in std_logic_vector(1 downto 0);
+    dco_div_sel        : in std_logic_vector(2 downto 0);
+    dco_fc_sel         : in std_logic_vector(5 downto 0);
+    dco_cc_sel         : in std_logic_vector(5 downto 0);
+    dco_clk_sel        : in std_ulogic;
+    dco_en             : in std_ulogic;  
+    -- NoC DCO config
+    dco_noc_freq_sel   : in std_logic_vector(1 downto 0);
+    dco_noc_div_sel    : in std_logic_vector(2 downto 0);
+    dco_noc_fc_sel     : in std_logic_vector(5 downto 0);
+    dco_noc_cc_sel     : in std_logic_vector(5 downto 0);
+    dco_noc_clk_sel    : in std_ulogic;
+    dco_noc_en         : in std_ulogic;  
     -- I/O bus interfaces
     eth0_apbi          : out apb_slv_in_type;
     eth0_apbo          : in  apb_slv_out_type;
@@ -82,54 +92,45 @@ entity tile_io is
     iolink_clk_out    : out std_ulogic;
     iolink_credit_in  : in  std_ulogic;
     iolink_credit_out : out std_ulogic;
-    -- Pads configuration
-    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
-    sys_clk_out        : out std_ulogic;  -- NoC clock out (if DCO is present)
-    sys_clk_lock       : out std_ulogic;  -- NoC DCO lock
-    noc1_mon_noc_vec   : in monitor_noc_type;
-    noc2_mon_noc_vec   : in monitor_noc_type;
-    noc3_mon_noc_vec   : in monitor_noc_type;
-    noc4_mon_noc_vec   : in monitor_noc_type;
-    noc5_mon_noc_vec   : in monitor_noc_type;
-    noc6_mon_noc_vec   : in monitor_noc_type;
-    test1_output_port   : in noc_flit_type;
+    test1_output_port   : in coh_noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
-    test2_output_port   : in noc_flit_type;
+    test2_output_port   : in coh_noc_flit_type;
     test2_data_void_out : in std_ulogic;
     test2_stop_in       : in std_ulogic;
-    test3_output_port   : in noc_flit_type;
+    test3_output_port   : in coh_noc_flit_type;
     test3_data_void_out : in std_ulogic;
     test3_stop_in       : in std_ulogic;
-    test4_output_port   : in noc_flit_type;
+    test4_output_port   : in dma_noc_flit_type;
     test4_data_void_out : in std_ulogic;
     test4_stop_in       : in std_ulogic;
     test5_output_port   : in misc_noc_flit_type;
     test5_data_void_out : in std_ulogic;
     test5_stop_in       : in std_ulogic;
-    test6_output_port   : in noc_flit_type;
+    test6_output_port   : in dma_noc_flit_type;
     test6_data_void_out : in std_ulogic;
     test6_stop_in       : in std_ulogic;
-    test1_input_port    : out noc_flit_type;
+    test1_input_port    : out coh_noc_flit_type;
     test1_data_void_in  : out std_ulogic;
     test1_stop_out      : out std_ulogic;
-    test2_input_port    : out noc_flit_type;
+    test2_input_port    : out coh_noc_flit_type;
     test2_data_void_in  : out std_ulogic;
     test2_stop_out      : out std_ulogic;
-    test3_input_port    : out noc_flit_type;
+    test3_input_port    : out coh_noc_flit_type;
     test3_data_void_in  : out std_ulogic;
     test3_stop_out      : out std_ulogic;
-    test4_input_port    : out noc_flit_type;
+    test4_input_port    : out dma_noc_flit_type;
     test4_data_void_in  : out std_ulogic;
     test4_stop_out      : out std_ulogic;
     test5_input_port    : out misc_noc_flit_type;
     test5_data_void_in  : out std_ulogic;
     test5_stop_out      : out std_ulogic;
-    test6_input_port    : out noc_flit_type;
+    test6_input_port    : out dma_noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
-    mon_dvfs           : out monitor_dvfs_type
+    mon_noc             : in  monitor_noc_vector(1 to 6);
+    mon_dvfs            : out monitor_dvfs_type
     );
 
 end;
@@ -140,22 +141,10 @@ architecture rtl of tile_io is
   signal rst : std_ulogic;
 
   -- DCO
-  signal dco_noc_en       : std_ulogic;
-  signal dco_noc_clk_sel  : std_ulogic;
-  signal dco_noc_cc_sel   : std_logic_vector(5 downto 0);
-  signal dco_noc_fc_sel   : std_logic_vector(5 downto 0);
-  signal dco_noc_div_sel  : std_logic_vector(2 downto 0);
-  signal dco_noc_freq_sel : std_logic_vector(1 downto 0);
-  signal sys_clk_out_int  : std_ulogic;
-
-  signal dco_en       : std_ulogic;
-  signal dco_clk_sel  : std_ulogic;
-  signal dco_cc_sel   : std_logic_vector(5 downto 0);
-  signal dco_fc_sel   : std_logic_vector(5 downto 0);
-  signal dco_div_sel  : std_logic_vector(2 downto 0);
-  signal dco_freq_sel : std_logic_vector(1 downto 0);
+  signal tile_clk     : std_ulogic;
   signal dco_clk_lock : std_ulogic;
-  signal dco_clk_int  : std_ulogic;
+  signal dco_clk      : std_ulogic;
+  signal noc_clk_out_int : std_ulogic;
 
   -- Bootrom
   component ahbrom is
@@ -223,10 +212,10 @@ architecture rtl of tile_io is
   signal ahbs_snd_full             : std_ulogic;
   -- Extended remote_ahbs_* signals that
   signal ahbm_rcv_rdreq      : std_ulogic;
-  signal ahbm_rcv_data_out   : noc_flit_type;
+  signal ahbm_rcv_data_out   : arch_noc_flit_type;
   signal ahbm_rcv_empty      : std_ulogic;
   signal ahbm_snd_wrreq      : std_ulogic;
-  signal ahbm_snd_data_in    : noc_flit_type;
+  signal ahbm_snd_data_in    : arch_noc_flit_type;
   signal ahbm_snd_full       : std_ulogic;
 
   signal remote_ahbs_rcv_rdreq     : std_ulogic;
@@ -236,18 +225,18 @@ architecture rtl of tile_io is
   signal remote_ahbs_snd_data_in   : misc_noc_flit_type;
   signal remote_ahbs_snd_full      : std_ulogic;
   signal dma_rcv_rdreq             : std_ulogic;
-  signal dma_rcv_data_out          : noc_flit_type;
+  signal dma_rcv_data_out          : dma_noc_flit_type;
   signal dma_rcv_empty             : std_ulogic;
   signal dma_snd_wrreq             : std_ulogic;
-  signal dma_snd_data_in           : noc_flit_type;
+  signal dma_snd_data_in           : dma_noc_flit_type;
   signal dma_snd_full              : std_ulogic;
   signal dma_snd_atleast_4slots    : std_ulogic;
   signal dma_snd_exactly_3slots    : std_ulogic;
   signal coherent_dma_rcv_rdreq    : std_ulogic;
-  signal coherent_dma_rcv_data_out : noc_flit_type;
+  signal coherent_dma_rcv_data_out : dma_noc_flit_type;
   signal coherent_dma_rcv_empty    : std_ulogic;
   signal coherent_dma_snd_wrreq    : std_ulogic;
-  signal coherent_dma_snd_data_in  : noc_flit_type;
+  signal coherent_dma_snd_data_in  : dma_noc_flit_type;
   signal coherent_dma_snd_full     : std_ulogic;
   signal apb_rcv_rdreq             : std_ulogic;
   signal apb_rcv_data_out          : misc_noc_flit_type;
@@ -309,7 +298,6 @@ architecture rtl of tile_io is
 
   -- Mon
   signal mon_dvfs_int   : monitor_dvfs_type;
-  signal mon_noc        : monitor_noc_vector(1 to 6);
 
   -- Interrupt ack to NoC
   type intr_ack_fsm is (idle, send_packet);
@@ -369,12 +357,12 @@ architecture rtl of tile_io is
   attribute keep of timer_irq : signal is "true";
   attribute keep of ipi : signal is "true";
 
-  attribute keep of apb_rcv_rdreq : signal is "true";
-  attribute keep of apb_rcv_data_out : signal is "true";
-  attribute keep of apb_rcv_empty : signal is "true";
-  attribute keep of apb_snd_wrreq : signal is "true";
-  attribute keep of apb_snd_data_in : signal is "true";
-  attribute keep of apb_snd_full : signal is "true";
+  attribute mark_debug of apb_rcv_rdreq : signal is "true";
+  attribute mark_debug of apb_rcv_data_out : signal is "true";
+  attribute mark_debug of apb_rcv_empty : signal is "true";
+  attribute mark_debug of apb_snd_wrreq : signal is "true";
+  attribute mark_debug of apb_snd_data_in : signal is "true";
+  attribute mark_debug of apb_snd_full : signal is "true";
   attribute keep of interrupt_rdreq : signal is "true";
   attribute keep of interrupt_data_out : signal is "true";
   attribute keep of interrupt_empty : signal is "true";
@@ -388,23 +376,27 @@ architecture rtl of tile_io is
   attribute keep of header : signal is "true";
   attribute keep of header_next : signal is "true";
 
+  attribute mark_debug of remote_apb_rcv_rdreq      : signal is "true";
+  attribute mark_debug of remote_apb_rcv_data_out   : signal is "true";
+  attribute mark_debug of remote_apb_rcv_empty      : signal is "true";
+  attribute mark_debug of remote_apb_snd_wrreq      : signal is "true";
+  attribute mark_debug of remote_apb_snd_data_in    : signal is "true";
+  attribute mark_debug of remote_apb_snd_full       : signal is "true";
+  
 begin
-
-  local_x <= this_local_x;
-  local_y <= this_local_y;
 
   -- DCO Reset synchronizer
   rst_gen: if this_has_dco = 1 generate
-    tile_rstn : rstgen
+    tile_rstn_out : rstgen
       generic map (acthigh => 1, syncin => 0)
-      port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
+      port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
   end generate rst_gen;
 
   no_rst_gen: if this_has_dco /= 1 generate
     rst <= tile_rst;
   end generate no_rst_gen;
 
-  dco_rstn <= rst;
+  tile_rstn_out <= rst;
 
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
@@ -415,77 +407,60 @@ begin
         dlog => 8)                      -- NoC is the first to come out of reset
       port map (
         rstn     => raw_rstn,
-        ext_clk  => refclk_noc,
+        ext_clk  => ext_clk_noc,
         en       => dco_noc_en,
         clk_sel  => dco_noc_clk_sel,
         cc_sel   => dco_noc_cc_sel,
         fc_sel   => dco_noc_fc_sel,
         div_sel  => dco_noc_div_sel,
         freq_sel => dco_noc_freq_sel,
-        clk      => sys_clk_out_int,
-        clk_div  => pllclk_noc,
-        lock     => sys_clk_lock);
+        clk      => noc_clk_out_int,
+        clk_div  => clk_div_noc,
+        lock     => noc_clk_lock);
 
-    dco_noc_freq_sel <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 0  downto ESP_CSR_DCO_NOC_CFG_MSB - 0  - 1);
-    dco_noc_div_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 2  downto ESP_CSR_DCO_NOC_CFG_MSB - 2  - 2);
-    dco_noc_fc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 5  downto ESP_CSR_DCO_NOC_CFG_MSB - 5  - 5);
-    dco_noc_cc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 11 downto ESP_CSR_DCO_NOC_CFG_MSB - 11 - 5);
-    dco_noc_clk_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_LSB + 1);
-    dco_noc_en       <= raw_rstn and tile_config(ESP_CSR_DCO_NOC_CFG_LSB);
-
-    sys_clk_out <= sys_clk_out_int;
+    noc_clk_out <= noc_clk_out_int;
 
     dco_tile_gen : if this_has_dco = 1 generate
+
       dco_i: dco
         generic map (
           tech => CFG_FABTECH,
           enable_div2 => 0,
           dlog => 10)                     -- Tile I/O is the first sending NoC
+                                          -- packets; last reset to be released
         port map (
           rstn     => raw_rstn,
-          ext_clk  => refclk,
+          ext_clk  => ext_clk,
           en       => dco_en,
           clk_sel  => dco_clk_sel,
           cc_sel   => dco_cc_sel,
           fc_sel   => dco_fc_sel,
           div_sel  => dco_div_sel,
           freq_sel => dco_freq_sel,
-          clk      => dco_clk_int,
-          clk_div  => pllclk,
+          clk      => dco_clk,
+          clk_div  => clk_div,
           lock     => dco_clk_lock);
 
-      dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  - 1);
-      dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  - 2);
-      dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
-      dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
-      dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
-      dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
-
+      tile_clk <= dco_clk;
     end generate dco_tile_gen;
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco = 0 generate
-    pllclk       <= '0';
-    pllclk_noc   <= '0';
-    dco_clk_int  <= refclk;
-    sys_clk_out  <= refclk_noc;
+    clk_div       <= '0';
+    clk_div_noc   <= '0';
+    tile_clk  <= ext_clk;
+    noc_clk_out  <= ext_clk_noc;
     dco_clk_lock <= '1';
-    sys_clk_lock <= '1';
+    noc_clk_lock <= '1';
   end generate no_dco_gen;
 
   no_tile_dco_gen: if this_has_dco = 2 generate
-    pllclk       <= '0';
-    dco_clk_int  <= sys_clk_out_int;
+    clk_div       <= '0';
+    tile_clk  <= noc_clk_out_int;
     dco_clk_lock <= '1';
   end generate no_tile_dco_gen;
 
-  dco_clk <= dco_clk_int;
-
-  -- MDC scaler configuration
-  mdcscaler              <= conv_integer(tile_config(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB));
-
-  -- Pads configuration
-  pad_cfg                <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
+  tile_clk_out <= tile_clk;
 
   -----------------------------------------------------------------------------
   -- Bus
@@ -508,7 +483,7 @@ begin
                  rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
                  nahbm   => CFG_GRETH + CFG_DSU_ETH  + CFG_IOLINK_EN + 2, nahbs => maxahbs,
                  cfgmask => 0)
-    port map (rst, clk, ahbmi, ahbmo, ahbsi, ctrl_ahbso);
+    port map (rst, tile_clk, ahbmi, ahbmo, ahbsi, ctrl_ahbso);
 
 
   -- apb2noc proxy handles pindex and pconfig assignments
@@ -521,7 +496,7 @@ begin
   apb0 : patient_apbctrl                -- AHB/APB bridge
     generic map (hindex     => ahb2apb_hindex, haddr => CFG_APBADDR, hmask => ahb2apb_hmask, nslaves => NAPBSLV,
                  remote_apb => this_apb_en)
-    port map (rst, clk, ahbsi, ahbso(ahb2apb_hindex), apbi, apbo, apb_req, apb_ack);
+    port map (rst, tile_clk, ahbsi, ahbso(ahb2apb_hindex), apbi, apbo, apb_req, apb_ack);
 
   -----------------------------------------------------------------------------
   -- Drive unused bus ports
@@ -552,7 +527,7 @@ begin
       srst_sequence => esp_srst_sequence)
     port map (
       rstn   => rst,
-      clk    => clk,
+      clk    => tile_clk,
       noinit => '0',
       srst   => srst,
       init_done  => init_done,
@@ -605,7 +580,7 @@ begin
         word_bitwidth => 32,
         little_end    => 0)
       port map (
-        clk           => clk,
+        clk           => tile_clk,
         rstn          => rst,
         io_clk_in     => iolink_clk_in,
         io_clk_out    => iolink_clk_out,
@@ -645,7 +620,7 @@ begin
         )
       port map(
         rst     => rst,
-        clk     => clk,
+        clk     => tile_clk,
         haddr   => ahbrom_haddr,
         hmask   => ahbrom_hmask,
         ahbsi   => ahbsi,
@@ -665,7 +640,7 @@ begin
         maccsz   => AHBDW)
       port map (
         rst   => rst,
-        clk   => clk,
+        clk   => tile_clk,
         haddr => ahbrom_haddr,
         hmask => ahbrom_hmask,
         ahbsi => ahbsi,
@@ -685,7 +660,7 @@ begin
     uart1 : apbuart                     -- UART 1
       generic map (pindex   => 1, paddr => 1, pirq => CFG_UART1_IRQ, console => CFG_DUART,
                    fifosize => CFG_UART1_FIFO)
-      port map (rst, clk, noc_apbi, noc_apbo(1), u1i, u1o);
+      port map (rst, tile_clk, noc_apbi, noc_apbo(1), u1i, u1o);
     u1i.extclk <= '0';
   end generate;
 
@@ -709,7 +684,7 @@ begin
     irqctrl : if CFG_IRQ3_ENABLE /= 0 generate
       irqctrl0 : irqmp                    -- interrupt controller
         generic map (pindex => 2, paddr => 2, ncpu => CFG_NCPU_TILE)
-        port map (soft_reset, clk, noc_apbi_wirq, noc_apbo(2), irqo, irqi);
+        port map (soft_reset, tile_clk, noc_apbi_wirq, noc_apbo(2), irqo, irqi);
     end generate;
 
     irq3 : if CFG_IRQ3_ENABLE = 0 generate
@@ -746,7 +721,7 @@ begin
         NHARTS    => CFG_NCPU_TILE,
         NIRQ_SRCS => 30)
       port map (
-        clk         => clk,
+        clk         => tile_clk,
         rstn        => soft_reset,
         irq_sources => irq_sources,
         irq         => irq,
@@ -762,7 +737,7 @@ begin
           hconfig => clint_hconfig,
           NHARTS  => CFG_NCPU_TILE)
         port map (
-          clk       => clk,
+          clk       => tile_clk,
           rstn      => soft_reset,
           timer_irq => timer_irq,
           ipi       => ipi,
@@ -779,12 +754,12 @@ begin
 
     -- TODO: if the interrupt_ack queue is full this entity may miss some irq
     -- restore message to the interrupt controller
-    fsm_intr_ack_update : process (clk, rst)
+    fsm_intr_ack_update : process (tile_clk, rst)
     begin
       if rst = '0' then
         intr_ack_state <= idle;
         header <= (others => '0');
-      elsif clk'event and clk = '1' then
+      elsif tile_clk'event and tile_clk = '1' then
         intr_ack_state <= intr_ack_state_next;
         header <= header_next;
       end if;
@@ -875,7 +850,7 @@ begin
         generic map (pindex => 3, paddr => 3, pirq => CFG_GPT_IRQ,
                      sepirq => CFG_GPT_SEPIRQ, sbits => CFG_GPT_SW, ntimers => CFG_GPT_NTIM,
                      nbits  => CFG_GPT_TW, wdog => CFG_GPT_WDOGEN*CFG_GPT_WDOG)
-        port map (soft_reset, clk, noc_apbi, noc_apbo(3), gpti, gpto);
+        port map (soft_reset, tile_clk, noc_apbi, noc_apbo(3), gpti, gpto);
       gpti.dhalt <= '0'; gpti.extclk <= '0';
     end generate;
 
@@ -891,7 +866,7 @@ begin
         pindex  => 3,
         pconfig => ibex_timer_pconfig)
       port map (
-        clk       => clk,
+        clk       => tile_clk,
         rstn      => ibex_reset,
         timer_irq => ibex_timer_irq,
         apbi      => noc_apbi,
@@ -920,7 +895,7 @@ begin
       APB_AW     => 32,
       REV_ENDIAN => 0)
     port map (
-      clk     => clk,
+      clk     => tile_clk,
       rstn    => rst,
       srst    => srst,
       psel    => noc_apbi.psel(4),
@@ -962,7 +937,7 @@ begin
         wordsz  => 32)
       port map (
         rst    => rst,
-        clk    => clk,
+        clk    => tile_clk,
         ahbsi1 => ahbsi,
         ahbso1 => ahbso(fb_hindex),
         ahbsi2 => ahbsi2,
@@ -974,7 +949,7 @@ begin
                    rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
                    nahbm   => 1, nahbs => 1,
                    cfgmask => 0)
-      port map (rst, clk, ahbmi2, ahbmo2, ahbsi2, ahbso2);
+      port map (rst, tile_clk, ahbmi2, ahbmo2, ahbsi2, ahbso2);
 
   end generate svga_on_apb;
 
@@ -1017,19 +992,20 @@ begin
 
   ahbslv2noc_1 : ahbslv2noc
     generic map (
-      tech             => CFG_FABTECH,
-      hindex           => this_remote_ahb_slv_en,
-      hconfig          => fixed_ahbso_hconfig,
-      mem_hindex       => ddr_hindex(0),
-      mem_num          => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
-      mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1),
-      slv_y            => tile_y(io_tile_id),
-      slv_x            => tile_x(io_tile_id),
-      retarget_for_dma => 1,
-      dma_length       => CFG_DLINE)
+      tech                  => CFG_FABTECH,
+      hindex                => this_remote_ahb_slv_en,
+      hconfig               => fixed_ahbso_hconfig,
+      mem_hindex            => ddr_hindex(0),
+      mem_num               => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
+      mem_info              => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1),
+      this_noc_flit_size    => DMA_NOC_FLIT_SIZE,
+      slv_y                 => tile_y(io_tile_id),
+      slv_x                 => tile_x(io_tile_id),
+      retarget_for_dma      => 1,
+      dma_length            => CFG_DLINE)
     port map (
       rst                        => rst,
-      clk                        => clk,
+      clk                        => tile_clk,
       local_y                    => this_local_y,
       local_x                    => this_local_x,
       ahbsi                      => ahbsi,
@@ -1059,7 +1035,7 @@ begin
       apb_slv_x   => apb_slv_x)
     port map (
       rst                     => rst,
-      clk                     => clk,
+      clk                     => tile_clk,
       local_y                 => this_local_y,
       local_x                 => this_local_x,
       apbi                    => apbi,
@@ -1084,7 +1060,7 @@ begin
       apb_slv_x   => apb_slv_x)
     port map (
       rst                     => rst,
-      clk                     => clk,
+      clk                     => tile_clk,
       local_y                 => this_local_y,
       local_x                 => this_local_x,
       apbi                    => apbi,
@@ -1129,13 +1105,12 @@ begin
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
-      clk              => clk,
+      clk              => tile_clk,
       local_y          => this_local_y,
       local_x          => this_local_x,
       apbi             => noc_apbi,
       apbo             => noc_apbo,
       pready           => pready,
-      dvfs_transient   => '0',
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,
       apb_snd_full     => apb_snd_full,
@@ -1163,7 +1138,7 @@ begin
       cpu_x => cpu_x)
     port map (
       rst                => rst,
-      clk                => clk,
+      clk                => tile_clk,
       local_y            => this_local_y,
       local_x            => this_local_x,
       override_cpu_loc   => override_cpu_loc,
@@ -1184,7 +1159,7 @@ begin
       tech    => CFG_FABTECH)
     port map (
       rst                => rst,
-      clk                => clk,
+      clk                => tile_clk,
       noc_pirq           => noc_pirq,
       interrupt_rdreq    => interrupt_rdreq,
       interrupt_data_out => interrupt_data_out,
@@ -1194,17 +1169,18 @@ begin
   -- Requestes may be directed to the frame buffer or the boot ROM
   noc2ahbmst_1 : noc2ahbmst
     generic map (
-      tech        => CFG_FABTECH,
-      hindex      => CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN,
-      axitran     => GLOB_CPU_AXI,
-      little_end  => GLOB_CPU_RISCV,
-      narrow_noc  => 1,
-      eth_dma     => 0,
-      cacheline   => 1,
-      l2_cache_en => 0)
+      tech                  => CFG_FABTECH,
+      hindex                => CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN,
+      axitran               => GLOB_CPU_AXI,
+      little_end            => GLOB_CPU_RISCV,
+      narrow_noc            => 1,
+      eth_dma               => 0,
+      cacheline             => 1,
+      l2_cache_en           => 0,
+      this_coh_flit_size    => ARCH_NOC_FLIT_SIZE)
     port map (
       rst                       => rst,
-      clk                       => clk,
+      clk                       => tile_clk,
       local_y                   => this_local_y,
       local_x                   => this_local_x,
       ahbmi                     => ahbmi,
@@ -1247,26 +1223,19 @@ begin
   -----------------------------------------------------------------------------
   mon_dvfs_int.vf        <= "1000";         -- Run at highest frequency always
   mon_dvfs_int.transient <= '0';
-  mon_dvfs_int.clk       <= clk;
+  mon_dvfs_int.clk       <= tile_clk;
   mon_dvfs_int.acc_idle  <= '0';
   mon_dvfs_int.traffic   <= '0';
   mon_dvfs_int.burst     <= '0';
 
   mon_dvfs <= mon_dvfs_int;
   
-  mon_noc(1) <= noc1_mon_noc_vec;
-  mon_noc(2) <= noc2_mon_noc_vec;
-  mon_noc(3) <= noc3_mon_noc_vec;
-  mon_noc(4) <= noc4_mon_noc_vec;
-  mon_noc(5) <= noc5_mon_noc_vec;
-  mon_noc(6) <= noc6_mon_noc_vec;
-
   -- Memory mapped registers
   io_tile_csr : esp_tile_csr
     generic map(
       pindex  => 0)
     port map(
-      clk => clk,
+      clk => tile_clk,
       rstn => rst,
       pconfig => this_csr_pconfig,
       mon_ddr => monitor_ddr_none,
@@ -1278,6 +1247,7 @@ begin
       mon_dvfs => mon_dvfs_int,
       tile_config => tile_config,
       srst => open,
+      tp_acc_rst => open,
       apbi => noc_apbi,
       apbo => noc_apbo(0)
     );
@@ -1291,7 +1261,7 @@ begin
       tech => CFG_FABTECH)
     port map (
       rst                       => rst,
-      clk                       => clk,
+      clk                       => tile_clk,
       ahbs_rcv_rdreq            => ahbs_rcv_rdreq,
       ahbs_rcv_data_out         => ahbs_rcv_data_out,
       ahbs_rcv_empty            => ahbs_rcv_empty,

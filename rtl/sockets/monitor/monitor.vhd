@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2024 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -62,6 +62,9 @@ end monitor;
 
 architecture rtl of monitor is
 
+  type syscom_dn_t is array (integer range 0 to 0) of std_logic_vector(67 downto 0);
+  type syscom_up_t is array (integer range 0 to 0) of std_logic_vector(68 downto 0);
+
   subtype profpga_tech_description is string(1 to 4);
   type profpga_device_table_t is array (0 to NTECH) of profpga_tech_description;
   constant profpga_device_table : profpga_device_table_t := (
@@ -96,6 +99,8 @@ architecture rtl of monitor is
       srcsync_n : out std_logic_vector(3 downto 0);
       dmbi_h2f  : in  std_logic_vector(19 downto 0);
       dmbi_f2h  : out std_logic_vector(19 downto 0);
+      xdmbi_h2f : in  std_logic_vector(3 downto 0);
+      xdmbi_f2h : out std_logic_vector(3 downto 0);
 
       -- 200 MHz clock (useful for IDELAYCTRL calibration)
       clk_200mhz_o : out std_logic;
@@ -147,7 +152,14 @@ architecture rtl of monitor is
       clk6_cfg_dn_o : out std_logic_vector(19 downto 0);
       clk6_cfg_up_i : in  std_logic_vector(19 downto 0) := (others => '0');
       clk7_cfg_dn_o : out std_logic_vector(19 downto 0);
-      clk7_cfg_up_i : in  std_logic_vector(19 downto 0) := (others => '0')
+      clk7_cfg_up_i : in  std_logic_vector(19 downto 0) := (others => '0');
+
+      -- Stratix10 temperature monitor
+      temp_mon_i2c_sda : inout std_logic := '0';
+      temp_mon_i2c_scl : inout std_logic := '0';
+
+      syscom_dn_o : out syscom_dn_t;
+      syscom_up_i : in  syscom_up_t
     );
   end component profpga_ctrl;
 
@@ -417,6 +429,8 @@ architecture rtl of monitor is
   signal accelerator_tot_count : accelerator_cycles_counter_type;
   type accelerator_cycles_small_counter_type is array (0 to accelerators_num - 1) of std_logic_vector(REGISTER_WIDTH-1 downto 0);
   signal accelerator_tlb_count : accelerator_cycles_small_counter_type;
+  signal temp_mon_sda : std_logic := '0';
+  signal temp_mon_scl : std_logic := '0';
 
 begin
 
@@ -438,6 +452,8 @@ begin
       srcsync_n     => open,
       dmbi_h2f      => dmbi_h2f,
       dmbi_f2h      => dmbi_f2h,
+      xdmbi_h2f      => (others => '0'),
+      xdmbi_f2h      => open,
       -- 200 MHz clock (useful for delay calibration)
       clk_200mhz_o => open,
       -- source clock/sync input, not used
@@ -482,7 +498,12 @@ begin
       clk6_cfg_dn_o => open,
       clk6_cfg_up_i => (others => '0'),
       clk7_cfg_dn_o => open,
-      clk7_cfg_up_i => (others => '0')
+      clk7_cfg_up_i => (others => '0'),
+      -- Stratix 10 temperature monitor
+      temp_mon_i2c_sda => temp_mon_sda,
+      temp_mon_i2c_scl => temp_mon_scl,
+      syscom_dn_o => open,
+      syscom_up_i => (others => (others => '0'))
       );
 
   mmi64_resetn <= not mmi64_reset;

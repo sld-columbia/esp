@@ -432,6 +432,7 @@ begin  -- architecture rtl
   begin
     reg          := io_rcv_reg;
     io_rcv_wrreq <= '0';
+    io_rcv_data_in <= (others => '0');
 
     if io_valid_in = '1' and io_rcv_full = '0' and receiving.sync_clk_io = '1' then
       reg.word((reg.cnt + 1) * io_bitwidth - 1 downto reg.cnt * io_bitwidth) := io_data_in;
@@ -452,6 +453,7 @@ begin  -- architecture rtl
     reg          := io_snd_reg;
     io_snd_rdreq <= '0';
     io_valid_out_int <= '0';
+    io_data_out <= (others => '0');
 
     case io_snd_reg.state is
 

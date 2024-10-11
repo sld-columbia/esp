@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2023 Columbia University, System Level Design Group
+// Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #include "monitors.h"
 #include "libesp.h"
@@ -234,7 +234,7 @@ int main(int argc, char **argv)
 	mon_args.read_mask |= 1 << ESP_MON_READ_ACC_STATS;
 
 	//enable reading noc injections - requires the index of the tile
-	const int ACC_TILE_INDEX = 2;
+	const int ACC_TILE_INDEX = 0;
 	mon_args.tile_index = ACC_TILE_INDEX;
 	mon_args.read_mask |= 1 << ESP_MON_READ_NOC_INJECTS;
 

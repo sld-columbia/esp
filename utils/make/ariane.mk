@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -109,6 +109,9 @@ $(SOFT_BUILD)/systest.bin: $(TEST_PROGRAM)
 $(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
 	@mkdir -p $(SOFT_BUILD)
 	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O srec --gap-fill 0 $< $@
+	@if [ -n "$(SIM_DATA_FILES)" ]; then\
+		python3 $(ESP_ROOT)/utils/scripts/srec/modify_srec.py $@ $(SIM_DATA_FILES) $(START_ADDRS);\
+	fi
 
 
 $(SOFT_BUILD)/sysroot:
@@ -191,7 +194,6 @@ GENUS_VLOGOPT += -define WT_DCACHE=1
 ## Modelsim
 VLOGOPT +=
 VLOGOPT += -incr
-VLOGOPT += -64
 VLOGOPT += -nologo
 VLOGOPT += -suppress 13262
 VLOGOPT += -suppress 2286
@@ -200,7 +202,7 @@ VLOGOPT += +define+WT_DCACHE
 VLOGOPT += -pedanticerrors
 VLOGOPT += -suppress 2583
 ifeq ("$(CPU_ARCH)", "ariane")
-VSIMOPT += +UVM_NO_RELNOTES -64 +permissive-off
+VSIMOPT += +UVM_NO_RELNOTES +permissive-off
 VSIMOPT += -voptargs="+acc"
 else
 VSIMOPT += -novopt

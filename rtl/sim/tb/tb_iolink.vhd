@@ -12,6 +12,7 @@ use std.textio.all;
 use work.stdio.all;
 -- pragma translate_on
 use work.tb_pkg.all;
+use work.esp_global.all;
 
 entity tb_iolink is
   port (
@@ -43,8 +44,8 @@ begin
   ---------------------------------------------------------------------------
   test_iolink : process
 
-    file bootloader : text open read_mode is "../soft-build/ariane/prom.txt";
-    file program    : text open read_mode is "../soft-build/ariane/systest.txt";
+    file bootloader : text open read_mode is "../soft-build/" & CPU_STR & "/prom.txt";
+    --file program    : text open read_mode is "../soft-build/ariane/systest.txt";
 
     variable text_word, text_data : line;
     variable word_var             : std_logic_vector(31 downto 0);
@@ -125,7 +126,11 @@ begin
     ---------------------------------------------------------------------------
     for i in 0 to 1 loop
       -- send address
-      word <= X"60000401";
+      if CPU_STR = "leon3" then
+        word <= X"80000401";
+      else
+        word <= X"60000401";
+      end if;
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       -- send length
       word <= X"00000001";
@@ -140,7 +145,13 @@ begin
     -- Send bootloader binary
     ---------------------------------------------------------------------------
     -- send address
-    word <= X"00010001";
+    if CPU_STR = "ibex" then
+      word <= X"00000081";
+    elsif CPU_STR = "ariane" then
+      word <= X"00010001";
+    else
+      word <= X"00000001";
+    end if;
     snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
     -- send length
     readline(bootloader, text_word);
@@ -185,7 +196,11 @@ begin
     ---------------------------------------------------------------------------
     for i in 0 to 1 loop
       -- send address
-      word <= X"60000401";
+      if CPU_STR = "leon3" then
+        word <= X"80000401";
+      else
+        word <= X"60000401";
+      end if;
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       -- send length
       word <= X"00000001";
