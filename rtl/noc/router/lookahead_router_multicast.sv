@@ -134,7 +134,8 @@ module lookahead_router_multicast
   logic [4:0][4:0] next_hop_routing;
 
   //forking arbiter logic
-  logic [4:0][4:0] case_a, case_b, case_c, non_forking_req, new_final_routing_request, granted_req;
+  logic [4:0][4:0] case_b, case_c, non_forking_req, new_final_routing_request, granted_req;
+  logic [4:0][4:0] case_a;
   logic [4:0][2:0] routing_sum_vertical_a, routing_sum_vertical_b;
   logic [4:0][2:0] routing_sum_horizontal_initial;
   logic [4:0] forking_input_initial, non_forking_req_OR;
@@ -148,8 +149,9 @@ module lookahead_router_multicast
 
   logic [4:0][3:0] routing_configuration;
   logic [4:0][3:0] saved_routing_configuration;
-  logic [4:0][3:0] grant, granted;
-  logic [4:0][4:0] transp_grant;
+  logic [4:0][3:0] grant;
+//  logic [4:0][3:0] granted;
+//  logic [4:0][4:0] transp_grant;
   logic [4:0] grant_valid;
   logic [4:0][4:0] backpressure_tmp;
 
@@ -305,25 +307,28 @@ module lookahead_router_multicast
       forking_input_a[i] = forking_input_initial[i];
       for (int j = 0; j < 5; j++) begin
         if ((noc::int2noc_port(i) != saved_input_direction[j]) && forwarding_in_progress[j]) begin
+//        if ((noc::int2noc_port(i) != saved_input_direction[j]) && (|saved_enhanc_routing_configuration[j])) begin
+//        if ((|saved_enhanc_routing_configuration[j]) && (~saved_enhanc_routing_configuration[j][i])) begin
           forking_input_a[i] &= ~(final_routing_request[i][j] & forking_input_initial[i]);
         end//end if
       end//end j for
       case_a[i] = final_routing_request[i] & {5{forking_input_a[i]}};
-      case_b[i] = case_a[i];
+      //case_b[i] = final_routing_request[i] & {5{forking_input_a[i]}};
     end//end i for
-    
+
     for (int i = 0; i < 5; i++) begin
       routing_sum_vertical_a[i] = case_a[0][i] + case_a[1][i] + case_a[2][i] + case_a[3][i] + case_a[4][i];
       conflict_output_a[i] = routing_sum_vertical_a[i][2] | routing_sum_vertical_a[i][1];
     end//end i for
     
     for (int i = 0; i < 5; i++) begin
+      case_b[i] = case_a[i];
       for (int j = 0; j < 5; j++) begin
         if (conflict_output_a[j]) begin
           case_b[i] &= {5{~(case_b[i][j] & non_forking_req_OR[j])}};
         end//end if
       end//end j for
-      case_c[i] = case_b[i];
+      //case_c[i] = case_b[i];
     end//end i for
 
     for (int i = 0; i < 5; i++) begin
@@ -333,6 +338,7 @@ module lookahead_router_multicast
 
     for (int i = 0; i < 5; i++) begin
       forking_input_c[i] = '0;
+      case_c[i] = case_b[i];
       for (int j = 0; j < 5; j++) begin
         if (conflict_output_b[j]) begin
           case_c[i] &= {5{~case_c[i][j]}};
@@ -359,15 +365,15 @@ router_fork_arbiter fork_arbiter_i (
   //////////////////////////////////////////////////////////////////////////////
   for (g_i = 0; g_i < 5; g_i++) begin : gen_output_control
     genvar g_j;
-    for (g_j = 0; g_j < 5; g_j++) begin : gen_transpose_routing
-      if (g_j < g_i) begin : gen_transpose_routin_j_lt_i
-        assign transp_grant[g_j][g_i] = granted[g_i][g_j];
-      end else if (g_j > g_i) begin : gen_transpose_routin_j_gt_i
-        assign transp_grant[g_j][g_i] = granted[g_i][g_j-1];
-      end else begin : gen_transpose_routin_j_eq_i
-        assign transp_grant[g_j][g_i] = 1'b0;
-      end
-    end // for gen_transpose_routing
+//    for (g_j = 0; g_j < 5; g_j++) begin : gen_transpose_routing
+//      if (g_j < g_i) begin : gen_transpose_routin_j_lt_i
+//        assign transp_grant[g_j][g_i] = granted[g_i][g_j];
+//      end else if (g_j > g_i) begin : gen_transpose_routin_j_gt_i
+//        assign transp_grant[g_j][g_i] = granted[g_i][g_j-1];
+//      end else begin : gen_transpose_routin_j_eq_i
+//        assign transp_grant[g_j][g_i] = 1'b0;
+//      end
+//    end // for gen_transpose_routing
 
     if (Ports[g_i]) begin : gen_output_port_enabled
       assign non_forking_req_OR[g_i] = non_forking_req[0][g_i] | non_forking_req[1][g_i] | non_forking_req[2][g_i] | non_forking_req[3][g_i] | non_forking_req[4][g_i];
@@ -402,17 +408,17 @@ router_fork_arbiter fork_arbiter_i (
         .grant_valid(grant_valid[g_i])
       );
 
-      always_ff @(posedge clk) begin
-        if (rst) begin
-          granted[g_i] = '0;
-        end else begin
-          if (grant_valid[g_i] && no_backpressure_old[g_i]) begin
-            granted[g_i] = grant[g_i];
-          end else if (forwarding_tail[g_i]) begin
-            granted[g_i] = '0;
-          end
-        end
-      end
+//      always_ff @(posedge clk) begin
+//        if (rst) begin
+//          granted[g_i] = '0;
+//        end else begin
+//          if (grant_valid[g_i] && no_backpressure_old[g_i]) begin
+//            granted[g_i] = grant[g_i];
+//          end else if (forwarding_tail[g_i]) begin
+//            granted[g_i] = '0;
+//          end
+//        end
+//      end
 
       assign rd_fifo[g_i][noc::kNorthPort] = no_backpressure[g_i] && forwarding_in_progress[g_i] && (enhanc_routing_configuration[g_i] == noc::goNorth);
       assign rd_fifo[g_i][noc::kSouthPort] = no_backpressure[g_i] && forwarding_in_progress[g_i] && (enhanc_routing_configuration[g_i] == noc::goSouth);
@@ -435,8 +441,8 @@ router_fork_arbiter fork_arbiter_i (
           saved_routing_configuration[g_i] <= '0;
         end 
         else begin
-          if ((forwarding_in_progress[g_i] & ~forwarding_tail[g_i]) | sample_routing_config[g_i]) begin
-//          if (forwarding_in_progress[g_i] | sample_routing_config[g_i]) begin
+//          if ((forwarding_in_progress[g_i] & ~forwarding_tail[g_i]) | sample_routing_config[g_i]) begin
+          if (forwarding_in_progress[g_i] | sample_routing_config[g_i]) begin
             saved_routing_configuration[g_i] <= routing_configuration[g_i];
           end
           else if (forwarding_tail[g_i]) begin
@@ -663,7 +669,7 @@ router_fork_arbiter fork_arbiter_i (
     end  else begin : gen_input_port_disabled
       assign grant_valid[g_i] = '0;
       assign grant[g_i] = '0;
-      assign granted[g_i] = '0;
+//      assign granted[g_i] = '0;
       assign data_void_out[g_i] = '1;
       assign out_unvalid_flit[g_i] = '1;
       assign data_out_crossbar[g_i] = '0;
