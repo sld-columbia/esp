@@ -311,6 +311,7 @@ architecture rtl of esp_acc_dma is
 --   attribute mark_debug of interrupt_data_in         : signal is "true";
 --   attribute mark_debug of interrupt_wrreq           : signal is "true";
 --   attribute mark_debug of dma_state : signal is "true";
+--   attribute mark_debug of dma_next : signal is "true";
 --   attribute mark_debug of status : signal is "true";
 --   attribute mark_debug of sample_status : signal is "true";
 --   attribute mark_debug of burst_count                : signal is "true";

@@ -136,16 +136,16 @@ module lookahead_router_multicast
   //forking arbiter logic
   logic [4:0][4:0] case_b, case_c, non_forking_req, new_final_routing_request, granted_req;
   logic [4:0][4:0] case_a;
-  logic [4:0][2:0] routing_sum_vertical_a, routing_sum_vertical_b;
+  logic [4:0][2:0] routing_sum_vertical_b;
   logic [4:0][2:0] routing_sum_horizontal_initial;
   logic [4:0] forking_input_initial, non_forking_req_OR;
-  logic [4:0] forking_input_a, forking_input_c, conflict_output_a, conflict_output_b, grant_fork, grant_fork_arbiter;
+  logic [4:0] forking_input_a, forking_input_c, conflict_output_b, grant_fork, grant_fork_arbiter;
   logic grant_valid_fork;
 
   logic [4:0][3:0] transp_final_routing_request;
 
   logic [4:0][4:0] enhanc_routing_configuration;
-  logic [4:0][4:0] saved_enhanc_routing_configuration;
+// (* mark_debug = "true" *) logic [4:0][4:0] saved_enhanc_routing_configuration;
 
   logic [4:0][3:0] routing_configuration;
   logic [4:0][3:0] saved_routing_configuration;
@@ -307,6 +307,8 @@ module lookahead_router_multicast
       forking_input_a[i] = forking_input_initial[i];
       for (int j = 0; j < 5; j++) begin
         if ((noc::int2noc_port(i) != saved_input_direction[j]) && forwarding_in_progress[j]) begin
+//        if ((~(|((1 << i) & saved_enhanced_routing_configuration[j]))) && forwarding_in_progress[j]) begin
+//        if ((state[j] != kReservePort) && ((1 << i) != saved_enhanced_routing_configuration[j])) begin
 //        if ((noc::int2noc_port(i) != saved_input_direction[j]) && (|saved_enhanc_routing_configuration[j])) begin
 //        if ((|saved_enhanc_routing_configuration[j]) && (~saved_enhanc_routing_configuration[j][i])) begin
           forking_input_a[i] &= ~(final_routing_request[i][j] & forking_input_initial[i]);
@@ -315,31 +317,35 @@ module lookahead_router_multicast
       case_a[i] = final_routing_request[i] & {5{forking_input_a[i]}};
       //case_b[i] = final_routing_request[i] & {5{forking_input_a[i]}};
     end//end i for
+//    forking_input_a = forking_input_initial;
+//    for (int i = 0; i < 5; i++) begin	//i = output
+//      for (int j = 0; j < 5; j++) begin	//j = input
+//        if ((state[i] != kReservePort) && ((1 << j) != saved_enhanced_routing_configuration[i])) begin
+//          forking_input_a[j] &= ~(final_routing_request[j][i] & forking_input_initial[j]);
+//        end//end if
+//      end//end j for
+//    end//end i for
+//
+//    for (int i = 0; i < 5; i++) begin	//i = input
+//      case_a[i] = final_routing_request[i] & {5{forking_input_a[i]}};
+//    end
 
-    for (int i = 0; i < 5; i++) begin
-      routing_sum_vertical_a[i] = case_a[0][i] + case_a[1][i] + case_a[2][i] + case_a[3][i] + case_a[4][i];
-      conflict_output_a[i] = routing_sum_vertical_a[i][2] | routing_sum_vertical_a[i][1];
-    end//end i for
-    
-    for (int i = 0; i < 5; i++) begin
+    for (int i = 0; i < 5; i++) begin//i = input
       case_b[i] = case_a[i];
-      for (int j = 0; j < 5; j++) begin
-        if (conflict_output_a[j]) begin
-          case_b[i] &= {5{~(case_b[i][j] & non_forking_req_OR[j])}};
-        end//end if
+      for (int j = 0; j < 5; j++) begin//j = output
+        case_b[i] &= {5{~(case_b[i][j] & non_forking_req_OR[j])}};
       end//end j for
-      //case_c[i] = case_b[i];
     end//end i for
 
-    for (int i = 0; i < 5; i++) begin
+    for (int i = 0; i < 5; i++) begin	//i = output
       routing_sum_vertical_b[i] = case_b[0][i] + case_b[1][i] + case_b[2][i] + case_b[3][i] + case_b[4][i];
       conflict_output_b[i] = routing_sum_vertical_b[i][2] | routing_sum_vertical_b[i][1];
     end//end i for
 
-    for (int i = 0; i < 5; i++) begin
+    for (int i = 0; i < 5; i++) begin//i = input
       forking_input_c[i] = '0;
       case_c[i] = case_b[i];
-      for (int j = 0; j < 5; j++) begin
+      for (int j = 0; j < 5; j++) begin//j = output
         if (conflict_output_b[j]) begin
           case_c[i] &= {5{~case_c[i][j]}};
           forking_input_c[i] |= case_b[i][j];
@@ -383,19 +389,19 @@ router_fork_arbiter fork_arbiter_i (
         if (g_j < g_i) begin : gen_transpose_routin_j_lt_i
           assign transp_final_routing_request[g_i][g_j] = new_final_routing_request[g_j][g_i];
           assign enhanc_routing_configuration[g_i][g_j] = routing_configuration[g_i][g_j];
-          assign saved_enhanc_routing_configuration[g_i][g_j] = saved_routing_configuration[g_i][g_j];
+//          assign saved_enhanc_routing_configuration[g_i][g_j] = saved_routing_configuration[g_i][g_j];
         end else if (g_j > g_i) begin : gen_transpose_routin_j_gt_i
           assign transp_final_routing_request[g_i][g_j-1] = new_final_routing_request[g_j][g_i];
           assign enhanc_routing_configuration[g_i][g_j] = routing_configuration[g_i][g_j-1];
-          assign saved_enhanc_routing_configuration[g_i][g_j] = saved_routing_configuration[g_i][g_j-1];
+//          assign saved_enhanc_routing_configuration[g_i][g_j] = saved_routing_configuration[g_i][g_j-1];
         end else begin : gen_transpose_routin_j_eq_i
           assign enhanc_routing_configuration[g_i][g_j] = 1'b0;
-          assign saved_enhanc_routing_configuration[g_i][g_j] = 1'b0;
+//          assign saved_enhanc_routing_configuration[g_i][g_j] = 1'b0;
         end
       end // for gen_transpose_routing
 
       assign input_direction[g_i] = noc::get_direction(enhanc_routing_configuration[g_i]);
-      assign saved_input_direction[g_i] = noc::get_direction(saved_enhanc_routing_configuration[g_i]);
+//      assign saved_input_direction[g_i] = noc::get_direction(saved_enhanc_routing_configuration[g_i]);
 
       // Arbitration
       router_arbiter arbiter_i (
@@ -439,14 +445,17 @@ router_fork_arbiter fork_arbiter_i (
       always_ff @(posedge clk) begin
         if (rst) begin
           saved_routing_configuration[g_i] <= '0;
+          saved_input_direction[g_i] <= noc::kNorthPort; 
         end 
         else begin
 //          if ((forwarding_in_progress[g_i] & ~forwarding_tail[g_i]) | sample_routing_config[g_i]) begin
           if (forwarding_in_progress[g_i] | sample_routing_config[g_i]) begin
             saved_routing_configuration[g_i] <= routing_configuration[g_i];
+            saved_input_direction[g_i] <= input_direction[g_i];
           end
           else if (forwarding_tail[g_i]) begin
             saved_routing_configuration[g_i] <= 'h0;
+            saved_input_direction[g_i] <= noc::kNorthPort;
           end
         end
       end
@@ -573,6 +582,10 @@ router_fork_arbiter fork_arbiter_i (
       assign backpressure_tmp[g_i][g_j] = ((g_i == g_j) || ((|enhanc_routing_configuration[g_i])
                  && (enhanc_routing_configuration[g_j] == enhanc_routing_configuration[g_i])))
                  && (FifoBypassEnable ? stop_in[g_j] : credits[g_j] == '0);
+//      assign backpressure_tmp[g_i][g_j] = ((g_i == g_j) || 
+//                 (forwarding_in_progress[g_i] && (saved_input_direction[g_j] == saved_input_direction[g_i]))) 
+//                 && (FifoBypassEnable ? stop_in[g_j] : credits[g_j] == '0);
+
     end
     assign no_backpressure_old[g_i] = FifoBypassEnable ? ~stop_in[g_i] : credits != '0;
     assign no_backpressure[g_i] = ~(|backpressure_tmp[g_i]);
@@ -589,7 +602,8 @@ router_fork_arbiter fork_arbiter_i (
 
       unique case (state[g_i])
         kReservePort : begin
-            if (grant_valid[g_i] & no_backpressure_old[g_i]) begin
+            if (grant_valid[g_i] & no_backpressure_old[g_i]) begin	// no_backpressure change?
+//            if (grant_valid[g_i] & no_backpressure[g_i]) begin	// no_backpressure change
                 routing_configuration[g_i] = grant[g_i];
                 sample_routing_config[g_i] = 1'b1;
                 new_state[g_i] = kHeadFlit;
@@ -637,8 +651,9 @@ router_fork_arbiter fork_arbiter_i (
       always_ff @(posedge clk) begin
         if (rst) begin
           data_void_out[g_i] <= 1'b1;
-        end else begin
+        end else begin		//3 lines of no backpressure changes
           if (~forwarding_in_progress[g_i] && no_backpressure_old[g_i]) begin
+//          if (~forwarding_in_progress[g_i] && no_backpressure[g_i]) begin
             data_void_out[g_i] <= 1'b1;
           end else if (no_backpressure[g_i]) begin
             data_void_out[g_i] <= out_unvalid_flit[g_i];
@@ -693,11 +708,11 @@ router_fork_arbiter fork_arbiter_i (
       assign fifo_head_temp[g_i][4] = '0;
       assign current_routing[g_i] = '0 ;
       assign enhanc_routing_configuration[g_i] = '0;
-      assign saved_enhanc_routing_configuration[g_i] = '0;
+//      assign saved_enhanc_routing_configuration[g_i] = '0;
       assign state[g_i] = kReservePort;
       assign sample_routing_config[g_i] = '0;
       assign input_direction[g_i] = noc::kNorthPort;
-      assign saved_input_direction[g_i] = noc::kNorthPort;
+//      assign saved_input_direction[g_i] = noc::kNorthPort;
     end // block: gen_output_port_enabled
 
   end // for gen_output_control
