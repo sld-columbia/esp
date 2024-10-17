@@ -53,14 +53,24 @@ package noc;
     get_onehot_port.go_local = (port == kLocalPort);
   endfunction // get_onehot_port
 
+//  function automatic noc_port_t get_direction (
+//    input direction_t direction);
+//    if (direction.go_north) return kNorthPort;
+//    else if (direction.go_south) return kSouthPort;
+//    else if (direction.go_west) return kWestPort;
+//    else if (direction.go_east) return kEastPort;
+//    else if (direction.go_local) return kLocalPort;
+//    else return kNorthPort;
+//  endfunction // get_onehot_port
+
   function automatic noc_port_t get_direction (
     input direction_t direction);
     if (direction.go_north) return kNorthPort;
-    else if (direction.go_south) return kSouthPort;
-    else if (direction.go_west) return kWestPort;
-    else if (direction.go_east) return kEastPort;
-    else if (direction.go_local) return kLocalPort;
-    else return kNorthPort;
+    if (direction.go_south) return kSouthPort;
+    if (direction.go_west) return kWestPort;
+    if (direction.go_east) return kEastPort;
+    if (direction.go_local) return kLocalPort;
+    return kNorthPort;
   endfunction // get_onehot_port
 
   function automatic noc_port_t int2noc_port(
