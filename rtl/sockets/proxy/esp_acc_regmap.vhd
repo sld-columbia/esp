@@ -58,6 +58,7 @@ package esp_acc_regmap is
   constant P2P_BIT_SRCS_YX : integer range 0 to 31 := 4;
   constant P2P_BIT_MCAST_DESTS : integer range 0 to 31 := 28;
   constant P2P_WIDTH_MCAST_DESTS : integer range 0 to 31 := 4;
+  constant P2P_BIT_MCAST_PACKET : integer range 0 to 31 := 27;
 
   -- bank(11)       : RESERVED for extra P2P_REG fields if NSRCS > 4
   constant YX_REG  : integer range 0 to MAXREGNUM - 1 := 11;

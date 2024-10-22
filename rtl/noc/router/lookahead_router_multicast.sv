@@ -436,7 +436,7 @@ router_fork_arbiter fork_arbiter_i (
           if (forwarding_tail[g_i]) begin
             // Next flit will be head (convers single-flit packet)
             insert_lookahead_routing[g_i] <= 1'b1;
-          end else if (forwarding_head[g_i] && forwarding_in_progress[g_i]) begin
+          end else if (forwarding_head[g_i]) begin
             // Next flit will not be head
             insert_lookahead_routing[g_i] <= 1'b0;
           end

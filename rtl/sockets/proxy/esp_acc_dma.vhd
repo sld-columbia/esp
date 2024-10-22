@@ -207,6 +207,8 @@ architecture rtl of esp_acc_dma is
   signal p2p_dst_arr_y        : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
   signal count_n_dest         : integer range 0 to MAX_MCAST_DESTS - 1;
   signal p2p_mcast_ndests     : integer range 0 to MAX_MCAST_DESTS - 1;
+  signal p2p_mcast_packet     : std_ulogic;
+  signal p2p_mcast_depth      : std_logic_vector(3 downto 0);
 
   -- IRQ
   signal irq      : std_ulogic;
@@ -248,12 +250,15 @@ architecture rtl of esp_acc_dma is
 
   -- DMA word count
   signal burst_count            : std_logic_vector(31 downto 0);
+  signal burst_count_mcast      : std_logic_vector(3 downto 0);
   signal tlb_count              : std_logic_vector(31 downto 0);
   signal word_count             : std_logic_vector(31 downto 0);
   signal increment_burst_count  : std_ulogic;
+  signal increment_burst_count_mcast : std_ulogic;
   signal increment_tlb_count    : std_ulogic;
   signal increment_word_count   : std_ulogic;
   signal clear_burst_count      : std_ulogic;
+  signal clear_burst_count_mcast : std_ulogic;
   signal clear_tlb_count        : std_ulogic;
   signal clear_word_count       : std_ulogic;
   signal set_word_count         : std_ulogic;
@@ -475,6 +480,9 @@ end generate tlb_gen;
   p2p_dst_y <= get_origin_y(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
   p2p_dst_x <= get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
   p2p_mcast_ndests <= to_integer(unsigned(bankreg(P2P_REG)(P2P_BIT_MCAST_DESTS + P2P_WIDTH_MCAST_DESTS - 1 downto P2P_BIT_MCAST_DESTS)));
+  p2p_mcast_packet <= bankreg(P2P_REG)(P2P_BIT_MCAST_PACKET);
+  --p2p_mcast_depth <= noc::PortQueueDepth - 1;
+  p2p_mcast_depth <= conv_std_logic_vector(4,4);
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
                         p2p_src_index_r, p2p_dst_arr_y, p2p_dst_arr_x, p2p_dst_y, p2p_dst_x,
@@ -595,6 +603,7 @@ end generate tlb_gen;
       payload_address_r <= (others => '0');
       payload_length_r <= (others => '0');
       burst_count <= conv_std_logic_vector(1, 32);
+      burst_count_mcast <= conv_std_logic_vector(1, 4);
       p2p_count <= conv_std_logic_vector(1, 32);
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
@@ -616,6 +625,12 @@ end generate tlb_gen;
       end if;
       if clear_burst_count = '1' then
         burst_count <= conv_std_logic_vector(1, 32);
+      end if;
+      if increment_burst_count_mcast = '1' then
+        burst_count_mcast <= burst_count_mcast + 1;
+      end if;
+      if clear_burst_count_mcast = '1' then
+        burst_count_mcast <= conv_std_logic_vector(1, 4);
       end if;
       if increment_tlb_count = '1' then
         tlb_count <= tlb_count + 1;
@@ -693,7 +708,7 @@ end generate tlb_gen;
                           dma_tran_start, tlb_empty, pending_dma_write, pending_dma_read,
                           coherent_dma_ready, size_r, coherence, p2p_req_rcv_empty, p2p_req_rcv_data_out,
                           p2p_rsp_snd_full, acc_flush_done, read_length, rcv_p2p_length,
-                          skip_wait_p2p_req, p2p_header_r)
+                          skip_wait_p2p_req, p2p_header_r, burst_count_mcast)
     variable payload_data : dma_noc_flit_type;
     variable preamble : noc_preamble_type;
     variable msg : noc_msg_type;
@@ -711,6 +726,8 @@ end generate tlb_gen;
     sample_wr_size <= '0';
     increment_burst_count <= '0';
     clear_burst_count <= '0';
+    increment_burst_count_mcast <= '0';
+    clear_burst_count_mcast <= '0';
     increment_tlb_count <= '0';
     increment_word_count <= '0';
     clear_tlb_count <= '0';
@@ -753,7 +770,7 @@ end generate tlb_gen;
     else
       len := payload_length_r(31 downto 0);
     end if;
-    if burst_count = len or burst_count = rcv_p2p_length then
+    if burst_count = len or burst_count = rcv_p2p_length  or ((burst_count_mcast = p2p_mcast_depth) and (p2p_mcast_packet = '1') and (msg = RSP_P2P)) then
       payload_data(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     else
       payload_data(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
@@ -1071,6 +1088,9 @@ end generate tlb_gen;
                 continue_p2p := '0';
                 clear_p2p_count <= '1';
               end if;--p2p count < rcv_p2p_length
+              if p2p_mcast_packet = '1' then
+                clear_burst_count_mcast <= '1';
+              end if;
               clear_burst_count <= '1';
               dma_tran_done <= '1';
               dma_next <= running;
@@ -1091,6 +1111,15 @@ end generate tlb_gen;
             else
               increment_burst_count <= '1';
               increment_p2p_count <= '1';
+              if p2p_mcast_packet = '1' then
+                if burst_count_mcast = p2p_mcast_depth then
+                  clear_burst_count_mcast <= '1';
+                  dma_next <= send_header;
+                  continue_p2p := '1';
+                else
+                  increment_burst_count_mcast <= '1';
+                end if;
+              end if;
             end if;
           end if;
         end if;

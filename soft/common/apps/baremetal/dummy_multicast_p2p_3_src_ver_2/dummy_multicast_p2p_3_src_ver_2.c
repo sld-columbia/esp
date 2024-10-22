@@ -27,8 +27,8 @@ typedef u64 token_t;
 #define BATCH_REG 0x44
 
 // User defined registers
-#define TOKENS 16
-#define BATCH 2048
+#define TOKENS 512
+#define BATCH 256
 #define mask 0x0LL
 
 // Control the number of consumers
@@ -43,6 +43,7 @@ typedef u64 token_t;
 #define CHUNK_SHIFT 20
 #define CHUNK_SIZE BIT(CHUNK_SHIFT)
 
+#define MCAST_PACKET 1
 
 static int validate_dummy_0(token_t *mem)
 {
@@ -50,9 +51,9 @@ static int validate_dummy_0(token_t *mem)
     int rtn = 0;
     for (j = 0; j < BATCH; j++)
         for (i = 0; i < TOKENS; i++) {
-            if (i == 0 && j == 0) {
-                printf("%llu\n", mem[0]);
-            }
+//            if (i == 0 && j == 0) {
+//                printf("%llu\n", mem[0]);
+//            }
             if (mem[i + j * TOKENS] != (mask | (token_t) ((2 * BATCH * TOKENS) + (i + j * TOKENS)))) {
 //                printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
                 rtn++;
@@ -67,9 +68,9 @@ static int validate_dummy_1(token_t *mem)
     int rtn = 0;
     for (j = 0; j < BATCH; j++)
         for (i = 0; i < TOKENS; i++) {
-            if (i == 0 && j == 0) {
-                printf("%llu\n", mem[0]);
-            }
+//            if (i == 0 && j == 0) {
+//                printf("%llu\n", mem[0]);
+//            }
             if (mem[i + j * TOKENS] != (mask | (token_t) ((BATCH * TOKENS) + (i + j * TOKENS)))) {
                 // printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
                 rtn++;
@@ -84,9 +85,9 @@ static int validate_dummy_2(token_t *mem)
     int rtn = 0;
     for (j = 0; j < BATCH; j++)
         for (i = 0; i < TOKENS; i++) {
-            if (i == 0 && j == 0) {
-                printf("%llu\n", mem[0]);
-            }
+//            if (i == 0 && j == 0) {
+//                printf("%llu\n", mem[0]);
+//            }
             if (mem[i + j * TOKENS] != (mask | (token_t) ((3* BATCH * TOKENS) + (i + j * TOKENS)))) {
                 // printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
                 rtn++;
@@ -127,16 +128,18 @@ static void clear_buf(token_t *mem)
             mem[i + j * TOKENS] = (mask | (token_t) (999999));
 }
 
-void p2p_setup(struct esp_device* dev, int p2p_store, int mcast_ndests, int p2p_load, struct esp_device* p2p_src){
+void p2p_setup(struct esp_device* dev, int p2p_store, int mcast_ndests, int p2p_load, struct esp_device* p2p_src, int mcast_packet){
     esp_p2p_reset(dev);
     if (p2p_store) {
         esp_p2p_enable_dst(dev);
         esp_p2p_set_mcast_ndests(dev, mcast_ndests);
+        esp_p2p_set_mcast_packet(dev, mcast_packet);
     }
     if (p2p_load) {
         esp_p2p_enable_src(dev);
         esp_p2p_set_y(dev, 0, esp_get_y(p2p_src));
         esp_p2p_set_x(dev, 0, esp_get_x(p2p_src));
+        esp_p2p_set_mcast_packet(dev, mcast_packet);
     }
 }
 
@@ -213,9 +216,9 @@ int main(int argc, char * argv[])
     //printf("  ptable = %p\n", ptable);
     //printf("  nchunk = %lu\n\n", nchunk);
 
-for (int it_0 = 2; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
-    for (int it_1 = 4; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
-        for (int it_2 = 4; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
+for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
+    for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
+        for (int it_2 = 0; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
 //if ((it_0 == 3 && it_1 == 4 && it_2 == 4) || (it_0 == 3 && it_1 == 4 && it_2 == 5) || (it_0 == 3 && it_1 == 5 && it_2 == 5)) {
 //    continue;
 //}
@@ -260,9 +263,9 @@ for (int it_0 = 2; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_0[i]], SELECT_REG, ioread32(&devs[dev_id_0[i]], DEVID_REG));
         iowrite32(&devs[dev_id_0[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_0[i]], 1, num_multicast_0, 0, NULL);
+            p2p_setup(&devs[dev_id_0[i]], 1, num_multicast_0, 0, NULL, MCAST_PACKET);
         else
-            p2p_setup(&devs[dev_id_0[i]], 0, 0, 1, &devs[dev_id_0[0]]);
+            p2p_setup(&devs[dev_id_0[i]], 0, 0, 1, &devs[dev_id_0[0]], 0);
 
         iowrite32(&devs[dev_id_0[i]], PT_ADDRESS_REG, (unsigned long) ptable);
         iowrite32(&devs[dev_id_0[i]], PT_NCHUNK_REG, nchunk);
@@ -279,9 +282,9 @@ for (int it_0 = 2; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_1[i]], SELECT_REG, ioread32(&devs[dev_id_1[i]], DEVID_REG));
         iowrite32(&devs[dev_id_1[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_1[i]], 1, num_multicast_1, 0, NULL);
+            p2p_setup(&devs[dev_id_1[i]], 1, num_multicast_1, 0, NULL, MCAST_PACKET);
         else
-            p2p_setup(&devs[dev_id_1[i]], 0, 0, 1, &devs[dev_id_1[0]]);
+            p2p_setup(&devs[dev_id_1[i]], 0, 0, 1, &devs[dev_id_1[0]], 0);
 
         iowrite32(&devs[dev_id_1[i]], PT_ADDRESS_REG, (unsigned long) ptable);
         iowrite32(&devs[dev_id_1[i]], PT_NCHUNK_REG, nchunk);
@@ -298,9 +301,9 @@ for (int it_0 = 2; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
         iowrite32(&devs[dev_id_2[i]], SELECT_REG, ioread32(&devs[dev_id_2[i]], DEVID_REG));
         iowrite32(&devs[dev_id_2[i]], COHERENCE_REG, coherence);
         if (i == 0)
-            p2p_setup(&devs[dev_id_2[i]], 1, num_multicast_2, 0, NULL);
+            p2p_setup(&devs[dev_id_2[i]], 1, num_multicast_2, 0, NULL, MCAST_PACKET);
         else
-            p2p_setup(&devs[dev_id_2[i]], 0, 0, 1, &devs[dev_id_2[0]]);
+            p2p_setup(&devs[dev_id_2[i]], 0, 0, 1, &devs[dev_id_2[0]], 0);
 
         iowrite32(&devs[dev_id_2[i]], PT_ADDRESS_REG, (unsigned long) ptable);
         iowrite32(&devs[dev_id_2[i]], PT_NCHUNK_REG, nchunk);

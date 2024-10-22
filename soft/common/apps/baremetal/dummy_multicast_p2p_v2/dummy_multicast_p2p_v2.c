@@ -28,12 +28,12 @@ typedef u64 token_t;
 
 // User defined registers
 #define TOKENS 512
-#define BATCH 2
+#define BATCH 4
 #define mask 0x0LL
 
 // Control the number of consumers
 //#define NUM_MULTICAST 16
-#define NUM_MULTICAST 16
+#define NUM_MULTICAST 2
 
 // MCAST Select the source ID
 //#define SOURCE_DEV_ID 7
@@ -43,18 +43,37 @@ typedef u64 token_t;
 #define CHUNK_SHIFT 20
 #define CHUNK_SIZE BIT(CHUNK_SHIFT)
 
-#define MCAST_PACKET 1
 
 static int validate_dummy(token_t *mem)
 {
     int i, j;
     int rtn = 0;
-    for (j = 0; j < BATCH; j++)
-        for (i = 0; i < TOKENS; i++)
+    for (j = 0; j < BATCH; j++) {
+        for (i = 0; i < TOKENS; i++) {
+//            if (i == 0 && j == 0) {
+//                printf("%llu\n", mem[0]);
+//            }
             if (mem[i + j * TOKENS] != (mask | (token_t) (i + j * TOKENS))) {
 //                printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
                 rtn++;
             }
+}
+}
+    return rtn;
+}
+
+static int validate_dummy_print(token_t *mem)
+{
+    int i, j;
+    int rtn = 0;
+    for (j = 0; j < BATCH; j++) {
+        for (i = 0; i < TOKENS; i++) {
+            if (mem[i + j * TOKENS] != (mask | (token_t) (i + j * TOKENS))) {
+//                printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS]);
+                rtn++;
+            }
+}
+}
     return rtn;
 }
 
@@ -66,18 +85,16 @@ static void init_buf(token_t *mem)
             mem[i + j * TOKENS] = (mask | (token_t) (i + j * TOKENS));
 }
 
-void p2p_setup(struct esp_device* dev, int p2p_store, int mcast_ndests, int p2p_load, struct esp_device* p2p_src, int mcast_packet){
+void p2p_setup(struct esp_device* dev, int p2p_store, int mcast_ndests, int p2p_load, struct esp_device* p2p_src){
     esp_p2p_reset(dev);
     if (p2p_store) {
         esp_p2p_enable_dst(dev);
         esp_p2p_set_mcast_ndests(dev, mcast_ndests);
-        esp_p2p_set_mcast_packet(dev, mcast_packet);
     }
     if (p2p_load) {
         esp_p2p_enable_src(dev);
         esp_p2p_set_y(dev, 0, esp_get_y(p2p_src));
         esp_p2p_set_x(dev, 0, esp_get_x(p2p_src));
-        esp_p2p_set_mcast_packet(dev, mcast_packet);
     }
 }
 
@@ -113,8 +130,8 @@ for (int source_dev_id = 0; source_dev_id < num_multicast + 1; source_dev_id++) 
 //		exit(EXIT_FAILURE);
 //	}
 
-    struct esp_device devs[17];
-    ndev = 17;
+    struct esp_device devs[NUM_MULTICAST+1];
+    ndev = 3;
     for (int i = 0; i < ndev; i++) {
         devs[i].addr = 0x60010000 + i * 0x100;
     }
@@ -162,9 +179,9 @@ for (int source_dev_id = 0; source_dev_id < num_multicast + 1; source_dev_id++) 
         iowrite32(&devs[i], SELECT_REG, ioread32(&devs[i], DEVID_REG));
         iowrite32(&devs[i], COHERENCE_REG, coherence);
         if (i == source_dev_id)
-            p2p_setup(&devs[i], 1, num_multicast, 0, NULL, MCAST_PACKET);
+            p2p_setup(&devs[i], 1, num_multicast, 0, NULL);
         else
-            p2p_setup(&devs[i], 0, 0, 1, &devs[source_dev_id], 0);
+            p2p_setup(&devs[i], 0, 0, 1, &devs[source_dev_id]);
 
         iowrite32(&devs[i], PT_ADDRESS_REG, (unsigned long) ptable);
         iowrite32(&devs[i], PT_NCHUNK_REG, nchunk);
@@ -195,11 +212,11 @@ for (int source_dev_id = 0; source_dev_id < num_multicast + 1; source_dev_id++) 
 
     while (!done) {
         done = STATUS_MASK_DONE;
-//        printf("  Debug checkpoint 2\n");
+        printf("  Debug checkpoint 2\n");
         for (int i = 0; i < num_multicast + 1; i++){
             done &= (ioread32(&devs[i], STATUS_REG) & STATUS_MASK_DONE);
         }
-//        printf("  Debug checkpoint 3\n");
+        printf("  Debug checkpoint 3\n");
     }
 
     end = get_counter();
@@ -216,17 +233,21 @@ for (int source_dev_id = 0; source_dev_id < num_multicast + 1; source_dev_id++) 
     for (int i = 0; i < num_multicast + 1; i++) {
         int error_increment = 0;
         if (i != source_dev_id) {
-            error_increment = validate_dummy(&mem[i * BATCH * TOKENS]);
+            error_increment = validate_dummy_print(&mem[i * BATCH * TOKENS]);
         }
+//        else if (i == 6) {
+//            error_increment = validate_dummy_print(&mem[i * BATCH * TOKENS]);
+//        }
         // errors += validate_dummy(&mem[(i + 1) * BATCH * TOKENS]);
         errors += error_increment;
 //        printf("Memory Block %d Iterated...\n", i);
-//        if (!error_increment)
-//            printf("Memory Block %d PASS\n", i);
-//        else
-//            printf("Memory Block %d FAIL\n", i);
+        if (!error_increment)
+            printf("Memory Block %d PASS\n", i);
+        else
+            printf("Memory Block %d FAIL\n", i);
+        printf("error_increment = %di\n", error_increment);
     }
-//    printf("Total Errors %d\n", errors);
+    printf("Total Errors %d\n", errors);
     if (!errors)
 		printf("Source %d, PASS\n", source_dev_id);
     else

@@ -32,11 +32,11 @@ typedef u64 token_t;
 #define mask 0x0LL
 
 // Control the number of consumers
-#define NUM_MULTICAST_0 1
-#define NUM_MULTICAST_1 14
+#define NUM_MULTICAST_0 6
+#define NUM_MULTICAST_1 9
 
 // MCAST number of iterations = 8 * 9 (num_dest + 1)*(num_dest + 1)
-#define IT 30
+#define IT 54
 
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 20
@@ -179,8 +179,8 @@ int main(int argc, char * argv[])
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(dummy_buf_size);
     //printf("\n  memory buffer base-address = %p\n", mem);
-    coherence = ACC_COH_RECALL;
-//    coherence = ACC_COH_NONE;
+//    coherence = ACC_COH_RECALL;
+    coherence = ACC_COH_NONE;
 
     //Alocate and populate page table
     ptable = aligned_malloc(nchunk * sizeof(unsigned *));
@@ -193,8 +193,8 @@ for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
     for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
 
     // Indexes
-    int dev_id_0[NUM_MULTICAST_0 + 1] = {1, 13};
-    int dev_id_1[NUM_MULTICAST_1 + 1] = {0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16};
+    int dev_id_0[NUM_MULTICAST_0 + 1] = {1, 2, 5, 6, 9, 10, 14};
+    int dev_id_1[NUM_MULTICAST_1 + 1] = {0, 3, 4, 7, 8, 11, 12, 13, 15, 16};
     int dev_id[NUM_MULTICAST_0 + NUM_MULTICAST_1 + 1 + 1] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     // Swap indexes
