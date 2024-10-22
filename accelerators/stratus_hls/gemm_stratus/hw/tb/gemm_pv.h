@@ -8,9 +8,7 @@
 
 #include "double_matrix_t.h"
 
-void gemm_pv(
-  double_matrix_t *matrix_in1,
-  double_matrix_t *matrix_in2,
-  double_matrix_t **matrix_out);
+void gemm_pv(double_matrix_t *matrix_in1, double_matrix_t *matrix_in2,
+             double_matrix_t **matrix_out);
 
 #endif // __PVC_GEMM_PV_H__

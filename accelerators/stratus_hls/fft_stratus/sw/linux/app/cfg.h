@@ -3,8 +3,8 @@
 #ifndef __ESP_CFG_000_H__
 #define __ESP_CFG_000_H__
 
-#include "libesp.h"
 #include "fft_stratus.h"
+#include "libesp.h"
 
 #if (FFT_FX_WIDTH == 64)
 typedef unsigned long long token_t;
@@ -33,27 +33,23 @@ const int32_t num_batches = 1;
 
 #define NACC 1
 
-struct fft_stratus_access fft_cfg_000[] = {
-	{
-		.batch_size = NUM_BATCHES,
-		.do_bitrev = DO_BITREV,
-		.log_len = LOG_LEN,
-		.src_offset = 0,
-		.dst_offset = 0,
-		.esp.coherence = ACC_COH_NONE,
-		.esp.p2p_store = 0,
-		.esp.p2p_nsrcs = 0,
-		.esp.p2p_srcs = {"", "", "", ""},
-	}
-};
+struct fft_stratus_access fft_cfg_000[] = {{
+    .batch_size = NUM_BATCHES,
+    .do_bitrev = DO_BITREV,
+    .log_len = LOG_LEN,
+    .src_offset = 0,
+    .dst_offset = 0,
+    .esp.coherence = ACC_COH_NONE,
+    .esp.p2p_store = 0,
+    .esp.p2p_nsrcs = 0,
+    .esp.p2p_srcs = {"", "", "", ""},
+}};
 
-esp_thread_info_t cfg_000[] = {
-	{
-		.run = true,
-		.devname = "fft_stratus.0",
-		.ioctl_req = FFT_STRATUS_IOC_ACCESS,
-		.esp_desc = &(fft_cfg_000[0].esp),
-	}
-};
+esp_thread_info_t cfg_000[] = {{
+    .run = true,
+    .devname = "fft_stratus.0",
+    .ioctl_req = FFT_STRATUS_IOC_ACCESS,
+    .esp_desc = &(fft_cfg_000[0].esp),
+}};
 
 #endif /* __ESP_CFG_000_H__ */

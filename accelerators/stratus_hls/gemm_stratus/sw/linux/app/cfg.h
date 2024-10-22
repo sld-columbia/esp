@@ -3,8 +3,8 @@
 #ifndef __ESP_CFG_000_H__
 #define __ESP_CFG_000_H__
 
-#include "libesp.h"
 #include "gemm_stratus.h"
+#include "libesp.h"
 
 /* User defined */
 
@@ -84,34 +84,30 @@ typedef float native_t;
 #define MAX_SIZE (ACC_PAGE_SIZE * ACC_TLB_ENTRIES)
 #define MAX_TESTS 30
 
-struct gemm_stratus_access gemm_cfg_000[] = {
-	{
-		/* <<--descriptor-->> */
-		.do_relu = DO_RELU,
-		.transpose = TRANSPOSE,
-		.ninputs = NINPUTS,
-		.d3 = D3,
-		.d2 = D2,
-		.d1 = D1,
-		.st_offset = ST_OFFSET,
-		.ld_offset1 = LD_OFFSET1,
-		.ld_offset2 = LD_OFFSET2,
-		.src_offset = 0,
-		.dst_offset = 0,
-		.esp.coherence = ACC_COH_NONE,
-		.esp.p2p_store = 0,
-		.esp.p2p_nsrcs = 0,
-		.esp.p2p_srcs = {"", "", "", ""},
-	}
-};
+struct gemm_stratus_access gemm_cfg_000[] = {{
+    /* <<--descriptor-->> */
+    .do_relu = DO_RELU,
+    .transpose = TRANSPOSE,
+    .ninputs = NINPUTS,
+    .d3 = D3,
+    .d2 = D2,
+    .d1 = D1,
+    .st_offset = ST_OFFSET,
+    .ld_offset1 = LD_OFFSET1,
+    .ld_offset2 = LD_OFFSET2,
+    .src_offset = 0,
+    .dst_offset = 0,
+    .esp.coherence = ACC_COH_NONE,
+    .esp.p2p_store = 0,
+    .esp.p2p_nsrcs = 0,
+    .esp.p2p_srcs = {"", "", "", ""},
+}};
 
-esp_thread_info_t cfg_000[] = {
-	{
-		.run = true,
-		.devname = "gemm_stratus.0",
-		.ioctl_req = GEMM_STRATUS_IOC_ACCESS,
-		.esp_desc = &(gemm_cfg_000[0].esp),
-	}
-};
+esp_thread_info_t cfg_000[] = {{
+    .run = true,
+    .devname = "gemm_stratus.0",
+    .ioctl_req = GEMM_STRATUS_IOC_ACCESS,
+    .esp_desc = &(gemm_cfg_000[0].esp),
+}};
 
 #endif /* __ESP_CFG_000_H__ */

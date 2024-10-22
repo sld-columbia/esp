@@ -3,8 +3,8 @@
 #ifndef __ESP_CFG_000_H__
 #define __ESP_CFG_000_H__
 
-#include "libesp.h"
 #include "conv2d_stratus.h"
+#include "libesp.h"
 
 /* User defined */
 
@@ -82,35 +82,31 @@ typedef float native_t;
 #define MAX_TESTS 10
 #define DMA_RATIO 2
 
-struct conv2d_stratus_access conv2d_cfg_000[] = {
-	{
-		/* <<--descriptor-->> */
-		.n_channels = N_CHANNELS,
-		.feature_map_height = FEATURE_MAP_HEIGHT,
-		.feature_map_width = FEATURE_MAP_WIDTH,
-		.n_filters = N_FILTERS,
-		.filter_dim = FILTER_DIM,
-		.is_padded = IS_PADDED,
-		.stride = STRIDE,
-		.do_relu = DO_RELU,
-		.pool_type = POOL_TYPE,
-		.batch_size = BATCH_SIZE,
-		.src_offset = 0,
-		.dst_offset = 0,
-		.esp.coherence = ACC_COH_NONE,
-		.esp.p2p_store = 0,
-		.esp.p2p_nsrcs = 0,
-		.esp.p2p_srcs = {"", "", "", ""},
-	}
-};
+struct conv2d_stratus_access conv2d_cfg_000[] = {{
+    /* <<--descriptor-->> */
+    .n_channels = N_CHANNELS,
+    .feature_map_height = FEATURE_MAP_HEIGHT,
+    .feature_map_width = FEATURE_MAP_WIDTH,
+    .n_filters = N_FILTERS,
+    .filter_dim = FILTER_DIM,
+    .is_padded = IS_PADDED,
+    .stride = STRIDE,
+    .do_relu = DO_RELU,
+    .pool_type = POOL_TYPE,
+    .batch_size = BATCH_SIZE,
+    .src_offset = 0,
+    .dst_offset = 0,
+    .esp.coherence = ACC_COH_NONE,
+    .esp.p2p_store = 0,
+    .esp.p2p_nsrcs = 0,
+    .esp.p2p_srcs = {"", "", "", ""},
+}};
 
-esp_thread_info_t cfg_000[] = {
-	{
-		.run = true,
-		.devname = "conv2d_stratus.0",
-		.ioctl_req = CONV2D_STRATUS_IOC_ACCESS,
-		.esp_desc = &(conv2d_cfg_000[0].esp),
-	}
-};
+esp_thread_info_t cfg_000[] = {{
+    .run = true,
+    .devname = "conv2d_stratus.0",
+    .ioctl_req = CONV2D_STRATUS_IOC_ACCESS,
+    .esp_desc = &(conv2d_cfg_000[0].esp),
+}};
 
 #endif /* __ESP_CFG_000_H__ */

@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #endif
 
+#include "utils/fft_utils.h"
 #include <esp_accelerator.h>
 #include <esp_probe.h>
-#include "utils/fft_utils.h"
 
 #if (FFT_FX_WIDTH == 64)
 typedef long long token_t;
@@ -26,11 +26,9 @@ typedef float native_t;
 
 const float ERR_TH = 0.05;
 
-static unsigned DMA_WORD_PER_BEAT(unsigned _st)
-{
-		return (sizeof(void *) / _st);
+static unsigned DMA_WORD_PER_BEAT(unsigned _st) {
+  return (sizeof(void *) / _st);
 }
-
 
 #define SLD_FFT 0x059
 #define DEV_NAME "sld,fft_stratus"
@@ -53,9 +51,8 @@ static unsigned mem_size;
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 20
 #define CHUNK_SIZE BIT(CHUNK_SHIFT)
-#define NCHUNK(_sz) ((_sz % CHUNK_SIZE == 0) ?		\
-			(_sz / CHUNK_SIZE) :		\
-			(_sz / CHUNK_SIZE) + 1)
+#define NCHUNK(_sz)                                                            \
+  ((_sz % CHUNK_SIZE == 0) ? (_sz / CHUNK_SIZE) : (_sz / CHUNK_SIZE) + 1)
 
 /* User defined registers */
 /* <<--regs-->> */
@@ -64,176 +61,172 @@ static unsigned mem_size;
 #define FFT_LOG_LEN_REG 0x44
 #define FFT_BATCH_SIZE_REG 0x40
 
-static int validate_buf(token_t *out, float *gold)
-{
-	int j;
-	unsigned errors = 0;
+static int validate_buf(token_t *out, float *gold) {
+  int j;
+  unsigned errors = 0;
 
-	for (j = 0; j < 2 * len * batch_size; j++) {
-		native_t val = fx2float(out[j], FX_IL);
-		if ((fabs(gold[j] - val) / fabs(gold[j])) > ERR_TH){
-			errors++;
-		}
-	}
+  for (j = 0; j < 2 * len * batch_size; j++) {
+    native_t val = fx2float(out[j], FX_IL);
+    if ((fabs(gold[j] - val) / fabs(gold[j])) > ERR_TH) {
+      errors++;
+    }
+  }
 
-	printf("  %u errors\n", errors);
-	return errors;
+  printf("  %u errors\n", errors);
+  return errors;
 }
 
+static void init_buf(token_t *in, float *gold) {
+  int j;
+  const float LO = -10.0;
+  const float HI = 10.0;
 
-static void init_buf(token_t *in, float *gold)
-{
-	int j;
-	const float LO = -10.0;
-	const float HI = 10.0;
+  /* srand((unsigned int) time(NULL)); */
 
-	/* srand((unsigned int) time(NULL)); */
+  for (j = 0; j < 2 * len * batch_size; j++) {
+    float scaling_factor = (float)rand() / (float)RAND_MAX;
+    gold[j] = LO + scaling_factor * (HI - LO);
+  }
 
-	for (j = 0; j < 2 * len * batch_size; j++) {
-		float scaling_factor = (float) rand () / (float) RAND_MAX;
-		gold[j] = LO + scaling_factor * (HI - LO);
-	}
+  // preprocess with bitreverse (fast in software anyway)
+  if (!do_bitrev)
+    fft_bit_reverse(gold, len, log_len);
 
-	// preprocess with bitreverse (fast in software anyway)
-	if (!do_bitrev)
-		fft_bit_reverse(gold, len, log_len);
+  // convert input to fixed point
+  for (j = 0; j < 2 * len * batch_size; j++)
+    in[j] = float2fx((native_t)gold[j], FX_IL);
 
-	// convert input to fixed point
-	for (j = 0; j < 2 * len * batch_size; j++)
-		in[j] = float2fx((native_t) gold[j], FX_IL);
-
-
-	// Compute golden output
-	for (j = 0; j < batch_size; j++)
-		fft_comp(&gold[j * 2 * len], len, log_len, -1, do_bitrev);
+  // Compute golden output
+  for (j = 0; j < batch_size; j++)
+    fft_comp(&gold[j * 2 * len], len, log_len, -1, do_bitrev);
 }
 
+int main(int argc, char *argv[]) {
+  int i;
+  int n;
+  int ndev;
+  struct esp_device *espdevs;
+  struct esp_device *dev;
+  unsigned done;
+  unsigned **ptable = NULL;
+  token_t *mem;
+  float *gold;
+  unsigned errors = 0;
+  unsigned coherence;
+  const float ERROR_COUNT_TH = 0.01;
 
-int main(int argc, char * argv[])
-{
-	int i;
-	int n;
-	int ndev;
-	struct esp_device *espdevs;
-	struct esp_device *dev;
-	unsigned done;
-	unsigned **ptable = NULL;
-	token_t *mem;
-	float *gold;
-	unsigned errors = 0;
-	unsigned coherence;
-	const float ERROR_COUNT_TH = 0.01;
+  len = 1 << log_len;
 
-	len = 1 << log_len;
+  if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
+    in_words_adj = 2 * len * batch_size;
+    out_words_adj = 2 * len * batch_size;
+  } else {
+    in_words_adj =
+        round_up(2 * len * batch_size, DMA_WORD_PER_BEAT(sizeof(token_t)));
+    out_words_adj =
+        round_up(2 * len * batch_size, DMA_WORD_PER_BEAT(sizeof(token_t)));
+  }
+  in_len = in_words_adj;
+  out_len = out_words_adj;
+  in_size = in_len * sizeof(token_t);
+  out_size = out_len * sizeof(token_t);
+  out_offset = 0;
+  mem_size = (out_offset * sizeof(token_t)) + out_size;
 
-	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
-		in_words_adj = 2 * len * batch_size;
-		out_words_adj = 2 * len * batch_size;
-	} else {
-		in_words_adj = round_up(2 * len * batch_size, DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_words_adj = round_up(2 * len * batch_size, DMA_WORD_PER_BEAT(sizeof(token_t)));
-	}
-	in_len = in_words_adj;
-	out_len = out_words_adj;
-	in_size = in_len * sizeof(token_t);
-	out_size = out_len * sizeof(token_t);
-	out_offset = 0;
-	mem_size = (out_offset * sizeof(token_t)) + out_size;
+  // Search for the device
+  printf("Scanning device tree... \n");
 
+  ndev = probe(&espdevs, VENDOR_SLD, SLD_FFT, DEV_NAME);
+  if (ndev == 0) {
+    printf("fft not found\n");
+    return 0;
+  }
 
-	// Search for the device
-	printf("Scanning device tree... \n");
+  for (n = 0; n < ndev; n++) {
 
-	ndev = probe(&espdevs, VENDOR_SLD, SLD_FFT, DEV_NAME);
-	if (ndev == 0) {
-		printf("fft not found\n");
-		return 0;
-	}
+    printf("**************** %s.%d ****************\n", DEV_NAME, n);
 
-	for (n = 0; n < ndev; n++) {
+    dev = &espdevs[n];
 
-		printf("**************** %s.%d ****************\n", DEV_NAME, n);
+    // Check DMA capabilities
+    if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
+      printf("  -> scatter-gather DMA is disabled. Abort.\n");
+      return 0;
+    }
 
-		dev = &espdevs[n];
+    if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
+      printf("  -> Not enough TLB entries available. Abort.\n");
+      return 0;
+    }
 
-		// Check DMA capabilities
-		if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-			printf("  -> scatter-gather DMA is disabled. Abort.\n");
-			return 0;
-		}
+    // Allocate memory
+    gold = aligned_malloc(out_len * sizeof(float));
+    mem = aligned_malloc(mem_size);
+    printf("  memory buffer base-address = %p\n", mem);
 
-		if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
-			printf("  -> Not enough TLB entries available. Abort.\n");
-			return 0;
-		}
+    // Allocate and populate page table
+    ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
+    for (i = 0; i < NCHUNK(mem_size); i++)
+      ptable[i] = (unsigned *)&mem[i * (CHUNK_SIZE / sizeof(token_t))];
 
-		// Allocate memory
-		gold = aligned_malloc(out_len * sizeof(float));
-		mem = aligned_malloc(mem_size);
-		printf("  memory buffer base-address = %p\n", mem);
+    printf("  ptable = %p\n", ptable);
+    printf("  nchunk = %lu\n", NCHUNK(mem_size));
 
-		// Allocate and populate page table
-		ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
-		for (i = 0; i < NCHUNK(mem_size); i++)
-			ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
+    for (coherence = ACC_COH_NONE; coherence < ACC_COH_FULL; coherence++) {
+      printf("  --------------------\n");
+      printf("  Generate input...\n");
+      init_buf(mem, gold);
 
-		printf("  ptable = %p\n", ptable);
-		printf("  nchunk = %lu\n", NCHUNK(mem_size));
+      // Pass common configuration parameters
 
-		for (coherence = ACC_COH_NONE; coherence < ACC_COH_FULL; coherence++) {
-			printf("  --------------------\n");
-			printf("  Generate input...\n");
-			init_buf(mem, gold);
+      iowrite32(dev, COHERENCE_REG, coherence);
 
-			// Pass common configuration parameters
+      iowrite32(dev, PT_ADDRESS_REG, (unsigned long)ptable);
 
-			iowrite32(dev, COHERENCE_REG, coherence);
+      iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_size));
+      iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
 
-			iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
+      // Use the following if input and output data are not allocated at the
+      // default offsets
+      iowrite32(dev, SRC_OFFSET_REG, 0x0);
+      iowrite32(dev, DST_OFFSET_REG, 0x0);
 
-			iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_size));
-			iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
+      // Pass accelerator-specific configuration parameters
+      /* <<--regs-config-->> */
+      iowrite32(dev, FFT_DO_PEAK_REG, 0);
+      iowrite32(dev, FFT_DO_BITREV_REG, do_bitrev);
+      iowrite32(dev, FFT_LOG_LEN_REG, log_len);
+      iowrite32(dev, FFT_BATCH_SIZE_REG, batch_size);
 
-			// Use the following if input and output data are not allocated at the default offsets
-			iowrite32(dev, SRC_OFFSET_REG, 0x0);
-			iowrite32(dev, DST_OFFSET_REG, 0x0);
+      // Flush (customize coherence model here)
+      esp_flush(coherence);
 
-			// Pass accelerator-specific configuration parameters
-			/* <<--regs-config-->> */
-			iowrite32(dev, FFT_DO_PEAK_REG, 0);
-			iowrite32(dev, FFT_DO_BITREV_REG, do_bitrev);
-			iowrite32(dev, FFT_LOG_LEN_REG, log_len);
-			iowrite32(dev, FFT_BATCH_SIZE_REG, batch_size);
+      // Start accelerators
+      printf("  Start...\n");
+      iowrite32(dev, CMD_REG, CMD_MASK_START);
 
-			// Flush (customize coherence model here)
-			esp_flush(coherence);
+      // Wait for completion
+      done = 0;
+      while (!done) {
+        done = ioread32(dev, STATUS_REG);
+        done &= STATUS_MASK_DONE;
+      }
+      iowrite32(dev, CMD_REG, 0x0);
 
-			// Start accelerators
-			printf("  Start...\n");
-			iowrite32(dev, CMD_REG, CMD_MASK_START);
+      printf("  Done\n");
+      printf("  validating...\n");
 
-			// Wait for completion
-			done = 0;
-			while (!done) {
-				done = ioread32(dev, STATUS_REG);
-				done &= STATUS_MASK_DONE;
-			}
-			iowrite32(dev, CMD_REG, 0x0);
+      /* Validation */
+      errors = validate_buf(&mem[out_offset], gold);
+      if (((float)errors / (float)len) > ERROR_COUNT_TH)
+        printf("  ... FAIL\n");
+      else
+        printf("  ... PASS\n");
+    }
+    aligned_free(ptable);
+    aligned_free(mem);
+    aligned_free(gold);
+  }
 
-			printf("  Done\n");
-			printf("  validating...\n");
-
-			/* Validation */
-			errors = validate_buf(&mem[out_offset], gold);
-			if (((float) errors / (float) len) > ERROR_COUNT_TH)
-				printf("  ... FAIL\n");
-			else
-				printf("  ... PASS\n");
-		}
-		aligned_free(ptable);
-		aligned_free(mem);
-		aligned_free(gold);
-	}
-
-	return 0;
+  return 0;
 }

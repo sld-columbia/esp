@@ -14,12 +14,12 @@
 #define DRV_NAME "nightvision_stratus"
 
 #define NIGHTVISION_NIMAGES_REG 0x40
-#define NIGHTVISION_ROWS_REG    0x44
-#define NIGHTVISION_COLS_REG    0x48
-#define NIGHTVISION_DO_DWT_REG  0x4C
+#define NIGHTVISION_ROWS_REG 0x44
+#define NIGHTVISION_COLS_REG 0x48
+#define NIGHTVISION_DO_DWT_REG 0x4C
 
 struct nightvision_stratus_device {
-    struct esp_device esp;
+  struct esp_device esp;
 };
 
 static struct esp_driver nightvision_driver;
@@ -39,97 +39,97 @@ static struct of_device_id nightvision_device_ids[] = {
 
 static int nightvision_devs;
 
-static inline struct nightvision_stratus_device *to_nightvision(struct esp_device *esp)
-{
-    return container_of(esp, struct nightvision_stratus_device, esp);
+static inline struct nightvision_stratus_device *
+to_nightvision(struct esp_device *esp) {
+  return container_of(esp, struct nightvision_stratus_device, esp);
 }
 
-static void nightvision_prep_xfer(struct esp_device *esp, void *arg)
-{
-    struct nightvision_stratus_access *a = arg;
+static void nightvision_prep_xfer(struct esp_device *esp, void *arg) {
+  struct nightvision_stratus_access *a = arg;
 
-    iowrite32be(a->nimages, esp->iomem + NIGHTVISION_NIMAGES_REG);
-    iowrite32be(a->rows, esp->iomem + NIGHTVISION_ROWS_REG);
-    iowrite32be(a->cols, esp->iomem + NIGHTVISION_COLS_REG);
-    iowrite32be(a->do_dwt, esp->iomem + NIGHTVISION_DO_DWT_REG);
-    iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
-    iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
+  iowrite32be(a->nimages, esp->iomem + NIGHTVISION_NIMAGES_REG);
+  iowrite32be(a->rows, esp->iomem + NIGHTVISION_ROWS_REG);
+  iowrite32be(a->cols, esp->iomem + NIGHTVISION_COLS_REG);
+  iowrite32be(a->do_dwt, esp->iomem + NIGHTVISION_DO_DWT_REG);
+  iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
+  iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
 }
 
-static bool nightvision_xfer_input_ok(struct esp_device *esp, void *arg)
-{
-    struct nightvision_stratus_access *a = arg;
+static bool nightvision_xfer_input_ok(struct esp_device *esp, void *arg) {
+  struct nightvision_stratus_access *a = arg;
 
-    if (a->nimages > MAX_NIMAGES)
-        return false;
+  if (a->nimages > MAX_NIMAGES)
+    return false;
 
-    if (a->rows > MAX_ROWS)
-        return false;
+  if (a->rows > MAX_ROWS)
+    return false;
 
-    if (a->cols > MAX_COLS)
-        return false;
+  if (a->cols > MAX_COLS)
+    return false;
 
-    if (a->do_dwt != 0 && a->do_dwt != 1)
-        return false;
+  if (a->do_dwt != 0 && a->do_dwt != 1)
+    return false;
 
-    return true;
+  return true;
 }
 
-static int nightvision_probe(struct platform_device *pdev)
-{
-    struct nightvision_stratus_device *nightvision;
-    struct esp_device *                esp;
-    int                                rc;
+static int nightvision_probe(struct platform_device *pdev) {
+  struct nightvision_stratus_device *nightvision;
+  struct esp_device *esp;
+  int rc;
 
-    nightvision = kzalloc(sizeof(*nightvision), GFP_KERNEL);
-    if (nightvision == NULL)
-        return -ENOMEM;
-    esp         = &nightvision->esp;
-    esp->module = THIS_MODULE;
-    esp->number = nightvision_devs;
-    esp->driver = &nightvision_driver;
-    rc          = esp_device_register(esp, pdev);
-    if (rc)
-        goto err;
+  nightvision = kzalloc(sizeof(*nightvision), GFP_KERNEL);
+  if (nightvision == NULL)
+    return -ENOMEM;
+  esp = &nightvision->esp;
+  esp->module = THIS_MODULE;
+  esp->number = nightvision_devs;
+  esp->driver = &nightvision_driver;
+  rc = esp_device_register(esp, pdev);
+  if (rc)
+    goto err;
 
-    nightvision_devs++;
-    return 0;
+  nightvision_devs++;
+  return 0;
 err:
-    kfree(nightvision);
-    return rc;
+  kfree(nightvision);
+  return rc;
 }
 
-static int __exit nightvision_remove(struct platform_device *pdev)
-{
-    struct esp_device *                esp         = platform_get_drvdata(pdev);
-    struct nightvision_stratus_device *nightvision = to_nightvision(esp);
+static int __exit nightvision_remove(struct platform_device *pdev) {
+  struct esp_device *esp = platform_get_drvdata(pdev);
+  struct nightvision_stratus_device *nightvision = to_nightvision(esp);
 
-    esp_device_unregister(esp);
-    kfree(nightvision);
-    return 0;
+  esp_device_unregister(esp);
+  kfree(nightvision);
+  return 0;
 }
 
 static struct esp_driver nightvision_driver = {
     .plat =
         {
-            .probe  = nightvision_probe,
+            .probe = nightvision_probe,
             .remove = nightvision_remove,
             .driver =
                 {
-                    .name           = DRV_NAME,
-                    .owner          = THIS_MODULE,
+                    .name = DRV_NAME,
+                    .owner = THIS_MODULE,
                     .of_match_table = nightvision_device_ids,
                 },
         },
     .xfer_input_ok = nightvision_xfer_input_ok,
-    .prep_xfer     = nightvision_prep_xfer,
-    .ioctl_cm      = NIGHTVISION_STRATUS_IOC_ACCESS,
-    .arg_size      = sizeof(struct nightvision_stratus_access),
+    .prep_xfer = nightvision_prep_xfer,
+    .ioctl_cm = NIGHTVISION_STRATUS_IOC_ACCESS,
+    .arg_size = sizeof(struct nightvision_stratus_access),
 };
 
-static int __init nightvision_init(void) { return esp_driver_register(&nightvision_driver); }
+static int __init nightvision_init(void) {
+  return esp_driver_register(&nightvision_driver);
+}
 
-static void __exit nightvision_exit(void) { esp_driver_unregister(&nightvision_driver); }
+static void __exit nightvision_exit(void) {
+  esp_driver_unregister(&nightvision_driver);
+}
 
 module_init(nightvision_init) module_exit(nightvision_exit)
 

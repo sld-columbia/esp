@@ -1,7 +1,7 @@
 // Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
-#include <stdlib.h>
 #include <inttypes.h>
+#include <stdlib.h>
 
 // These constants valid for the IEEE 494 bus interconnect matrix
 /* #define NNZ 1666 */
@@ -21,15 +21,15 @@
 /* }; */
 
 struct bench_args_t {
-    long mtx_len;
-    long nrows;
-    long ncols;
-    TYPE *val;
-    int32_t *cols;
-    int32_t *rowDelimiters;
-    TYPE *vec;
-    TYPE *out;
-    TYPE *chk;
+  long mtx_len;
+  long nrows;
+  long ncols;
+  TYPE *val;
+  int32_t *cols;
+  int32_t *rowDelimiters;
+  TYPE *vec;
+  TYPE *out;
+  TYPE *chk;
 };
 
 ///// File and section functions
@@ -75,8 +75,8 @@ int check_data(struct bench_args_t *data);
 ///// TYPE macros
 // Macro trick to automatically expand TYPE into the appropriate function
 // (S)et (T)ype (A)nd (C)oncatenate
-#define __STAC_EXPANDED(f_pfx,t,f_sfx) f_pfx##t##f_sfx
-#define STAC(f_pfx,t,f_sfx) __STAC_EXPANDED(f_pfx,t,f_sfx)
+#define __STAC_EXPANDED(f_pfx, t, f_sfx) f_pfx##t##f_sfx
+#define STAC(f_pfx, t, f_sfx) __STAC_EXPANDED(f_pfx, t, f_sfx)
 // Invoke like this:
 //   #define TYPE int32_t
 //   STAC(write_,TYPE,_array)(fd, array, n);
@@ -84,51 +84,49 @@ int check_data(struct bench_args_t *data);
 // This translates to:
 //   write_int32_t_array(fd, array, n);
 
-
 /**** PRNG library. Available at https://github.com/rdadolf/prng. *****/
 #ifndef __PRNG_H__
 #define __PRNG_H__
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <inttypes.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define LAG1 (UINT16_C(24))
 #define LAG2 (UINT16_C(55))
-#define RAND_SSIZE ((UINT16_C(1))<<6)
-#define RAND_SMASK (RAND_SSIZE-1)
+#define RAND_SSIZE ((UINT16_C(1)) << 6)
+#define RAND_SMASK (RAND_SSIZE - 1)
 #define RAND_EXHAUST_LIMIT LAG2
 // 10x is a heuristic, it just needs to be large enough to remove correlation
-#define RAND_REFILL_COUNT ((LAG2*10)-RAND_EXHAUST_LIMIT)
+#define RAND_REFILL_COUNT ((LAG2 * 10) - RAND_EXHAUST_LIMIT)
 struct prng_rand_t {
   uint64_t s[RAND_SSIZE]; // Lags
-  uint_fast16_t i; // Location of the current lag
-  uint_fast16_t c; // Exhaustion count
+  uint_fast16_t i;        // Location of the current lag
+  uint_fast16_t c;        // Exhaustion count
 };
 
 #define PRNG_RAND_MAX UINT64_MAX
 
-
 static inline uint64_t prng_rand(struct prng_rand_t *state) {
   uint_fast16_t i;
-  uint_fast16_t r, new_rands=0;
+  uint_fast16_t r, new_rands = 0;
 
-  if( !state->c ) { // Randomness exhausted, run forward to refill
-    new_rands += RAND_REFILL_COUNT+1;
-    state->c = RAND_EXHAUST_LIMIT-1;
+  if (!state->c) { // Randomness exhausted, run forward to refill
+    new_rands += RAND_REFILL_COUNT + 1;
+    state->c = RAND_EXHAUST_LIMIT - 1;
   } else {
     new_rands = 1;
     state->c--;
   }
 
-  for( r=0; r<new_rands; r++ ) {
+  for (r = 0; r < new_rands; r++) {
     i = state->i;
-    state->s[i&RAND_SMASK] = state->s[(i+RAND_SSIZE-LAG1)&RAND_SMASK]
-                              + state->s[(i+RAND_SSIZE-LAG2)&RAND_SMASK];
+    state->s[i & RAND_SMASK] = state->s[(i + RAND_SSIZE - LAG1) & RAND_SMASK] +
+                               state->s[(i + RAND_SSIZE - LAG2) & RAND_SMASK];
     state->i++;
   }
-  return state->s[i&RAND_SMASK];
+  return state->s[i & RAND_SMASK];
 }
 
 static inline void prng_srand(uint64_t seed, struct prng_rand_t *state) {
@@ -138,14 +136,14 @@ static inline void prng_srand(uint64_t seed, struct prng_rand_t *state) {
   state->i = 0;
 
   state->s[0] = seed;
-  for(i=1; i<RAND_SSIZE; i++) {
+  for (i = 1; i < RAND_SSIZE; i++) {
     // Arbitrary magic, mostly to eliminate the effect of low-value seeds.
     // Probably could be better, but the run-up obviates any real need to.
-    state->s[i] = i*(UINT64_C(2147483647)) + seed;
+    state->s[i] = i * (UINT64_C(2147483647)) + seed;
   }
 
   // Run forward 10,000 numbers
-  for(i=0; i<10000; i++) {
+  for (i = 0; i < 10000; i++) {
     prng_rand(state);
   }
 }
