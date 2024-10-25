@@ -103,8 +103,8 @@ $(RTL_CFG_BUILD):
 techmap_flist:
 	$(shell cd $(ESP_ROOT)/rtl ; (find -L techmap/ -not \( -path techmap/unisim -prune \) \
                 -not \( -path techmap/maps -prune \) -not \( -path techmap/inferred -prune \)  -name "*.vhd") > $(ESP_ROOT)/utils/flist/techmap_vhdl.flist ; \
-		(find -L techmap/ -not \( -path techmap/unisim -prune \) -name "*.v") > $(ESP_ROOT)/utils/flist/techmap_vlog.flist ; \
-		(find -L techmap/ -not \( -path techmap/unisim -prune \) -name "*.sv") >> $(ESP_ROOT)/utils/flist/techmap_vlog.flist  ; cd $(ESP_ROOT)/../$(PROJECT_NAME) )
+		(find -L techmap/ -not \( -path techmap/unisim -prune \) -not \( -path techmap/asic/mem/tb -prune \) -name "*.v") > $(ESP_ROOT)/utils/flist/techmap_vlog.flist ; \
+		(find -L techmap/ -not \( -path techmap/unisim -prune \) -not \( -path techmap/asic/mem/tb -prune \) -name "*.sv") >> $(ESP_ROOT)/utils/flist/techmap_vlog.flist  ; cd $(ESP_ROOT)/../$(PROJECT_NAME) )
 
 
 check_all_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls

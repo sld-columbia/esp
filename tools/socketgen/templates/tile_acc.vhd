@@ -101,9 +101,10 @@ architecture rtl of tile_acc is
   signal rst          : std_ulogic;
 
   -- DCO
-  signal tile_clk  : std_ulogic;
-  signal dco_clk  : std_ulogic;
+  signal tile_clk     : std_ulogic;
+  signal dco_clk      : std_ulogic;
   signal dco_clk_lock : std_ulogic;
+  signal dco_en_int   : std_ulogic;
 
   -- BUS
   signal apbi           : apb_slv_in_type;
@@ -243,6 +244,7 @@ begin
   tile_rstn_out <= rst;
 
   -- DCO
+  dco_en_int <= dco_en and raw_rstn;
   dco_gen: if this_has_dco = 1 generate
 
     dco_i: dco
@@ -254,7 +256,7 @@ begin
       port map (
         rstn     => raw_rstn,
         ext_clk  => ext_clk,
-        en       => dco_en,
+        en       => dco_en_int,
         clk_sel  => dco_clk_sel,
         cc_sel   => dco_cc_sel,
         fc_sel   => dco_fc_sel,

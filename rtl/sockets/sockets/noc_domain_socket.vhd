@@ -722,7 +722,7 @@ begin  -- architecture rtl
   dco_fc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
   dco_cc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
   dco_clk_sel  <= tile_config_int(ESP_CSR_DCO_CFG_LSB + 1);
-  dco_en       <= raw_rstn_s and tile_config_int(ESP_CSR_DCO_CFG_LSB);
+  dco_en       <= tile_config_int(ESP_CSR_DCO_CFG_LSB);
 
   -- Using only one apbo signal
   no_apb : for i in 0 to NAPBSLV - 1 generate

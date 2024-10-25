@@ -139,6 +139,7 @@ architecture rtl of tile_io is
   signal dco_clk_lock : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal noc_clk_out_int : std_ulogic;
+  signal dco_en_int   : std_ulogic;
 
   -- NoC DCO config
   signal dco_noc_en       : std_ulogic;
@@ -408,6 +409,8 @@ begin
   dco_noc_en       <= raw_rstn and tile_config_int(ESP_CSR_DCO_NOC_CFG_LSB);
 
   -- DCO
+  dco_en_int <= dco_en and raw_rstn;
+
   dco_gen: if this_has_dco /= 0 generate
     dco_noc_i : dco
       generic map (
@@ -440,7 +443,7 @@ begin
         port map (
           rstn     => raw_rstn,
           ext_clk  => ext_clk,
-          en       => dco_en,
+          en       => dco_en_int,
           clk_sel  => dco_clk_sel,
           cc_sel   => dco_cc_sel,
           fc_sel   => dco_fc_sel,

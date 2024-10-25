@@ -54,7 +54,7 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
 } elseif {[lsearch $asic_techs $TECH_TYPE] >= 0} {
     set_attr verilog_files "$ESP_ROOT/rtl/sim/asic/verilog/*v $ESP_ROOT/rtl/techmap/asic/mem/*v"
     set LIB_PATH "$TECH_PATH/lib"
-    set LIB_NAMES [glob -directory $LIB_PATH *{.lib,.lib_*}]
+    set LIB_NAMES [glob -directory $LIB_PATH *{.lib}]
     foreach LIB_NAME $LIB_NAMES {
         use_tech_lib "$LIB_NAME"
         puts "use_tech_lib = $LIB_NAME"

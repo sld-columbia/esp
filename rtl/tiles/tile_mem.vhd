@@ -120,7 +120,8 @@ architecture rtl of tile_mem is
   -- DCO
   signal dco_clk_lock : std_ulogic;
   signal dco_clk      : std_ulogic;
-  signal tile_clk      : std_ulogic;
+  signal tile_clk     : std_ulogic;
+  signal dco_en_int   : std_ulogic;
 
   -- Delay line for DDR ui_clk delay
   signal dco_clk_div2_int    : std_logic;
@@ -279,6 +280,7 @@ begin
   tile_rstn_out <= rst;
 
   -- DCO
+  dco_en_int <= dco_en and raw_rstn;
   dco_gen: if this_has_dco = 1 generate
 
     dco_i: dco
@@ -290,7 +292,7 @@ begin
       port map (
         rstn     => raw_rstn,
         ext_clk  => ext_clk,
-        en       => dco_en,
+        en       => dco_en_int,
         clk_sel  => dco_clk_sel,
         cc_sel   => dco_cc_sel,
         fc_sel   => dco_fc_sel,
