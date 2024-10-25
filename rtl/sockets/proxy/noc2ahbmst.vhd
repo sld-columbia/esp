@@ -713,7 +713,7 @@ begin  -- rtl
             dma_snd_data_in <= v.dma_noc_data;
             v.state         := receive_header;
           else
-            if dma_snd_exactly_3slots = '1' then
+            if dma_snd_exactly_3slots = '1' and v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS - 1 then
               v.htrans := HTRANS_BUSY;
               v.state  := dma_send_busy;
             else
@@ -726,11 +726,10 @@ begin  -- rtl
         if (v.ready = '1') then
           dma_snd_wrreq   <= '1';
           v.dma_noc_data(DMA_NOC_FLIT_SIZE -1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
-          for i in 1 to DMA_NOC_WIDTH / ARCH_BITS loop
-            v.dma_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
-          end loop;
+          v.dma_noc_data(ARCH_BITS * (r.word_cnt + 1) - 1 downto ARCH_BITS * r.word_cnt) := fix_endian(ahbmi.hrdata);
           dma_snd_data_in <= v.dma_noc_data;
           v.count         := r.count - 1;
+          v.word_cnt      := 0;
           v.state := dma_wait_busy;
         end if;
 
