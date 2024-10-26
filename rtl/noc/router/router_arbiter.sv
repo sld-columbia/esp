@@ -70,7 +70,7 @@ module router_arbiter
   always_ff @(posedge clk) begin
     if (rst) begin
       priority_mask <= InitialPriority;
-    end else if (forwarding_tail) begin
+    end else if (forwarding_head) begin
       priority_mask <= priority_mask_next;
     end
   end
@@ -146,38 +146,47 @@ module router_fork_arbiter
    input  logic rst,
    input  logic [4:0] request,
    input  logic [4:0] forwarding_head,
+//   input  logic [4:0] rd_fifo_or,
+   input  logic [4:0] forwarding_body,
    input  logic [4:0] forwarding_tail,
+   input  logic [4:0] reset_arbiter,
    output logic [4:0] grant,
    output logic grant_valid
    );
 
   logic grant_locked;
-  logic forwarding_head_input, forwarding_tail_input;
+  logic forwarding_head_input, forwarding_tail_input, forwarding_body_input;
+//  logic rd_fifo;
   logic [4:0] saved_grant;
   // Lock current grant for flit between head and tail, tail included
   always_ff @(posedge clk) begin
-    if (rst) begin
+    if (rst | (|(reset_arbiter))) begin
       grant_locked <= 1'b0;
       saved_grant <= '0;
     end else begin
       if (forwarding_tail_input) begin
         grant_locked <= 1'b0;
         saved_grant <= '0;
-      end else if (forwarding_head_input) begin
+      end
+      if (forwarding_body_input) begin
+        saved_grant <= grant;
         grant_locked <= 1'b1;
+      end else if (forwarding_head_input) begin
         saved_grant <= grant;
       end
     end
   end
 
   assign forwarding_head_input = |(grant & forwarding_head);
+//  assign forwarding_tail_input = |(saved_grant & forwarding_tail & rd_fifo_or);
   assign forwarding_tail_input = |(saved_grant & forwarding_tail);
-
+//  assign rd_fifo = |(rd_fifo_or & grant & forwarding_head);
+  assign forwarding_body_input = |(forwarding_body & grant);
   assign grant_valid = |request & ~grant_locked;
 
   // Update priority
   typedef logic [4:0][4:0] priority_t;
-  priority_t priority_mask, priority_mask_next;
+  priority_t priority_mask, priority_mask_next, saved_priority_mask_next;
   priority_t grant_stage1;
   logic [4:0][2:0] grant_stage2;
 
@@ -191,8 +200,11 @@ module router_fork_arbiter
   always_ff @(posedge clk) begin
     if (rst) begin
       priority_mask <= InitialPriority;
+      saved_priority_mask_next <= InitialPriority;
+    end else if (forwarding_body_input) begin
+      saved_priority_mask_next <= priority_mask_next;
     end else if (forwarding_tail_input) begin
-      priority_mask <= priority_mask_next;
+      priority_mask <= saved_priority_mask_next;
     end
   end
 

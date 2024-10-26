@@ -104,23 +104,13 @@ module lookahead_routing_multicast #(
 
     for (int dest_num = 0; dest_num < DEST_SIZE; dest_num++) begin
       if (val[dest_num]) begin
-        if (position.x == destination[dest_num].x && position.y == destination[dest_num].y) begin
-          routing_paths[dest_num].go_local = 0;
-          routing_paths[dest_num].go_east = 0;
-          routing_paths[dest_num].go_west = 0;
-          routing_paths[dest_num].go_south = 0;
-          routing_paths[dest_num].go_north = 0;
-        end else if (current_routing.go_west) begin
-          routing_paths[dest_num] = routing(next_position_q[noc::kWestPort], destination[dest_num]);
-        end else if (current_routing.go_east) begin
-          routing_paths[dest_num] = routing(next_position_q[noc::kEastPort], destination[dest_num]);
-        end else if (current_routing.go_north) begin
-          routing_paths[dest_num] = routing(next_position_q[noc::kNorthPort],destination[dest_num]);
-        end else if (current_routing.go_south) begin
-          routing_paths[dest_num] = routing(next_position_q[noc::kSouthPort], destination[dest_num]);
-        end else if(current_routing.go_local) begin
-          routing_paths[dest_num] = routing(next_position_q[noc::kLocalPort], destination[dest_num]);
-        end
+        unique case (current_routing)
+          noc::goNorth : routing_paths[dest_num] = routing(next_position_q[noc::kNorthPort],destination[dest_num]);
+          noc::goSouth : routing_paths[dest_num] = routing(next_position_q[noc::kSouthPort],destination[dest_num]);
+          noc::goWest : routing_paths[dest_num] = routing(next_position_q[noc::kWestPort],destination[dest_num]);
+          noc::goEast : routing_paths[dest_num] = routing(next_position_q[noc::kEastPort],destination[dest_num]);
+          default : routing_paths[dest_num] = 5'b00000;
+        endcase 
       end
     end
 

@@ -187,8 +187,8 @@ int main(int argc, char * argv[])
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(dummy_buf_size);
     //printf("\n  memory buffer base-address = %p\n", mem);
-    coherence = ACC_COH_RECALL;
-//    coherence = ACC_COH_NONE;    
+//    coherence = ACC_COH_RECALL;
+    coherence = ACC_COH_NONE;    
     ptable = aligned_malloc(nchunk * sizeof(unsigned *));
     for (i = 0; i < nchunk; i++)
         ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];

@@ -241,10 +241,10 @@ int main(int argc, char * argv[])
     coherence = ACC_COH_NONE;
 
 
-for (int it_0 = 0; it_0 < 1; it_0++) {
-    for (int it_1 = 0; it_1 < 1; it_1++) {
-        for (int it_2 = 0; it_2 < 1; it_2++) {
-            for (int it_3 = 0; it_3 < 1; it_3++) {
+for (int it_0 = 0; it_0 < NUM_MULTICAST_0 + 1; it_0++) {
+    for (int it_1 = 0; it_1 < NUM_MULTICAST_1 + 1; it_1++) {
+        for (int it_2 = 0; it_2 < NUM_MULTICAST_2 + 1; it_2++) {
+            for (int it_3 = 0; it_3 < NUM_MULTICAST_3 + 1; it_3++) {
 //if ((it_0 == 0 && it_1 == 0 && it_2 == 0 && it_3 == 0) || (it_0 == 0 && it_1 == 0 && it_2 == 1 && it_3 == 0) || (it_0 == 0 && it_1 == 0 && it_2 == 2 && it_3 == 0) || (it_0 == 0 && it_1 == 0 && it_2 == 3 && it_3 == 0) || (it_0 == 0 && it_1 == 0 && it_2 == 4 && it_3 == 0) || (it_0 == 0 && it_1 == 0 && it_2 == 3 && it_3 == 1) || (it_0 == 0 && it_1 == 0 && it_2 == 3 && it_3 == 3)) {
 //continue;
 //}
