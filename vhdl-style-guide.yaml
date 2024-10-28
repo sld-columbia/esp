@@ -1,0 +1,11 @@
+rule:
+  constant_004:
+     case: 'upper'
+     prefix_exceptions:
+       - 'G_'
+     suffix_exceptions:
+       - '_G'
+     case_exceptions:
+       = 'IEEE'
+  length_001 :
+     length : 120
