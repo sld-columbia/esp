@@ -1,0 +1,46 @@
+name: Post-push Format Checker
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+jobs:
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+    container:
+      image: columbiasld/esp:ubuntu18-small
+      credentials:
+        username: ${{ env.DOCKER_USERNAME }}
+        password: ${{ env.DOCKER_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      
+      - name: Set directory ownership
+        run: sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+
+      - name: Configure Git
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
+
+      - name: Install formatting tools
+        run: |
+          run: |
+          ./install.sh
+        working-directory: ./utils/scripts/format/tools
+
+      - name: Navigate to formatting scripts directory and run format check
+        run: |
+          if ! ./format.sh -g -ca; then
+            echo "Code format check failed. Please fix the formatting issues by running the formatting script."
+            exit 1
+          fi
+        working-directory: ./utils/scripts/format
