@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2023 Columbia University, System Level Design Group
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ###############################################################################
@@ -9,6 +9,7 @@
 #
 ###############################################################################
 import customtkinter as ctk
+import math
 from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
@@ -22,13 +23,13 @@ from NoCConfiguration import *
 from soc import *
 from socmap_gen import *
 from mmi64_gen import *
-from power_gen import *
 
 def print_usage():
-  print("Usage                    : ./esp_creator.py <dma_width> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
+  print("Usage                    : ./esp_creator.py <arch_bits> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
   print("")
   print("")
-  print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
+  print("      <arch_bits>        : Word size for CPU architecture (32 for Leon3/Ibex, 64 for Ariane)")
+  print("      <tech_type>        : Technology type (fpga or asic)")
   print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
   print("      <linux_mac>        : MAC Address for Linux network interface")
   print("      <leon3_stack>      : Stack Pointer for LEON3")
@@ -37,399 +38,482 @@ def print_usage():
   print("      <emu_freq>         : Ethernet MDC scaler override for FPGA emulation of ASIC design")
   print("")
 
-import customtkinter as ctk
-from tkinter import ttk
-
-class ConfigFrame(ctk.CTkFrame):
-    def __init__(self, soc, top_frame):
-      # Increase the width of the frame
-      super().__init__(top_frame, width=400, corner_radius=0, border_width=1, fg_color="#f0ebe6") 
-      self.pack(side=LEFT, expand=NO, fill=Y)
-      
-      # Title Label: SoC Configuration
-      ctk.CTkLabel(self, text="SoC Configuration", font=("Comic Sans MS", 12, "bold"), bg_color="#f0ebe6").pack(side=TOP, pady=5)
-
-      # Create a frame for the configuration items with two columns
-      config_frame = ctk.CTkFrame(self, fg_color="#f0ebe6")
-      config_frame.pack(side=TOP, fill="both", expand=True, padx=10, pady=10)
-
-      # Create a grid layout with 2 columns
-      config_frame.grid_columnconfigure(0, weight=1, minsize=150)  # Left column for labels
-      config_frame.grid_columnconfigure(1, weight=1, minsize=150)  # Right column for value labels
-
-      # Technology Field (no colon)
-      ctk.CTkLabel(config_frame, text="Technology", font=("Comic Sans MS", 10), bg_color="#f0ebe6").grid(row=0, column=0, sticky="w", padx=5, pady=5)
-      label_frame_tech = ctk.CTkFrame(config_frame, border_width=1, border_color="#d2d0ce", corner_radius=2, fg_color="#f0ebe6")
-      label_frame_tech.grid(row=0, column=1, sticky="nsew", padx=10, pady=5)
-      ctk.CTkLabel(label_frame_tech, text=soc.TECH, text_color="black", font=("Comic Sans MS", 9, "bold"), bg_color="#f0ebe6").pack(padx=25, pady=1, anchor="center")
-
-      # FPGA Board Field (no colon)
-      ctk.CTkLabel(config_frame, text="FPGA Board", font=("Comic Sans MS", 10), bg_color="#f0ebe6").grid(row=1, column=0, sticky="w", padx=5, pady=5)
-      label_frame_fpga = ctk.CTkFrame(config_frame, border_width=1, border_color="#d2d0ce", corner_radius=1, fg_color="#f0ebe6")
-      label_frame_fpga.grid(row=1, column=1, sticky="nsew", padx=10, pady=5)
-      ctk.CTkLabel(label_frame_fpga, text=soc.FPGA_BOARD, text_color="black", font=("Comic Sans MS", 9, "bold"), bg_color="#f0ebe6").pack(padx=25, pady=1, anchor="center")
-
-      # CPU Architecture Dropdown
-      ctk.CTkLabel(config_frame, text="CPU Architecture", font=("Comic Sans MS", 10), bg_color="#f0ebe6").grid(row=2, column=0, sticky="w", padx=5, pady=5)
-      
-      # Create a frame for the dropdown
-      label_frame_cpu = ctk.CTkFrame(config_frame, border_width=1, border_color="#d2d0ce", corner_radius=1, fg_color="#f0ebe6")
-      label_frame_cpu.grid(row=2, column=1, sticky="nsew", padx=10, pady=5)
-
-      # Create a list of CPU choices
-      cpu_choices = ["leon3", "ariane", "ibex"]
-
-      # Create the dropdown (OptionMenu) for CPU Architecture with custom styling
-      cpu_option_menu = ctk.CTkOptionMenu(
-          label_frame_cpu, 
-          variable=soc.CPU_ARCH, 
-          values=cpu_choices, 
-          command=self.update_cpu_architecture,
-          fg_color="white",
-          button_color="grey"  # Set the color of the arrow to gray (or any color you prefer)
-      )
-      cpu_option_menu.pack(padx=25, pady=1)
-
-    def update_cpu_architecture(self, selection):
-      # This method can be used to handle changes in CPU selection if needed
-      print(f"Selected CPU Architecture: {selection}")
-
-      # NoC DMA Width Field
-      # ctk.CTkLabel(config_frame, text="CPU Architecture", font=("Comic Sans MS", 10), bg_color="#f0ebe6").grid(row=2, column=0, sticky="w", padx=5, pady=5)
-      # label_frame_cpu = ctk.CTkFrame(config_frame, border_width=1, border_color="#d2d0ce", corner_radius=1, fg_color="#f0ebe6")
-      # label_frame_cpu.grid(row=2, column=1, sticky="nsew", padx=10, pady=5)
-      # ctk.CTkLabel(label_frame_cpu, text=soc.CPU_ARCH.get(), text_color="black", font=("Comic Sans MS", 9, "bold"), bg_color="#f0ebe6").pack(padx=25, pady=1, anchor="center")
-
-
-        # # Data Allocation Strategy Field
-        # ctk.CTkLabel(config_frame, text="Data Allocation Strategy: ", bg_color="#f0ebe6").grid(row=4, column=0, sticky="w", padx=5, pady=5)
-        # ctk.CTkLabel(config_frame, text=soc.DATA_ALLOCATION_STRATEGY, text_color="darkgreen", bg_color="#f0ebe6").grid(row=4, column=1, sticky="w", padx=5, pady=5)
-
-        # # SLM KB per Tile Field
-        # ctk.CTkLabel(config_frame, text="SLM KB per Tile: ", bg_color="#f0ebe6").grid(row=5, column=0, sticky="w", padx=5, pady=5)
-        # ctk.CTkLabel(config_frame, text=soc.SLM_KB_PER_TILE, text_color="darkgreen", bg_color="#f0ebe6").grid(row=5, column=1, sticky="w", padx=5, pady=5)
-
-        # # Linux MAC Address Field
-        # ctk.CTkLabel(config_frame, text="Linux MAC Address: ", bg_color="#f0ebe6").grid(row=6, column=0, sticky="w", padx=5, pady=5)
-        # ctk.CTkLabel(config_frame, text=soc.LINUX_MAC_ADDRESS, text_color="darkgreen", bg_color="#f0ebe6").grid(row=6, column=1, sticky="w", padx=5, pady=5)
-
-    
-class CacheFrame(Frame):
-
-  def __init__(self, soc, top_frame, main_frame):
-    self.soc = soc
-    Frame.__init__(self, top_frame, width=50, borderwidth=2)
-    self.pack(side=LEFT, expand=NO, fill=Y)
-    Label(self, text = "Cache Hierarchy ", font="TkDefaultFont 11 bold").pack(side = TOP)
-
-    cache_config_frame = Frame(self)
-    cache_config_frame.pack(side=TOP)
-
-    sets_choices = [32, 64, 128, 256, 512, 1024, 2048, 4096, 8192]
-    l2_ways_choices = [2, 4, 8]
-    llc_ways_choices = [4, 8, 16]
-    cache_choices = ["ESP RTL", "SPANDEX HLS", "ESP HLS"]
-
-    Label(cache_config_frame, text = "Caches: ").grid(row=1, column=1)
-    Checkbutton(cache_config_frame, text="", variable=soc.cache_en,
-                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=1, column=2)
-    Label(cache_config_frame, text = "Implementation: ").grid(row=2, column=1)
-    OptionMenu(cache_config_frame, soc.cache_impl, *cache_choices, command=main_frame.update_noc_config).grid(row=2,column=2)
-    Label(cache_config_frame, text = "L2 SETS: ").grid(row=3, column=1)
-    OptionMenu(cache_config_frame, soc.l2_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=3, column=2)
-    Label(cache_config_frame, text = "L2 WAYS: ").grid(row=4, column=1)
-    OptionMenu(cache_config_frame, soc.l2_ways, *l2_ways_choices, command=main_frame.update_noc_config).grid(row=4, column=2)
-    Label(cache_config_frame, text = "LLC SETS (per mem tile): ").grid(row=5, column=1)
-    OptionMenu(cache_config_frame, soc.llc_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=5, column=2)
-    Label(cache_config_frame, text = "LLC WAYS: ").grid(row=6, column=1)
-    OptionMenu(cache_config_frame, soc.llc_ways, *llc_ways_choices, command=main_frame.update_noc_config).grid(row=6, column=2)
-    Label(cache_config_frame, text = "ACC L2 SETS: ").grid(row=7, column=1)
-    OptionMenu(cache_config_frame, soc.acc_l2_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=7, column=2)
-    Label(cache_config_frame, text = "ACC L2 WAYS: ").grid(row=8, column=1)
-    OptionMenu(cache_config_frame, soc.acc_l2_ways, *l2_ways_choices, command=main_frame.update_noc_config).grid(row=8, column=2)
-
-class PeripheralFrame(Frame):
-
-  def __init__(self, soc, top_frame, main_frame):
-    self.soc = soc
-
-    #
-    # Peripherals
-    #
-    Frame.__init__(self, top_frame, width=50, borderwidth=2)
-    self.pack(side=LEFT, expand=NO, fill=Y)
-    Label(self, text = "Peripherals ", font="TkDefaultFont 11 bold").pack(side = TOP)
-
-    periph_config_frame = Frame(self)
-    periph_config_frame.pack(side=TOP)
-
-    # UART
-    Label(periph_config_frame, text = "UART ", fg="darkgreen").grid(row=1, column=1)
-
-    # JTAG
-    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-      Label(periph_config_frame, text = "JTAG (test) :").grid(row=2, column=1)
-      Checkbutton(periph_config_frame, text="", variable=soc.jtag_en,
-                  onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=2, column=2)
-    else:
-      Label(periph_config_frame, text = "No JTAG (test) ", fg="red").grid(row=2, column=1)
-
-    # Ethernet
-    # if soc.HAS_SGMII == 1:
-    #   eth_text = "Ethernet (use SGMII): "
-    # else:
-    #   eth_text = "Ethernet (no SGMII): "
-    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-        Label(periph_config_frame, text = "Ethernet :").grid(row=3, column=1)
-        Checkbutton(periph_config_frame, text="", variable=soc.eth_en,
-                    onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=3, column=2)
-    else:
-        Label(periph_config_frame, text = "Ethernet", fg="darkgreen").grid(row=3, column=1)
-
-
-    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-        Label(periph_config_frame, text = "Custom IO Link:").grid(row=4, column=1)
-        Checkbutton(periph_config_frame, text="", variable=soc.iolink_en,
-                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=4, column=2)
-    else:
-        Label(periph_config_frame, text = "No Custom IO Link", fg="red").grid(row=4, column=1)
-
-    # SVGA
-    if soc.FPGA_BOARD.find("profpga") != -1 and (soc.TECH == "virtex7" or soc.TECH == "virtexu"):
-      Label(periph_config_frame, text = "SVGA: ").grid(row=5, column=1)
-      Checkbutton(periph_config_frame, text="", variable=soc.svga_en,
-                  onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=5, column=2)
-    else:
-      Label(periph_config_frame, text = "No SVGA", fg="red").grid(row=5, column=1)
-
-    #
-    # Debug Link
-    #
-    ttk.Separator(self, orient="horizontal").pack(anchor="nw", fill=X, pady=10)
-    Label(self, text = "Debug Link ", font="TkDefaultFont 11 bold").pack(side=TOP)
-
-    Label(self, text = "Ethernet link (EDCL)").pack(side = TOP)
-
-    dsu_config_frame = Frame(self)
-    dsu_config_frame.pack(side=TOP, pady=5)
-
-    Label(dsu_config_frame, text="IP address (hex): ").grid(row=2, column=1)
-    self.DSU_IP = Entry(dsu_config_frame, width=10)
-    self.DSU_IP.grid(row=2, column=2)
-    Label(dsu_config_frame, text="IP address (dec): ").grid(row=3, column=1)
-    self.DSU_IP_DEC = Label(dsu_config_frame, text=soc.IP_ADDR, fg="darkgreen").grid(row=3, column=2)
-    Label(dsu_config_frame, text="MAC address (hex): ").grid(row=4, column=1)
-    self.DSU_ETH = Entry(dsu_config_frame, width=13)
-    self.DSU_ETH.grid(row=4, column=2)
-
-  def update_frame(self):
-    if len(self.soc.dsu_ip) == 8 and len(self.soc.dsu_eth) == 12:
-      self.DSU_IP.insert(0, self.soc.dsu_ip)
-      self.DSU_ETH.insert(0, self.soc.dsu_eth)
-
-class CpuFrame(Frame):
-
-  def set_cpu_specific_labels(self, soc):
-
-    if soc.CPU_ARCH.get() == "ariane":
-      self.fpu_label.config(text="ETH FPnew", fg="darkgreen")
-    elif soc.CPU_ARCH.get() == "leon3" and soc.LEON3_HAS_FPU == "7":
-      self.fpu_label.config(text="SLD FPU", fg="darkgreen")
-    elif soc.CPU_ARCH.get() == "leon3" and soc.LEON3_HAS_FPU == "(1+0)":
-      self.fpu_label.config(text="GRFPU", fg="darkgreen")
-    else:
-      self.fpu_label.config(text="None", fg="red")
-    
-  def __init__(self, soc, top_frame, main_frame):
-    self.soc = soc
-    Frame.__init__(self, top_frame, width=70, borderwidth=2)
-    self.pack(side=LEFT, expand=NO, fill=Y)
-    Label(self, text = "CPU ", font="TkDefaultFont 11 bold").pack(side=TOP)
-
-    self.cpu_frame = Frame(self)
-    self.cpu_frame.pack(side=TOP, pady=5)
-
-    cpu_choices = ["leon3", "ariane", "ibex"]
-
-    Label(self.cpu_frame, text = "Core: ").grid(row=1, column=1)
-    Pmw.OptionMenu(self.cpu_frame, menubutton_textvariable=soc.CPU_ARCH,
-                   items=cpu_choices, command=main_frame.update_noc_config).grid(row=1, column=2)
-
-    Label(self.cpu_frame, text="FPU: ").grid(row=2, column=1)
-    self.fpu_label = Label(self.cpu_frame, text="None", fg="red")
-    self.fpu_label.grid(row=2, column=2)
-    self.set_cpu_specific_labels(soc)
-    
-    ttk.Separator(self, orient="horizontal").pack(anchor="nw", fill=X, pady=10)
-
-    Label(self, text = "Shared Local Memory ", font="TkDefaultFont 11 bold").pack(side=TOP)
-
-    slm_config_frame = Frame(self)
-    slm_config_frame.pack(side=TOP, pady=5)
-
-    slm_kbytes_choices = [64, 128, 256, 512, 1024, 2048, 4096]
-
-    Label(slm_config_frame, text = "KB per tile: ").grid(row=1, column=1)
-    OptionMenu(slm_config_frame, soc.slm_kbytes, *slm_kbytes_choices, command=main_frame.update_noc_config).grid(row=1, column=2)
-
-    ttk.Separator(self, orient="horizontal").pack(anchor="nw", fill=X, pady=10)
-
-    Label(self, text = "Accelerators ", font="TkDefaultFont 11 bold").pack(side = TOP, pady=5)
-    Label(self, text = "Data allocation strategy:").pack(side = TOP)
-    Radiobutton(self, text = "Big physical area", variable = soc.transfers, value = 0).pack(side = TOP)
-    Radiobutton(self, text = "Scatter/Gather  ", variable = soc.transfers, value = 1).pack(side = TOP)
-
-class EspCreator(Frame):
-
-  def __init__(self, master, _soc):
-    self.soc = _soc
-    self.noc = self.soc.noc
-    self.master = master
-
-    # Create scroll bar
-    self.y_axis_scrollbar = Scrollbar(self.master)
-    self.x_axis_scrollbar = Scrollbar(self.master, orient='horizontal')
-
-    # Create canvas with yscrollcommmand from scrollbar, use xscrollcommand for horizontal scroll
-    self.main_canvas = Canvas(self.master, yscrollcommand=self.y_axis_scrollbar.set,
-                              xscrollcommand=self.x_axis_scrollbar.set)
-
-    # Configure and pack/grid scrollbar to master
-    self.y_axis_scrollbar.config(command=self.main_canvas.yview)
-    self.y_axis_scrollbar.pack(side=RIGHT, fill=BOTH, expand=NO)
-    self.x_axis_scrollbar.config(command=self.main_canvas.xview)
-    self.x_axis_scrollbar.pack(side=BOTTOM, fill=BOTH, expand=NO)
-
-    # This is the frame all content will go to. The 'master' of the frame is the canvas
-    self.ParentFrame = Frame(self.main_canvas, borderwidth=5)
-    self.ParentFrame.pack(side=TOP, expand=YES, fill=BOTH)
-        
-    # Place canvas on app pack/grid
-    self.main_canvas.pack(side=TOP, fill=BOTH, expand=YES)
-
-    # create_window draws the Frame on the canvas. Imagine it as another pack/grid
-    self.main_canvas.create_window((0, 0), window=self.ParentFrame, anchor=E)
-
-    #, width=self.master.winfo_screenwidth(), height=self.master.winfo_screenheight())
-    
-    #.:: creating the general layout
-    #top frame (configuration of SoC and peripherals)
-    self.top_frame = Frame(self.ParentFrame, borderwidth=5) 
-    self.top_frame.pack(side=TOP, expand=YES,  padx=10, pady=5, ipadx=5, ipady=5, fill=BOTH)    
-    #bottom frame (configuration of components)
-    self.bottom_frame = Frame(self.ParentFrame, borderwidth=5)
-    self.bottom_frame.pack(side=TOP, expand=YES,  padx=10, pady=5, ipadx=5, ipady=5, fill=BOTH)    
-    #message frame
-    self.message_frame = Frame(self.ParentFrame, borderwidth=5)
-    self.message_frame.pack(side=TOP, expand=YES,  padx=10, pady=5, ipadx=5, ipady=5, fill=BOTH)
-    self.message_bar = Frame(self.message_frame)
-    self.message_bar.pack(side=LEFT,fill=BOTH,expand=YES)
-    self.message_buttons = Frame(self.message_frame, width=50)
-    self.message_buttons.pack(side=RIGHT, expand=YES, fill=BOTH)
-    #final button
-    self.done = ctk.CTkButton(self.message_buttons, text="Generate SoC config", width=25, state=DISABLED, command=self.generate_files)
-    self.done.pack(side=RIGHT)
-
-    # #.:: creating the configuration frame (read-only)
-    cfg_frame = ConfigFrame(self.soc, self.top_frame) 
-    # .:: creating the CPU frame
-    # self.cpu_frame = CpuFrame(self.soc, self.top_frame, self)
-    # #.:: creating the cache frame
-    # self.cache_frame = CacheFrame(self.soc, self.top_frame, self)
-    # #.:: creating the peripherals frame
-    # self.peripheral_frame = PeripheralFrame(self.soc, self.top_frame, self)
-    # self.peripheral_frame.update_frame()
-
-    # #noc frame
-    # self.bottom_frame_noccfg = NoCFrame(self.soc, self.bottom_frame) 
-    # self.bottom_frame_noccfg.noc_config_frame.pack(side=LEFT, expand=NO, fill=Y)
-    # self.bottom_frame_noccfg.create_noc()
-    # self.done.configure(state=DISABLED)
-
-    # #message box
-    # self.message=Text(self.message_bar, width = 150, height = 7, wrap = WORD)
-    # self.message.pack()
-    # self.bottom_frame_noccfg.set_message(self.message, cfg_frame, self.cpu_frame, self.done)   
-
-    # self.bottom_frame_noccfg.update_frame()
-
-    # Call this method after every update to the canvas
-    self.update_scroll_region()
-
-  def update_scroll_region(self):
-    ''' Call after every update to content in self.main_canvas '''
-    self.master.update()
-    self.main_canvas.config(scrollregion=self.main_canvas.bbox('all'))
-
-  def update_noc_config(self, *args):
-    if soc.CPU_ARCH.get() == "ariane":
-      self.soc.DMA_WIDTH = 64
-    else:
-      self.soc.DMA_WIDTH = 32
-    self.soc.IPs = Components(self.soc.TECH, self.soc.DMA_WIDTH, soc.CPU_ARCH.get())
-    self.soc.update_list_of_ips()
-    self.soc.changed()
-    self.bottom_frame_noccfg.changed()
-
-  def generate_files(self):
-    self.bottom_frame_noccfg.changed()
-    self.generate_socmap()
-    self.generate_mmi64_regs()
-    self.generate_power()
-    if os.path.isfile(".esp_config.bak") == True:
-      shutil.move(".esp_config.bak", ".esp_config")
-
-  def generate_socmap(self):
-    try:
-      int(self.bottom_frame_noccfg.vf_points_entry.get())
-    except:
-      return
-    self.soc.noc.vf_points = int(self.bottom_frame_noccfg.vf_points_entry.get())
-    self.soc.write_config(self.peripheral_frame.DSU_IP.get(), self.peripheral_frame.DSU_ETH.get())
-    esp_config = soc_config(soc)
-    create_socmap(esp_config, soc)
- 
-  def generate_power(self):
-      create_power(soc)
-
-  def generate_mmi64_regs(self):
-      create_mmi64_regs(soc)
-
-if len(sys.argv) != 8:
-    print_usage()
-    sys.exit(1)
-
-DMA_WIDTH = int(sys.argv[1])
-TECH = sys.argv[2]
-LINUX_MAC = sys.argv[3]
-LEON3_STACK = sys.argv[4]
-FPGA_BOARD = sys.argv[5]
-EMU_TECH = sys.argv[6]
-EMU_FREQ = sys.argv[7]
-
-ctk.set_appearance_mode("System")        
-
-ctk.set_default_color_theme("dark-blue")
 ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("dark-blue")
+
+ARCH_BITS = int(sys.argv[1])
+TECH_TYPE = sys.argv[2]
+TECH = sys.argv[3]
+LINUX_MAC = sys.argv[4]
+LEON3_STACK = sys.argv[5]
+FPGA_BOARD = sys.argv[6]
+EMU_TECH = sys.argv[7]
+EMU_FREQ = sys.argv[8]
 
 root = ctk.CTk()
 root.title("ESP SoC Generator")
-soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, True)
+soc = SoC_Config(ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, True)
 
-root.geometry("1024x768")
-w, h = root.winfo_screenwidth(), root.winfo_screenheight()
-root.geometry("%dx%d+0+0" % (w, h))
-app = EspCreator(root, soc)
+root.geometry("1300x800")
+# w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+# root.geometry("%dx%d+0+0" % (w, h))
+# app = EspCreator(root, soc)
 
 def on_closing():
-  try:
-    int(app.bottom_frame_noccfg.vf_points_entry.get())
-  except:
-    return
-  soc.noc.vf_points = int(app.bottom_frame_noccfg.vf_points_entry.get())
   if messagebox.askokcancel("Quit", "Do you want to quit?"):
-    soc.write_config(app.peripheral_frame.DSU_IP.get(), app.peripheral_frame.DSU_ETH.get())
+    # soc.write_config(app.peripheral_frame.DSU_IP.get(), app.peripheral_frame.DSU_ETH.get())
     root.destroy()
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
+
+# Frames
+main_frame = ctk.CTkScrollableFrame(root, scrollbar_button_color="grey")
+main_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+# Left panel for "SoC Configuration" and other sections
+left_panel = ctk.CTkScrollableFrame(main_frame, width=440, height=900, scrollbar_button_color="grey")
+left_panel.grid(row=0, column=0, sticky="ns", padx=10, pady=10)
+
+# "SoC Configuration" Section
+soc_config_frame = ctk.CTkFrame(left_panel, fg_color="#ebebeb")
+soc_config_frame.pack(fill="x", padx=(8,3), pady=10)
+
+soc_config_label = ctk.CTkLabel(soc_config_frame, text="SoC Configuration", font=("Arial", 12, "bold"), pady=15)
+soc_config_label.grid(row=0, column=0, columnspan=2)
+
+# Target Technology 
+tech_label = ctk.CTkLabel(soc_config_frame, text="Target Technology", font=("Arial", 10))
+tech_value_frame = ctk.CTkFrame(soc_config_frame)
+tech_value_frame.grid(row=1, column=1, pady=5, padx=15)
+tech_value = ctk.CTkLabel(tech_value_frame, text="virtex7", width=200, font=("Arial", 10, "bold"))
+tech_value.pack(anchor="center", padx=3, pady=3)
+tech_label.grid(row=1, column=0, sticky="w", pady=5, padx=15)
+
+# FPGA Board 
+fpga_label = ctk.CTkLabel(soc_config_frame, text="FPGA Board", font=("Arial", 10))
+fpga_value_frame = ctk.CTkFrame(soc_config_frame)
+fpga_value_frame.grid(row=2, column=1, pady=5, padx=15)
+fpga_value = ctk.CTkLabel(fpga_value_frame, text="xilinx-vcu138-xcvu37p", width=200, font=("Arial", 10, "bold"))
+fpga_value.pack(anchor="center", padx=3, pady=3)
+fpga_label.grid(row=2, column=0, sticky="w", pady=5, padx=15)
+
+# def set_cpu_specific_labels(self, soc):
+#     if soc.CPU_ARCH.get() == "ariane":
+#       fpu_label.config(text="ETH FPnew", fg="darkgreen")
+#     elif soc.CPU_ARCH.get() == "leon3" and soc.LEON3_HAS_FPU == "7":
+#       fpu_label.config(text="SLD FPU", fg="darkgreen")
+#     elif soc.CPU_ARCH.get() == "leon3" and soc.LEON3_HAS_FPU == "(1+0)":
+#       fpu_label.config(text="GRFPU", fg="darkgreen")
+#     else:
+#       fpu_label.config(text="None", fg="red")
+
+# CPU Architecture 
+cpu_label = ctk.CTkLabel(soc_config_frame, text="CPU Architecture", font=("Arial", 10))
+cpu_value_frame = ctk.CTkFrame(soc_config_frame)
+cpu_value_frame.grid(row=3, column=1, pady=5, padx=15)
+cpu_value_menu = ctk.CTkOptionMenu(cpu_value_frame, values=["ariane", "leon3"], fg_color="white", 
+								   bg_color="#e8e8e8", button_color="#e8e8e8", width=200, text_color="black",font=("Arial", 10),
+								   button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8")
+cpu_value_menu.pack(anchor="center", padx=3, pady=3)
+cpu_label.grid(row=3, column=0, sticky="w", pady=5, padx=15)
+
+# NoC/DMA Width 
+noc_label = ctk.CTkLabel(soc_config_frame, text="NoC/DMA Width", font=("Arial", 10))
+noc_value_frame = ctk.CTkFrame(soc_config_frame)
+noc_value_frame.grid(row=4, column=1, pady=5, padx=15)
+noc_value = ctk.CTkLabel(noc_value_frame, text="64", width=200, font=("Arial", 10, "bold"))
+noc_value.pack(anchor="center", padx=3, pady=3)
+noc_label.grid(row=4, column=0, sticky="w", pady=5, padx=15)
+
+# Data Allocation Strategy 
+das_label = ctk.CTkLabel(soc_config_frame, text="Data Allocation Strategy", font=("Arial", 10))
+das_value_frame = ctk.CTkFrame(soc_config_frame)
+das_value_frame.grid(row=5, column=1, pady=5, padx=15)
+das_value_menu = ctk.CTkOptionMenu(das_value_frame, values=["Big physical area", "Scatter/Gatter"], fg_color="white", 
+								   bg_color="#e8e8e8", button_color="#e8e8e8", width=200, text_color="black",font=("Arial", 10),
+								   button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8")
+das_value_menu.pack(anchor="center", padx=3, pady=3)
+das_label.grid(row=5, column=0, sticky="w", pady=5, padx=15)
+
+# SLM KB per tile 
+slm_label = ctk.CTkLabel(soc_config_frame, text="SLM KB Per Tile", font=("Arial", 10))
+slm_value_frame = ctk.CTkFrame(soc_config_frame)
+slm_value_frame.grid(row=6, column=1, pady=(5,20), padx=15)
+slm_value_menu = ctk.CTkOptionMenu(slm_value_frame, values=["64", "138", "256", "513", "1024", "2048", "4096"], fg_color="white", 
+								   bg_color="#e8e8e8", button_color="#e8e8e8", width=200, text_color="black",font=("Arial", 10),
+								   button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8")
+slm_value_menu.pack(anchor="center", padx=3, pady=3)
+slm_label.grid(row=6, column=0, sticky="w", pady=(5,20), padx=15)
+
+# Sample peripherals list for demonstration
+peripherals = [
+    ("UART", True), ("JTAG", False), ("Ethernet", True), 
+    ("Custom IO Link", False), ("SVGA", False), 
+    ("FPGA Memory Link", False)
+]
+
+# Create the main frame for peripherals section
+peripherals_frame = ctk.CTkFrame(left_panel, fg_color="#ebebeb")
+peripherals_frame.pack(fill="x", padx=(8,3), pady=(0,10))  # Adjust padx for less space around the frame
+
+# Title for peripherals section, centered across all columns
+peripherals_label = ctk.CTkLabel(peripherals_frame, text="Peripherals", font=("Arial", 12, "bold"))
+peripherals_label.grid(row=0, column=0, columnspan=2, pady=(10, 15), padx=(15, 0))  # Centered across 4 columns
+
+# Determine the number of rows needed for a 4-column layout
+columns = 2
+rows = math.ceil(len(peripherals) / columns)
+
+# Populate peripherals in a 4-column layout with checkboxes and labels side-by-side
+for i, (label_text, is_present) in enumerate(peripherals):
+    row = (i // columns) + 1
+    column = i % columns
+
+    # Frame for each (checkbox, label) pair
+    pair_frame = ctk.CTkFrame(peripherals_frame, fg_color="transparent")
+    pair_frame.grid(row=row, column=column, padx=(20,10))
+
+    # Checkbox for availability, styled based on presence
+    checkbox = ctk.CTkCheckBox(
+        pair_frame,
+        text="",
+        state="normal",  # Enable only "Ethernet"
+        fg_color="green",  # Green for present, red for absent
+		border_color="grey",
+		corner_radius=0,
+        width=0,
+        checkbox_width=18,
+        checkbox_height=18,
+        hover=False  # Remove hover effect for a cleaner look
+    )
+    # Label for peripheral next to the checkbox
+    label = ctk.CTkLabel(pair_frame, text=label_text, font=("Arial", 11), width=140, anchor="w")
+    label.pack(side="right", pady=10)  # Place label on the right within the pair frame
+    
+    if is_present:
+        label.configure(text_color="black")
+        checkbox.select()
+    checkbox.pack(side="left", anchor="e")  # Place checkbox on the left within the pair frame
+    
+# Debug Link Section
+debug_link_frame = ctk.CTkFrame(left_panel, fg_color="#ebebeb")
+debug_link_frame.pack(fill="x", padx=(8,3), pady=10)
+
+debug_link_label = ctk.CTkLabel(debug_link_frame, text="Debug Link", font=("Arial", 12, "bold"), pady=15)
+debug_link_label.grid(row=0, column=0, columnspan=2)
+
+# Target Technology 
+ip_add_label = ctk.CTkLabel(debug_link_frame, text="IP Address (hex)", font=("Arial", 10))
+ip_add_value_frame = ctk.CTkFrame(debug_link_frame)
+ip_add_value_frame.grid(row=2, column=1, pady=5, padx=15)
+ip_add_value = ctk.CTkEntry(ip_add_value_frame, placeholder_text="C0A8010C", width=200, font=("Arial", 10), placeholder_text_color="black")
+ip_add_value.pack(anchor="center", padx=3, pady=3)
+ip_add_label.grid(row=2, column=0, sticky="w", pady=5, padx=20)
+
+# Target Technology 
+ip_add_label = ctk.CTkLabel(debug_link_frame, text="IP Address (dec)", font=("Arial", 10))
+ip_add_value_frame = ctk.CTkFrame(debug_link_frame)
+ip_add_value_frame.grid(row=1, column=1, pady=5, padx=15)
+ip_add_value = ctk.CTkLabel(ip_add_value_frame, text="192.168.1.12", width=200, font=("Arial", 10, "bold"))
+ip_add_value.pack(anchor="center")
+ip_add_label.grid(row=1, column=0, sticky="w", pady=5, padx=20)
+
+ip_add_label = ctk.CTkLabel(debug_link_frame, text="MAC Address (hex)", font=("Arial", 10))
+ip_add_value_frame = ctk.CTkFrame(debug_link_frame)
+ip_add_value_frame.grid(row=3, column=1, pady=5, padx=15)
+ip_add_value = ctk.CTkEntry(ip_add_value_frame, placeholder_text="A6A7A0F80442", width=200, font=("Arial", 10), placeholder_text_color="black")
+ip_add_value.pack(anchor="center", padx=3, pady=3)
+ip_add_label.grid(row=3, column=0, sticky="w", pady=5, padx=20)
+
+# Caches Configuration Frame
+caches_frame = ctk.CTkFrame(left_panel, fg_color="#ebebeb")
+caches_frame.pack(padx=(8, 3), pady=(10,20), fill="x")
+
+# Title label for the Caches Configuration section
+title_label = ctk.CTkLabel(caches_frame, text="Caches Configuration", font=("Arial", 12, "bold"))
+title_label.grid(row=0, column=0, columnspan=2, pady=10)
+
+# Enable Caches checkbox
+enable_caches_cb = ctk.CTkCheckBox(caches_frame, text="Enable Caches",
+                                   fg_color="green",
+                                   border_color="grey",
+                                   width=0,
+								   corner_radius=0,
+                                   checkbox_width=18,
+                                   checkbox_height=18,
+								   font=("Arial", 10),
+                                   hover=False)
+enable_caches_cb.grid(row=1, column=0, sticky="w", padx=20, pady=20)
+
+# Implementation Dropdown (ESP RTL)
+l2_label = ctk.CTkLabel(caches_frame, text="Implementation", font=("Arial", 10))
+l2_label.grid(row=2, column=0, padx=20, pady=(10, 5), sticky="w")
+
+esp_rtl_frame = ctk.CTkFrame(caches_frame)
+esp_rtl_frame.grid(row=2, column=1, padx=20, pady=5)
+esp_rtl_dd = ctk.CTkOptionMenu(esp_rtl_frame, values=["ESP RTL"], fg_color="white", 
+                               bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
+                               font=("Arial", 10), button_hover_color="lightgrey", width=160)
+esp_rtl_dd.set("ESP RTL")
+esp_rtl_dd.pack(padx=3, pady=3)
+
+# Cache Line Size Dropdown
+l2_label = ctk.CTkLabel(caches_frame, text="Cache Line Size", font=("Arial", 10))
+l2_label.grid(row=3, column=0, padx=20, pady=(10, 5), sticky="w")
+
+cache_line_frame = ctk.CTkFrame(caches_frame)
+cache_line_frame.grid(row=3, column=1, padx=20, pady=5)
+cache_line_dd = ctk.CTkOptionMenu(cache_line_frame, values=["128", "256"], fg_color="white", 
+                                  bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
+                                  font=("Arial", 10), button_hover_color="lightgrey", width=160)
+cache_line_dd.set("128")
+cache_line_dd.pack(padx=3, pady=3)
+
+# Section Labels
+l2_label = ctk.CTkLabel(caches_frame, text="L2 Properties", font=("Arial", 10))
+llc_label = ctk.CTkLabel(caches_frame, text="LLC Properties", font=("Arial", 10))
+acc_l2_label = ctk.CTkLabel(caches_frame, text="Acc L2 Properties", font=("Arial", 10))
+
+l2_label.grid(row=4, column=0, padx=20, pady=(10, 5), sticky="w")
+llc_label.grid(row=4, column=1, padx=20, pady=(10, 5), sticky="w")
+acc_l2_label.grid(row=7, column=0, padx=20, pady=(10, 5), sticky="w")
+
+ways_options = ["4 ways", "8 ways", "16 ways"]
+sets_options = ["512 sets", "1024 sets", "2048 sets"]
+
+# L2 Properties Dropdowns
+l2_ways_frame = ctk.CTkFrame(caches_frame)
+l2_ways_frame.grid(row=5, column=0, padx=20, pady=5)
+l2_ways_dd = ctk.CTkOptionMenu(l2_ways_frame, values=ways_options, fg_color="white",
+                               bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
+                               font=("Arial", 10), button_hover_color="lightgrey", width=165)
+l2_ways_dd.set(ways_options[0])
+l2_ways_dd.pack(padx=3, pady=3)
+
+l2_sets_frame = ctk.CTkFrame(caches_frame)
+l2_sets_frame.grid(row=6, column=0, padx=20, pady=5)
+l2_sets_dd = ctk.CTkOptionMenu(l2_sets_frame, values=sets_options, fg_color="white",
+                               bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
+                               font=("Arial", 10), button_hover_color="lightgrey", width=165)
+l2_sets_dd.set(sets_options[0])
+l2_sets_dd.pack(padx=3, pady=3)
+
+# LLC Properties Dropdowns
+llc_ways_frame = ctk.CTkFrame(caches_frame)
+llc_ways_frame.grid(row=5, column=1, padx=20, pady=5)
+llc_ways_dd = ctk.CTkOptionMenu(llc_ways_frame, values=ways_options, fg_color="white",
+                                bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
+                                font=("Arial", 10), button_hover_color="lightgrey", width=165)
+llc_ways_dd.set(ways_options[2])
+llc_ways_dd.pack(padx=3, pady=3)
+
+llc_sets_frame = ctk.CTkFrame(caches_frame)
+llc_sets_frame.grid(row=6, column=1, padx=20, pady=5)
+llc_sets_dd = ctk.CTkOptionMenu(llc_sets_frame, values=sets_options, fg_color="white",
+                                bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
+                                font=("Arial", 10), button_hover_color="lightgrey", width=165)
+llc_sets_dd.set(sets_options[1])
+llc_sets_dd.pack(padx=3, pady=3)
+
+# Acc L2 Properties Dropdowns
+acc_l2_ways_frame = ctk.CTkFrame(caches_frame)
+acc_l2_ways_frame.grid(row=8, column=0, padx=20, pady=5)
+acc_l2_ways_dd = ctk.CTkOptionMenu(acc_l2_ways_frame, values=ways_options, fg_color="white",
+                                   bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
+                                   font=("Arial", 10), button_hover_color="lightgrey", width=165)
+acc_l2_ways_dd.set(ways_options[0])
+acc_l2_ways_dd.pack(padx=3, pady=3)
+
+acc_l2_sets_frame = ctk.CTkFrame(caches_frame)
+acc_l2_sets_frame.grid(row=9, column=0, padx=20, pady=5)
+acc_l2_sets_dd = ctk.CTkOptionMenu(acc_l2_sets_frame, values=sets_options, fg_color="white",
+                                   bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
+                                   font=("Arial", 10), button_hover_color="lightgrey", width=165)
+acc_l2_sets_dd.set(sets_options[0])
+acc_l2_sets_dd.pack(padx=3, pady=3)
+
+noc_select_frame = ctk.CTkFrame(left_panel, fg_color="#ebebeb")
+noc_select_frame.pack(padx=(8,3), pady=(10,20), fill="x")
+
+# Title label for the NoC Configuration section
+title_label = ctk.CTkLabel(noc_select_frame, text="NoC Configuration", font=("Arial", 12, "bold"))
+title_label.grid(row=0, column=0, columnspan=2, pady=10)
+
+# noc_rows_label = ctk.CTkLabel(noc_select_frame, text="Rows:")
+# noc_rows_label.grid(row=1, column=0, padx=5, pady=5, sticky="e")
+# noc_rows = ctk.CTkEntry(noc_select_frame, width=50)
+# noc_rows.insert(0, "2")
+# noc_rows.grid(row=1, column=1, padx=5, pady=5)
+
+# noc_columns_label = ctk.CTkLabel(noc_select_frame, text="Columns:")
+# noc_columns_label.grid(row=1, column=2, padx=5, pady=5, sticky="e")
+# noc_columns = ctk.CTkEntry(noc_select_frame, width=50)
+# noc_columns.insert(0, "2")
+# noc_columns.grid(row=1, column=3, padx=5, pady=5)
+
+# update_noc_button = ctk.CTkButton(noc_select_frame, text="Update NoC", width=100, font=("Arial", 12))
+#update_noc_button.grid(row=1, column=4, padx=10, pady=5)
+
+cpu_label = ctk.CTkLabel(noc_select_frame, text="Coherence NoC Planes (1,2,3) Bitwidth", font=("Arial", 10))
+cpu_value_frame = ctk.CTkFrame(noc_select_frame)
+cpu_value_frame.grid(row=2, column=1, pady=5, padx=15)
+cpu_value_menu = ctk.CTkOptionMenu(cpu_value_frame, values=["64", "32"], fg_color="white", 
+								   bg_color="#e8e8e8", button_color="#e8e8e8", width=100, text_color="black",font=("Arial", 10),
+								   button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8")
+cpu_value_menu.pack(anchor="center", padx=3, pady=3)
+cpu_label.grid(row=2, column=0, sticky="w", pady=5, padx=15)
+
+
+
+cpu_label = ctk.CTkLabel(noc_select_frame, text="DMA NoC Planes (4,6) Bitwidth", font=("Arial", 10))
+cpu_value_frame = ctk.CTkFrame(noc_select_frame)
+cpu_value_frame.grid(row=3, column=1, pady=5, padx=15)
+cpu_value_menu = ctk.CTkOptionMenu(cpu_value_frame, values=["64", "32"], fg_color="white", 
+								   bg_color="#e8e8e8", button_color="#e8e8e8", width=100, text_color="black",font=("Arial", 10),
+								   button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8")
+cpu_value_menu.pack(anchor="center", padx=3, pady=3)
+cpu_label.grid(row=3, column=0, sticky="w", pady=5, padx=15)
+
+enable_caches_cb = ctk.CTkCheckBox(noc_select_frame, text="Enable Multicast on DMA Planes",
+								   font=("Arial", 11),
+                                   fg_color="green",
+                                   border_color="grey",
+                                   width=0,
+								   corner_radius=0,
+                                   checkbox_width=18,
+                                   checkbox_height=18,
+                                   hover=False)
+enable_caches_cb.grid(row=4, column=0, sticky="w", padx=15, pady=10)
+
+cpu_label = ctk.CTkLabel(noc_select_frame, text="Maximum Multicast Destinations", font=("Arial", 11))
+cpu_value_frame = ctk.CTkFrame(noc_select_frame)
+cpu_value_frame.grid(row=5, column=1, pady=5, padx=15)
+cpu_value_menu = ctk.CTkOptionMenu(cpu_value_frame, values=["2", "3"], fg_color="white", 
+								   bg_color="#e8e8e8", button_color="#e8e8e8", width=100, text_color="black",font=("Arial", 10),
+								   button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8")
+cpu_value_menu.pack(anchor="center", padx=3, pady=3)
+cpu_label.grid(row=5, column=0, sticky="w", pady=5, padx=15)
+
+probe_frame = ctk.CTkFrame(left_panel, fg_color="#ebebeb")
+probe_frame.pack(padx=(8,3), pady=10, fill="x")
+
+# Title label for the NoC Configuration section
+title_label = ctk.CTkLabel(probe_frame, text="Probe Configuration", font=("Arial", 12, "bold"))
+title_label.pack(pady=10)
+
+enable_caches_cb = ctk.CTkCheckBox(probe_frame, text="Monitor DDR bandwidth",
+                                   font=("Arial", 11),
+                                   fg_color="green",
+                                   border_color="grey",
+                                   width=0,
+								   corner_radius=0,
+                                   checkbox_width=18,
+                                   checkbox_height=18,
+                                   hover=False)
+enable_caches_cb.pack(padx=15, pady=10, anchor="w")
+
+enable_caches_cb = ctk.CTkCheckBox(probe_frame, text="Monitor Memory Access",
+                                   font=("Arial", 11),
+                                   fg_color="green",
+                                   border_color="grey",
+                                   width=0,
+								   corner_radius=0,
+                                   checkbox_width=18,
+                                   checkbox_height=18,
+                                   hover=False)
+enable_caches_cb.pack(padx=15, pady=10, anchor="w")
+
+enable_caches_cb = ctk.CTkCheckBox(probe_frame, text="Monitor Injection Rate",
+                                   font=("Arial", 11),
+                                   fg_color="green",
+                                   border_color="grey",
+                                   width=0,
+								   corner_radius=0,
+                                   checkbox_width=18,
+                                   checkbox_height=18,
+                                   hover=False)
+enable_caches_cb.pack(padx=15, pady=10, anchor="w")
+
+enable_caches_cb = ctk.CTkCheckBox(probe_frame, text="Monitor Router Ports",
+                                   font=("Arial", 11),
+                                   fg_color="green",
+                                   border_color="grey",
+                                   width=0,
+								   corner_radius=0,
+                                   checkbox_width=18,
+                                   checkbox_height=18,
+                                   hover=False)
+enable_caches_cb.pack(padx=15, pady=10, anchor="w")
+
+enable_caches_cb = ctk.CTkCheckBox(probe_frame, text="Monitor Accelerator Status",
+                                   font=("Arial", 11),
+                                   fg_color="green",
+                                   border_color="grey",
+                                   width=0,
+								   corner_radius=0,
+                                   checkbox_width=18,
+                                   checkbox_height=18,
+                                   hover=False)
+enable_caches_cb.pack(padx=15, pady=10, anchor="w")
+
+enable_caches_cb = ctk.CTkCheckBox(probe_frame, text="Monitor L2 Hit/Miss",
+                                   font=("Arial", 11),
+                                   fg_color="green",
+                                   border_color="grey",
+                                   width=0,
+								   corner_radius=0,
+                                   checkbox_width=18,
+                                   checkbox_height=18,
+                                   hover=False)
+enable_caches_cb.pack(padx=15, pady=10, anchor="w")
+
+enable_caches_cb = ctk.CTkCheckBox(probe_frame, text="Monitor LLC Hit/Miss",
+                                   font=("Arial", 11),
+                                   fg_color="green",
+                                   border_color="grey",
+                                   width=0,
+								   corner_radius=0,
+                                   checkbox_width=18,
+                                   checkbox_height=18,
+                                   hover=False)
+enable_caches_cb.pack(padx=15, pady=10, anchor="w")
+
+enable_caches_cb = ctk.CTkCheckBox(probe_frame, text="Monitor DVFS",
+                                   font=("Arial", 11),
+                                   fg_color="green",
+                                   border_color="grey",
+                                   width=0,
+								   corner_radius=0,
+                                   checkbox_width=18,
+                                   checkbox_height=18,
+                                   hover=False)
+enable_caches_cb.pack(padx=15, pady=10, anchor="w")
+
+gen_soc_config = ctk.CTkButton(left_panel, text="Generate SoC Configuration", font=("Arial", 12), height=40, width=150)
+gen_soc_config.pack(fill="x", pady=15)
+
+# # Right panel for tiles configuration
+# right_panel = ctk.CTkFrame(main_frame)
+# right_panel.grid(row=0, column=1, sticky="ns", padx=10, pady=10)
+
+# # Example for configuring Tile 0
+# tile_frame = ctk.CTkFrame(right_panel, fg_color="lightblue")
+# tile_frame.grid(row=0, column=0, padx=5, pady=5)
+
+# tile_label = ctk.CTkLabel(tile_frame, text="Tile 0")
+# tile_label.grid(row=0, column=0, columnspan=2)
+
+# tile_type = ctk.CTkOptionMenu(tile_frame, values=["Accelerator", "Empty"])
+# tile_type.grid(row=1, column=0, columnspan=2)
+
+# # Additional options under "Tile 0"
+# clock_domain_label = ctk.CTkLabel(tile_frame, text="Clock domain:")
+# clock_domain_entry = ctk.CTkEntry(tile_frame)
+# clock_domain_label.grid(row=2, column=0, sticky="w", padx=10)
+# clock_domain_entry.grid(row=2, column=1, padx=10)
+
+# # Repeat similar layout for other tiles (Tile 1, Tile 2, etc.)
+
+# Run the app
+
 root.mainloop()
