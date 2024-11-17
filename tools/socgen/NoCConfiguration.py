@@ -3,6 +3,7 @@
 # Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
+import customtkinter as ctk
 from tkinter import *
 from tkinter.ttk import Separator
 from thirdparty import *
@@ -242,8 +243,7 @@ class NoC():
     self.monitor_dvfs = IntVar()
 
 #NoC configuration frame (middle)
-class NoCFrame(Pmw.ScrolledFrame):
-
+class NoCConfigFrame:
   current_nocx = 0
   current_nocy = 0
 
@@ -307,76 +307,163 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.has_ddr_selection.grid(row=1, column=3)
     Separator(config_frame, orient="horizontal").grid(row=2, column=1, columnspan=3, ipadx=140, pady=3)
 
-  def __init__(self, soc, bottom_frame):
+  def __init__(self, soc, left_panel, right_panel):
     self.soc = soc
     self.noc = self.soc.noc
-    #configuration frame
-    self.noc_config_frame = Frame(bottom_frame)
-    Label(self.noc_config_frame, text="NoC configuration", font="TkDefaultFont 11 bold").pack(side = TOP)
-    self.config_noc_frame = Frame(self.noc_config_frame)
-    self.config_noc_frame.pack(side=TOP)
-    Label(self.config_noc_frame, text="Rows: ").pack(side = LEFT)
-    self.ROWS = Entry(self.config_noc_frame, width=3)
-    self.ROWS.pack(side = LEFT)
-    Label(self.config_noc_frame, text="Cols: ").pack(side = LEFT)
-    self.COLS = Entry(self.config_noc_frame, width=3)
-    self.COLS.pack(side = LEFT)
+    self.left_panel = left_panel
+    self.right_panel = right_panel
+    
+    self.noc_select_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
+    self.noc_select_frame.pack(padx=(8, 3), pady=(10, 20), fill="x")
+    self.title_label = ctk.CTkLabel(self.noc_select_frame, text="NoC Configuration", font=("Arial", 12, "bold"))
+    self.title_label.grid(row=0, column=0, columnspan=5, pady=10)
 
-    noc_width_choices = ["32", "64", "128", "256", "512", "1024"]
-    Label(self.noc_config_frame, text = "Coherence NoC Planes (1,2,3) Bitwidth: ", height=1).pack()
-    OptionMenu(self.noc_config_frame, self.noc.coh_noc_width, *noc_width_choices).pack()
-    Label(self.noc_config_frame, text = "DMA NoC Planes (4,6) Bitwidth: ", height=1).pack()
-    OptionMenu(self.noc_config_frame, self.noc.dma_noc_width, *noc_width_choices).pack()
-    Label(self.noc_config_frame, text = "MMIO/Irq NoC Plane (5) Bitwidth is always 32", height=1).pack(side=TOP)
-    Checkbutton(self.noc_config_frame, text="Enable Multicast on DMA Planes", variable=self.noc.multicast_en, anchor=W, width=30).pack()
-    max_multicast_choices = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"]
-    Label(self.noc_config_frame, text = "Maximum Multicast Destinations: ", height=1).pack()
-    OptionMenu(self.noc_config_frame, self.noc.max_mcast_dests, *max_multicast_choices).pack()
-    Button(self.noc_config_frame, text = "Config", command=self.create_noc).pack(side=TOP)
+    self.noc_rows_label = ctk.CTkLabel(self.noc_select_frame, text="Rows:", font=("Arial", 10))
+    self.noc_rows_label.grid(row=1, column=0, padx=20, pady=20, sticky="e")
+    self.noc_rows = ctk.CTkEntry(self.noc_select_frame, width=45, font=("Arial", 10), placeholder_text_color="black", border_width=0)
+    self.ROWS = self.noc_rows
+    self.noc_rows.insert(0, "2")
+    self.noc_rows.grid(row=1, column=1, padx=5, pady=20)
+    self.noc_columns_label = ctk.CTkLabel(self.noc_select_frame, text="Columns:", font=("Arial", 10))
+    self.noc_columns_label.grid(row=1, column=2, padx=20, pady=20, sticky="e")
+    self.noc_columns = ctk.CTkEntry(self.noc_select_frame,  width=45, font=("Arial", 10), placeholder_text_color="black", border_width=0)
+    self.COLS = self.noc_columns
+    self.noc_columns.insert(0, "2")
+    self.noc_columns.grid(row=1, column=3, padx=5, pady=20)
 
-    Label(self.noc_config_frame, height=1).pack()
-    Checkbutton(self.noc_config_frame, text="Monitor DDR bandwidth", variable=self.noc.monitor_ddr, anchor=W, width=20).pack()
-    Checkbutton(self.noc_config_frame, text="Monitor memory access", variable=self.noc.monitor_mem, anchor=W, width=20).pack()
-    Checkbutton(self.noc_config_frame, text="Monitor injection rate", variable=self.noc.monitor_inj, anchor=W, width=20).pack()
-    Checkbutton(self.noc_config_frame, text="Monitor router ports", variable=self.noc.monitor_routers, anchor=W, width=20).pack()
-    self.monitor_acc_selection = Checkbutton(self.noc_config_frame, text="Monitor accelerator status", variable=self.noc.monitor_accelerators, anchor=W, width=20)
-    self.monitor_acc_selection.pack()
-    Checkbutton(self.noc_config_frame, text="Monitor L2 Hit/Miss", variable=self.noc.monitor_l2, anchor=W, width=20).pack()
-    Checkbutton(self.noc_config_frame, text="Monitor LLC Hit/Miss", variable=self.noc.monitor_llc, anchor=W, width=20).pack()
-    self.monitor_dvfs_selection = Checkbutton(self.noc_config_frame, text="Monitor DVFS", variable=self.noc.monitor_dvfs, width=20, anchor=W)
-    self.monitor_dvfs_selection.pack()
+    self.update_noc_button = ctk.CTkButton(self.noc_select_frame, text="Update NoC", width=100, font=("Arial", 10))
+    self.update_noc_button.grid(row=1, column=4, padx=20, pady=20)
 
+    self.noc_config_frame = ctk.CTkFrame(self.noc_select_frame, fg_color="#ebebeb")
+    self.noc_config_frame.grid(row=2, column=0, columnspan=5, pady=10)
 
-    #statistics
-    Label(self.noc_config_frame, height=1).pack()
-    self.TOT_CPU = Label(self.noc_config_frame, anchor=W, width=20)
-    self.TOT_MEM = Label(self.noc_config_frame, anchor=W, width=25)
-    self.TOT_SLM = Label(self.noc_config_frame, anchor=W, width=25)
-    self.TOT_SLMDDR = Label(self.noc_config_frame, anchor=W, width=25)
-    self.TOT_MISC = Label(self.noc_config_frame, anchor=W, width=20)
-    self.TOT_ACC = Label(self.noc_config_frame, anchor=W, width=20)
-    self.TOT_CPU.pack(side=TOP, fill=BOTH)
-    self.TOT_MEM.pack(side=TOP, fill=BOTH)
-    self.TOT_SLM.pack(side=TOP, fill=BOTH)
-    self.TOT_SLMDDR.pack(side=TOP, fill=BOTH)
-    self.TOT_MISC.pack(side=TOP, fill=BOTH)
-    self.TOT_ACC.pack(side=TOP, fill=BOTH)
+    self.noc_width_choices = ["32", "64", "128", "256", "512", "1024"]
 
-    Label(self.noc_config_frame, height=1).pack()
+    # Coherence NoC Planes
+    self.noc_planes_label = ctk.CTkLabel(self.noc_config_frame, text="Coherence NoC Planes (1,2,3) Bitwidth", font=("Arial", 10))
+    self.noc_planes_label.grid(row=2, column=0, sticky="w", pady=5, padx=15)
+    self.noc_planes_frame = ctk.CTkFrame(self.noc_config_frame)
+    self.noc_planes_frame.grid(row=2, column=1, pady=5, padx=15)
+    self.noc_planes_value_menu = ctk.CTkOptionMenu(self.noc_planes_frame, variable=self.noc.coh_noc_width, values=self.noc_width_choices, 
+                                 fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", width=100, text_color="black", 
+                                 font=("Arial", 10), button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", 
+                                 dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8")
+    self.noc_planes_value_menu.pack(anchor="center", padx=3, pady=3)
+
+    # DMA NoC Planes
+    self.dma_planes_label = ctk.CTkLabel(self.noc_config_frame, text="DMA NoC Planes (4,6) Bitwidth", font=("Arial", 10))
+    self.dma_planes_label.grid(row=3, column=0, sticky="w", pady=5, padx=15)
+    self.dma_planes_value_frame = ctk.CTkFrame(self.noc_config_frame)
+    self.dma_planes_value_frame.grid(row=3, column=1, pady=5, padx=15)
+    self.dma_planes_value_menu = ctk.CTkOptionMenu(self.dma_planes_value_frame, variable=self.noc.dma_noc_width, values=self.noc_width_choices, 
+                                 fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", width=100, text_color="black", 
+                                 font=("Arial", 10), button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", 
+                                 dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8")
+    self.dma_planes_value_menu.pack(anchor="center", padx=3, pady=3)
+
+    self.mmio_label = ctk.CTkLabel(self.noc_config_frame, text="MMIO/Irq NoC Plane (5) Bitwidth", font=("Arial", 10))
+    self.mmio_label.grid(row=4, column=0, sticky="w", pady=5, padx=15)
+    self.mmio_value_frame = ctk.CTkFrame(self.noc_config_frame)
+    self.mmio_value_frame.grid(row=4, column=1, pady=5, padx=15)
+    self.mmio_value = ctk.CTkLabel(self.mmio_value_frame, text="32", width=100, font=("Arial", 10, "bold"))
+    self.mmio_value.pack(anchor="center", padx=3, pady=3)
+
+    # Enable Multicast
+    self.enable_multicast_cb = ctk.CTkCheckBox(
+        self.noc_config_frame, variable=self.noc.multicast_en, text="Enable Multicast on DMA Planes", font=("Arial", 11),
+        fg_color="green", border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18, hover=False
+    )
+    self.enable_multicast_cb.grid(row=5, column=0, sticky="w", padx=15, pady=10)
+
+    self.max_multicast_choices = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"]
+    # Maximum Multicast Destinations
+    self.max_multicast_label = ctk.CTkLabel(self.noc_config_frame, text="Maximum Multicast Destinations", font=("Arial", 11))
+    self.max_multicast_label.grid(row=6, column=0, sticky="w", pady=5, padx=15)
+    self.max_multicast_value_frame = ctk.CTkFrame(self.noc_config_frame)
+    self.max_multicast_value_frame.grid(row=6, column=1, pady=5, padx=15)
+    self.max_multicast_value_menu = ctk.CTkOptionMenu(
+        self.max_multicast_value_frame, variable=self.noc.max_mcast_dests, values=self.max_multicast_choices, 
+        fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8",
+        width=100, text_color="black", font=("Arial", 10), button_hover_color="lightgrey", anchor="center",
+        dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8"
+    )
+    self.max_multicast_value_menu.pack(anchor="center", padx=3, pady=3)
+
+    self.probe_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
+    self.probe_frame.pack(padx=(8,3), pady=10, fill="x")
+    self.title_label = ctk.CTkLabel(self.probe_frame, text="Probe Configuration", font=("Arial", 12, "bold"))
+    self.title_label.pack(pady=10)
+
+    self.ddr_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DDR bandwidth", font=("Arial", 11), fg_color="green",
+                  border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+                  hover=False, variable=self.noc.monitor_ddr)
+    self.ddr_cb.pack(padx=15, pady=10, anchor="w")
+
+    self.mem_access_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Memory Access", font=("Arial", 11), fg_color="green",
+                         border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+                         hover=False, variable=self.noc.monitor_mem)
+    self.mem_access_cb.pack(padx=15, pady=10, anchor="w")
+
+    self.inj_rate_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Injection Rate", font=("Arial", 11), fg_color="green",
+                       border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+                       hover=False, variable=self.noc.monitor_inj)
+    self.inj_rate_cb.pack(padx=15, pady=10, anchor="w")
+
+    self.router_ports_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Router Ports", font=("Arial", 11), fg_color="green",
+                           border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+                           hover=False, variable=self.noc.monitor_routers)
+    self.router_ports_cb.pack(padx=15, pady=10, anchor="w")
+
+    self.acc_status_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Accelerator Status", font=("Arial", 11), fg_color="green",
+                         border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+                         hover=False, variable=self.noc.monitor_accelerators)
+    self.acc_status_cb.pack(padx=15, pady=10, anchor="w")
+
+    self.l2_hm_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor L2 Hit/Miss", font=("Arial", 11), fg_color="green",
+                    border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+                    hover=False, variable=self.noc.monitor_l2)
+    self.l2_hm_cb.pack(padx=15, pady=10, anchor="w")
+
+    self.llc_hm_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor LLC Hit/Miss", font=("Arial", 11), fg_color="green",
+                     border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+                     hover=False, variable=self.noc.monitor_llc)
+    self.llc_hm_cb.pack(padx=15, pady=10, anchor="w")
+
+    self.dvfs_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DVFS", font=("Arial", 11), fg_color="green",
+                   border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+                   hover=False, variable=self.noc.monitor_dvfs)
+    self.dvfs_cb.pack(padx=15, pady=10, anchor="w")
+
+    # #statistics
+    # Label(self.noc_config_frame, height=1).pack()
+    # self.TOT_CPU = Label(self.noc_config_frame, anchor=W, width=20)
+    # self.TOT_MEM = Label(self.noc_config_frame, anchor=W, width=25)
+    # self.TOT_SLM = Label(self.noc_config_frame, anchor=W, width=25)
+    # self.TOT_SLMDDR = Label(self.noc_config_frame, anchor=W, width=25)
+    # self.TOT_MISC = Label(self.noc_config_frame, anchor=W, width=20)
+    # self.TOT_ACC = Label(self.noc_config_frame, anchor=W, width=20)
+    # self.TOT_CPU.pack(side=TOP, fill=BOTH)
+    # self.TOT_MEM.pack(side=TOP, fill=BOTH)
+    # self.TOT_SLM.pack(side=TOP, fill=BOTH)
+    # self.TOT_SLMDDR.pack(side=TOP, fill=BOTH)
+    # self.TOT_MISC.pack(side=TOP, fill=BOTH)
+    # self.TOT_ACC.pack(side=TOP, fill=BOTH)
+
+    # Label(self.noc_config_frame, height=1).pack()
 
     #frame for the tiles
-    Pmw.ScrolledFrame.__init__(self, bottom_frame,
-           labelpos = 'n',
-           label_text = 'NoC Tile Configuration',
-           label_font="TkDefaultFont 11 bold",
-           usehullsize = 1,
-           horizflex='expand',
-           hull_width = 1180,
-           hull_height = 520,)
-    self.noc_frame = self.interior()
+    # Pmw.ScrolledFrame.__init__(self, bottom_frame,
+    #        labelpos = 'n',
+    #        label_text = 'NoC Tile Configuration',
+    #        label_font="TkDefaultFont 11 bold",
+    #        usehullsize = 1,
+    #        horizflex='expand',
+    #        hull_width = 1180,
+    #        hull_height = 520,)
+    # self.noc_frame = self.interior()
 
   def update_msg(self):
-    self.done.config(state=DISABLED)
+    self.gen_soc_config.configure(state="disabled")
     tot_tiles = self.noc.rows * self.noc.cols
     tot_cpu = self.noc.get_cpu_num(self.soc)
     if self.soc.cache_en.get():
@@ -399,12 +486,12 @@ class NoCFrame(Pmw.ScrolledFrame):
         if self.soc.IPs.MISC.count(selection):
           tot_io += 1
     #update statistics
-    self.TOT_CPU.config(text=" Num CPUs: " + str(tot_cpu))
-    self.TOT_MEM.config(text=" Num memory controllers: " + str(tot_mem))
-    self.TOT_SLM.config(text=" Num local memory tiles using on-chip memory: " + str(tot_slm))
-    self.TOT_SLMDDR.config(text=" Num local memory tiles using off-chip DDR memory: " + str(tot_slmddr))
-    self.TOT_MISC.config(text=" Num I/O tiles: " + str(tot_io))
-    self.TOT_ACC.config(text=" Num accelerators: " + str(tot_acc))
+    # self.TOT_CPU.config(text=" Num CPUs: " + str(tot_cpu))
+    # self.TOT_MEM.config(text=" Num memory controllers: " + str(tot_mem))
+    # self.TOT_SLM.config(text=" Num local memory tiles using on-chip memory: " + str(tot_slm))
+    # self.TOT_SLMDDR.config(text=" Num local memory tiles using off-chip DDR memory: " + str(tot_slmddr))
+    # self.TOT_MISC.config(text=" Num I/O tiles: " + str(tot_io))
+    # self.TOT_ACC.config(text=" Num accelerators: " + str(tot_acc))
 
     if self.soc.noc.get_acc_num(self.soc) > 0:
       self.monitor_acc_selection.config(state=NORMAL)
@@ -471,7 +558,7 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "INFO: Multicast NoC is in beta testing\n"
       if self.noc.dma_noc_width.get() != self.soc.ARCH_BITS:
         string += "INFO: to enable accelerator private caches, DMA NoC width must match CPU architecture size (64 bits for Ariane, 32 for Leon3 and Ibex)\n"
-      self.done.config(state=NORMAL)
+      self.gen_soc_config.configure(state="normal")
     else:
       if (self.noc.cols > 8 or self.noc.rows > 8): 
         string += "ERROR: Maximum number of rows and columns is 8.\n"
@@ -549,14 +636,14 @@ class NoCFrame(Pmw.ScrolledFrame):
     # Update message box
     self.message.insert(0.0, string)
 
-  def set_message(self, message, cfg_frame, cpu_frame, done):
+  def set_message(self, message, cfg_frame, cpu_frame, gen_soc_config):
     self.message = message
     self.cfg_frame = cfg_frame
     self.cpu_frame = cpu_frame
-    self.done = done
+    self.gen_soc_config = gen_soc_config
 
   def create_noc(self):
-    self.pack(side=LEFT,fill=BOTH,expand=YES)
+    # self.pack(side=LEFT,fill=BOTH,expand=YES)
     if isInt(self.ROWS.get()) == False or isInt(self.COLS.get()) == False:
        return
     #destroy current topology
@@ -566,9 +653,9 @@ class NoCFrame(Pmw.ScrolledFrame):
       self.noc_tiles = []
       self.row_frames = []
     #create new topology
-    self.noc.create_topology(self.noc_frame, int(self.ROWS.get()), int(self.COLS.get()))
+    self.noc.create_topology(self.right_panel, int(self.ROWS.get()), int(self.COLS.get()))
     for y in range(0, int(self.ROWS.get())):
-      self.row_frames.append(Frame(self.noc_frame, borderwidth=2, relief=RIDGE))
+      self.row_frames.append(Frame(self.right_panel, borderwidth=2, relief=RIDGE))
       self.row_frames[y].pack(side=TOP)
       self.noc_tiles.append([])
       for x in range(0, int(self.COLS.get())):
