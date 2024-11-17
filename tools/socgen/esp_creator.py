@@ -344,14 +344,21 @@ class CachesConfigFrame:
     self.soc = soc
     self.left_panel = left_panel
 
+    self.sets_choices = ["32", "64", "128", "256", "512", "1024", "2048", "4096", "8192"]
+    self.l2_ways_choices = ["2", "4", "8"]
+    self.llc_ways_choices = ["4", "8", "16"]
+    self.cache_choices = ["ESP RTL", "SPANDEX HLS", "ESP HLS"]
+    self.cache_line_choices = ["128", "256", "512"]
+
     self.caches_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.caches_frame.pack(padx=(8, 3), pady=(10,20), fill="x")
     self.title_label = ctk.CTkLabel(self.caches_frame, text="Caches Configuration", font=("Arial", 12, "bold"))
     self.title_label.grid(row=0, column=0, columnspan=2, pady=10)
 
 
-    self.enable_caches_cb = ctk.CTkCheckBox(self.caches_frame, text="Enable Caches", fg_color="green", border_color="grey",
-                            width=0, corner_radius=0, checkbox_width=18, checkbox_height=18, font=("Arial", 10), hover=False)
+    self.enable_caches_cb = ctk.CTkCheckBox(self.caches_frame, variable=self.soc.cache_en, text="Enable Caches", fg_color="green", 
+              border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18, 
+              onvalue = 1, offvalue = 0, font=("Arial", 10), hover=False)
     self.enable_caches_cb.grid(row=1, column=0, sticky="w", padx=20, pady=20)
 
     self.l2_label = ctk.CTkLabel(self.caches_frame, text="Implementation", font=("Arial", 10))
@@ -359,10 +366,10 @@ class CachesConfigFrame:
 
     self.esp_rtl_frame = ctk.CTkFrame(self.caches_frame)
     self.esp_rtl_frame.grid(row=2, column=1, padx=20, pady=5)
-    self.esp_rtl_dd = ctk.CTkOptionMenu(self.esp_rtl_frame, values=["ESP RTL"], fg_color="white", bg_color="#e8e8e8", 
-                      button_color="#e8e8e8", text_color="black", font=("Arial", 10), 
+    self.esp_rtl_dd = ctk.CTkOptionMenu(self.esp_rtl_frame, variable=self.soc.cache_impl, values=self.cache_choices, fg_color="white", 
+                      bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", font=("Arial", 10), dropdown_fg_color="white", 
+                      dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", hover=False, 
                       button_hover_color="lightgrey", width=160)
-    self.esp_rtl_dd.set("ESP RTL")
     self.esp_rtl_dd.pack(padx=3, pady=3)
 
     self.l2_label = ctk.CTkLabel(self.caches_frame, text="Cache Line Size", font=("Arial", 10))
@@ -370,10 +377,10 @@ class CachesConfigFrame:
 
     self.cache_line_frame = ctk.CTkFrame(self.caches_frame)
     self.cache_line_frame.grid(row=3, column=1, padx=20, pady=5)
-    self.cache_line_dd = ctk.CTkOptionMenu(self.cache_line_frame, values=["128", "256"], fg_color="white", 
-                         bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
-                         font=("Arial", 10), button_hover_color="lightgrey", width=160)
-    self.cache_line_dd.set("128")
+    self.cache_line_dd = ctk.CTkOptionMenu(self.cache_line_frame, variable=self.soc.cache_line_size, values=self.cache_line_choices, 
+                         fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
+                         dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
+                         button_hover_color="lightgrey", width=160)
     self.cache_line_dd.pack(padx=3, pady=3)
 
     self.l2_label = ctk.CTkLabel(self.caches_frame, text="L2 Properties", font=("Arial", 10))
@@ -384,55 +391,52 @@ class CachesConfigFrame:
     self.llc_label.grid(row=4, column=1, padx=20, pady=(10, 5), sticky="w")
     self.acc_l2_label.grid(row=7, column=0, padx=20, pady=(10, 5), sticky="w")
 
-    ways_options = ["4 ways", "8 ways", "16 ways"]
-    sets_options = ["512 sets", "1024 sets", "2048 sets"]
-
     self.l2_ways_frame = ctk.CTkFrame(self.caches_frame)
     self.l2_ways_frame.grid(row=5, column=0, padx=20, pady=5)
-    self.l2_ways_dd = ctk.CTkOptionMenu(self.l2_ways_frame, values=ways_options, fg_color="white",
-                      bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
-                      font=("Arial", 10), button_hover_color="lightgrey", width=165)
-    self.l2_ways_dd.set(ways_options[0])
+    self.l2_ways_dd = ctk.CTkOptionMenu(self.l2_ways_frame, variable=self.soc.l2_ways, values=self.l2_ways_choices, 
+                      fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
+                      dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
+                      button_hover_color="lightgrey", width=165)
     self.l2_ways_dd.pack(padx=3, pady=3)
 
     self.l2_sets_frame = ctk.CTkFrame(self.caches_frame)
     self.l2_sets_frame.grid(row=6, column=0, padx=20, pady=5)
-    self.l2_sets_dd = ctk.CTkOptionMenu(self.l2_sets_frame, values=sets_options, fg_color="white",
-                      bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
-                      font=("Arial", 10), button_hover_color="lightgrey", width=165)
-    self.l2_sets_dd.set(sets_options[0])
+    self.l2_sets_dd = ctk.CTkOptionMenu(self.l2_sets_frame, variable=self.soc.l2_sets, values=self.sets_choices,
+                      fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
+                      dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
+                      button_hover_color="lightgrey", width=165)
     self.l2_sets_dd.pack(padx=3, pady=3)
 
     self.llc_ways_frame = ctk.CTkFrame(self.caches_frame)
     self.llc_ways_frame.grid(row=5, column=1, padx=20, pady=5)
-    self.llc_ways_dd = ctk.CTkOptionMenu(self.llc_ways_frame, values=ways_options, fg_color="white",
-                       bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
-                       font=("Arial", 10), button_hover_color="lightgrey", width=165)
-    self.llc_ways_dd.set(ways_options[2])
+    self.llc_ways_dd = ctk.CTkOptionMenu(self.llc_ways_frame, variable=self.soc.llc_ways, values=self.llc_ways_choices,
+                       fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
+                       dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
+                       button_hover_color="lightgrey", width=165)
     self.llc_ways_dd.pack(padx=3, pady=3)
 
     self.llc_sets_frame = ctk.CTkFrame(self.caches_frame)
     self.llc_sets_frame.grid(row=6, column=1, padx=20, pady=5)
-    self.llc_sets_dd = ctk.CTkOptionMenu(self.llc_sets_frame, values=sets_options, fg_color="white",
-                       bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
-                       font=("Arial", 10), button_hover_color="lightgrey", width=165)
-    self.llc_sets_dd.set(sets_options[1])
+    self.llc_sets_dd = ctk.CTkOptionMenu(self.llc_sets_frame, variable=self.soc.llc_sets, values=self.sets_choices,
+                       fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
+                       dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False,
+                       button_hover_color="lightgrey", width=165)
     self.llc_sets_dd.pack(padx=3, pady=3)
 
     self.acc_l2_ways_frame = ctk.CTkFrame(self.caches_frame)
     self.acc_l2_ways_frame.grid(row=8, column=0, padx=20, pady=5)
-    self.acc_l2_ways_dd = ctk.CTkOptionMenu(self.acc_l2_ways_frame, values=ways_options, fg_color="white",
-                          bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
-                          font=("Arial", 10), button_hover_color="lightgrey", width=165)
-    self.acc_l2_ways_dd.set(ways_options[0])
+    self.acc_l2_ways_dd = ctk.CTkOptionMenu(self.acc_l2_ways_frame, variable=self.soc.acc_l2_ways, values=self.l2_ways_choices,
+                          fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
+                          dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
+                          button_hover_color="lightgrey", width=165)
     self.acc_l2_ways_dd.pack(padx=3, pady=3)
 
     self.acc_l2_sets_frame = ctk.CTkFrame(self.caches_frame)
     self.acc_l2_sets_frame.grid(row=9, column=0, padx=20, pady=5)
-    self.acc_l2_sets_dd = ctk.CTkOptionMenu(self.acc_l2_sets_frame, values=sets_options, fg_color="white",
-                          bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black",
-                          font=("Arial", 10), button_hover_color="lightgrey", width=165)
-    self.acc_l2_sets_dd.set(sets_options[0])
+    self.acc_l2_sets_dd = ctk.CTkOptionMenu(self.acc_l2_sets_frame, variable=self.soc.acc_l2_sets, values=self.sets_choices,
+                          fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
+                          dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
+                          button_hover_color="lightgrey", width=165)
     self.acc_l2_sets_dd.pack(padx=3, pady=3)
 
 class NoCConfigFrame:
@@ -466,7 +470,7 @@ class NoCConfigFrame:
     self.noc_planes_value_menu = ctk.CTkOptionMenu(self.noc_planes_frame, values=["64", "32"], fg_color="white", 
                       bg_color="#e8e8e8", button_color="#e8e8e8", width=100, text_color="black",font=("Arial", 10),
                       button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-					  dropdown_hover_color="#e8e8e8")
+                      dropdown_hover_color="#e8e8e8")
     self.noc_planes_value_menu.pack(anchor="center", padx=3, pady=3)
     self.noc_planes_label.grid(row=2, column=0, sticky="w", pady=5, padx=15)
 
@@ -476,7 +480,7 @@ class NoCConfigFrame:
     self.dma_planes_value_menu = ctk.CTkOptionMenu(self.dma_planes_value_frame, values=["64", "32"], fg_color="white", 
                       bg_color="#e8e8e8", button_color="#e8e8e8", width=100, text_color="black",font=("Arial", 10),
                       button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-					  dropdown_hover_color="#e8e8e8")
+            		  dropdown_hover_color="#e8e8e8")
     self.dma_planes_value_menu.pack(anchor="center", padx=3, pady=3)
     self.dma_planes_label.grid(row=3, column=0, sticky="w", pady=5, padx=15)
 
@@ -491,59 +495,59 @@ class NoCConfigFrame:
     self.max_multicast_value_menu = ctk.CTkOptionMenu(self.max_multicast_value_frame, values=["2", "3"], fg_color="white", 
                       bg_color="#e8e8e8", button_color="#e8e8e8", width=100, text_color="black",font=("Arial", 10),
                       button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10),
-					  dropdown_hover_color="#e8e8e8")
+            		  dropdown_hover_color="#e8e8e8")
     self.max_multicast_value_menu.pack(anchor="center", padx=3, pady=3)
     self.max_multicast_label.grid(row=5, column=0, sticky="w", pady=5, padx=15)
 
 class ProbeConfigFrame:
-	def __init__(self, soc, left_panel):
-		self.soc = soc
-		self.left_panel = left_panel
+  def __init__(self, soc, left_panel):
+    self.soc = soc
+    self.left_panel = left_panel
 
-		self.probe_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
-		self.probe_frame.pack(padx=(8,3), pady=10, fill="x")
-		self.title_label = ctk.CTkLabel(self.probe_frame, text="Probe Configuration", font=("Arial", 12, "bold"))
-		self.title_label.pack(pady=10)
+    self.probe_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
+    self.probe_frame.pack(padx=(8,3), pady=10, fill="x")
+    self.title_label = ctk.CTkLabel(self.probe_frame, text="Probe Configuration", font=("Arial", 12, "bold"))
+    self.title_label.pack(pady=10)
 
-		self.ddr_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DDR bandwidth", font=("Arial", 11), fg_color="green",
-					  border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-					  hover=False)
-		self.ddr_cb.pack(padx=15, pady=10, anchor="w")
+    self.ddr_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DDR bandwidth", font=("Arial", 11), fg_color="green",
+            border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+            hover=False)
+    self.ddr_cb.pack(padx=15, pady=10, anchor="w")
 
-		self.mem_access_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Memory Access", font=("Arial", 11), fg_color="green",
-						   border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-						   hover=False)
-		self.mem_access_cb.pack(padx=15, pady=10, anchor="w")
+    self.mem_access_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Memory Access", font=("Arial", 11), fg_color="green",
+               border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+               hover=False)
+    self.mem_access_cb.pack(padx=15, pady=10, anchor="w")
 
-		self.inj_rate_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Injection Rate", font=("Arial", 11), fg_color="green",
-						   border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-						   hover=False)
-		self.inj_rate_cb.pack(padx=15, pady=10, anchor="w")
+    self.inj_rate_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Injection Rate", font=("Arial", 11), fg_color="green",
+               border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+               hover=False)
+    self.inj_rate_cb.pack(padx=15, pady=10, anchor="w")
 
-		self.router_ports_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Router Ports", font=("Arial", 11), fg_color="green",
-						   border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-						   hover=False)
-		self.router_ports_cb.pack(padx=15, pady=10, anchor="w")
+    self.router_ports_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Router Ports", font=("Arial", 11), fg_color="green",
+               border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+               hover=False)
+    self.router_ports_cb.pack(padx=15, pady=10, anchor="w")
 
-		self.acc_status_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Accelerator Status", font=("Arial", 11), fg_color="green",
-						   border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-						   hover=False)
-		self.acc_status_cb.pack(padx=15, pady=10, anchor="w")
+    self.acc_status_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Accelerator Status", font=("Arial", 11), fg_color="green",
+               border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+               hover=False)
+    self.acc_status_cb.pack(padx=15, pady=10, anchor="w")
 
-		self.l2_hm_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor L2 Hit/Miss", font=("Arial", 11), fg_color="green",
-						   border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-						   hover=False)
-		self.l2_hm_cb.pack(padx=15, pady=10, anchor="w")
+    self.l2_hm_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor L2 Hit/Miss", font=("Arial", 11), fg_color="green",
+               border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+               hover=False)
+    self.l2_hm_cb.pack(padx=15, pady=10, anchor="w")
 
-		self.llc_hm_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor LLC Hit/Miss", font=("Arial", 11), fg_color="green",
-						 border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-						 hover=False)
-		self.llc_hm_cb.pack(padx=15, pady=10, anchor="w")
+    self.llc_hm_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor LLC Hit/Miss", font=("Arial", 11), fg_color="green",
+             border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+             hover=False)
+    self.llc_hm_cb.pack(padx=15, pady=10, anchor="w")
 
-		self.dvfs_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DVFS", font=("Arial", 11), fg_color="green",
-					   border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-					   hover=False)
-		self.dvfs_cb.pack(padx=15, pady=10, anchor="w")
+    self.dvfs_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DVFS", font=("Arial", 11), fg_color="green",
+             border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+             hover=False)
+    self.dvfs_cb.pack(padx=15, pady=10, anchor="w")
 
 class EspCreator:
   def __init__(self, root, _soc):
