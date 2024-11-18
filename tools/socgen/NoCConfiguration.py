@@ -42,7 +42,7 @@ class Tile():
 
   def update_tile(self, soc):
     selection = self.ip_type.get()
-    self.label.config(text=selection)
+    self.label.configure(text=selection)
     self.point_label.forget()
     self.point_select.forget()
     self.ip_list.forget()
@@ -331,7 +331,7 @@ class NoCConfigFrame:
     self.noc_columns.insert(0, "2")
     self.noc_columns.grid(row=1, column=3, padx=5, pady=20)
 
-    self.update_noc_button = ctk.CTkButton(self.noc_select_frame, text="Update NoC", width=100, font=("Arial", 10))
+    self.update_noc_button = ctk.CTkButton(self.noc_select_frame, text="Update NoC", width=100, font=("Arial", 10), command=self.create_noc)
     self.update_noc_button.grid(row=1, column=4, padx=20, pady=20)
 
     self.noc_config_frame = ctk.CTkFrame(self.noc_select_frame, fg_color="#ebebeb")
@@ -494,20 +494,20 @@ class NoCConfigFrame:
     # self.TOT_ACC.config(text=" Num accelerators: " + str(tot_acc))
 
     if self.soc.noc.get_acc_num(self.soc) > 0:
-      self.monitor_acc_selection.config(state=NORMAL)
+      self.acc_status_cb.configure(state="normal")
     else:
-      self.monitor_acc_selection.config(state=DISABLED)
+      self.acc_status_cb.configure(state="disabled")
       self.noc.monitor_accelerators.set(0)
 
     if self.soc.noc.has_dvfs():
-      self.monitor_dvfs_selection.config(state=NORMAL)
+      self.dvfs_cb.configure(state="normal")
     else:
-      self.monitor_dvfs_selection.config(state=DISABLED)
+      self.dvfs_cb.configure(state="disabled")
       self.noc.monitor_dvfs.set(0)
 
     #update message box
     self.message.delete(0.0, END)
-    self.cpu_frame.set_cpu_specific_labels(self.soc)
+    self.soc_config_frame.set_cpu_specific_labels(self.soc)
 
     string = ""
     if (tot_cpu > 0) and \
@@ -636,14 +636,13 @@ class NoCConfigFrame:
     # Update message box
     self.message.insert(0.0, string)
 
-  def set_message(self, message, cfg_frame, cpu_frame, gen_soc_config):
+  def set_message(self, message, soc_config_frame, gen_soc_config):
     self.message = message
-    self.cfg_frame = cfg_frame
-    self.cpu_frame = cpu_frame
+    self.soc_config_frame = soc_config_frame
     self.gen_soc_config = gen_soc_config
 
   def create_noc(self):
-    # self.pack(side=LEFT,fill=BOTH,expand=YES)
+    #self.pack(side=LEFT,fill=BOTH,expand=YES)
     if isInt(self.ROWS.get()) == False or isInt(self.COLS.get()) == False:
        return
     #destroy current topology
