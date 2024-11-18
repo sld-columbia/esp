@@ -46,9 +46,10 @@ class SocConfigFrame:
     else:
       self.fpu_value.configure(text="None")
 
-  def __init__(self, soc, left_panel):
+  def __init__(self, soc, left_panel, main_frame):
     self.soc = soc
     self.left_panel = left_panel
+    self.main_frame = main_frame
     
     self.soc_config_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.soc_config_frame.pack(fill="x", padx=(8, 3), pady=10)
@@ -77,11 +78,11 @@ class SocConfigFrame:
     self.cpu_label.grid(row=3, column=0, sticky="w", pady=5, padx=15)
     self.cpu_value_frame = ctk.CTkFrame(self.soc_config_frame)
     self.cpu_value_frame.grid(row=3, column=1, pady=5, padx=15)
-    self.cpu_value_menu = ctk.CTkOptionMenu(self.cpu_value_frame, values=self.cpu_choices, fg_color="white", 
+    self.cpu_value_menu = ctk.CTkOptionMenu(self.cpu_value_frame, variable=self.soc.CPU_ARCH, values=self.cpu_choices, fg_color="white", 
                           bg_color="#e8e8e8", button_color="#e8e8e8", width=200, text_color="black",
                           font=("Arial", 10), button_hover_color="lightgrey", anchor="center", 
                           dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-                          dropdown_hover_color="#e8e8e8")
+                          dropdown_hover_color="#e8e8e8", command=main_frame.update_noc_config)
     self.cpu_value_menu.pack(anchor="center", padx=3, pady=3)
 
     # FPU
@@ -113,13 +114,15 @@ class SocConfigFrame:
     self.slm_value_frame.grid(row=6, column=1, pady=(5,20), padx=15)
     self.slm_value_menu = ctk.CTkOptionMenu(self.slm_value_frame, values=self.slm_kbytes_choices, fg_color="white", 
                       bg_color="#e8e8e8", button_color="#e8e8e8", width=200, text_color="black",font=("Arial", 10),
-                      button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8")
+                      button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), 
+                      dropdown_hover_color="#e8e8e8", command=main_frame.update_noc_config)
     self.slm_value_menu.pack(anchor="center", padx=3, pady=3)
 
 class PeripheralsConfigFrame:
-  def __init__(self, soc, left_panel):
+  def __init__(self, soc, left_panel, main_frame):
     self.soc = soc
     self.left_panel = left_panel
+    self.main_frame = main_frame
 
     self.peripherals_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.peripherals_frame.pack(fill="x", padx=(8,3), pady=(0,10))
@@ -153,7 +156,6 @@ class PeripheralsConfigFrame:
         self.pair_frame,
         text="",
         variable=self.soc.jtag_en,
-        # command=main_frame.update_noc_config,
         state="disabled",
         onvalue = 1, 
         offvalue = 0,
@@ -163,7 +165,8 @@ class PeripheralsConfigFrame:
         width=0,
         checkbox_width=18,
         checkbox_height=18,
-        hover=False
+        hover=False,
+        command=main_frame.update_noc_config
     )
     if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
       self.jtag_checkbox.configure(state="normal")
@@ -181,7 +184,6 @@ class PeripheralsConfigFrame:
         self.pair_frame,
         text="",
         variable=self.soc.eth_en,
-        # command=main_frame.update_noc_config,
         state="normal",
         onvalue = 1, 
         offvalue = 0,
@@ -191,7 +193,8 @@ class PeripheralsConfigFrame:
         width=0,
         checkbox_width=18,
         checkbox_height=18,
-        hover=False
+        hover=False,
+        command=main_frame.update_noc_config
     )
     if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
       self.eth_label = ctk.CTkLabel(self.pair_frame, text="Ethernet", font=("Arial", 11), width=140, anchor="w")
@@ -211,7 +214,6 @@ class PeripheralsConfigFrame:
         self.pair_frame,
         text="",
         variable=self.soc.iolink_en,
-        # command=main_frame.update_noc_config,
         state="normal",
         onvalue = 1, 
         offvalue = 0,
@@ -221,7 +223,8 @@ class PeripheralsConfigFrame:
         width=0,
         checkbox_width=18,
         checkbox_height=18,
-        hover=False
+        hover=False,
+        command=main_frame.update_noc_config
     )
     if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
       self.custom_io_label = ctk.CTkLabel(self.pair_frame, text="Custom IO Link", font=("Arial", 11), width=140, anchor="w")
@@ -231,7 +234,7 @@ class PeripheralsConfigFrame:
                         bg_color="#e8e8e8", button_color="#e8e8e8", width=200, text_color="black", 
                         font=("Arial", 10), button_hover_color="lightgrey", anchor="center", 
                         dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-                        dropdown_hover_color="#e8e8e8")
+                        dropdown_hover_color="#e8e8e8", command=main_frame.update_noc_config)
       self.custom_io_menu.pack()
     else:
       self.custom_io_checkbox.configure(state="disabled")
@@ -246,7 +249,6 @@ class PeripheralsConfigFrame:
     self.fpga_mem_checkbox = ctk.CTkCheckBox(
         self.pair_frame,
         text="",
-        # command=main_frame.update_noc_config,
         state="disabled",
         onvalue = 1, 
         offvalue = 0,
@@ -272,7 +274,6 @@ class PeripheralsConfigFrame:
         self.pair_frame,
         text="",
         variable=self.soc.svga_en,
-        # command=main_frame.update_noc_config,
         state="normal",
         onvalue = 1, 
         offvalue = 0,
@@ -282,7 +283,8 @@ class PeripheralsConfigFrame:
         width=0,
         checkbox_width=18,
         checkbox_height=18,
-        hover=False
+        hover=False,
+        command=main_frame.update_noc_config
     )
     if soc.FPGA_BOARD.find("profpga") != -1 and (soc.TECH == "virtex7" or soc.TECH == "virtexu"):
       self.svga_label = ctk.CTkLabel(self.pair_frame, text="SVGA", font=("Arial", 11), width=140, anchor="w")
@@ -335,9 +337,10 @@ class DebugLinkConfigFrame:
       self.mac_addr_value.insert(0, self.soc.dsu_eth)
 
 class CachesConfigFrame:
-  def __init__(self, soc, left_panel):
+  def __init__(self, soc, left_panel, main_frame):
     self.soc = soc
     self.left_panel = left_panel
+    self.main_frame = main_frame
 
     self.sets_choices = ["32", "64", "128", "256", "512", "1024", "2048", "4096", "8192"]
     self.l2_ways_choices = ["2", "4", "8"]
@@ -350,10 +353,9 @@ class CachesConfigFrame:
     self.title_label = ctk.CTkLabel(self.caches_frame, text="Caches Configuration", font=("Arial", 12, "bold"))
     self.title_label.grid(row=0, column=0, columnspan=2, pady=10)
 
-
     self.enable_caches_cb = ctk.CTkCheckBox(self.caches_frame, variable=self.soc.cache_en, text="Enable Caches", fg_color="green", 
               border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18, 
-              onvalue = 1, offvalue = 0, font=("Arial", 10), hover=False)
+              onvalue = 1, offvalue = 0, font=("Arial", 10), hover=False, command=main_frame.update_noc_config)
     self.enable_caches_cb.grid(row=1, column=0, sticky="w", padx=20, pady=20)
 
     self.l2_label = ctk.CTkLabel(self.caches_frame, text="Implementation", font=("Arial", 10))
@@ -364,7 +366,7 @@ class CachesConfigFrame:
     self.esp_rtl_dd = ctk.CTkOptionMenu(self.esp_rtl_frame, variable=self.soc.cache_impl, values=self.cache_choices, fg_color="white", 
                       bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", font=("Arial", 10), dropdown_fg_color="white", 
                       dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", hover=False, 
-                      button_hover_color="lightgrey", width=160)
+                      button_hover_color="lightgrey", width=160, command=main_frame.update_noc_config)
     self.esp_rtl_dd.pack(padx=3, pady=3)
 
     self.l2_label = ctk.CTkLabel(self.caches_frame, text="Cache Line Size", font=("Arial", 10))
@@ -375,7 +377,7 @@ class CachesConfigFrame:
     self.cache_line_dd = ctk.CTkOptionMenu(self.cache_line_frame, variable=self.soc.cache_line_size, values=self.cache_line_choices, 
                          fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
                          dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                         button_hover_color="lightgrey", width=160)
+                         button_hover_color="lightgrey", width=160, command=main_frame.update_noc_config)
     self.cache_line_dd.pack(padx=3, pady=3)
 
     self.l2_label = ctk.CTkLabel(self.caches_frame, text="L2 Properties", font=("Arial", 10))
@@ -391,7 +393,7 @@ class CachesConfigFrame:
     self.l2_ways_dd = ctk.CTkOptionMenu(self.l2_ways_frame, variable=self.soc.l2_ways, values=self.l2_ways_choices, 
                       fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
                       dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                      button_hover_color="lightgrey", width=165)
+                      button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
     self.l2_ways_dd.pack(padx=3, pady=3)
 
     self.l2_sets_frame = ctk.CTkFrame(self.caches_frame)
@@ -399,7 +401,7 @@ class CachesConfigFrame:
     self.l2_sets_dd = ctk.CTkOptionMenu(self.l2_sets_frame, variable=self.soc.l2_sets, values=self.sets_choices,
                       fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
                       dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                      button_hover_color="lightgrey", width=165)
+                      button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
     self.l2_sets_dd.pack(padx=3, pady=3)
 
     self.llc_ways_frame = ctk.CTkFrame(self.caches_frame)
@@ -407,7 +409,7 @@ class CachesConfigFrame:
     self.llc_ways_dd = ctk.CTkOptionMenu(self.llc_ways_frame, variable=self.soc.llc_ways, values=self.llc_ways_choices,
                        fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
                        dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                       button_hover_color="lightgrey", width=165)
+                       button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
     self.llc_ways_dd.pack(padx=3, pady=3)
 
     self.llc_sets_frame = ctk.CTkFrame(self.caches_frame)
@@ -415,7 +417,7 @@ class CachesConfigFrame:
     self.llc_sets_dd = ctk.CTkOptionMenu(self.llc_sets_frame, variable=self.soc.llc_sets, values=self.sets_choices,
                        fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
                        dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False,
-                       button_hover_color="lightgrey", width=165)
+                       button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
     self.llc_sets_dd.pack(padx=3, pady=3)
 
     self.acc_l2_ways_frame = ctk.CTkFrame(self.caches_frame)
@@ -423,7 +425,7 @@ class CachesConfigFrame:
     self.acc_l2_ways_dd = ctk.CTkOptionMenu(self.acc_l2_ways_frame, variable=self.soc.acc_l2_ways, values=self.l2_ways_choices,
                           fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
                           dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                          button_hover_color="lightgrey", width=165)
+                          button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
     self.acc_l2_ways_dd.pack(padx=3, pady=3)
 
     self.acc_l2_sets_frame = ctk.CTkFrame(self.caches_frame)
@@ -431,137 +433,14 @@ class CachesConfigFrame:
     self.acc_l2_sets_dd = ctk.CTkOptionMenu(self.acc_l2_sets_frame, variable=self.soc.acc_l2_sets, values=self.sets_choices,
                           fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
                           dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                          button_hover_color="lightgrey", width=165)
+                          button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
     self.acc_l2_sets_dd.pack(padx=3, pady=3)
 
-# class NoCConfigFrame:
-#   def __init__(self, soc, left_panel):
-#       self.soc = soc
-#       self.left_panel = left_panel
-
-#       # NoC Configuration Main Frame
-#       self.noc_select_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
-#       self.noc_select_frame.pack(padx=(8, 3), pady=(10, 20), fill="x")
-
-#       # Title
-#       self.title_label = ctk.CTkLabel(self.noc_select_frame, text="NoC Configuration", font=("Arial", 12, "bold"))
-#       self.title_label.grid(row=0, column=0, columnspan=5, pady=10)
-
-#       # Rows and Columns Configuration
-#       self.noc_rows_label = ctk.CTkLabel(self.noc_select_frame, text="Rows:", font=("Arial", 10))
-#       self.noc_rows_label.grid(row=1, column=0, padx=20, pady=20, sticky="e")
-#       self.noc_rows = ctk.CTkEntry(self.noc_select_frame, width=45, font=("Arial", 10), placeholder_text_color="black", border_width=0)
-#       self.noc_rows.insert(0, "2")
-#       self.noc_rows.grid(row=1, column=1, padx=5, pady=20)
-#       self.noc_columns_label = ctk.CTkLabel(self.noc_select_frame, text="Columns:", font=("Arial", 10))
-#       self.noc_columns_label.grid(row=1, column=2, padx=20, pady=20, sticky="e")
-#       self.noc_columns = ctk.CTkEntry(self.noc_select_frame,  width=45, font=("Arial", 10), placeholder_text_color="black", border_width=0)
-#       self.noc_columns.insert(0, "2")
-#       self.noc_columns.grid(row=1, column=3, padx=5, pady=20)
-
-#       self.update_noc_button = ctk.CTkButton(self.noc_select_frame, text="Update NoC", width=100, font=("Arial", 10))
-#       self.update_noc_button.grid(row=1, column=4, padx=20, pady=20)
-
-#       self.noc_config_frame = ctk.CTkFrame(self.noc_select_frame, fg_color="#ebebeb")
-#       self.noc_config_frame.grid(row=2, column=0, columnspan=5, pady=10)
-
-#       # Coherence NoC Planes
-#       self.noc_planes_label = ctk.CTkLabel(self.noc_config_frame, text="Coherence NoC Planes (1,2,3) Bitwidth", font=("Arial", 10))
-#       self.noc_planes_label.grid(row=2, column=0, sticky="w", pady=5, padx=15)
-#       self.noc_planes_frame = ctk.CTkFrame(self.noc_config_frame)
-#       self.noc_planes_frame.grid(row=2, column=1, pady=5, padx=15)
-#       self.noc_planes_value_menu = ctk.CTkOptionMenu(
-#           self.noc_planes_frame, values=["64", "32"], fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8",
-#           width=100, text_color="black", font=("Arial", 10), button_hover_color="lightgrey", anchor="center",
-#           dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8"
-#       )
-#       self.noc_planes_value_menu.pack(anchor="center", padx=3, pady=3)
-
-#       # DMA NoC Planes
-#       self.dma_planes_label = ctk.CTkLabel(self.noc_config_frame, text="DMA NoC Planes (4,6) Bitwidth", font=("Arial", 10))
-#       self.dma_planes_label.grid(row=3, column=0, sticky="w", pady=5, padx=15)
-#       self.dma_planes_value_frame = ctk.CTkFrame(self.noc_config_frame)
-#       self.dma_planes_value_frame.grid(row=3, column=1, pady=5, padx=15)
-#       self.dma_planes_value_menu = ctk.CTkOptionMenu(
-#           self.dma_planes_value_frame, values=["64", "32"], fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8",
-#           width=100, text_color="black", font=("Arial", 10), button_hover_color="lightgrey", anchor="center",
-#           dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8"
-#       )
-#       self.dma_planes_value_menu.pack(anchor="center", padx=3, pady=3)
-
-#       # Enable Multicast
-#       self.enable_multicast_cb = ctk.CTkCheckBox(
-#           self.noc_config_frame, text="Enable Multicast on DMA Planes", font=("Arial", 11),
-#           fg_color="green", border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18, hover=False
-#       )
-#       self.enable_multicast_cb.grid(row=4, column=0, sticky="w", padx=15, pady=10)
-
-#       # Maximum Multicast Destinations
-#       self.max_multicast_label = ctk.CTkLabel(self.noc_config_frame, text="Maximum Multicast Destinations", font=("Arial", 11))
-#       self.max_multicast_label.grid(row=5, column=0, sticky="w", pady=5, padx=15)
-#       self.max_multicast_value_frame = ctk.CTkFrame(self.noc_config_frame)
-#       self.max_multicast_value_frame.grid(row=5, column=1, pady=5, padx=15)
-#       self.max_multicast_value_menu = ctk.CTkOptionMenu(
-#           self.max_multicast_value_frame, values=["2", "3"], fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8",
-#           width=100, text_color="black", font=("Arial", 10), button_hover_color="lightgrey", anchor="center",
-#           dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8"
-#       )
-#       self.max_multicast_value_menu.pack(anchor="center", padx=3, pady=3)
-
-# class ProbeConfigFrame:
-#   def __init__(self, soc, left_panel):
-#     self.soc = soc
-#     self.left_panel = left_panel
-
-#     self.probe_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
-#     self.probe_frame.pack(padx=(8,3), pady=10, fill="x")
-#     self.title_label = ctk.CTkLabel(self.probe_frame, text="Probe Configuration", font=("Arial", 12, "bold"))
-#     self.title_label.pack(pady=10)
-
-#     self.ddr_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DDR bandwidth", font=("Arial", 11), fg_color="green",
-#             border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-#             hover=False)
-#     self.ddr_cb.pack(padx=15, pady=10, anchor="w")
-
-#     self.mem_access_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Memory Access", font=("Arial", 11), fg_color="green",
-#                border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-#                hover=False)
-#     self.mem_access_cb.pack(padx=15, pady=10, anchor="w")
-
-#     self.inj_rate_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Injection Rate", font=("Arial", 11), fg_color="green",
-#                border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-#                hover=False)
-#     self.inj_rate_cb.pack(padx=15, pady=10, anchor="w")
-
-#     self.router_ports_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Router Ports", font=("Arial", 11), fg_color="green",
-#                border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-#                hover=False)
-#     self.router_ports_cb.pack(padx=15, pady=10, anchor="w")
-
-#     self.acc_status_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Accelerator Status", font=("Arial", 11), fg_color="green",
-#                border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-#                hover=False)
-#     self.acc_status_cb.pack(padx=15, pady=10, anchor="w")
-
-#     self.l2_hm_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor L2 Hit/Miss", font=("Arial", 11), fg_color="green",
-#                border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-#                hover=False)
-#     self.l2_hm_cb.pack(padx=15, pady=10, anchor="w")
-
-#     self.llc_hm_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor LLC Hit/Miss", font=("Arial", 11), fg_color="green",
-#              border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-#              hover=False)
-#     self.llc_hm_cb.pack(padx=15, pady=10, anchor="w")
-
-#     self.dvfs_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DVFS", font=("Arial", 11), fg_color="green",
-#              border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-#              hover=False)
-#     self.dvfs_cb.pack(padx=15, pady=10, anchor="w")
-
 class AdvancedConfigFrame:
-  def __init__(self, soc, left_panel):
+  def __init__(self, soc, left_panel, main_frame):
     self.soc = soc
     self.left_panel = left_panel
+    self.main_frame = main_frame
 
     self.adv_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.adv_frame.pack(padx=(8,3), pady=(10,20), fill="x")
@@ -578,7 +457,7 @@ class AdvancedConfigFrame:
                             bg_color="#e8e8e8", button_color="#e8e8e8", width=200, text_color="black", 
                             font=("Arial", 10), button_hover_color="lightgrey", anchor="center", 
                             dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-                            dropdown_hover_color="#e8e8e8")
+                            dropdown_hover_color="#e8e8e8", command=main_frame.update_noc_config)
       self.clk_value_menu.pack(anchor="center", padx=3, pady=3)
     else:
       self.clk_value = ctk.CTkLabel(self.clk_value_frame, text="Dual external clocks", width=200, font=("Arial", 10, "bold"))
@@ -587,12 +466,16 @@ class AdvancedConfigFrame:
 class EspCreator:
   def __init__(self, root, _soc):
     self.soc = _soc
-    # self.noc = self.soc.noc
+    self.noc = self.soc.noc
     self.root = root
 
     # Scrollable main frame
     self.main_frame = ctk.CTkScrollableFrame(self.root)
     self.main_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+    self.main_frame.grid_rowconfigure(0, weight=1)  # Allow rows to expand
+    self.main_frame.grid_columnconfigure(0, weight=0)  # Fixed width for left panel
+    self.main_frame.grid_columnconfigure(1, weight=1)  # Expandable for right panel
 
     # Scrollable left panel
     self.left_panel = ctk.CTkScrollableFrame(self.main_frame, width=440, height=900)
@@ -600,23 +483,30 @@ class EspCreator:
 
     # Scrollable left panel
     self.right_panel = ctk.CTkScrollableFrame(self.main_frame, orientation="horizontal")
-    self.right_panel.grid(row=0, column=1, sticky="ns", padx=10, pady=10)
+    self.right_panel.grid(row=0, column=1, columnspan=16, sticky="nsew", padx=10, pady=10)
 
     # Static configuration frames
-    self.soc_config_frame = SocConfigFrame(self.soc, self.left_panel)
-    self.peripherals_config_frame = PeripheralsConfigFrame(self.soc, self.left_panel)
+    self.soc_config_frame = SocConfigFrame(self.soc, self.left_panel, self)
+    self.peripherals_config_frame = PeripheralsConfigFrame(self.soc, self.left_panel, self)
     self.debug_link_config_frame = DebugLinkConfigFrame(self.soc, self.left_panel)
     self.debug_link_config_frame.update_frame()
-    self.adv_config_frame = AdvancedConfigFrame(self.soc, self.left_panel)
-    self.caches_config_frame = CachesConfigFrame(self.soc, self.left_panel)
+    self.adv_config_frame = AdvancedConfigFrame(self.soc, self.left_panel, self)
+    self.caches_config_frame = CachesConfigFrame(self.soc, self.left_panel, self)
     self.noc_config_frame = NoCConfigFrame(self.soc, self.left_panel, self.right_panel) 
-    self.noc_config_frame.create_noc()
-  
-    # self.probe_config_frame = ProbeConfigFrame(self.soc, self.left_panel)
-    
-    self.gen_soc_config = ctk.CTkButton(self.left_panel, text="Generate SoC Configuration", font=("Arial", 12), height=40)
+
+    self.message_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
+    self.message_frame.pack(padx=(8,3), pady=(10,20), fill="x")
+    self.title_label = ctk.CTkLabel(self.message_frame, text="Messages", font=("Arial", 10, "bold"))
+    self.title_label.pack(fill="x", expand=True, pady=10)
+    self.message = ctk.CTkTextbox(self.message_frame, height=150, wrap=WORD)
+    self.message.pack(fill="x", expand=True)
+
+    self.gen_soc_config = ctk.CTkButton(self.left_panel, text="Generate SoC Configuration", font=("Arial", 12), height=40, command=self.generate_files)
     self.gen_soc_config.pack(fill="x", pady=15)
-    self.gen_soc_config.configure(state="disable")
+    self.gen_soc_config.configure(state="disabled")
+
+    self.noc_config_frame.set_message(self.message, self.soc_config_frame, self.gen_soc_config)
+    self.noc_config_frame.create_noc()
 
   def update_noc_config(self, *args):
     if soc.CPU_ARCH.get() == "ariane":
@@ -636,7 +526,7 @@ class EspCreator:
       shutil.move(".esp_config.bak", ".esp_config")
 
   def generate_socmap(self):
-    self.soc.write_config(self.peripheral_frame.DSU_IP.get(), self.peripheral_frame.DSU_ETH.get())
+    self.soc.write_config(self.debug_link_config_frame.ip_addr_value.get(), self.debug_link_config_frame.mac_addr_value.get())
     esp_config = soc_config(soc)
     create_socmap(esp_config, soc)
 
@@ -665,7 +555,7 @@ app = EspCreator(root, soc)
 
 def on_closing():
   if messagebox.askokcancel("Quit", "Do you want to quit?"):
-    # soc.write_config(app.peripheral_frame.DSU_IP.get(), app.peripheral_frame.DSU_ETH.get())
+    soc.write_config(app.debug_link_config_frame.ip_addr_value.get(), app.debug_link_config_frame.mac_addr_value.get())
     root.destroy()
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
