@@ -5,6 +5,7 @@
 
 import customtkinter as ctk
 from tkinter import *
+import tkinter as tk
 from tkinter.ttk import Separator
 from thirdparty import *
 import Pmw
@@ -42,60 +43,59 @@ class Tile():
 
   def update_tile(self, soc):
     selection = self.ip_type.get()
-    self.label.configure(text=selection)
-    self.point_label.forget()
-    self.point_select.forget()
+    # self.point_label.forget()
+    # self.point_select.forget()
     self.ip_list.forget()
-    self.ip_list.setitems(soc.list_of_ips)
-    self.ip_list.pack(side=LEFT)
+    self.ip_list.configure(values=soc.list_of_ips)
+    self.ip_list.pack(pady=10)
     if soc.IPs.PROCESSORS.count(selection):
-       self.label.config(bg="#ef6865")
+       self.frame.configure(fg_color="#ef6865")
     elif soc.IPs.MISC.count(selection):
-       self.label.config(bg="#fdfda0")
+       self.frame.configure(fg_color="#fdfda0")
     elif soc.IPs.MEM.count(selection):
-       self.label.config(bg="#6ab0d4")
+       self.frame.configure(fg_color="#6ab0d4")
     elif soc.IPs.SLM.count(selection):
-       self.label.config(bg="#c9a6e4")
+       self.frame.configure(fg_color="#c9a6e4")
     elif soc.IPs.ACCELERATORS.count(selection):
-       self.label.config(bg="#78cbbb")
-       self.point_label.pack(side=LEFT)
+       self.frame.configure(fg_color="#78cbbb")
+       self.point_label.configure(text_color="black")
        self.vendor = soc.IPs.VENDOR[selection]
        dma_width = str(soc.noc.dma_noc_width.get())
        display_points = [point for point in soc.IPs.POINTS[selection] if "dma" + str(dma_width) in point]
-       self.point_select.setitems(display_points)
+       self.point_select.configure(values=display_points)
        point = self.point.get()
-       self.point_select.setvalue("")
+       self.point_select.set("")
        for p in display_points:
          if point == p:
-           self.point_select.setvalue(point)
+           self.point_select.set(point)
            break;
          else:
-           self.point_select.setvalue(str(display_points[0]))
-       self.point_select.pack(side=LEFT)
+           self.point_select.set(str(display_points[0]))
+       self.point_select.configure(state="normal")
     else:
-       self.label.config(bg='white')
+       self.frame.configure(fg_color='white')
        if self.ip_type.get() != "empty":
          self.ip_type.set("empty")
 
     try:
       if soc.IPs.ACCELERATORS.count(selection) and soc.cache_en.get() == 1 and soc.noc.dma_noc_width.get() == soc.ARCH_BITS:
-        self.has_l2_selection.config(state=NORMAL)
+        self.has_l2_selection.configure(state="normal")
       else:
         if soc.IPs.PROCESSORS.count(selection) and soc.cache_en.get() == 1:
           self.has_l2.set(1)
         else:
           self.has_l2.set(0)
-        self.has_l2_selection.config(state=DISABLED)
+        self.has_l2_selection.configure(state="disabled")
       if soc.IPs.ACCELERATORS.count(selection) and (soc.TECH == "asic" or soc.TECH == "inferred"):
-        self.has_tdvfs_selection.config(state=NORMAL)
+        self.has_tdvfs_selection.configure(state="normal")
       else:
-        self.has_tdvfs_selection.config(state=DISABLED)
+        self.has_tdvfs_selection.configure(state="disabled")
       if soc.IPs.SLM.count(selection) and soc.TECH == "asic":
-        self.has_ddr_selection.config(state=NORMAL)
+        self.has_ddr_selection.configure(state="normal")
       else:
         # DDR SLM tile only supported w/ ASIC technology
         self.has_ddr.set(0)
-        self.has_ddr_selection.config(state=DISABLED)
+        self.has_ddr_selection.configure(state="disabled")
     except:
       pass
 
@@ -117,7 +117,6 @@ class Tile():
     self.has_l2 = IntVar()
     self.has_tdvfs = IntVar()
     self.has_ddr = IntVar()
-    self.label = Label(top)
 
 
 class NoC():
@@ -191,7 +190,7 @@ class NoC():
          tile = self.topology[y][x]
          selection = tile.ip_type.get()
          if soc.IPs.ACCELERATORS.count(selection):
-           if tile.point_select.getvalue() == "" and (not tile.ip_type.get().lower() in THIRDPARTY_COMPATIBLE):
+           if tile.point_select.get() == "" and (not tile.ip_type.get().lower() in THIRDPARTY_COMPATIBLE):
              return False
     return True
 
@@ -272,40 +271,72 @@ class NoCConfigFrame:
     for x in range(0, len(list_items)):
       if len(list_items[x]) > width:
         width = len(list_items[x])
+    tile.frame = frame
+
     #creating tile
-    select_frame = Frame(frame)
-    select_frame.pack(side=TOP)
+    tile.type_frame = ctk.CTkFrame(frame, fg_color="#e8e8e8")
+    tile.type_frame.pack(anchor="center", pady=(30,0))
 
-    display_frame = Frame(frame)
-    display_frame.pack(side=TOP)
+    impl_frame = ctk.CTkFrame(frame, width=0, height=0, fg_color="#e8e8e8")
+    impl_frame.pack(anchor="center")
 
-    config_frame = Frame(frame)
-    config_frame.pack(side=TOP)
+    config_frame = ctk.CTkFrame(frame, fg_color="#e8e8e8")
+    config_frame.pack(anchor="center", padx=30, pady=(0,30))
 
-    tile.ip_list = Pmw.OptionMenu(select_frame, menubutton_font="TkDefaultFont 8",
-                   menubutton_textvariable=tile.ip_type,
-                   menubutton_width = width+2,
-                   items=list_items
-                  )
-    tile.ip_list.pack(side=LEFT)
-    tile.point_label = Label(select_frame, text="Impl.: ", width=5)
-    tile.point_select = Pmw.OptionMenu(select_frame, menubutton_font="TkDefaultFont 8",
-                   menubutton_textvariable=tile.point,
-                   menubutton_width = 10,
-                   items=[]
-                  )
+    tile_type_label = ctk.CTkLabel(tile.type_frame, text="Tile", font=("Arial", 11), text_color="black")
+    tile_type_label.pack(side="left", padx=(19,29), pady=10)
+    tile.ip_list = ctk.CTkOptionMenu(tile.type_frame, variable=tile.ip_type, values=list_items, fg_color="white", 
+          bg_color="#e8e8e8", button_color="lightgrey", width=150, text_color="black",font=("Arial", 10),
+          button_hover_color="grey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), 
+          dropdown_hover_color="#e8e8e8")
+    tile.ip_list.pack(side="right", padx=20, pady=10)
+  
+    tile.point_label = ctk.CTkLabel(impl_frame, text="Impl.", font=("Arial", 10), text_color="grey")
+    tile.point_label.pack(side="left", padx=(20,1), pady=10)
+    tile.point_select = ctk.CTkOptionMenu(impl_frame, variable=tile.point, values=[], fg_color="white", 
+          bg_color="#e8e8e8", button_color="lightgrey", width=150, text_color="black",font=("Arial", 10),
+          button_hover_color="grey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), 
+          dropdown_hover_color="#e8e8e8", state="disabled")
+    tile.point_select.pack(side="right", padx=(20,0), pady=10)
 
-    tile.label = Label(display_frame, text=tile.ip_type.get())
-    tile.label.config(height=4,bg='white', width=width+25)
-    tile.label.pack()
+    tile.has_l2_selection = ctk.CTkCheckBox(config_frame, text="Cache", variable=tile.has_l2,
+                                   onvalue = 1, offvalue = 0,
+                                   fg_color="green",
+                                   border_color="grey",
+                                   font=("Arial", 10),
+                                   width=82,
+                                   checkbox_width=18,
+                                   checkbox_height=18,
+                                   corner_radius=0,
+                                   hover=False,
+                                   command=self.changed)
+    tile.has_l2_selection.grid(row=0, column=0, sticky="e", padx=15, pady=10)
 
-    tile.has_l2_selection = Checkbutton(config_frame, text="Has cache", variable=tile.has_l2, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_l2_selection.grid(row=1, column=1)
-    tile.has_tdvfs_selection = Checkbutton(config_frame, text="Has DVFS", variable=tile.has_tdvfs, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_tdvfs_selection.grid(row=1, column=2)
-    tile.has_ddr_selection = Checkbutton(config_frame, text="Has DDR", variable=tile.has_ddr, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_ddr_selection.grid(row=1, column=3)
-    Separator(config_frame, orient="horizontal").grid(row=2, column=1, columnspan=3, ipadx=140, pady=3)
+    tile.has_ddr_selection = ctk.CTkCheckBox(config_frame, text="DDR", variable=tile.has_ddr,
+                                onvalue = 1, offvalue = 0,
+                                fg_color="green",
+                                border_color="grey",
+                                font=("Arial", 10),
+                                width=82,
+                                checkbox_width=18,
+                                checkbox_height=18,
+                                corner_radius=0,
+                                hover=False,
+                                command=self.changed)
+    tile.has_ddr_selection.grid(row=0, column=1, sticky="e", padx=15, pady=10)
+    
+    tile.has_tdvfs_selection = ctk.CTkCheckBox(config_frame, text="DVFS", variable=tile.has_tdvfs,
+                                onvalue = 1, offvalue = 0,
+                                fg_color="green",
+                                border_color="grey",
+                                font=("Arial", 10),
+                                width=82,
+                                checkbox_width=18,
+                                checkbox_height=18,
+                                corner_radius=0,
+                                hover=False,
+                                command=self.changed)
+    tile.has_tdvfs_selection.grid(row=1, column=0, sticky="e", padx=15, pady=10)
 
   def __init__(self, soc, left_panel, right_panel):
     self.soc = soc
@@ -654,13 +685,13 @@ class NoCConfigFrame:
     #create new topology
     self.noc.create_topology(self.right_panel, int(self.ROWS.get()), int(self.COLS.get()))
     for y in range(0, int(self.ROWS.get())):
-      self.row_frames.append(Frame(self.right_panel, borderwidth=2, relief=RIDGE))
+      self.row_frames.append(ctk.CTkFrame(self.right_panel))
       self.row_frames[y].pack(side=TOP)
       self.noc_tiles.append([])
       for x in range(0, int(self.COLS.get())):
-        self.noc_tiles[y].append(Frame(self.row_frames[y], borderwidth=2, relief=RIDGE))
+        self.noc_tiles[y].append(ctk.CTkFrame(self.row_frames[y]))
         self.noc_tiles[y][x].pack(side=LEFT)
-        Label(self.noc_tiles[y][x], text="("+str(y)+","+str(x)+")").pack()
+        # Label(self.noc_tiles[y][x], text="("+str(y)+","+str(x)+")").pack()
         self.create_tile(self.noc_tiles[y][x], self.noc.topology[y][x])
         if len(self.noc.topology[y][x].ip_type.get()) == 0:
           self.noc.topology[y][x].ip_type.set("empty") # default value
@@ -668,7 +699,7 @@ class NoCConfigFrame:
     for y in range(0, int(self.ROWS.get())):
       for x in range(0, int(self.COLS.get())):
         tile = self.noc.topology[y][x]
-        tile.ip_type.trace('w', self.changed)
+        # tile.ip_type.trace('w', self.changed)
     self.soc.IPs = Components(self.soc.TECH, self.noc.dma_noc_width.get(), self.soc.CPU_ARCH.get())
     self.soc.update_list_of_ips()
     self.changed()

@@ -69,7 +69,8 @@ class SocConfigFrame:
     self.fpga_label.grid(row=2, column=0, sticky="w", pady=5, padx=15)
     self.fpga_value_frame = ctk.CTkFrame(self.soc_config_frame)
     self.fpga_value_frame.grid(row=2, column=1, pady=5, padx=15)
-    self.fpga_value = ctk.CTkLabel(self.fpga_value_frame, text=self.soc.FPGA_BOARD, width=200, font=("Arial", 10, "bold"))
+    fpga_board_text = self.soc.FPGA_BOARD[:22] + (self.soc.FPGA_BOARD[22:] and ' ..')
+    self.fpga_value = ctk.CTkLabel(self.fpga_value_frame, text=fpga_board_text, width=200, font=("Arial", 10, "bold"))
     self.fpga_value.pack(anchor="center", padx=3, pady=3)
 
     # CPU Architecture
@@ -478,7 +479,7 @@ class EspCreator:
     self.main_frame.grid_columnconfigure(1, weight=1)  # Expandable for right panel
 
     # Scrollable left panel
-    self.left_panel = ctk.CTkScrollableFrame(self.main_frame, width=440, height=900)
+    self.left_panel = ctk.CTkScrollableFrame(self.main_frame, width=450, height=900)
     self.left_panel.grid(row=0, column=0, sticky="ns", padx=10, pady=10)
 
     # Scrollable left panel
