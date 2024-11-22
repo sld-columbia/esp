@@ -43,8 +43,6 @@ class Tile():
 
   def update_tile(self, soc):
     selection = self.ip_type.get()
-    # self.point_label.forget()
-    # self.point_select.forget()
     self.ip_list.forget()
     self.ip_list.configure(values=soc.list_of_ips)
     self.ip_list.pack(pady=10)
@@ -275,36 +273,36 @@ class NoCConfigFrame:
 
     #creating tile
     tile.type_frame = ctk.CTkFrame(frame, fg_color="#e8e8e8")
-    tile.type_frame.pack(anchor="center", pady=(30,0))
+    tile.type_frame.pack(anchor="center", pady=(15,0))
 
     impl_frame = ctk.CTkFrame(frame, width=0, height=0, fg_color="#e8e8e8")
     impl_frame.pack(anchor="center")
 
     config_frame = ctk.CTkFrame(frame, fg_color="#e8e8e8")
-    config_frame.pack(anchor="center", padx=30, pady=(0,30))
+    config_frame.pack(anchor="center", padx=15, pady=(0,15))
 
     tile_type_label = ctk.CTkLabel(tile.type_frame, text="Tile", font=("Arial", 11), text_color="black")
-    tile_type_label.pack(side="left", padx=(19,29), pady=10)
+    tile_type_label.pack(side="left", padx=(14,24), pady=10)
     tile.ip_list = ctk.CTkOptionMenu(tile.type_frame, variable=tile.ip_type, values=list_items, fg_color="white", 
-          bg_color="#e8e8e8", button_color="lightgrey", width=150, text_color="black",font=("Arial", 10),
+          bg_color="#e8e8e8", button_color="lightgrey", width=140, text_color="black",font=("Arial", 10),
           button_hover_color="grey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-          dropdown_hover_color="#e8e8e8")
+          dropdown_hover_color="#e8e8e8", command=self.changed)
     tile.ip_list.pack(side="right", padx=20, pady=10)
   
     tile.point_label = ctk.CTkLabel(impl_frame, text="Impl.", font=("Arial", 10), text_color="grey")
-    tile.point_label.pack(side="left", padx=(20,1), pady=10)
+    tile.point_label.pack(side="left", padx=(12,0), pady=10)
     tile.point_select = ctk.CTkOptionMenu(impl_frame, variable=tile.point, values=[], fg_color="white", 
-          bg_color="#e8e8e8", button_color="lightgrey", width=150, text_color="black",font=("Arial", 10),
+          bg_color="#e8e8e8", button_color="lightgrey", width=140, text_color="black",font=("Arial", 10),
           button_hover_color="grey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-          dropdown_hover_color="#e8e8e8", state="disabled")
-    tile.point_select.pack(side="right", padx=(20,0), pady=10)
+          dropdown_hover_color="#e8e8e8", state="disabled", command=self.changed)
+    tile.point_select.pack(side="right", padx=(18,1), pady=10)
 
     tile.has_l2_selection = ctk.CTkCheckBox(config_frame, text="Cache", variable=tile.has_l2,
                                    onvalue = 1, offvalue = 0,
                                    fg_color="green",
                                    border_color="grey",
                                    font=("Arial", 10),
-                                   width=82,
+                                   width=72,
                                    checkbox_width=18,
                                    checkbox_height=18,
                                    corner_radius=0,
@@ -317,7 +315,7 @@ class NoCConfigFrame:
                                 fg_color="green",
                                 border_color="grey",
                                 font=("Arial", 10),
-                                width=82,
+                                width=72,
                                 checkbox_width=18,
                                 checkbox_height=18,
                                 corner_radius=0,
@@ -330,7 +328,7 @@ class NoCConfigFrame:
                                 fg_color="green",
                                 border_color="grey",
                                 font=("Arial", 10),
-                                width=82,
+                                width=72,
                                 checkbox_width=18,
                                 checkbox_height=18,
                                 corner_radius=0,
@@ -465,34 +463,6 @@ class NoCConfigFrame:
                    hover=False, variable=self.noc.monitor_dvfs)
     self.dvfs_cb.pack(padx=15, pady=10, anchor="w")
 
-    # #statistics
-    # Label(self.noc_config_frame, height=1).pack()
-    # self.TOT_CPU = Label(self.noc_config_frame, anchor=W, width=20)
-    # self.TOT_MEM = Label(self.noc_config_frame, anchor=W, width=25)
-    # self.TOT_SLM = Label(self.noc_config_frame, anchor=W, width=25)
-    # self.TOT_SLMDDR = Label(self.noc_config_frame, anchor=W, width=25)
-    # self.TOT_MISC = Label(self.noc_config_frame, anchor=W, width=20)
-    # self.TOT_ACC = Label(self.noc_config_frame, anchor=W, width=20)
-    # self.TOT_CPU.pack(side=TOP, fill=BOTH)
-    # self.TOT_MEM.pack(side=TOP, fill=BOTH)
-    # self.TOT_SLM.pack(side=TOP, fill=BOTH)
-    # self.TOT_SLMDDR.pack(side=TOP, fill=BOTH)
-    # self.TOT_MISC.pack(side=TOP, fill=BOTH)
-    # self.TOT_ACC.pack(side=TOP, fill=BOTH)
-
-    # Label(self.noc_config_frame, height=1).pack()
-
-    #frame for the tiles
-    # Pmw.ScrolledFrame.__init__(self, bottom_frame,
-    #        labelpos = 'n',
-    #        label_text = 'NoC Tile Configuration',
-    #        label_font="TkDefaultFont 11 bold",
-    #        usehullsize = 1,
-    #        horizflex='expand',
-    #        hull_width = 1180,
-    #        hull_height = 520,)
-    # self.noc_frame = self.interior()
-
   def update_msg(self):
     self.gen_soc_config.configure(state="disabled")
     tot_tiles = self.noc.rows * self.noc.cols
@@ -516,13 +486,6 @@ class NoCConfigFrame:
         selection = tile.ip_type.get()
         if self.soc.IPs.MISC.count(selection):
           tot_io += 1
-    #update statistics
-    # self.TOT_CPU.config(text=" Num CPUs: " + str(tot_cpu))
-    # self.TOT_MEM.config(text=" Num memory controllers: " + str(tot_mem))
-    # self.TOT_SLM.config(text=" Num local memory tiles using on-chip memory: " + str(tot_slm))
-    # self.TOT_SLMDDR.config(text=" Num local memory tiles using off-chip DDR memory: " + str(tot_slmddr))
-    # self.TOT_MISC.config(text=" Num I/O tiles: " + str(tot_io))
-    # self.TOT_ACC.config(text=" Num accelerators: " + str(tot_acc))
 
     if self.soc.noc.get_acc_num(self.soc) > 0:
       self.acc_status_cb.configure(state="normal")
