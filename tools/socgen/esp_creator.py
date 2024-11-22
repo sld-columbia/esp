@@ -471,7 +471,7 @@ class EspCreator:
     self.root = root
 
     # Scrollable main frame
-    self.main_frame = ctk.CTkScrollableFrame(self.root)
+    self.main_frame = ctk.CTkFrame(self.root)
     self.main_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
     self.main_frame.grid_rowconfigure(0, weight=1)  # Allow rows to expand
@@ -479,12 +479,33 @@ class EspCreator:
     self.main_frame.grid_columnconfigure(1, weight=1)  # Expandable for right panel
 
     # Scrollable left panel
-    self.left_panel = ctk.CTkScrollableFrame(self.main_frame, width=450, height=900)
+    self.left_panel = ctk.CTkScrollableFrame(self.main_frame, width=440, height=680)
     self.left_panel.grid(row=0, column=0, sticky="ns", padx=10, pady=10)
 
-    # Scrollable left panel
-    self.right_panel = ctk.CTkScrollableFrame(self.main_frame, orientation="horizontal")
-    self.right_panel.grid(row=0, column=1, columnspan=16, sticky="nsew", padx=10, pady=10)
+    # Canvas for right panel with both horizontal and vertical scrolling
+    self.right_canvas = Canvas(self.main_frame)
+    self.right_canvas.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+
+    # Horizontal scrollbar
+    self.h_scrollbar = ctk.CTkScrollbar(self.main_frame, orientation="horizontal", command=self.right_canvas.xview)
+    self.h_scrollbar.grid(row=1, column=1, sticky="ew")
+
+    # Vertical scrollbar
+    self.v_scrollbar = ctk.CTkScrollbar(self.main_frame, orientation="vertical", command=self.right_canvas.yview)
+    self.v_scrollbar.grid(row=0, column=2, sticky="ns")
+
+    # Configure the canvas to use the scrollbars
+    self.right_canvas.configure(xscrollcommand=self.h_scrollbar.set, yscrollcommand=self.v_scrollbar.set)
+
+    # Embed a frame within the canvas
+    self.right_panel_frame = ctk.CTkFrame(self.right_canvas)
+    self.right_canvas.create_window((0, 0), window=self.right_panel_frame, anchor="nw")
+
+    # Configure the scroll region
+    def configure_canvas(event):
+        self.right_canvas.configure(scrollregion=self.right_canvas.bbox("all"))
+
+    self.right_panel_frame.bind("<Configure>", configure_canvas)
 
     # Static configuration frames
     self.soc_config_frame = SocConfigFrame(self.soc, self.left_panel, self)
@@ -493,7 +514,7 @@ class EspCreator:
     self.debug_link_config_frame.update_frame()
     self.adv_config_frame = AdvancedConfigFrame(self.soc, self.left_panel, self)
     self.caches_config_frame = CachesConfigFrame(self.soc, self.left_panel, self)
-    self.noc_config_frame = NoCConfigFrame(self.soc, self.left_panel, self.right_panel) 
+    self.noc_config_frame = NoCConfigFrame(self.soc, self.left_panel, self.right_panel_frame) 
 
     self.message_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.message_frame.pack(padx=(8,3), pady=(10,20), fill="x")
