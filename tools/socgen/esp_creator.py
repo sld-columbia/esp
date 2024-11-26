@@ -81,6 +81,18 @@ class StyledComponents:
     )
     menu.pack(anchor="center", padx=3, pady=3)
     return menu
+  
+  @staticmethod
+  def CheckBoxWithLabel(frame, variable, text, state, row, column, command=None):
+    """Create a styled checkbox with label."""
+    check_frame = ctk.CTkFrame(frame, fg_color="transparent")
+    check_frame.grid(row=row, column=column, padx=(20,10))
+    label = ctk.CTkLabel(check_frame, text=text, font=("Arial", 11), width=140, anchor="w")
+    label.pack(side="right", pady=10)
+    checkbox = ctk.CTkCheckBox(check_frame, variable=variable, text="", state=state, fg_color="green", border_color="grey",
+        corner_radius=0, width=0, checkbox_width=18, checkbox_height=18, onvalue = 1, offvalue = 0, hover=False)
+    checkbox.pack(side="left", anchor="e")
+    return label, checkbox
 
 class SocConfigFrame:
   def set_cpu_specific_labels(self, soc):
@@ -120,7 +132,8 @@ class SocConfigFrame:
     self.cpu_label = StyledComponents.KeyLabel(self.soc_config_frame, "CPU Architecture", 3, 0)
     self.cpu_value_frame = ctk.CTkFrame(self.soc_config_frame)
     self.cpu_value_frame.grid(row=3, column=1, pady=5, padx=15)
-    self.cpu_value_menu = StyledComponents.OptionMenu(self.cpu_value_frame, self.soc.CPU_ARCH, self.cpu_choices, command=main_frame.update_noc_config)
+    self.cpu_value_menu = StyledComponents.OptionMenu(self.cpu_value_frame, self.soc.CPU_ARCH, self.cpu_choices, 
+              command=main_frame.update_noc_config)
 
     # FPU
     self.fpu_label = StyledComponents.KeyLabel(self.soc_config_frame, "Floating-Point Unit", 4,0)
@@ -130,23 +143,19 @@ class SocConfigFrame:
     self.set_cpu_specific_labels(self.soc)
 
     # Data Allocation Strategy
-    self.das_label = ctk.CTkLabel(self.soc_config_frame, text="Data Allocation Strategy", font=("Arial", 10))
-    self.das_label.grid(row=5, column=0, sticky="w", pady=5, padx=15)
+    self.das_label = StyledComponents.KeyLabel(self.soc_config_frame, "Data Allocation Strategy", 5, 0)
     self.das_value_frame = ctk.CTkFrame(self.soc_config_frame)
     self.das_value_frame.grid(row=5, column=1, pady=5, padx=15)
-    self.das_value_menu = StyledComponents.OptionMenu(self.das_value_frame, soc.transfers, ["Big physical area", "Scatter/Gatter"])
+    self.das_value_menu = StyledComponents.OptionMenu(self.das_value_frame, self.soc.transfers, [
+              "Big physical area", "Scatter/Gatter"])
 
     # SLM KB per Tile
     self.slm_kbytes_choices = ["64", "128", "256", "512", "1024", "2048", "4096"]
-    self.slm_label = ctk.CTkLabel(self.soc_config_frame, text="SLM KB Per Tile", font=("Arial", 10))
-    self.slm_label.grid(row=6, column=0, sticky="w", pady=(5,20), padx=15)
+    self.slm_label = StyledComponents.KeyLabel(self.soc_config_frame, "SLM KB Per Tile", 6, 0)
     self.slm_value_frame = ctk.CTkFrame(self.soc_config_frame)
     self.slm_value_frame.grid(row=6, column=1, pady=(5,20), padx=15)
-    self.slm_value_menu = ctk.CTkOptionMenu(self.slm_value_frame, values=self.slm_kbytes_choices, fg_color="white", 
-                      bg_color="#e8e8e8", button_color="#e8e8e8", width=200, text_color="black",font=("Arial", 10),
-                      button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-                      dropdown_hover_color="#e8e8e8", command=main_frame.update_noc_config)
-    self.slm_value_menu.pack(anchor="center", padx=3, pady=3)
+    self.slm_value_menu = StyledComponents.OptionMenu(self.slm_value_frame, self.soc.slm_kbytes, self.slm_kbytes_choices, 
+              command=main_frame.update_noc_config)
 
 class PeripheralsConfigFrame:
   def __init__(self, soc, left_panel, main_frame):
@@ -154,110 +163,35 @@ class PeripheralsConfigFrame:
     self.left_panel = left_panel
     self.main_frame = main_frame
 
-    self.peripherals_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
-    self.peripherals_frame.pack(fill="x", padx=(8,3), pady=(0,10))
+    self.peripherals_frame = StyledComponents.Panel(self.left_panel, fg_color="#ebebeb")
+    self.peripherals_frame.pack(fill="x", padx=(8, 3), pady=(0, 10))
     self.peripherals_label = StyledComponents.Header(self.peripherals_frame, "Peripherals", 0, 0)
-    # self.peripherals_label.grid(row=0, column=0, columnspan=2, pady=(10, 15), padx=(15, 0))
 
     # UART
-    self.pair_frame = ctk.CTkFrame(self.peripherals_frame, fg_color="transparent")
-    self.pair_frame.grid(row=1, column=0, padx=(20,10))
-    self.uart_checkbox = ctk.CTkCheckBox(
-        self.pair_frame,
-        text="",
-        state="disabled",
-        fg_color="green",
-        border_color="grey",
-        corner_radius=0,
-        width=0,
-        checkbox_width=18,
-        checkbox_height=18,
-        hover=False
-    )
+    self.uart_label, self.uart_checkbox = StyledComponents.CheckBoxWithLabel(self.peripherals_frame, None, "UART", "disabled", 1, 0)
     self.uart_checkbox.select()
-    self.uart_label = ctk.CTkLabel(self.pair_frame, text="UART", font=("Arial", 11), width=140, anchor="w")
-    self.uart_label.pack(side="right", pady=10)
-    self.uart_checkbox.pack(side="left", anchor="e")
 
-    # JTAG
-    self.pair_frame = ctk.CTkFrame(self.peripherals_frame, fg_color="transparent")
-    self.pair_frame.grid(row=1, column=1, padx=(20,10))
-    self.jtag_checkbox = ctk.CTkCheckBox(
-        self.pair_frame,
-        text="",
-        variable=self.soc.jtag_en,
-        state="disabled",
-        onvalue = 1, 
-        offvalue = 0,
-        fg_color="green",
-        border_color="grey",
-        corner_radius=0,
-        width=0,
-        checkbox_width=18,
-        checkbox_height=18,
-        hover=False,
-        command=main_frame.update_noc_config
-    )
+    # JTAGssh
+    self.jtag_label, self.jtag_checkbox = StyledComponents.CheckBoxWithLabel(self.peripherals_frame, self.soc.jtag_en, "JTAG", "disabled", 1, 1,
+                     command=main_frame.update_noc_config)
     if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
       self.jtag_checkbox.configure(state="normal")
-      self.jtag_label = ctk.CTkLabel(self.pair_frame, text="JTAG", font=("Arial", 11), width=140, anchor="w")
+      self.jtag_label.configure(text_color="black")
     else:
-      self.jtag_label = ctk.CTkLabel(self.pair_frame, text="JTAG", font=("Arial", 11), text_color="grey", width=140, anchor="w")
-    
-    self.jtag_label.pack(side="right", pady=10)
-    self.jtag_checkbox.pack(side="left", anchor="e")
+      self.jtag_label.configure(text_color="grey")
 
     # Ethernet
-    self.pair_frame = ctk.CTkFrame(self.peripherals_frame, fg_color="transparent")
-    self.pair_frame.grid(row=2, column=0, padx=(20,10))
-    self.eth_checkbox = ctk.CTkCheckBox(
-        self.pair_frame,
-        text="",
-        variable=self.soc.eth_en,
-        state="normal",
-        onvalue = 1, 
-        offvalue = 0,
-        fg_color="green",
-        border_color="grey",
-        corner_radius=0,
-        width=0,
-        checkbox_width=18,
-        checkbox_height=18,
-        hover=False,
-        command=main_frame.update_noc_config
-    )
-    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-      self.eth_label = ctk.CTkLabel(self.pair_frame, text="Ethernet", font=("Arial", 11), width=140, anchor="w")
-    else:
+    self.eth_label, self.eth_checkbox = StyledComponents.CheckBoxWithLabel(self.peripherals_frame, self.soc.eth_en, "Ethernet", "normal", 2, 0,
+            command=main_frame.update_noc_config)
+    if not(soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none"):
       self.eth_checkbox.select()
       self.eth_checkbox.configure(state="disabled")
-      self.eth_label = ctk.CTkLabel(self.pair_frame, text="Ethernet", font=("Arial", 11), width=140, anchor="w")
-
-    self.eth_label.pack(side="right", pady=10)
-    self.eth_checkbox.pack(side="left", anchor="e")
 
     # Custom IO Link
     iolink_width_choices = ["8", "16", "32"]
-    self.pair_frame = ctk.CTkFrame(self.peripherals_frame, fg_color="transparent")
-    self.pair_frame.grid(row=4, column=0, padx=(20,10))
-    self.custom_io_checkbox = ctk.CTkCheckBox(
-        self.pair_frame,
-        text="",
-        variable=self.soc.iolink_en,
-        state="normal",
-        onvalue = 1, 
-        offvalue = 0,
-        fg_color="green",
-        border_color="grey",
-        corner_radius=0,
-        width=0,
-        checkbox_width=18,
-        checkbox_height=18,
-        hover=False,
-        command=main_frame.update_noc_config
-    )
+    self.custom_io_label, self.custom_io_checkbox = StyledComponents.CheckBoxWithLabel(self.peripherals_frame, self.soc.iolink_en, "Custom IO Link", 
+          "normal", 4, 0, command=main_frame.update_noc_config)
     if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-      self.custom_io_label = ctk.CTkLabel(self.pair_frame, text="Custom IO Link", font=("Arial", 11), width=140, anchor="w")
       self.menu_frame = ctk.CTkFrame(self.peripherals_frame, fg_color="transparent")
       self.menu_frame.grid(row=4, column=1, padx=(20,10))
       self.custom_io_menu = ctk.CTkOptionMenu(self.menu_frame, values=iolink_width_choices, variable=self.soc.iolink_width, fg_color="white", 
@@ -268,34 +202,12 @@ class PeripheralsConfigFrame:
       self.custom_io_menu.pack()
     else:
       self.custom_io_checkbox.configure(state="disabled")
-      self.custom_io_label = ctk.CTkLabel(self.pair_frame, text="Custom IO Link", text_color="grey", font=("Arial", 11), width=140, anchor="w")
-
-    self.custom_io_label.pack(side="right", pady=(10, 20))
-    self.custom_io_checkbox.pack(side="left", anchor="e", pady=(10, 20))
+      self.custom_io_label.configure(text_color="grey")
 
     # FPGA Memory Link
-    self.pair_frame = ctk.CTkFrame(self.peripherals_frame, fg_color="transparent")
-    self.pair_frame.grid(row=3, column=0, padx=(20,10))
-    self.fpga_mem_checkbox = ctk.CTkCheckBox(
-        self.pair_frame,
-        text="",
-        state="disabled",
-        onvalue = 1, 
-        offvalue = 0,
-        fg_color="green",
-        border_color="grey",
-        corner_radius=0,
-        width=0,
-        checkbox_width=18,
-        checkbox_height=18,
-        hover=False
-    )
-    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-      self.fpga_mem_label = ctk.CTkLabel(self.pair_frame, text="FPGA Memory Link", font=("Arial", 11), width=140, anchor="w")
-    else:
-      self.fpga_mem_label = ctk.CTkLabel(self.pair_frame, text="FPGA Memory Link", font=("Arial", 11), width=140, anchor="w", text_color="grey")
-    self.fpga_mem_label.pack(side="right", pady=10)
-    self.fpga_mem_checkbox.pack(side="left", anchor="e")
+    self.fpga_mem_label, self.fpga_mem_checkbox = StyledComponents.CheckBoxWithLabel(self.peripherals_frame, None, "FPGA Memory Link", "disabled", 3, 0)
+    if not(soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none"):
+      self.fpga_mem_label.configure(text_color="grey")
 
     # SVGA
     self.pair_frame = ctk.CTkFrame(self.peripherals_frame, fg_color="transparent")
