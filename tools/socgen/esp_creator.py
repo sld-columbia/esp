@@ -52,14 +52,14 @@ class StyledComponents:
   def KeyLabel(frame, text, row, column, font=("Arial", 10)):
     """Styled label for the key columns."""
     label = ctk.CTkLabel(frame, text=text, font=font)
-    label.grid(row=row, column=column, sticky="w", pady=5, padx=15)
+    label.grid(row=row, column=column, sticky="w", pady=5, padx=20)
     return label
   
   @staticmethod
   def ValueLabel(frame, text, width=200, font=("Arial", 10, "bold")):
     """Styled label for the value columns."""
     label = ctk.CTkLabel(frame, text=text, width=width, font=font)
-    label.pack(anchor="center", padx=3, pady=3)
+    label.pack(anchor="w", padx=3, pady=3)
     return label
 
   @staticmethod
@@ -70,16 +70,16 @@ class StyledComponents:
     return frame
 
   @staticmethod
-  def OptionMenu(parent, variable, values, width=200, command=None):
+  def OptionMenu(parent, variable, values, width=200, command=None, anchor="center"):
     """Create a styled option menu."""
     menu = ctk.CTkOptionMenu(
       parent, variable=variable, values=values, fg_color="white",
       bg_color="#e8e8e8", button_color="#e8e8e8", width=width, text_color="black",
-      font=("Arial", 10), button_hover_color="lightgrey", anchor="center",
+      font=("Arial", 10), button_hover_color="lightgrey", anchor=anchor,
       dropdown_fg_color="white", dropdown_font=("Arial", 10),
       dropdown_hover_color="#e8e8e8", command=command
     )
-    menu.pack(anchor="center", padx=3, pady=3)
+    menu.pack(anchor="w", padx=3, pady=3)
     return menu
   
   @staticmethod
@@ -93,6 +93,13 @@ class StyledComponents:
         corner_radius=0, width=0, checkbox_width=18, checkbox_height=18, onvalue = 1, offvalue = 0, hover=False)
     checkbox.pack(side="left", anchor="e")
     return label, checkbox
+
+  @staticmethod
+  def Entry(frame, placeholder_text):
+    entry = ctk.CTkEntry(frame, placeholder_text=placeholder_text, width=200 , font=("Arial", 10), 
+            placeholder_text_color="black", border_width=0)
+    entry.pack(anchor="center", padx=3, pady=3)
+    return entry
 
 class SocConfigFrame:
   def set_cpu_specific_labels(self, soc):
@@ -210,32 +217,11 @@ class PeripheralsConfigFrame:
       self.fpga_mem_label.configure(text_color="grey")
 
     # SVGA
-    self.pair_frame = ctk.CTkFrame(self.peripherals_frame, fg_color="transparent")
-    self.pair_frame.grid(row=2, column=1, padx=(20,10))
-    self.svga_checkbox = ctk.CTkCheckBox(
-        self.pair_frame,
-        text="",
-        variable=self.soc.svga_en,
-        state="normal",
-        onvalue = 1, 
-        offvalue = 0,
-        fg_color="green",
-        border_color="grey",
-        corner_radius=0,
-        width=0,
-        checkbox_width=18,
-        checkbox_height=18,
-        hover=False,
-        command=main_frame.update_noc_config
-    )
-    if soc.FPGA_BOARD.find("profpga") != -1 and (soc.TECH == "virtex7" or soc.TECH == "virtexu"):
-      self.svga_label = ctk.CTkLabel(self.pair_frame, text="SVGA", font=("Arial", 11), width=140, anchor="w")
-    else:
+    self.svga_label, self.svga_checkbox = StyledComponents.CheckBoxWithLabel(self.peripherals_frame, self.soc.svga_en, "SVGA", "normal", 2, 1,
+	      command=main_frame.update_noc_config)
+    if not(soc.FPGA_BOARD.find("profpga") != -1 and (soc.TECH == "virtex7" or soc.TECH == "virtexu")):
       self.svga_checkbox.configure(state="disabled")
-      self.svga_label = ctk.CTkLabel(self.pair_frame, text="SVGA", font=("Arial", 11), width=140, anchor="w", text_color="grey")
-    self.svga_label.pack(side="right", pady=10)
-    self.svga_checkbox.pack(side="left", anchor="e")
-
+      self.svga_label.configure(text_color="grey")
 
 class DebugLinkConfigFrame:
   def __init__(self, soc, left_panel):
@@ -245,33 +231,24 @@ class DebugLinkConfigFrame:
     self.debug_link_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.debug_link_frame.pack(fill="x", padx=(8,3), pady=10)
     self.debug_link_label = StyledComponents.Header(self.debug_link_frame, "Debug Link", 0, 0)
-    # self.debug_link_label.grid(row=0, column=0, columnspan=2)
 
     # IP Address (dec) 
-    self.ip_addr_label = ctk.CTkLabel(self.debug_link_frame, text="IP Address (dec)", font=("Arial", 10))
+    self.ip_addr_label = StyledComponents.KeyLabel(self.debug_link_frame, "IP Address (dec)", 1,0)
     self.ip_addr_value_frame = ctk.CTkFrame(self.debug_link_frame)
     self.ip_addr_value_frame.grid(row=1, column=1, pady=5, padx=15)
-    self.ip_addr_value = ctk.CTkLabel(self.ip_addr_value_frame, text="192.168.1.12", width=200, font=("Arial", 10, "bold"))
-    self.ip_addr_value.pack(anchor="center")
-    self.ip_addr_label.grid(row=1, column=0, sticky="w", pady=5, padx=20)
+    self.ip_addr_value = StyledComponents.ValueLabel(self.ip_addr_value_frame, self.soc.IP_ADDR)
 
     # IP Address (hex) 
-    self.ip_addr_label = ctk.CTkLabel(self.debug_link_frame, text="IP Address (hex)", font=("Arial", 10))
+    self.ip_addr_label = StyledComponents.KeyLabel(self.debug_link_frame, "IP Address (hex)", 2,0)
     self.ip_addr_value_frame = ctk.CTkFrame(self.debug_link_frame)
     self.ip_addr_value_frame.grid(row=2, column=1, pady=5, padx=15)
-    self.ip_addr_value = ctk.CTkEntry(self.ip_addr_value_frame, placeholder_text="", width=200, font=("Arial", 10), 
-                         placeholder_text_color="black", border_width=0)
-    self.ip_addr_value.pack(anchor="center", padx=3, pady=3)
-    self.ip_addr_label.grid(row=2, column=0, sticky="w", pady=5, padx=20)
+    self.ip_addr_value = StyledComponents.Entry(self.ip_addr_value_frame, "")
 
     # MAC Address (hex)
-    self.mac_addr_label = ctk.CTkLabel(self.debug_link_frame, text="MAC Address (hex)", font=("Arial", 10))
+    self.mac_addr_label = StyledComponents.KeyLabel(self.debug_link_frame, "MAC Address (hex)", 3, 0)
     self.mac_addr_value_frame = ctk.CTkFrame(self.debug_link_frame)
     self.mac_addr_value_frame.grid(row=3, column=1, pady=5, padx=15)
-    self.mac_addr_value = ctk.CTkEntry(self.mac_addr_value_frame, placeholder_text="", width=200, font=("Arial", 10), 
-                          placeholder_text_color="black", border_width=0)
-    self.mac_addr_value.pack(anchor="center", padx=3, pady=3)
-    self.mac_addr_label.grid(row=3, column=0, sticky="w", pady=5, padx=20)
+    self.mac_addr_value = StyledComponents.Entry(self.mac_addr_value_frame, "")
 
   def update_frame(self):
     if len(self.soc.dsu_ip) == 8 and len(self.soc.dsu_eth) == 12:
@@ -293,7 +270,6 @@ class CachesConfigFrame:
     self.caches_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.caches_frame.pack(padx=(8, 3), pady=(10,20), fill="x")
     self.title_label = StyledComponents.Header(self.caches_frame, "Caches Configuration", 0, 0)
-    # self.title_label.grid(row=0, column=0, columnspan=2, pady=10)
 
     self.enable_caches_cb = ctk.CTkCheckBox(self.caches_frame, variable=self.soc.cache_en, text="Enable Caches", fg_color="green", 
               border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18, 
@@ -305,22 +281,15 @@ class CachesConfigFrame:
 
     self.esp_rtl_frame = ctk.CTkFrame(self.caches_frame)
     self.esp_rtl_frame.grid(row=2, column=1, padx=20, pady=5)
-    self.esp_rtl_dd = ctk.CTkOptionMenu(self.esp_rtl_frame, variable=self.soc.cache_impl, values=self.cache_choices, fg_color="white", 
-                      bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", font=("Arial", 10), dropdown_fg_color="white", 
-                      dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", hover=False, 
-                      button_hover_color="lightgrey", width=160, command=main_frame.update_noc_config)
-    self.esp_rtl_dd.pack(padx=3, pady=3)
+    self.esp_rtl_dd = StyledComponents.OptionMenu(self.esp_rtl_frame, self.soc.cache_impl, self.cache_choices, width=160, command=main_frame.update_noc_config)
 
     self.l2_label = ctk.CTkLabel(self.caches_frame, text="Cache Line Size", font=("Arial", 10))
     self.l2_label.grid(row=3, column=0, padx=20, pady=(10, 5), sticky="w")
 
     self.cache_line_frame = ctk.CTkFrame(self.caches_frame)
     self.cache_line_frame.grid(row=3, column=1, padx=20, pady=5)
-    self.cache_line_dd = ctk.CTkOptionMenu(self.cache_line_frame, variable=self.soc.cache_line_size, values=self.cache_line_choices, 
-                         fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
-                         dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                         button_hover_color="lightgrey", width=160, command=main_frame.update_noc_config)
-    self.cache_line_dd.pack(padx=3, pady=3)
+    self.cache_line_dd = StyledComponents.OptionMenu(self.cache_line_frame, self.soc.cache_line_size, self.cache_line_choices, 
+                         width=160, command=main_frame.update_noc_config)
 
     self.l2_label = ctk.CTkLabel(self.caches_frame, text="L2 Properties", font=("Arial", 10))
     self.llc_label = ctk.CTkLabel(self.caches_frame, text="LLC Properties", font=("Arial", 10))
@@ -332,51 +301,27 @@ class CachesConfigFrame:
 
     self.l2_ways_frame = ctk.CTkFrame(self.caches_frame)
     self.l2_ways_frame.grid(row=5, column=0, padx=20, pady=5)
-    self.l2_ways_dd = ctk.CTkOptionMenu(self.l2_ways_frame, variable=self.soc.l2_ways, values=self.l2_ways_choices, 
-                      fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
-                      dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                      button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
-    self.l2_ways_dd.pack(padx=3, pady=3)
+    self.l2_ways_dd = StyledComponents.OptionMenu(self.l2_ways_frame, self.soc.l2_ways, self.l2_ways_choices, width=165, command=main_frame.update_noc_config)
 
     self.l2_sets_frame = ctk.CTkFrame(self.caches_frame)
     self.l2_sets_frame.grid(row=6, column=0, padx=20, pady=5)
-    self.l2_sets_dd = ctk.CTkOptionMenu(self.l2_sets_frame, variable=self.soc.l2_sets, values=self.sets_choices,
-                      fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
-                      dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                      button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
-    self.l2_sets_dd.pack(padx=3, pady=3)
+    self.l2_sets_dd = StyledComponents.OptionMenu(self.l2_sets_frame, self.soc.l2_sets, self.sets_choices, width=165, command=main_frame.update_noc_config)
 
     self.llc_ways_frame = ctk.CTkFrame(self.caches_frame)
     self.llc_ways_frame.grid(row=5, column=1, padx=20, pady=5)
-    self.llc_ways_dd = ctk.CTkOptionMenu(self.llc_ways_frame, variable=self.soc.llc_ways, values=self.llc_ways_choices,
-                       fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
-                       dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                       button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
-    self.llc_ways_dd.pack(padx=3, pady=3)
+    self.llc_ways_dd = StyledComponents.OptionMenu(self.llc_ways_frame, self.soc.llc_ways, self.llc_ways_choices, width=165, command=main_frame.update_noc_config)
 
     self.llc_sets_frame = ctk.CTkFrame(self.caches_frame)
     self.llc_sets_frame.grid(row=6, column=1, padx=20, pady=5)
-    self.llc_sets_dd = ctk.CTkOptionMenu(self.llc_sets_frame, variable=self.soc.llc_sets, values=self.sets_choices,
-                       fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
-                       dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False,
-                       button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
-    self.llc_sets_dd.pack(padx=3, pady=3)
+    self.llc_sets_dd = StyledComponents.OptionMenu(self.llc_sets_frame, self.soc.llc_sets, self.sets_choices, width=165, command=main_frame.update_noc_config)
 
     self.acc_l2_ways_frame = ctk.CTkFrame(self.caches_frame)
     self.acc_l2_ways_frame.grid(row=8, column=0, padx=20, pady=5)
-    self.acc_l2_ways_dd = ctk.CTkOptionMenu(self.acc_l2_ways_frame, variable=self.soc.acc_l2_ways, values=self.l2_ways_choices,
-                          fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
-                          dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                          button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
-    self.acc_l2_ways_dd.pack(padx=3, pady=3)
+    self.acc_l2_ways_dd = StyledComponents.OptionMenu(self.acc_l2_ways_frame, self.soc.acc_l2_ways, self.l2_ways_choices, width=165, command=main_frame.update_noc_config)
 
     self.acc_l2_sets_frame = ctk.CTkFrame(self.caches_frame)
     self.acc_l2_sets_frame.grid(row=9, column=0, padx=20, pady=5)
-    self.acc_l2_sets_dd = ctk.CTkOptionMenu(self.acc_l2_sets_frame, variable=self.soc.acc_l2_sets, values=self.sets_choices,
-                          fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", text_color="black", dropdown_fg_color="white",
-                          dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8", font=("Arial", 10), hover=False, 
-                          button_hover_color="lightgrey", width=165, command=main_frame.update_noc_config)
-    self.acc_l2_sets_dd.pack(padx=3, pady=3)
+    self.acc_l2_sets_dd = StyledComponents.OptionMenu(self.acc_l2_sets_frame, self.soc.acc_l2_sets, self.sets_choices, width=165, command=main_frame.update_noc_config)
 
 class AdvancedConfigFrame:
   def __init__(self, soc, left_panel, main_frame):
