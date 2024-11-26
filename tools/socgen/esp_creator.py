@@ -35,6 +35,53 @@ def print_usage():
   print("      <emu_freq>         : Ethernet MDC scaler override for FPGA emulation of ASIC design")
   print("")
 
+class StyledComponents:
+  @staticmethod
+  def Panel(frame, fg_color="#ebebeb"):
+    """Styled panel."""
+    return ctk.CTkFrame(frame, fg_color=fg_color)
+
+  @staticmethod
+  def Header(frame, text, row, column, font=("Arial", 12, "bold")):
+    """Styled header."""
+    label = ctk.CTkLabel(frame, text=text, font=font, pady=15)
+    label.grid(row=row, column=column, columnspan=2)
+    return label
+  
+  @staticmethod
+  def KeyLabel(frame, text, row, column, font=("Arial", 10)):
+    """Styled label for the key columns."""
+    label = ctk.CTkLabel(frame, text=text, font=font)
+    label.grid(row=row, column=column, sticky="w", pady=5, padx=15)
+    return label
+  
+  @staticmethod
+  def ValueLabel(frame, text, width=200, font=("Arial", 10, "bold")):
+    """Styled label for the value columns."""
+    label = ctk.CTkLabel(frame, text=text, width=width, font=font)
+    label.pack(anchor="center", padx=3, pady=3)
+    return label
+
+  @staticmethod
+  def ValueFrame(frame, row, column):
+    """Styled label for the value columns."""
+    frame = ctk.CTkFrame(frame)
+    frame.grid(row=row, column=column, pady=5, padx=15)
+    return frame
+
+  @staticmethod
+  def OptionMenu(parent, variable, values, width=200, command=None):
+    """Create a styled option menu."""
+    menu = ctk.CTkOptionMenu(
+      parent, variable=variable, values=values, fg_color="white",
+      bg_color="#e8e8e8", button_color="#e8e8e8", width=width, text_color="black",
+      font=("Arial", 10), button_hover_color="lightgrey", anchor="center",
+      dropdown_fg_color="white", dropdown_font=("Arial", 10),
+      dropdown_hover_color="#e8e8e8", command=command
+    )
+    menu.pack(anchor="center", padx=3, pady=3)
+    return menu
+
 class SocConfigFrame:
   def set_cpu_specific_labels(self, soc):
     if soc.CPU_ARCH.get() == "ariane":
@@ -51,48 +98,35 @@ class SocConfigFrame:
     self.left_panel = left_panel
     self.main_frame = main_frame
     
-    self.soc_config_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
+    self.soc_config_frame = ctk.CTkFrame(self.left_panel)
     self.soc_config_frame.pack(fill="x", padx=(8, 3), pady=10)
-    self.soc_config_label = ctk.CTkLabel(self.soc_config_frame, text="SoC Configuration", font=("Arial", 12, "bold"), pady=15)
-    self.soc_config_label.grid(row=0, column=0, columnspan=2)
+    self.soc_config_label = StyledComponents.Header(self.soc_config_frame, "SoC Configuration", 0, 0)
 
     # Target Technology
-    self.tech_label = ctk.CTkLabel(self.soc_config_frame, text="Target Technology", font=("Arial", 10))
-    self.tech_label.grid(row=1, column=0, sticky="w", pady=5, padx=15)
+    self.tech_label = StyledComponents.KeyLabel(self.soc_config_frame, "Target Technology", 1, 0)
     self.tech_value_frame = ctk.CTkFrame(self.soc_config_frame)
     self.tech_value_frame.grid(row=1, column=1, pady=5, padx=15)
-    self.tech_value = ctk.CTkLabel(self.tech_value_frame, text=self.soc.TECH, width=200, font=("Arial", 10, "bold"))
-    self.tech_value.pack(anchor="center", padx=3, pady=3)
+    self.tech_value = StyledComponents.ValueLabel(self.tech_value_frame, self.soc.TECH)
 
     # FPGA Board
-    self.fpga_label = ctk.CTkLabel(self.soc_config_frame, text="FPGA Board", font=("Arial", 10))
-    self.fpga_label.grid(row=2, column=0, sticky="w", pady=5, padx=15)
+    self.fpga_board_text = self.soc.FPGA_BOARD[:22] + (self.soc.FPGA_BOARD[22:] and ' ..')
+    self.fpga_label = StyledComponents.KeyLabel(self.soc_config_frame, "FPGA Board", 2, 0)
     self.fpga_value_frame = ctk.CTkFrame(self.soc_config_frame)
     self.fpga_value_frame.grid(row=2, column=1, pady=5, padx=15)
-    fpga_board_text = self.soc.FPGA_BOARD[:22] + (self.soc.FPGA_BOARD[22:] and ' ..')
-    self.fpga_value = ctk.CTkLabel(self.fpga_value_frame, text=fpga_board_text, width=200, font=("Arial", 10, "bold"))
-    self.fpga_value.pack(anchor="center", padx=3, pady=3)
+    self.fpga_value = StyledComponents.ValueLabel(self.fpga_value_frame, self.fpga_board_text)
 
     # CPU Architecture
     self.cpu_choices = ["leon3", "ariane", "ibex"]
-    self.cpu_label = ctk.CTkLabel(self.soc_config_frame, text="CPU Architecture", font=("Arial", 10))
-    self.cpu_label.grid(row=3, column=0, sticky="w", pady=5, padx=15)
+    self.cpu_label = StyledComponents.KeyLabel(self.soc_config_frame, "CPU Architecture", 3, 0)
     self.cpu_value_frame = ctk.CTkFrame(self.soc_config_frame)
     self.cpu_value_frame.grid(row=3, column=1, pady=5, padx=15)
-    self.cpu_value_menu = ctk.CTkOptionMenu(self.cpu_value_frame, variable=self.soc.CPU_ARCH, values=self.cpu_choices, fg_color="white", 
-                          bg_color="#e8e8e8", button_color="#e8e8e8", width=200, text_color="black",
-                          font=("Arial", 10), button_hover_color="lightgrey", anchor="center", 
-                          dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-                          dropdown_hover_color="#e8e8e8", command=main_frame.update_noc_config)
-    self.cpu_value_menu.pack(anchor="center", padx=3, pady=3)
+    self.cpu_value_menu = StyledComponents.OptionMenu(self.cpu_value_frame, self.soc.CPU_ARCH, self.cpu_choices, command=main_frame.update_noc_config)
 
     # FPU
-    self.fpu_label = ctk.CTkLabel(self.soc_config_frame, text="Floating-Point Unit", font=("Arial", 10))
-    self.fpu_label.grid(row=4, column=0, sticky="w", pady=5, padx=15)
+    self.fpu_label = StyledComponents.KeyLabel(self.soc_config_frame, "Floating-Point Unit", 4,0)
     self.fpu_value_frame = ctk.CTkFrame(self.soc_config_frame)
     self.fpu_value_frame.grid(row=4, column=1, pady=5, padx=15)
-    self.fpu_value = ctk.CTkLabel(self.fpu_value_frame, width=200, font=("Arial", 10, "bold"))
-    self.fpu_value.pack(anchor="center", padx=3, pady=3)
+    self.fpu_value = StyledComponents.ValueLabel(self.fpu_value_frame, "None")
     self.set_cpu_specific_labels(self.soc)
 
     # Data Allocation Strategy
@@ -100,12 +134,7 @@ class SocConfigFrame:
     self.das_label.grid(row=5, column=0, sticky="w", pady=5, padx=15)
     self.das_value_frame = ctk.CTkFrame(self.soc_config_frame)
     self.das_value_frame.grid(row=5, column=1, pady=5, padx=15)
-    self.das_value_menu = ctk.CTkOptionMenu(self.das_value_frame, values=["Big physical area", "Scatter/Gatter"], fg_color="white", 
-                        bg_color="#e8e8e8", button_color="#e8e8e8", width=200, text_color="black", 
-                        font=("Arial", 10), button_hover_color="lightgrey", anchor="center", 
-                        dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-                        dropdown_hover_color="#e8e8e8")
-    self.das_value_menu.pack(anchor="center", padx=3, pady=3)
+    self.das_value_menu = StyledComponents.OptionMenu(self.das_value_frame, soc.transfers, ["Big physical area", "Scatter/Gatter"])
 
     # SLM KB per Tile
     self.slm_kbytes_choices = ["64", "128", "256", "512", "1024", "2048", "4096"]
@@ -127,8 +156,8 @@ class PeripheralsConfigFrame:
 
     self.peripherals_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.peripherals_frame.pack(fill="x", padx=(8,3), pady=(0,10))
-    self.peripherals_label = ctk.CTkLabel(self.peripherals_frame, text="Peripherals", font=("Arial", 12, "bold"))
-    self.peripherals_label.grid(row=0, column=0, columnspan=2, pady=(10, 15), padx=(15, 0))
+    self.peripherals_label = StyledComponents.Header(self.peripherals_frame, "Peripherals", 0, 0)
+    # self.peripherals_label.grid(row=0, column=0, columnspan=2, pady=(10, 15), padx=(15, 0))
 
     # UART
     self.pair_frame = ctk.CTkFrame(self.peripherals_frame, fg_color="transparent")
@@ -303,8 +332,8 @@ class DebugLinkConfigFrame:
 
     self.debug_link_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.debug_link_frame.pack(fill="x", padx=(8,3), pady=10)
-    self.debug_link_label = ctk.CTkLabel(self.debug_link_frame, text="Debug Link", font=("Arial", 12, "bold"), pady=15)
-    self.debug_link_label.grid(row=0, column=0, columnspan=2)
+    self.debug_link_label = StyledComponents.Header(self.debug_link_frame, "Debug Link", 0, 0)
+    # self.debug_link_label.grid(row=0, column=0, columnspan=2)
 
     # IP Address (dec) 
     self.ip_addr_label = ctk.CTkLabel(self.debug_link_frame, text="IP Address (dec)", font=("Arial", 10))
@@ -351,8 +380,8 @@ class CachesConfigFrame:
 
     self.caches_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.caches_frame.pack(padx=(8, 3), pady=(10,20), fill="x")
-    self.title_label = ctk.CTkLabel(self.caches_frame, text="Caches Configuration", font=("Arial", 12, "bold"))
-    self.title_label.grid(row=0, column=0, columnspan=2, pady=10)
+    self.title_label = StyledComponents.Header(self.caches_frame, "Caches Configuration", 0, 0)
+    # self.title_label.grid(row=0, column=0, columnspan=2, pady=10)
 
     self.enable_caches_cb = ctk.CTkCheckBox(self.caches_frame, variable=self.soc.cache_en, text="Enable Caches", fg_color="green", 
               border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18, 
@@ -445,8 +474,8 @@ class AdvancedConfigFrame:
 
     self.adv_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.adv_frame.pack(padx=(8,3), pady=(10,20), fill="x")
-    self.title_label = ctk.CTkLabel(self.adv_frame, text="Advanced Settings", font=("Arial", 12, "bold"))
-    self.title_label.grid(row=0, column=0, columnspan=2, pady=10)
+    self.title_label = StyledComponents.Header(self.adv_frame, "Advanced Settings", 0, 0)
+    # self.title_label.grid(row=0, column=0, columnspan=2, pady=10)
 
     self.clk_label = ctk.CTkLabel(self.adv_frame, text="Clock Strategy", font=("Arial", 10))
     self.clk_label.grid(row=1, column=0, sticky="w", pady=5, padx=(20, 40))
