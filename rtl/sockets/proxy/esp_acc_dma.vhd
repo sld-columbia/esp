@@ -924,6 +924,7 @@ begin  -- rtl
         sample_status <= '1';
         clear_acc_done <= '1';
         dma_next <= idle;
+        p2p_length_v := (others => '0');
 
       when config =>
         -- Set conf_done to start the accelerator.
@@ -1084,7 +1085,7 @@ begin  -- rtl
 
             -- local accelerator has finished its write burst
             if burst_count = len then
-              if p2p_count < rcv_p2p_length then
+              if p2p_count < rcv_p2p_length and msg = RSP_P2P then
                 -- burst length is less than what consumer accelerator requested
                 continue_p2p := '1';
               else
@@ -1096,7 +1097,7 @@ begin  -- rtl
               dma_tran_done <= '1';
               dma_next <= running;
             -- the amount request by the consumer has been sent, but the accelerator burst is not complete
-            elsif burst_count > conv_std_logic_vector(0, 32) and burst_count = rcv_p2p_length then
+            elsif burst_count > conv_std_logic_vector(0, 32) and burst_count = rcv_p2p_length and msg = RSP_P2P  then
               continue_p2p := '0';
               if (p2p_count = len) then
                 --if burst completes, go back to idle
