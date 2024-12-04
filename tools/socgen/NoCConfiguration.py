@@ -22,6 +22,70 @@ from socmap_gen import NTILE_MAX
 from socmap_gen import NFULL_COHERENT_MAX
 from socmap_gen import NLLC_COHERENT_MAX
 
+class StyledComponents:
+  @staticmethod
+  def OptionMenu(parent, variable, values, width=140, font=("Arial", 10), anchor="center", state="normal", command=None):
+    """Styled option menu."""
+    menu = ctk.CTkOptionMenu(
+      parent, variable=variable, values=values, fg_color="white",
+      bg_color="#e8e8e8", button_color="lightgrey", width=width, text_color="black",
+      font=font, button_hover_color="grey", anchor=anchor,
+      dropdown_fg_color="white", dropdown_font=("Arial", 10),
+      dropdown_hover_color="#e8e8e8", state=state, command=command
+    )
+    return menu
+
+  @staticmethod
+  def CheckBox(frame, variable, text, row, column, command=None, onvalue=1, offvalue=0):
+    """Styled checkbox."""
+    checkbox = ctk.CTkCheckBox(frame, text=text, variable=variable, onvalue=onvalue, offvalue=offvalue,
+                                fg_color="green", border_color="grey", font=("Arial", 10), width=72,
+                                checkbox_width=18, checkbox_height=18, corner_radius=0, hover=False, command=command)
+    checkbox.grid(row=row, column=column, padx=15, pady=10, sticky="e")
+    return checkbox
+
+  @staticmethod
+  def LabelPack(frame, text, font=("Arial", 10), text_color="black", side="left", padx=(14,24), pady=10):
+    """Styled label."""
+    label = ctk.CTkLabel(frame, text=text, font=font, text_color=text_color)
+    label.pack(side=side, padx=padx, pady=pady)
+    return label
+
+  @staticmethod
+  def LabelGrid(frame, text, font=("Arial", 12, "bold"), text_color="black", row=0, column=0, padx=5, pady=20, columnspan=None, sticky="nsew"):
+    """Styled label."""
+    label = ctk.CTkLabel(frame, text=text, font=font, text_color=text_color)
+    label.grid(row=row, column=column, columnspan=columnspan, padx=padx, pady=pady, sticky=sticky)
+    return label
+  
+  @staticmethod
+  def Entry(frame, variable=None, width=45, font=("Arial", 10), placeholder_text_color="black"):
+    """Styled entry box."""
+    entry = ctk.CTkEntry(frame, textvariable=variable, width=width, font=font, placeholder_text_color=placeholder_text_color, border_width=0)
+    return entry
+  
+  @staticmethod
+  def CheckBox(frame, variable, text, row, column, command=None, onvalue=1, offvalue=0):
+    """Styled checkbox."""
+    checkbox = ctk.CTkCheckBox(frame, text=text, variable=variable, onvalue=onvalue, offvalue=offvalue,
+                                fg_color="green", border_color="grey", font=("Arial", 10), width=72,
+                                checkbox_width=18, checkbox_height=18, corner_radius=0, hover=False, command=command)
+    checkbox.grid(row=row, column=column, padx=15, pady=10, sticky="e")
+    return checkbox
+
+  @staticmethod
+  def CheckBoxPack(frame, text, variable):
+    checkbox = ctk.CTkCheckBox(frame, text=text, font=("Arial", 11), fg_color="green",
+                  border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+                  hover=False, variable=variable)
+    checkbox.pack(padx=15, pady=10, anchor="w")
+    return checkbox
+  
+  @staticmethod
+  def Button(frame, text, font=("Arial", 10), width=100, command=None):
+    """Styled button."""
+    button = ctk.CTkButton(frame, text=text, font=font, width=width, command=command)
+    return button
 
 def isInt(s):
   try:
@@ -281,60 +345,18 @@ class NoCConfigFrame:
     config_frame = ctk.CTkFrame(frame, fg_color="#e8e8e8")
     config_frame.pack(anchor="center", padx=15, pady=(0,15))
 
-    tile_type_label = ctk.CTkLabel(tile.type_frame, text="Tile", font=("Arial", 11), text_color="black")
-    tile_type_label.pack(side="left", padx=(14,24), pady=10)
-    tile.ip_list = ctk.CTkOptionMenu(tile.type_frame, variable=tile.ip_type, values=list_items, fg_color="white", 
-          bg_color="#e8e8e8", button_color="lightgrey", width=140, text_color="black",font=("Arial", 10),
-          button_hover_color="grey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-          dropdown_hover_color="#e8e8e8", command=self.changed)
+    tile_type_label = StyledComponents.LabelPack(tile.type_frame, text="Tile", font=("Arial", 11), text_color="black")
+    tile.ip_list = StyledComponents.OptionMenu(tile.type_frame, variable=tile.ip_type, values=list_items, command=self.changed)
     tile.ip_list.pack(side="right", padx=20, pady=10)
   
-    tile.point_label = ctk.CTkLabel(impl_frame, text="Impl.", font=("Arial", 10), text_color="grey")
-    tile.point_label.pack(side="left", padx=(12,0), pady=10)
-    tile.point_select = ctk.CTkOptionMenu(impl_frame, variable=tile.point, values=[], fg_color="white", 
-          bg_color="#e8e8e8", button_color="lightgrey", width=140, text_color="black",font=("Arial", 10),
-          button_hover_color="grey", anchor="center", dropdown_fg_color="white", dropdown_font=("Arial", 10), 
-          dropdown_hover_color="#e8e8e8", state="disabled", command=self.changed)
+    tile.point_label = StyledComponents.LabelPack(impl_frame, text="Impl.", font=("Arial", 10), text_color="grey", side="left", padx=(12,0), pady=10)
+    tile.point_select = StyledComponents.OptionMenu(impl_frame, variable=tile.point, values=[], state="disabled", command=self.changed)
     tile.point_select.pack(side="right", padx=(18,1), pady=10)
+ 
+    tile.has_l2_selection = StyledComponents.CheckBox(config_frame, variable=tile.has_l2, text="Cache", row=0, column=0, command=self.changed)
+    tile.has_ddr_selection = StyledComponents.CheckBox(config_frame, variable=tile.has_ddr, text="DDR", row=0, column=1, command=self.changed)
+    tile.has_tdvfs_selection = StyledComponents.CheckBox(config_frame, variable=tile.has_tdvfs, text="DVFS", row=1, column=0, command=self.changed)
 
-    tile.has_l2_selection = ctk.CTkCheckBox(config_frame, text="Cache", variable=tile.has_l2,
-                                   onvalue = 1, offvalue = 0,
-                                   fg_color="green",
-                                   border_color="grey",
-                                   font=("Arial", 10),
-                                   width=72,
-                                   checkbox_width=18,
-                                   checkbox_height=18,
-                                   corner_radius=0,
-                                   hover=False,
-                                   command=self.changed)
-    tile.has_l2_selection.grid(row=0, column=0, sticky="e", padx=15, pady=10)
-
-    tile.has_ddr_selection = ctk.CTkCheckBox(config_frame, text="DDR", variable=tile.has_ddr,
-                                onvalue = 1, offvalue = 0,
-                                fg_color="green",
-                                border_color="grey",
-                                font=("Arial", 10),
-                                width=72,
-                                checkbox_width=18,
-                                checkbox_height=18,
-                                corner_radius=0,
-                                hover=False,
-                                command=self.changed)
-    tile.has_ddr_selection.grid(row=0, column=1, sticky="e", padx=15, pady=10)
-    
-    tile.has_tdvfs_selection = ctk.CTkCheckBox(config_frame, text="DVFS", variable=tile.has_tdvfs,
-                                onvalue = 1, offvalue = 0,
-                                fg_color="green",
-                                border_color="grey",
-                                font=("Arial", 10),
-                                width=72,
-                                checkbox_width=18,
-                                checkbox_height=18,
-                                corner_radius=0,
-                                hover=False,
-                                command=self.changed)
-    tile.has_tdvfs_selection.grid(row=1, column=0, sticky="e", padx=15, pady=10)
 
   def __init__(self, soc, left_panel, right_panel):
     self.soc = soc
@@ -344,23 +366,21 @@ class NoCConfigFrame:
     
     self.noc_select_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
     self.noc_select_frame.pack(padx=(8, 3), pady=(10, 20), fill="x")
-    self.title_label = ctk.CTkLabel(self.noc_select_frame, text="NoC Configuration", font=("Arial", 12, "bold"))
-    self.title_label.grid(row=0, column=0, columnspan=5, pady=10)
+    self.title_label = StyledComponents.LabelGrid(self.noc_select_frame, text="NoC Configuration", font=("Arial", 12, "bold"), row=0, column=0, columnspan=5, padx=0, pady=10)
 
-    self.noc_rows_label = ctk.CTkLabel(self.noc_select_frame, text="Rows:", font=("Arial", 10))
-    self.noc_rows_label.grid(row=1, column=0, padx=20, pady=20, sticky="e")
-    self.noc_rows = ctk.CTkEntry(self.noc_select_frame, width=45, font=("Arial", 10), placeholder_text_color="black", border_width=0)
+    self.noc_rows_label = StyledComponents.LabelGrid(self.noc_select_frame, text="Rows:", font=("Arial", 10), row=1, column=0, padx=20, pady=20, sticky="e")
+    self.noc_rows = StyledComponents.Entry(self.noc_select_frame)
     self.ROWS = self.noc_rows
     self.noc_rows.insert(0, "2")
     self.noc_rows.grid(row=1, column=1, padx=5, pady=20)
-    self.noc_columns_label = ctk.CTkLabel(self.noc_select_frame, text="Columns:", font=("Arial", 10))
-    self.noc_columns_label.grid(row=1, column=2, padx=20, pady=20, sticky="e")
-    self.noc_columns = ctk.CTkEntry(self.noc_select_frame,  width=45, font=("Arial", 10), placeholder_text_color="black", border_width=0)
+
+    self.noc_columns_label = StyledComponents.LabelGrid(self.noc_select_frame, text="Columns:", font=("Arial", 10), row=1, column=2, padx=20, pady=20, sticky="e")
+    self.noc_columns = StyledComponents.Entry(self.noc_select_frame)
     self.COLS = self.noc_columns
     self.noc_columns.insert(0, "2")
     self.noc_columns.grid(row=1, column=3, padx=5, pady=20)
 
-    self.update_noc_button = ctk.CTkButton(self.noc_select_frame, text="Update NoC", width=100, font=("Arial", 10), command=self.create_noc)
+    self.update_noc_button = StyledComponents.Button(self.noc_select_frame, text="Update NoC", font=("Arial", 10), command=self.create_noc)
     self.update_noc_button.grid(row=1, column=4, padx=20, pady=20)
 
     self.noc_config_frame = ctk.CTkFrame(self.noc_select_frame, fg_color="#ebebeb")
@@ -369,29 +389,23 @@ class NoCConfigFrame:
     self.noc_width_choices = ["32", "64", "128", "256", "512", "1024"]
 
     # Coherence NoC Planes
-    self.noc_planes_label = ctk.CTkLabel(self.noc_config_frame, text="Coherence NoC Planes (1,2,3) Bitwidth", font=("Arial", 10))
-    self.noc_planes_label.grid(row=2, column=0, sticky="w", pady=5, padx=15)
+    self.noc_planes_label = StyledComponents.LabelGrid(self.noc_config_frame, text="Coherence NoC Planes (1,2,3) Bitwidth", font=("Arial", 10), row=2, column=0, padx=15, pady=5, sticky="w")
+    
     self.noc_planes_frame = ctk.CTkFrame(self.noc_config_frame)
     self.noc_planes_frame.grid(row=2, column=1, pady=5, padx=15)
-    self.noc_planes_value_menu = ctk.CTkOptionMenu(self.noc_planes_frame, variable=self.noc.coh_noc_width, values=self.noc_width_choices, 
-                                 fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", width=100, text_color="black", 
-                                 font=("Arial", 10), button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", 
-                                 dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8")
+    self.noc_planes_value_menu = StyledComponents.OptionMenu(self.noc_planes_frame, variable=self.noc.coh_noc_width, values=self.noc_width_choices, width=100, font=("Arial", 10))
     self.noc_planes_value_menu.pack(anchor="center", padx=3, pady=3)
 
     # DMA NoC Planes
-    self.dma_planes_label = ctk.CTkLabel(self.noc_config_frame, text="DMA NoC Planes (4,6) Bitwidth", font=("Arial", 10))
-    self.dma_planes_label.grid(row=3, column=0, sticky="w", pady=5, padx=15)
+    self.dma_planes_label = StyledComponents.LabelGrid(self.noc_config_frame, text="DMA NoC Planes (4,6) Bitwidth", font=("Arial", 10), row=3, column=0, padx=15, pady=5, sticky="w")
+
     self.dma_planes_value_frame = ctk.CTkFrame(self.noc_config_frame)
     self.dma_planes_value_frame.grid(row=3, column=1, pady=5, padx=15)
-    self.dma_planes_value_menu = ctk.CTkOptionMenu(self.dma_planes_value_frame, variable=self.noc.dma_noc_width, values=self.noc_width_choices, 
-                                 fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8", width=100, text_color="black", 
-                                 font=("Arial", 10), button_hover_color="lightgrey", anchor="center", dropdown_fg_color="white", 
-                                 dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8")
+    self.dma_planes_value_menu = StyledComponents.OptionMenu(self.dma_planes_value_frame, variable=self.noc.dma_noc_width, values=self.noc_width_choices, width=100, font=("Arial", 10))
     self.dma_planes_value_menu.pack(anchor="center", padx=3, pady=3)
 
-    self.mmio_label = ctk.CTkLabel(self.noc_config_frame, text="MMIO/Irq NoC Plane (5) Bitwidth", font=("Arial", 10))
-    self.mmio_label.grid(row=4, column=0, sticky="w", pady=5, padx=15)
+    self.mmio_label = StyledComponents.LabelGrid(self.noc_config_frame, text="MMIO/Irq NoC Plane (5) Bitwidth", font=("Arial", 10), row=4, column=0, padx=15, pady=5, sticky="w")
+
     self.mmio_value_frame = ctk.CTkFrame(self.noc_config_frame)
     self.mmio_value_frame.grid(row=4, column=1, pady=5, padx=15)
     self.mmio_value = ctk.CTkLabel(self.mmio_value_frame, text="32", width=100, font=("Arial", 10, "bold"))
@@ -406,16 +420,11 @@ class NoCConfigFrame:
 
     self.max_multicast_choices = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"]
     # Maximum Multicast Destinations
-    self.max_multicast_label = ctk.CTkLabel(self.noc_config_frame, text="Maximum Multicast Destinations", font=("Arial", 11))
-    self.max_multicast_label.grid(row=6, column=0, sticky="w", pady=5, padx=15)
+    self.max_multicast_label = StyledComponents.LabelGrid(self.noc_config_frame, text="Maximum Multicast Destinations", font=("Arial", 11), row=6, column=0, padx=15, pady=5, sticky="w")
+
     self.max_multicast_value_frame = ctk.CTkFrame(self.noc_config_frame)
     self.max_multicast_value_frame.grid(row=6, column=1, pady=5, padx=15)
-    self.max_multicast_value_menu = ctk.CTkOptionMenu(
-        self.max_multicast_value_frame, variable=self.noc.max_mcast_dests, values=self.max_multicast_choices, 
-        fg_color="white", bg_color="#e8e8e8", button_color="#e8e8e8",
-        width=100, text_color="black", font=("Arial", 10), button_hover_color="lightgrey", anchor="center",
-        dropdown_fg_color="white", dropdown_font=("Arial", 10), dropdown_hover_color="#e8e8e8"
-    )
+    self.max_multicast_value_menu = StyledComponents.OptionMenu(self.max_multicast_value_frame, variable=self.noc.max_mcast_dests, values=self.max_multicast_choices, width=100, font=("Arial", 10))
     self.max_multicast_value_menu.pack(anchor="center", padx=3, pady=3)
 
     self.probe_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
@@ -423,45 +432,21 @@ class NoCConfigFrame:
     self.title_label = ctk.CTkLabel(self.probe_frame, text="Probe Configuration", font=("Arial", 12, "bold"))
     self.title_label.pack(pady=10)
 
-    self.ddr_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DDR bandwidth", font=("Arial", 11), fg_color="green",
-                  border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-                  hover=False, variable=self.noc.monitor_ddr)
-    self.ddr_cb.pack(padx=15, pady=10, anchor="w")
+    self.ddr_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DDR bandwidth", variable=self.noc.monitor_ddr)
 
-    self.mem_access_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Memory Access", font=("Arial", 11), fg_color="green",
-                         border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-                         hover=False, variable=self.noc.monitor_mem)
-    self.mem_access_cb.pack(padx=15, pady=10, anchor="w")
+    self.mem_access_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor Memory Access", variable=self.noc.monitor_mem)
 
-    self.inj_rate_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Injection Rate", font=("Arial", 11), fg_color="green",
-                       border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-                       hover=False, variable=self.noc.monitor_inj)
-    self.inj_rate_cb.pack(padx=15, pady=10, anchor="w")
+    self.inj_rate_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor Injection Rate", variable=self.noc.monitor_inj)
 
-    self.router_ports_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Router Ports", font=("Arial", 11), fg_color="green",
-                           border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-                           hover=False, variable=self.noc.monitor_routers)
-    self.router_ports_cb.pack(padx=15, pady=10, anchor="w")
+    self.router_ports_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor Router Ports", variable=self.noc.monitor_routers)
 
-    self.acc_status_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor Accelerator Status", font=("Arial", 11), fg_color="green",
-                         border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-                         hover=False, variable=self.noc.monitor_accelerators)
-    self.acc_status_cb.pack(padx=15, pady=10, anchor="w")
+    self.acc_status_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor Accelerator Status", variable=self.noc.monitor_accelerators)
 
-    self.l2_hm_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor L2 Hit/Miss", font=("Arial", 11), fg_color="green",
-                    border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-                    hover=False, variable=self.noc.monitor_l2)
-    self.l2_hm_cb.pack(padx=15, pady=10, anchor="w")
+    self.l2_hm_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor L2 Hit/Miss", variable=self.noc.monitor_l2)
 
-    self.llc_hm_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor LLC Hit/Miss", font=("Arial", 11), fg_color="green",
-                     border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-                     hover=False, variable=self.noc.monitor_llc)
-    self.llc_hm_cb.pack(padx=15, pady=10, anchor="w")
+    self.llc_hm_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor LLC Hit/Miss", variable=self.noc.monitor_llc)
 
-    self.dvfs_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DVFS", font=("Arial", 11), fg_color="green",
-                   border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
-                   hover=False, variable=self.noc.monitor_dvfs)
-    self.dvfs_cb.pack(padx=15, pady=10, anchor="w")
+    self.dvfs_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor DVFS", variable=self.noc.monitor_dvfs)
 
   def update_msg(self):
     self.gen_soc_config.configure(state="disabled")
