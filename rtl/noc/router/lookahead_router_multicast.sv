@@ -56,7 +56,8 @@ module lookahead_router_multicast
     parameter int unsigned DataWidth = 64,
     parameter int unsigned PortWidth = DataWidth + $bits(noc::preamble_t),
     parameter bit [4:0] Ports = noc::AllPorts,
-    parameter integer DEST_SIZE = 6
+    parameter integer DEST_SIZE = 6,
+    parameter integer QUEUE_SIZE = 4
     )
   (
    input  logic clk,
@@ -85,6 +86,9 @@ module lookahead_router_multicast
 
   localparam int unsigned ReservedWidth =
     DataWidth - (1 + DEST_SIZE) * $bits(noc::xy_t) - $bits(noc::message_t) - DEST_SIZE - $bits(noc::direction_t);
+
+  parameter int unsigned CreditsWidth = $clog2(QUEUE_SIZE + 1);
+  typedef logic [4:0][CreditsWidth-1:0] credits_t;
 
   // Modified the structure to add more destinations and a valid bit for each destination
   typedef struct packed {
@@ -170,7 +174,7 @@ module lookahead_router_multicast
 
   noc::noc_port_t [4:0] input_direction; 
 
-  noc::credits_t credits;
+  credits_t credits;
 
   noc::direction_t [4:0] current_routing;
 
@@ -178,7 +182,7 @@ module lookahead_router_multicast
 
   logic [4:0] forwarding_tail;
   logic [4:0] forwarding_head;
-  logic [4:0] forwarding_tail_input, forwarding_body_input;
+  logic [4:0] forwarding_tail_input;
   logic [4:0] forwarding_in_progress;
   logic [4:0] insert_lookahead_routing;
   logic [4:0] sample_routing_config;
@@ -231,7 +235,7 @@ module lookahead_router_multicast
       router_fifo
         #(
           .BypassEnable(FifoBypassEnable),
-          .Depth(noc::PortQueueDepth),
+          .Depth(QUEUE_SIZE),
           .Width(PortWidth)
           )
       input_queue (
@@ -273,7 +277,6 @@ module lookahead_router_multicast
 //      assign new_final_routing_request[g_i] = case_c[g_i] | granted_req[g_i] | new_non_forking_req[g_i];
       assign new_final_routing_request[g_i] = case_c[g_i] | granted_req[g_i] | non_forking_req[g_i];
       assign forwarding_tail_input[g_i] = fifo_head[g_i].header.preamble.tail & ~in_unvalid_flit[g_i];
-      assign forwarding_body_input[g_i] = ~fifo_head[g_i].header.preamble.tail & ~fifo_head[g_i].header.preamble.head & ~in_unvalid_flit[g_i]; 
       assign grant_fork_arbiter[g_i] = grant_valid_fork & grant_fork[g_i];
 
       // AckNack: stop data at input port if FIFO is full
@@ -298,7 +301,6 @@ module lookahead_router_multicast
       assign routing_sum_horizontal_initial[g_i] = '0;
       assign forking_input_initial[g_i] = '0;
       assign forwarding_tail_input[g_i] = 1'b0;
-      assign forwarding_body_input[g_i] = 1'b0;
       assign grant_fork_arbiter[g_i] = 1'b0;
       assign non_forking_req[g_i] = '0;
 //      assign new_non_forking_req[g_i] = '0;
@@ -359,9 +361,7 @@ router_fork_arbiter fork_arbiter_i (
   .request(forking_input_c),
   .forwarding_head(in_valid_head),
   .forwarding_tail(forwarding_tail_input),
-  .forwarding_body(forwarding_body_input),
   .reset_arbiter(reset_arbiter),
-//  .rd_fifo_or(rd_fifo_or),
   .grant(grant_fork),
   .grant_valid(grant_valid_fork)
 );  
@@ -562,14 +562,10 @@ router_fork_arbiter fork_arbiter_i (
     assign backpressure_single[g_i] = FifoBypassEnable ? stop_in[g_i] : credits == '0;
     assign no_backpressure_single[g_i] = ~backpressure_single[g_i];
     assign no_backpressure_mcast[g_i] = ~(|backpressure_mcast_tmp[g_i]);
-//    assign forwarding_tail[g_i] = data_out_crossbar[g_i].header.preamble.tail &
-//                                   ~out_unvalid_flit[g_i] & no_backpressure_mcast[g_i];
-//    assign forwarding_head[g_i] = data_out_crossbar[g_i].header.preamble.head &
-//                                    ~out_unvalid_flit[g_i] & no_backpressure_mcast[g_i];
-    assign forwarding_tail[g_i] = fifo_head[input_direction[g_i]].header.preamble.tail &	//shorter crit path - bypass crossbar delay
+    assign forwarding_tail[g_i] = data_out_crossbar[g_i].header.preamble.tail &
                                    ~out_unvalid_flit[g_i] & no_backpressure_mcast[g_i];
-    assign forwarding_head[g_i] = forwarding_in_progress[g_i] & fifo_head[input_direction[g_i]].header.preamble.head &	//shorter crit path - bypass crossbar delay
-                                   ~out_unvalid_flit[g_i];
+    assign forwarding_head[g_i] = data_out_crossbar[g_i].header.preamble.head &
+                                    ~out_unvalid_flit[g_i] & forwarding_in_progress[g_i];
 
 
     always_comb begin : flow_control_fsm
@@ -641,7 +637,7 @@ router_fork_arbiter fork_arbiter_i (
                                   out_unvalid_flit[g_i] : 1'b1;
       always_ff @(posedge clk) begin
         if (rst) begin
-          credits[g_i] = noc::PortQueueDepth;
+          credits[g_i] = QUEUE_SIZE;
         end else begin
           if (~data_void_out[g_i]) begin
             credits[g_i] = credits[g_i] - stop_in[g_i];
@@ -723,7 +719,7 @@ router_fork_arbiter fork_arbiter_i (
       data_out_crossbar[g_i].header.preamble.head)
       else $error("Fail: a_expect_head_flit");
     a_credits_in_range: assert property (@(posedge clk) disable iff(rst)
-      credits[g_i] <= noc::PortQueueDepth)
+      credits[g_i] <= QUEUE_SIZE)
       else $error("Fail: a_enhanc_routing_configuration_onehot");
    end
 

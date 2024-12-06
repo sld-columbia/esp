@@ -208,6 +208,7 @@ architecture rtl of esp_acc_dma is
   signal count_n_dest         : integer range 0 to MAX_MCAST_DESTS - 1;
   signal p2p_mcast_ndests     : integer range 0 to MAX_MCAST_DESTS - 1;
   signal p2p_mcast_packet     : std_ulogic;
+  signal p2p_mcast_packet_size : integer range 0 to 15;
   signal p2p_mcast_depth      : std_logic_vector(3 downto 0);
 
   -- IRQ
@@ -481,8 +482,8 @@ end generate tlb_gen;
   p2p_dst_x <= get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
   p2p_mcast_ndests <= to_integer(unsigned(bankreg(P2P_REG)(P2P_BIT_MCAST_DESTS + P2P_WIDTH_MCAST_DESTS - 1 downto P2P_BIT_MCAST_DESTS)));
   p2p_mcast_packet <= bankreg(P2P_REG)(P2P_BIT_MCAST_PACKET);
-  --p2p_mcast_depth <= noc::PortQueueDepth - 1;
-  p2p_mcast_depth <= conv_std_logic_vector(4,4);
+  p2p_mcast_packet_size <= to_integer(unsigned(bankreg(P2P_REG)(P2P_BIT_MCAST_PACKET_SIZE + P2P_WIDTH_MCAST_PACKET_SIZE - 1 downto P2P_BIT_MCAST_PACKET_SIZE)));
+  p2p_mcast_depth <= conv_std_logic_vector(p2p_mcast_packet_size,4);
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
                         p2p_src_index_r, p2p_dst_arr_y, p2p_dst_arr_x, p2p_dst_y, p2p_dst_x,
@@ -603,7 +604,7 @@ end generate tlb_gen;
       payload_address_r <= (others => '0');
       payload_length_r <= (others => '0');
       burst_count <= conv_std_logic_vector(1, 32);
-      burst_count_mcast <= conv_std_logic_vector(1, 4);
+      burst_count_mcast <= (others => '0');
       p2p_count <= conv_std_logic_vector(1, 32);
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
@@ -630,7 +631,7 @@ end generate tlb_gen;
         burst_count_mcast <= burst_count_mcast + 1;
       end if;
       if clear_burst_count_mcast = '1' then
-        burst_count_mcast <= conv_std_logic_vector(1, 4);
+        burst_count_mcast <= (others => '0');
       end if;
       if increment_tlb_count = '1' then
         tlb_count <= tlb_count + 1;

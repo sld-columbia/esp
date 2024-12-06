@@ -183,6 +183,9 @@ class SoC_Config():
     item = line.split()
     self.noc.max_mcast_dests.set(int(item[2]))
     line = fp.readline()
+    item = line.split()
+    self.noc.queue_size.set(int(item[2]))
+    line = fp.readline()
     if line.find("CONFIG_CACHE_EN = y") != -1:
       self.cache_en.set(1)
     else:
@@ -337,6 +340,7 @@ class SoC_Config():
     else:
       fp.write("#CONFIG_MULTICAST_NOC_EN is not set\n")
     fp.write("CONFIG_MAX_MCAST_DESTS = " + str(self.noc.max_mcast_dests.get()) + "\n")
+    fp.write("CONFIG_QUEUE_SIZE = " + str(self.noc.queue_size.get()) + "\n")
     if self.cache_en.get() == 1:
       fp.write("CONFIG_CACHE_EN = y\n")
     else:
@@ -515,8 +519,10 @@ class SoC_Config():
       self.nmem_max = 1
     elif self.FPGA_BOARD == "profpga-xc7v2000t":
       self.nmem_max = 2
-    else:
+    elif self.FPGA_BOARD == "profpga-xcvu440":
       self.nmem_max = 4
+    else:
+      self.nmem_max = 7
 
     # Read GRLIB configurations
     with open("../grlib/grlib_config.vhd") as fp:

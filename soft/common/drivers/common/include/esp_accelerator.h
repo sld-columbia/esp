@@ -65,6 +65,8 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 #define P2P_SHIFT_MCAST_NDESTS 28
 #define P2P_SHIFT_MCAST_PACKET 27
 #define P2P_MASK_MCAST_PACKET 0x1
+#define P2P_MASK_MCAST_PACKET_SIZE 0xF
+#define P2P_SHIFT_MCAST_PACKET_SIZE 23
 
 /* bank(11)       : RESERVED */
 #define YX_REG 0x2c

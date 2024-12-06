@@ -109,5 +109,5 @@ void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsr
 #define esp_p2p_set_x(_dev, _n, _x) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)))
 #define esp_p2p_set_mcast_ndests(_dev, _n) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_MCAST_NDESTS & (_n - 1)) << P2P_SHIFT_MCAST_NDESTS))
 #define esp_p2p_set_mcast_packet(_dev, _n) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_MCAST_PACKET & _n) << P2P_SHIFT_MCAST_PACKET))
-
+#define esp_p2p_set_mcast_packet_size(_dev, _n) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_MCAST_PACKET_SIZE & (_n - 2)) << P2P_SHIFT_MCAST_PACKET_SIZE))
 #endif /* __ESP_PROBE_H__ */

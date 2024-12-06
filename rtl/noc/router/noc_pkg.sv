@@ -7,7 +7,7 @@ package noc;
   //
 
   // Queues
-  parameter int unsigned PortQueueDepth = 5;
+//  parameter int unsigned PortQueueDepth = QUEUE_SIZE;
 
   // Coordinates
   parameter int unsigned xMax = 8;
@@ -112,8 +112,8 @@ package noc;
     kFlowControlCreditBased = 1'b1
   } noc_flow_control_t;
 
-  parameter int unsigned CreditsWidth = $clog2(PortQueueDepth + 1);
-  typedef logic [4:0][CreditsWidth-1:0] credits_t;
+//  parameter int unsigned CreditsWidth = $clog2(PortQueueDepth + 1);
+//  typedef logic [4:0][CreditsWidth-1:0] credits_t;
 
   //
   // Packet info encoding

@@ -33,7 +33,7 @@ typedef u64 token_t;
 
 // Control the number of consumers
 //#define NUM_MULTICAST 16
-#define NUM_MULTICAST 16
+#define NUM_MULTICAST 14
 
 // MCAST Select the source ID
 //#define SOURCE_DEV_ID 7
@@ -44,6 +44,7 @@ typedef u64 token_t;
 #define CHUNK_SIZE BIT(CHUNK_SHIFT)
 
 #define MCAST_PACKET 1
+#define MCAST_PACKET_SIZE 17
 
 static int validate_dummy(token_t *mem)
 {
@@ -66,12 +67,13 @@ static void init_buf(token_t *mem)
             mem[i + j * TOKENS] = (mask | (token_t) (i + j * TOKENS));
 }
 
-void p2p_setup(struct esp_device* dev, int p2p_store, int mcast_ndests, int p2p_load, struct esp_device* p2p_src, int mcast_packet){
+void p2p_setup(struct esp_device* dev, int p2p_store, int mcast_ndests, int p2p_load, struct esp_device* p2p_src, int mcast_packet, int mcast_packet_size){
     esp_p2p_reset(dev);
     if (p2p_store) {
         esp_p2p_enable_dst(dev);
         esp_p2p_set_mcast_ndests(dev, mcast_ndests);
         esp_p2p_set_mcast_packet(dev, mcast_packet);
+        esp_p2p_set_mcast_packet_size(dev, mcast_packet_size);
     }
     if (p2p_load) {
         esp_p2p_enable_src(dev);
@@ -162,9 +164,9 @@ for (int source_dev_id = 0; source_dev_id < num_multicast + 1; source_dev_id++) 
         iowrite32(&devs[i], SELECT_REG, ioread32(&devs[i], DEVID_REG));
         iowrite32(&devs[i], COHERENCE_REG, coherence);
         if (i == source_dev_id)
-            p2p_setup(&devs[i], 1, num_multicast, 0, NULL, MCAST_PACKET);
+            p2p_setup(&devs[i], 1, num_multicast, 0, NULL, MCAST_PACKET, MCAST_PACKET_SIZE);
         else
-            p2p_setup(&devs[i], 0, 0, 1, &devs[source_dev_id], 0);
+            p2p_setup(&devs[i], 0, 0, 1, &devs[source_dev_id], 0, MCAST_PACKET_SIZE);
 
         iowrite32(&devs[i], PT_ADDRESS_REG, (unsigned long) ptable);
         iowrite32(&devs[i], PT_NCHUNK_REG, nchunk);
