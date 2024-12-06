@@ -140,7 +140,7 @@ module router_arbiter
 
 endmodule
 
-module router_fork_arbiter
+module router_mcast_arbiter
   (
    input  logic clk,
    input  logic rst,
@@ -154,7 +154,6 @@ module router_fork_arbiter
 
   logic grant_locked;
   logic forwarding_head_input, forwarding_tail_input;
-//  logic rd_fifo;
   logic [4:0] saved_grant;
   // Lock current grant for flit between head and tail, tail included
   always_ff @(posedge clk) begin

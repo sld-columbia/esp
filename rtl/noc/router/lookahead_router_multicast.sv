@@ -137,16 +137,14 @@ module lookahead_router_multicast
   logic [4:0][4:0] final_routing_request;  // ri lint_check_waive NOT_READ
   logic [4:0][4:0] next_hop_routing;
 
-  //forking arbiter logic
-  logic [4:0][4:0] bp_frr, case_a, case_b, case_c, non_forking_req, new_final_routing_request, granted_req;
-//  logic [4:0][4:0] new_non_forking_req;
+  //mcast arbiter logic
+  logic [4:0][4:0] bp_frr, case_a, case_b, case_c, unicast_req, new_final_routing_request, granted_req;
   logic [4:0][2:0] routing_sum_vertical_b;
   logic [4:0][2:0] routing_sum_horizontal_initial;
-  logic [4:0] forking_input_initial;
-//  logic [4:0] forking_req_OR;
-  logic [4:0] non_forking_req_OR;
-  logic [4:0] forking_input_a, forking_input_c, conflict_output_b, grant_fork, grant_fork_arbiter;
-  logic grant_valid_fork;
+  logic [4:0] mcast_input_initial;
+  logic [4:0] unicast_req_OR;
+  logic [4:0] mcast_input_a, mcast_input_c, conflict_output_b, grant_mcast, grant_mcast_arbiter;
+  logic grant_valid_mcast;
 
   logic [4:0][3:0] transp_final_routing_request;
 
@@ -270,14 +268,13 @@ module lookahead_router_multicast
                                             saved_routing_request[g_i];
       assign bp_frr[g_i] = ((final_routing_request[g_i] & no_backpressure_single) == final_routing_request[g_i]) ? final_routing_request[g_i] : '0;	//possible change: put bp_frr logic right before output arbiters? --> if no_backpressure comes in late, this will get messy
       assign routing_sum_horizontal_initial[g_i] = bp_frr[g_i][0] + bp_frr[g_i][1] + bp_frr[g_i][2] + bp_frr[g_i][3] + bp_frr[g_i][4];
-      assign forking_input_initial[g_i] = routing_sum_horizontal_initial[g_i][2] | routing_sum_horizontal_initial[g_i][1];
-      assign non_forking_req[g_i] = {5{~forking_input_initial[g_i]}} & bp_frr[g_i];
+      assign mcast_input_initial[g_i] = routing_sum_horizontal_initial[g_i][2] | routing_sum_horizontal_initial[g_i][1];
+      assign unicast_req[g_i] = {5{~mcast_input_initial[g_i]}} & bp_frr[g_i];
 
-      assign granted_req[g_i] = {5{grant_fork_arbiter[g_i]}} & final_routing_request[g_i];
-//      assign new_final_routing_request[g_i] = case_c[g_i] | granted_req[g_i] | new_non_forking_req[g_i];
-      assign new_final_routing_request[g_i] = case_c[g_i] | granted_req[g_i] | non_forking_req[g_i];
+      assign granted_req[g_i] = {5{grant_mcast_arbiter[g_i]}} & final_routing_request[g_i];
+      assign new_final_routing_request[g_i] = case_c[g_i] | granted_req[g_i] | unicast_req[g_i];
       assign forwarding_tail_input[g_i] = fifo_head[g_i].header.preamble.tail & ~in_unvalid_flit[g_i];
-      assign grant_fork_arbiter[g_i] = grant_valid_fork & grant_fork[g_i];
+      assign grant_mcast_arbiter[g_i] = grant_valid_mcast & grant_mcast[g_i];
 
       // AckNack: stop data at input port if FIFO is full
       // CreditBased: send credits when reading from the input FIFO
@@ -299,11 +296,10 @@ module lookahead_router_multicast
       assign granted_req[g_i] = '0;
       assign new_final_routing_request[g_i] = '0;
       assign routing_sum_horizontal_initial[g_i] = '0;
-      assign forking_input_initial[g_i] = '0;
+      assign mcast_input_initial[g_i] = '0;
       assign forwarding_tail_input[g_i] = 1'b0;
-      assign grant_fork_arbiter[g_i] = 1'b0;
-      assign non_forking_req[g_i] = '0;
-//      assign new_non_forking_req[g_i] = '0;
+      assign grant_mcast_arbiter[g_i] = 1'b0;
+      assign unicast_req[g_i] = '0;
       assign bp_frr[g_i] = '0;
     end // if (Ports[g_i])
 
@@ -311,29 +307,20 @@ module lookahead_router_multicast
 
   always_comb begin
     for (int i = 0; i < 5; i++) begin
-      forking_input_a[i] = forking_input_initial[i];
+      mcast_input_a[i] = mcast_input_initial[i];
       for (int j = 0; j < 5; j++) begin
         if ((noc::int2noc_port(i) != input_direction[j]) && (state[j] != kReservePort)) begin
-          forking_input_a[i] &= ~(final_routing_request[i][j] & forking_input_initial[i]);
+          mcast_input_a[i] &= ~(final_routing_request[i][j] & mcast_input_initial[i]);
         end//end if
       end//end j for
-      case_a[i] = final_routing_request[i] & {5{forking_input_a[i]}};
+      case_a[i] = final_routing_request[i] & {5{mcast_input_a[i]}};
     end//end i for
 
-////  forks have priority
-//    case_b = case_a;
-//    for (int i = 0; i < 5; i++) begin//i = input
-//      new_non_forking_req[i] = non_forking_req[i];
-//      for (int j = 0; j < 5; j++) begin//j = output
-//        new_non_forking_req[i] &= {5{~(new_non_forking_req[i][j] & forking_req_OR[j])}};
-//      end//end j for
-//    end//end i for
-
-//  non-forks have priority
+//  unicasts have priority
     for (int i = 0; i < 5; i++) begin//i = input
       case_b[i] = case_a[i];
       for (int j = 0; j < 5; j++) begin//j = output
-        case_b[i] &= {5{~(case_b[i][j] & non_forking_req_OR[j])}};
+        case_b[i] &= {5{~(case_b[i][j] & unicast_req_OR[j])}};
       end//end j for
     end//end i for
 
@@ -344,26 +331,26 @@ module lookahead_router_multicast
     end//end i for
 
     for (int i = 0; i < 5; i++) begin//i = input
-      forking_input_c[i] = '0;
+      mcast_input_c[i] = '0;
       case_c[i] = case_b[i];
       for (int j = 0; j < 5; j++) begin//j = output
         if (conflict_output_b[j]) begin
           case_c[i] &= {5{~case_c[i][j]}};
-          forking_input_c[i] |= case_b[i][j];
+          mcast_input_c[i] |= case_b[i][j];
         end//end if
       end//end j for
     end//end i for
   end//end always_comb
 
-router_fork_arbiter fork_arbiter_i (
+router_mcast_arbiter mcast_arbiter_i (
   .clk(clk),
   .rst(rst),
-  .request(forking_input_c),
+  .request(mcast_input_c),
   .forwarding_head(in_valid_head),
   .forwarding_tail(forwarding_tail_input),
   .reset_arbiter(reset_arbiter),
-  .grant(grant_fork),
-  .grant_valid(grant_valid_fork)
+  .grant(grant_mcast),
+  .grant_valid(grant_valid_mcast)
 );  
 
   //////////////////////////////////////////////////////////////////////////////
@@ -372,8 +359,7 @@ router_fork_arbiter fork_arbiter_i (
   for (g_i = 0; g_i < 5; g_i++) begin : gen_output_control
     genvar g_j;
     if (Ports[g_i]) begin : gen_output_port_enabled
-//      assign forking_req_OR[g_i] = case_a[0][g_i] | case_a[1][g_i] | case_a[2][g_i] | case_a[3][g_i] | case_a[4][g_i];
-      assign non_forking_req_OR[g_i] = non_forking_req[0][g_i] | non_forking_req[1][g_i] | non_forking_req[2][g_i] | non_forking_req[3][g_i] | non_forking_req[4][g_i];
+      assign unicast_req_OR[g_i] = unicast_req[0][g_i] | unicast_req[1][g_i] | unicast_req[2][g_i] | unicast_req[3][g_i] | unicast_req[4][g_i];
       for (g_j = 0; g_j < 5; g_j++) begin : gen_transpose_routing
         // transpose current routing request for easier accesss, but
         // allow routing only to output port different from input port
@@ -677,10 +663,9 @@ router_fork_arbiter fork_arbiter_i (
       assign state[g_i] = kReservePort;
       assign sample_routing_config[g_i] = '0;
       assign input_direction[g_i] = noc::kNorthPort;
-//      assign forking_req_OR[g_i] = '0;
       assign reset_arbiter[g_i] = '0;
       assign rst_arbiter[g_i] = '0;
-      assign non_forking_req_OR[g_i] = '0;
+      assign unicast_req_OR[g_i] = '0;
     end // block: gen_output_port_enabled
 
   end // for gen_output_control
