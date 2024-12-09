@@ -1161,7 +1161,7 @@ end generate tlb_gen;
             increment_burst_count <= '1';
             if preamble = PREAMBLE_TAIL then
               --if producer sends less data than requested, then wait for another header
-              if msg = REQ_P2P and (burst_count < read_length - 1) then
+              if msg = REQ_P2P and (burst_count < read_length) then
                   dma_next <= reply_header;
               else
                 dma_tran_done <= '1';
