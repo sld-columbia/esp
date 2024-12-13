@@ -76,8 +76,8 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 #define MCAST_SHIFT_NDESTS 0
 #define MCAST_MASK_PACKET 0x1
 #define MCAST_SHIFT_PACKET 4
-#define MCAST_MASK_PACKET 0xF
-#define MCAST_SHIFT_PACKET 5
+#define MCAST_MASK_PACKET_SIZE 0xF
+#define MCAST_SHIFT_PACKET_SIZE 5
 
 /* bank(16 to 95) : USR (user defined) */
 
