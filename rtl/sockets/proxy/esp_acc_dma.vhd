@@ -661,7 +661,7 @@ begin  -- rtl
       elsif sample_wr   = '1' then
         size_r <= wr_size;
         if wr_ndests = conv_std_logic_vector(0, 5) then
-          p2p_mcast_ndests <= to_integer(unsigned(bankreg(P2P_REG)(P2P_BIT_MCAST_DESTS + P2P_WIDTH_MCAST_DESTS - 1 downto P2P_BIT_MCAST_DESTS)));
+          p2p_mcast_ndests <= to_integer(unsigned(bankreg(MCAST_REG)(MCAST_BIT_DESTS + MCAST_WIDTH_DESTS - 1 downto MCAST_BIT_DESTS)));
           p2p_store <= bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P);
         else
           p2p_mcast_ndests <= to_integer(unsigned(wr_ndests)) - 1;
@@ -1292,7 +1292,7 @@ begin  -- rtl
   process(apbi, bankreg)
     variable addr : integer range 0 to MAXREGNUM - 1;
   begin
-    addr := conv_integer(apbi.paddr(7 downto 2));
+    addr := conv_integer(apbi.paddr(8 downto 2));
 
     bankin <= (others => (others => '0'));
     sample <= (others => '0');

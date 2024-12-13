@@ -290,7 +290,7 @@ static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *
 #define esp_p2p_set_nsrcs(_dev, _n) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | (P2P_MASK_NSRCS & (_n - 1)), _dev->iomem + P2P_REG)
 #define esp_p2p_set_y(_dev, _n, _y) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)), _dev->iomem + P2P_REG)
 #define esp_p2p_set_x(_dev, _n, _x) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)), _dev->iomem + P2P_REG)
-#define esp_p2p_set_mcast_ndests(_dev, _n) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_MCAST_NDESTS & (_n - 1)) << P2P_SHIFT_MCAST_NDESTS), _dev->iomem + P2P_REG)
+#define esp_p2p_set_mcast_ndests(_dev, _n) iowrite32be(ioread32be(_dev->iomem + MCAST_REG) | ((MCAST_MASK_NDESTS & (_n - 1)) << MCAST_SHIFT_NDESTS), _dev->iomem + MCAST_REG)
 #define esp_yx_reg_set_y(_dev, _y, _n, _i) iowrite32be(ioread32be(_dev->iomem + YX_REG + _n) | (_y << (_i * 2 * YX_WIDTH + YX_WIDTH)), _dev->iomem + YX_REG + _n)
 #define esp_yx_reg_set_x(_dev, _x, _n, _i) iowrite32be(ioread32be(_dev->iomem + YX_REG + _n) | (_x << (_i * 2 * YX_WIDTH)), _dev->iomem + YX_REG + _n)
 

@@ -56,12 +56,10 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 #define P2P_MASK_SRC_IS_P2P BIT(2)
 #define P2P_MASK_DST_IS_P2P BIT(3)
 #define P2P_MASK_SRCS_YX 0x7
-#define P2P_MASK_MCAST_NDESTS 0xF
 #define P2P_BIT_SRCS_YX 4
 #define YX_WIDTH 4
 #define P2P_SHIFT_SRCS_Y(_n) (P2P_BIT_SRCS_YX + YX_WIDTH + _n * 2 * YX_WIDTH)
 #define P2P_SHIFT_SRCS_X(_n) (P2P_BIT_SRCS_YX + _n * 2 * YX_WIDTH)
-#define P2P_SHIFT_MCAST_NDESTS 28
 
 /* bank(10)       : SRC_OFFSET (offset in bytes from beginning of physical buffer) */
 #define SRC_OFFSET_REG 0x28
@@ -72,21 +70,44 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 /* bank(12)       : RESERVED */
 #define SPANDEX_REG 0x30
 
+/* bank(13)       : Point-to-point configuration */
+#define MCAST_REG 0x34
+#define MCAST_MASK_NDESTS 0xF
+#define MCAST_SHIFT_NDESTS 0
+
+/* bank(16 to 95) : USR (user defined) */
+
 /* YX_REGs contain a mapping from an accelerator number to a physical tile coordinate */
-/* bank(13)       : YX_REG - LSBs reserved for local tile's coordinates */
-#define YX_REG 0x34
+/* bank(96)       : YX_REG - LSBs reserved for local tile's coordinates */
+#define YX_REG 0x180
 #define YX_SHIFT_X 0
 #define YX_SHIFT_Y 4
 #define YX_MASK_YX 0xF
 #define YX_WIDTH 4
 
-/* bank(14)       : YX_REG_2 */
-#define YX_REG_2 0x38
+/* bank(97)       : YX_REG_2 */
+#define YX_REG_2 0x184
 
-/* bank(15)       : YX_REG_3 */
-#define YX_REG_3 0x3c
+/* bank(98)       : YX_REG_3 */
+#define YX_REG_3 0x188
 
-/* bank(16 to 63) : USR (user defined) */
+/* bank(99)       : YX_REG_2 */
+#define YX_REG_4 0x18C
+
+/* bank(100)      : YX_REG_3 */
+#define YX_REG_5 0x190
+
+/* bank(101)      : YX_REG_2 */
+#define YX_REG_6 0x194
+
+/* bank(102)      : YX_REG_3 */
+#define YX_REG_7 0x198
+
+/* bank(103)      : YX_REG_2 */
+#define YX_REG_8 0x19C
+
+/* bank(104)      : YX_REG_3 */
+#define YX_REG_9 0x1A0
 
 // Re-enable the following 3 registers if adding an SRAM expanding the register bank
 // /* bank(29)       : EXP_ADDR (bits 29:0 address an SRAM expanding the register bank) */

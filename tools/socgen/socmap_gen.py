@@ -131,7 +131,7 @@ SLD_APB_PINDEX = 40 + NTILE_MAX
 SLD_APB_ADDR = 0x100
 
 # default mask for accelerators' registers base address (256 Bytes regions per accelerator)
-SLD_APB_ADDR_MSK = 0xfff
+SLD_APB_ADDR_MSK = 0xffe
 
 # Number of bits for the custom I/O link interface
 IOLINK_BITS = 16
@@ -1124,7 +1124,7 @@ def print_mapping(fp, soc, esp_config):
     fp.write("  -- " + acc.uppercase_name + "\n")
 
     if acc.vendor == "sld":
-      address = SLD_APB_ADDR + acc.id
+      address = SLD_APB_ADDR + acc.id * 2
       address_ext = 0
       msk = SLD_APB_ADDR_MSK
       msk_ext = 0
@@ -2167,8 +2167,8 @@ def print_devtree(fp, soc, esp_config):
     acc = esp_config.accelerators[i]
     base = AHB2APB_HADDR[esp_config.cpu_arch] << 20
     if acc.vendor == "sld":
-      address = base + ((SLD_APB_ADDR + acc.id) << 8)
-      size = 0x100
+      address = base + ((SLD_APB_ADDR + acc.id * 2) << 8)
+      size = 0x200
     else:
       n = THIRDPARTY_N
       # Compute base address

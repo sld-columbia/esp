@@ -142,10 +142,17 @@ end;
     DST_OFFSET_REG     => '1',
     COHERENCE_REG      => '1',
     P2P_REG            => '1',
+    SPANDEX_REG        => '1',
+    MCAST_REG          => '1',
     YX_REG             => '1',
     YX_REG_2           => '1',
     YX_REG_3           => '1',
-    SPANDEX_REG        => '1',
+    YX_REG_4           => '1',
+    YX_REG_5           => '1',
+    YX_REG_6           => '1',
+    YX_REG_7           => '1',
+    YX_REG_8           => '1',
+    YX_REG_9           => '1',
     -- <<user_mask>>
     others             => '0');
 
