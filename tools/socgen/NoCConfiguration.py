@@ -3,7 +3,9 @@
 # Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
+import customtkinter as ctk
 from tkinter import *
+import tkinter as tk
 from tkinter.ttk import Separator
 from thirdparty import *
 import Pmw
@@ -20,6 +22,70 @@ from socmap_gen import NTILE_MAX
 from socmap_gen import NFULL_COHERENT_MAX
 from socmap_gen import NLLC_COHERENT_MAX
 
+class StyledComponents:
+  @staticmethod
+  def OptionMenu(parent, variable, values, width=140, font=("Arial", 10), anchor="center", state="normal", command=None):
+    """Styled option menu."""
+    menu = ctk.CTkOptionMenu(
+      parent, variable=variable, values=values, fg_color="white",
+      bg_color="#e8e8e8", button_color="lightgrey", width=width, text_color="black",
+      font=font, button_hover_color="grey", anchor=anchor,
+      dropdown_fg_color="white", dropdown_font=("Arial", 10),
+      dropdown_hover_color="#e8e8e8", state=state, command=command
+    )
+    return menu
+
+  @staticmethod
+  def CheckBox(frame, variable, text, row, column, command=None, onvalue=1, offvalue=0):
+    """Styled checkbox."""
+    checkbox = ctk.CTkCheckBox(frame, text=text, variable=variable, onvalue=onvalue, offvalue=offvalue,
+                                fg_color="green", border_color="grey", font=("Arial", 10), width=72,
+                                checkbox_width=18, checkbox_height=18, corner_radius=0, hover=False, command=command)
+    checkbox.grid(row=row, column=column, padx=15, pady=10, sticky="e")
+    return checkbox
+
+  @staticmethod
+  def LabelPack(frame, text, font=("Arial", 10), text_color="black", side="left", padx=(14,24), pady=10):
+    """Styled label."""
+    label = ctk.CTkLabel(frame, text=text, font=font, text_color=text_color)
+    label.pack(side=side, padx=padx, pady=pady)
+    return label
+
+  @staticmethod
+  def LabelGrid(frame, text, font=("Arial", 12, "bold"), text_color="black", row=0, column=0, padx=5, pady=20, columnspan=None, sticky="nsew"):
+    """Styled label."""
+    label = ctk.CTkLabel(frame, text=text, font=font, text_color=text_color)
+    label.grid(row=row, column=column, columnspan=columnspan, padx=padx, pady=pady, sticky=sticky)
+    return label
+  
+  @staticmethod
+  def Entry(frame, variable=None, width=45, font=("Arial", 10), placeholder_text_color="black"):
+    """Styled entry box."""
+    entry = ctk.CTkEntry(frame, textvariable=variable, width=width, font=font, placeholder_text_color=placeholder_text_color, border_width=0)
+    return entry
+  
+  @staticmethod
+  def CheckBox(frame, variable, text, row, column, command=None, onvalue=1, offvalue=0):
+    """Styled checkbox."""
+    checkbox = ctk.CTkCheckBox(frame, text=text, variable=variable, onvalue=onvalue, offvalue=offvalue,
+                                fg_color="green", border_color="grey", font=("Arial", 10), width=72,
+                                checkbox_width=18, checkbox_height=18, corner_radius=0, hover=False, command=command)
+    checkbox.grid(row=row, column=column, padx=15, pady=10, sticky="e")
+    return checkbox
+
+  @staticmethod
+  def CheckBoxPack(frame, text, variable):
+    checkbox = ctk.CTkCheckBox(frame, text=text, font=("Arial", 11), fg_color="green",
+                  border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18,
+                  hover=False, variable=variable)
+    checkbox.pack(padx=15, pady=10, anchor="w")
+    return checkbox
+  
+  @staticmethod
+  def Button(frame, text, font=("Arial", 10), width=100, command=None):
+    """Styled button."""
+    button = ctk.CTkButton(frame, text=text, font=font, width=width, command=command)
+    return button
 
 def isInt(s):
   try:
@@ -41,60 +107,57 @@ class Tile():
 
   def update_tile(self, soc):
     selection = self.ip_type.get()
-    self.label.config(text=selection)
-    self.point_label.forget()
-    self.point_select.forget()
     self.ip_list.forget()
-    self.ip_list.setitems(soc.list_of_ips)
-    self.ip_list.pack(side=LEFT)
+    self.ip_list.configure(values=soc.list_of_ips)
+    self.ip_list.pack(pady=10)
     if soc.IPs.PROCESSORS.count(selection):
-       self.label.config(bg="#ef6865")
+       self.frame.configure(fg_color="#ef6865")
     elif soc.IPs.MISC.count(selection):
-       self.label.config(bg="#fdfda0")
+       self.frame.configure(fg_color="#fdfda0")
     elif soc.IPs.MEM.count(selection):
-       self.label.config(bg="#6ab0d4")
+       self.frame.configure(fg_color="#6ab0d4")
     elif soc.IPs.SLM.count(selection):
-       self.label.config(bg="#c9a6e4")
+       self.frame.configure(fg_color="#c9a6e4")
     elif soc.IPs.ACCELERATORS.count(selection):
-       self.label.config(bg="#78cbbb")
-       self.point_label.pack(side=LEFT)
+       self.frame.configure(fg_color="#78cbbb")
+       self.point_label.configure(text_color="black")
        self.vendor = soc.IPs.VENDOR[selection]
        dma_width = str(soc.noc.dma_noc_width.get())
        display_points = [point for point in soc.IPs.POINTS[selection] if "dma" + str(dma_width) in point]
-       self.point_select.setitems(display_points)
+       self.point_select.configure(values=display_points)
        point = self.point.get()
-       self.point_select.setvalue("")
+       self.point_select.set("")
        for p in display_points:
          if point == p:
-           self.point_select.setvalue(point)
+           self.point_select.set(point)
            break;
          else:
-           self.point_select.setvalue(str(display_points[0]))
-       self.point_select.pack(side=LEFT)
+           self.point_select.set(str(display_points[0]))
+       self.point_select.configure(state="normal")
     else:
-       self.label.config(bg='white')
+       self.frame.configure(fg_color='white')
        if self.ip_type.get() != "empty":
          self.ip_type.set("empty")
 
     try:
       if soc.IPs.ACCELERATORS.count(selection) and soc.cache_en.get() == 1 and soc.noc.dma_noc_width.get() == soc.ARCH_BITS:
-        self.has_l2_selection.config(state=NORMAL)
+        self.has_l2_selection.configure(state="normal")
       else:
         if soc.IPs.PROCESSORS.count(selection) and soc.cache_en.get() == 1:
           self.has_l2.set(1)
         else:
           self.has_l2.set(0)
-        self.has_l2_selection.config(state=DISABLED)
+        self.has_l2_selection.configure(state="disabled")
       if soc.IPs.ACCELERATORS.count(selection) and (soc.TECH == "asic" or soc.TECH == "inferred"):
-        self.has_tdvfs_selection.config(state=NORMAL)
+        self.has_tdvfs_selection.configure(state="normal")
       else:
-        self.has_tdvfs_selection.config(state=DISABLED)
+        self.has_tdvfs_selection.configure(state="disabled")
       if soc.IPs.SLM.count(selection) and soc.TECH == "asic":
-        self.has_ddr_selection.config(state=NORMAL)
+        self.has_ddr_selection.configure(state="normal")
       else:
         # DDR SLM tile only supported w/ ASIC technology
         self.has_ddr.set(0)
-        self.has_ddr_selection.config(state=DISABLED)
+        self.has_ddr_selection.configure(state="disabled")
     except:
       pass
 
@@ -116,7 +179,6 @@ class Tile():
     self.has_l2 = IntVar()
     self.has_tdvfs = IntVar()
     self.has_ddr = IntVar()
-    self.label = Label(top)
 
 
 class NoC():
@@ -190,7 +252,7 @@ class NoC():
          tile = self.topology[y][x]
          selection = tile.ip_type.get()
          if soc.IPs.ACCELERATORS.count(selection):
-           if tile.point_select.getvalue() == "" and (not tile.ip_type.get().lower() in THIRDPARTY_COMPATIBLE):
+           if tile.point_select.get() == "" and (not tile.ip_type.get().lower() in THIRDPARTY_COMPATIBLE):
              return False
     return True
 
@@ -242,8 +304,7 @@ class NoC():
     self.monitor_dvfs = IntVar()
 
 #NoC configuration frame (middle)
-class NoCFrame(Pmw.ScrolledFrame):
-
+class NoCConfigFrame:
   current_nocx = 0
   current_nocy = 0
 
@@ -272,111 +333,123 @@ class NoCFrame(Pmw.ScrolledFrame):
     for x in range(0, len(list_items)):
       if len(list_items[x]) > width:
         width = len(list_items[x])
+    tile.frame = frame
+
     #creating tile
-    select_frame = Frame(frame)
-    select_frame.pack(side=TOP)
+    tile.type_frame = ctk.CTkFrame(frame, fg_color="#e8e8e8")
+    tile.type_frame.pack(anchor="center", pady=(15,0))
 
-    display_frame = Frame(frame)
-    display_frame.pack(side=TOP)
+    impl_frame = ctk.CTkFrame(frame, width=0, height=0, fg_color="#e8e8e8")
+    impl_frame.pack(anchor="center")
 
-    config_frame = Frame(frame)
-    config_frame.pack(side=TOP)
+    config_frame = ctk.CTkFrame(frame, fg_color="#e8e8e8")
+    config_frame.pack(anchor="center", padx=15, pady=(0,15))
 
-    tile.ip_list = Pmw.OptionMenu(select_frame, menubutton_font="TkDefaultFont 8",
-                   menubutton_textvariable=tile.ip_type,
-                   menubutton_width = width+2,
-                   items=list_items
-                  )
-    tile.ip_list.pack(side=LEFT)
-    tile.point_label = Label(select_frame, text="Impl.: ", width=5)
-    tile.point_select = Pmw.OptionMenu(select_frame, menubutton_font="TkDefaultFont 8",
-                   menubutton_textvariable=tile.point,
-                   menubutton_width = 10,
-                   items=[]
-                  )
+    tile_type_label = StyledComponents.LabelPack(tile.type_frame, text="Tile", font=("Arial", 11), text_color="black")
+    tile.ip_list = StyledComponents.OptionMenu(tile.type_frame, variable=tile.ip_type, values=list_items, command=self.changed)
+    tile.ip_list.pack(side="right", padx=20, pady=10)
+  
+    tile.point_label = StyledComponents.LabelPack(impl_frame, text="Impl.", font=("Arial", 10), text_color="grey", side="left", padx=(12,0), pady=10)
+    tile.point_select = StyledComponents.OptionMenu(impl_frame, variable=tile.point, values=[], state="disabled", command=self.changed)
+    tile.point_select.pack(side="right", padx=(18,1), pady=10)
+ 
+    tile.has_l2_selection = StyledComponents.CheckBox(config_frame, variable=tile.has_l2, text="Cache", row=0, column=0, command=self.changed)
+    tile.has_ddr_selection = StyledComponents.CheckBox(config_frame, variable=tile.has_ddr, text="DDR", row=0, column=1, command=self.changed)
+    tile.has_tdvfs_selection = StyledComponents.CheckBox(config_frame, variable=tile.has_tdvfs, text="DVFS", row=1, column=0, command=self.changed)
 
-    tile.label = Label(display_frame, text=tile.ip_type.get())
-    tile.label.config(height=4,bg='white', width=width+25)
-    tile.label.pack()
 
-    tile.has_l2_selection = Checkbutton(config_frame, text="Has cache", variable=tile.has_l2, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_l2_selection.grid(row=1, column=1)
-    tile.has_tdvfs_selection = Checkbutton(config_frame, text="Has DVFS", variable=tile.has_tdvfs, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_tdvfs_selection.grid(row=1, column=2)
-    tile.has_ddr_selection = Checkbutton(config_frame, text="Has DDR", variable=tile.has_ddr, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_ddr_selection.grid(row=1, column=3)
-    Separator(config_frame, orient="horizontal").grid(row=2, column=1, columnspan=3, ipadx=140, pady=3)
-
-  def __init__(self, soc, bottom_frame):
+  def __init__(self, soc, left_panel, right_panel):
     self.soc = soc
     self.noc = self.soc.noc
-    #configuration frame
-    self.noc_config_frame = Frame(bottom_frame)
-    Label(self.noc_config_frame, text="NoC configuration", font="TkDefaultFont 11 bold").pack(side = TOP)
-    self.config_noc_frame = Frame(self.noc_config_frame)
-    self.config_noc_frame.pack(side=TOP)
-    Label(self.config_noc_frame, text="Rows: ").pack(side = LEFT)
-    self.ROWS = Entry(self.config_noc_frame, width=3)
-    self.ROWS.pack(side = LEFT)
-    Label(self.config_noc_frame, text="Cols: ").pack(side = LEFT)
-    self.COLS = Entry(self.config_noc_frame, width=3)
-    self.COLS.pack(side = LEFT)
+    self.left_panel = left_panel
+    self.right_panel = right_panel
+    
+    self.noc_select_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
+    self.noc_select_frame.pack(padx=(8, 3), pady=(10, 20), fill="x")
+    self.title_label = StyledComponents.LabelGrid(self.noc_select_frame, text="NoC Configuration", font=("Arial", 12, "bold"), row=0, column=0, columnspan=5, padx=0, pady=10)
 
-    noc_width_choices = ["32", "64", "128", "256", "512", "1024"]
-    Label(self.noc_config_frame, text = "Coherence NoC Planes (1,2,3) Bitwidth: ", height=1).pack()
-    OptionMenu(self.noc_config_frame, self.noc.coh_noc_width, *noc_width_choices).pack()
-    Label(self.noc_config_frame, text = "DMA NoC Planes (4,6) Bitwidth: ", height=1).pack()
-    OptionMenu(self.noc_config_frame, self.noc.dma_noc_width, *noc_width_choices).pack()
-    Label(self.noc_config_frame, text = "MMIO/Irq NoC Plane (5) Bitwidth is always 32", height=1).pack(side=TOP)
-    Checkbutton(self.noc_config_frame, text="Enable Multicast on DMA Planes", variable=self.noc.multicast_en, anchor=W, width=30).pack()
-    max_multicast_choices = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"]
-    Label(self.noc_config_frame, text = "Maximum Multicast Destinations: ", height=1).pack()
-    OptionMenu(self.noc_config_frame, self.noc.max_mcast_dests, *max_multicast_choices).pack()
-    Button(self.noc_config_frame, text = "Config", command=self.create_noc).pack(side=TOP)
+    self.noc_rows_label = StyledComponents.LabelGrid(self.noc_select_frame, text="Rows:", font=("Arial", 10), row=1, column=0, padx=20, pady=20, sticky="e")
+    self.noc_rows = StyledComponents.Entry(self.noc_select_frame)
+    self.ROWS = self.noc_rows
+    self.noc_rows.insert(0, "2")
+    self.noc_rows.grid(row=1, column=1, padx=5, pady=20)
 
-    Label(self.noc_config_frame, height=1).pack()
-    Checkbutton(self.noc_config_frame, text="Monitor DDR bandwidth", variable=self.noc.monitor_ddr, anchor=W, width=20).pack()
-    Checkbutton(self.noc_config_frame, text="Monitor memory access", variable=self.noc.monitor_mem, anchor=W, width=20).pack()
-    Checkbutton(self.noc_config_frame, text="Monitor injection rate", variable=self.noc.monitor_inj, anchor=W, width=20).pack()
-    Checkbutton(self.noc_config_frame, text="Monitor router ports", variable=self.noc.monitor_routers, anchor=W, width=20).pack()
-    self.monitor_acc_selection = Checkbutton(self.noc_config_frame, text="Monitor accelerator status", variable=self.noc.monitor_accelerators, anchor=W, width=20)
-    self.monitor_acc_selection.pack()
-    Checkbutton(self.noc_config_frame, text="Monitor L2 Hit/Miss", variable=self.noc.monitor_l2, anchor=W, width=20).pack()
-    Checkbutton(self.noc_config_frame, text="Monitor LLC Hit/Miss", variable=self.noc.monitor_llc, anchor=W, width=20).pack()
-    self.monitor_dvfs_selection = Checkbutton(self.noc_config_frame, text="Monitor DVFS", variable=self.noc.monitor_dvfs, width=20, anchor=W)
-    self.monitor_dvfs_selection.pack()
+    self.noc_columns_label = StyledComponents.LabelGrid(self.noc_select_frame, text="Columns:", font=("Arial", 10), row=1, column=2, padx=20, pady=20, sticky="e")
+    self.noc_columns = StyledComponents.Entry(self.noc_select_frame)
+    self.COLS = self.noc_columns
+    self.noc_columns.insert(0, "2")
+    self.noc_columns.grid(row=1, column=3, padx=5, pady=20)
 
+    self.update_noc_button = StyledComponents.Button(self.noc_select_frame, text="Update NoC", font=("Arial", 10), command=self.create_noc)
+    self.update_noc_button.grid(row=1, column=4, padx=20, pady=20)
 
-    #statistics
-    Label(self.noc_config_frame, height=1).pack()
-    self.TOT_CPU = Label(self.noc_config_frame, anchor=W, width=20)
-    self.TOT_MEM = Label(self.noc_config_frame, anchor=W, width=25)
-    self.TOT_SLM = Label(self.noc_config_frame, anchor=W, width=25)
-    self.TOT_SLMDDR = Label(self.noc_config_frame, anchor=W, width=25)
-    self.TOT_MISC = Label(self.noc_config_frame, anchor=W, width=20)
-    self.TOT_ACC = Label(self.noc_config_frame, anchor=W, width=20)
-    self.TOT_CPU.pack(side=TOP, fill=BOTH)
-    self.TOT_MEM.pack(side=TOP, fill=BOTH)
-    self.TOT_SLM.pack(side=TOP, fill=BOTH)
-    self.TOT_SLMDDR.pack(side=TOP, fill=BOTH)
-    self.TOT_MISC.pack(side=TOP, fill=BOTH)
-    self.TOT_ACC.pack(side=TOP, fill=BOTH)
+    self.noc_config_frame = ctk.CTkFrame(self.noc_select_frame, fg_color="#ebebeb")
+    self.noc_config_frame.grid(row=2, column=0, columnspan=5, pady=10)
 
-    Label(self.noc_config_frame, height=1).pack()
+    self.noc_width_choices = ["32", "64", "128", "256", "512", "1024"]
 
-    #frame for the tiles
-    Pmw.ScrolledFrame.__init__(self, bottom_frame,
-           labelpos = 'n',
-           label_text = 'NoC Tile Configuration',
-           label_font="TkDefaultFont 11 bold",
-           usehullsize = 1,
-           horizflex='expand',
-           hull_width = 1180,
-           hull_height = 520,)
-    self.noc_frame = self.interior()
+    # Coherence NoC Planes
+    self.noc_planes_label = StyledComponents.LabelGrid(self.noc_config_frame, text="Coherence NoC Planes (1,2,3) Bitwidth", font=("Arial", 10), row=2, column=0, padx=15, pady=5, sticky="w")
+    
+    self.noc_planes_frame = ctk.CTkFrame(self.noc_config_frame)
+    self.noc_planes_frame.grid(row=2, column=1, pady=5, padx=15)
+    self.noc_planes_value_menu = StyledComponents.OptionMenu(self.noc_planes_frame, variable=self.noc.coh_noc_width, values=self.noc_width_choices, width=100, font=("Arial", 10))
+    self.noc_planes_value_menu.pack(anchor="center", padx=3, pady=3)
+
+    # DMA NoC Planes
+    self.dma_planes_label = StyledComponents.LabelGrid(self.noc_config_frame, text="DMA NoC Planes (4,6) Bitwidth", font=("Arial", 10), row=3, column=0, padx=15, pady=5, sticky="w")
+
+    self.dma_planes_value_frame = ctk.CTkFrame(self.noc_config_frame)
+    self.dma_planes_value_frame.grid(row=3, column=1, pady=5, padx=15)
+    self.dma_planes_value_menu = StyledComponents.OptionMenu(self.dma_planes_value_frame, variable=self.noc.dma_noc_width, values=self.noc_width_choices, width=100, font=("Arial", 10))
+    self.dma_planes_value_menu.pack(anchor="center", padx=3, pady=3)
+
+    self.mmio_label = StyledComponents.LabelGrid(self.noc_config_frame, text="MMIO/Irq NoC Plane (5) Bitwidth", font=("Arial", 10), row=4, column=0, padx=15, pady=5, sticky="w")
+
+    self.mmio_value_frame = ctk.CTkFrame(self.noc_config_frame)
+    self.mmio_value_frame.grid(row=4, column=1, pady=5, padx=15)
+    self.mmio_value = ctk.CTkLabel(self.mmio_value_frame, text="32", width=100, font=("Arial", 10, "bold"))
+    self.mmio_value.pack(anchor="center", padx=3, pady=3)
+
+    # Enable Multicast
+    self.enable_multicast_cb = ctk.CTkCheckBox(
+        self.noc_config_frame, variable=self.noc.multicast_en, text="Enable Multicast on DMA Planes", font=("Arial", 11),
+        fg_color="green", border_color="grey", width=0, corner_radius=0, checkbox_width=18, checkbox_height=18, hover=False
+    )
+    self.enable_multicast_cb.grid(row=5, column=0, sticky="w", padx=15, pady=10)
+
+    self.max_multicast_choices = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"]
+    # Maximum Multicast Destinations
+    self.max_multicast_label = StyledComponents.LabelGrid(self.noc_config_frame, text="Maximum Multicast Destinations", font=("Arial", 11), row=6, column=0, padx=15, pady=5, sticky="w")
+
+    self.max_multicast_value_frame = ctk.CTkFrame(self.noc_config_frame)
+    self.max_multicast_value_frame.grid(row=6, column=1, pady=5, padx=15)
+    self.max_multicast_value_menu = StyledComponents.OptionMenu(self.max_multicast_value_frame, variable=self.noc.max_mcast_dests, values=self.max_multicast_choices, width=100, font=("Arial", 10))
+    self.max_multicast_value_menu.pack(anchor="center", padx=3, pady=3)
+
+    self.probe_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
+    self.probe_frame.pack(padx=(8,3), pady=10, fill="x")
+    self.title_label = ctk.CTkLabel(self.probe_frame, text="Probe Configuration", font=("Arial", 12, "bold"))
+    self.title_label.pack(pady=10)
+
+    self.ddr_cb = ctk.CTkCheckBox(self.probe_frame, text="Monitor DDR bandwidth", variable=self.noc.monitor_ddr)
+
+    self.mem_access_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor Memory Access", variable=self.noc.monitor_mem)
+
+    self.inj_rate_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor Injection Rate", variable=self.noc.monitor_inj)
+
+    self.router_ports_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor Router Ports", variable=self.noc.monitor_routers)
+
+    self.acc_status_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor Accelerator Status", variable=self.noc.monitor_accelerators)
+
+    self.l2_hm_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor L2 Hit/Miss", variable=self.noc.monitor_l2)
+
+    self.llc_hm_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor LLC Hit/Miss", variable=self.noc.monitor_llc)
+
+    self.dvfs_cb = StyledComponents.CheckBoxPack(self.probe_frame, text="Monitor DVFS", variable=self.noc.monitor_dvfs)
 
   def update_msg(self):
-    self.done.config(state=DISABLED)
+    self.gen_soc_config.configure(state="disabled")
     tot_tiles = self.noc.rows * self.noc.cols
     tot_cpu = self.noc.get_cpu_num(self.soc)
     if self.soc.cache_en.get():
@@ -398,29 +471,22 @@ class NoCFrame(Pmw.ScrolledFrame):
         selection = tile.ip_type.get()
         if self.soc.IPs.MISC.count(selection):
           tot_io += 1
-    #update statistics
-    self.TOT_CPU.config(text=" Num CPUs: " + str(tot_cpu))
-    self.TOT_MEM.config(text=" Num memory controllers: " + str(tot_mem))
-    self.TOT_SLM.config(text=" Num local memory tiles using on-chip memory: " + str(tot_slm))
-    self.TOT_SLMDDR.config(text=" Num local memory tiles using off-chip DDR memory: " + str(tot_slmddr))
-    self.TOT_MISC.config(text=" Num I/O tiles: " + str(tot_io))
-    self.TOT_ACC.config(text=" Num accelerators: " + str(tot_acc))
 
     if self.soc.noc.get_acc_num(self.soc) > 0:
-      self.monitor_acc_selection.config(state=NORMAL)
+      self.acc_status_cb.configure(state="normal")
     else:
-      self.monitor_acc_selection.config(state=DISABLED)
+      self.acc_status_cb.configure(state="disabled")
       self.noc.monitor_accelerators.set(0)
 
     if self.soc.noc.has_dvfs():
-      self.monitor_dvfs_selection.config(state=NORMAL)
+      self.dvfs_cb.configure(state="normal")
     else:
-      self.monitor_dvfs_selection.config(state=DISABLED)
+      self.dvfs_cb.configure(state="disabled")
       self.noc.monitor_dvfs.set(0)
 
     #update message box
     self.message.delete(0.0, END)
-    self.cpu_frame.set_cpu_specific_labels(self.soc)
+    self.soc_config_frame.set_cpu_specific_labels(self.soc)
 
     string = ""
     if (tot_cpu > 0) and \
@@ -471,7 +537,7 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "INFO: Multicast NoC is in beta testing\n"
       if self.noc.dma_noc_width.get() != self.soc.ARCH_BITS:
         string += "INFO: to enable accelerator private caches, DMA NoC width must match CPU architecture size (64 bits for Ariane, 32 for Leon3 and Ibex)\n"
-      self.done.config(state=NORMAL)
+      self.gen_soc_config.configure(state="normal")
     else:
       if (self.noc.cols > 16 or self.noc.rows > 16):
         string += "Maximum number of rows and columns is 16.\n"
@@ -549,14 +615,13 @@ class NoCFrame(Pmw.ScrolledFrame):
     # Update message box
     self.message.insert(0.0, string)
 
-  def set_message(self, message, cfg_frame, cpu_frame, done):
+  def set_message(self, message, soc_config_frame, gen_soc_config):
     self.message = message
-    self.cfg_frame = cfg_frame
-    self.cpu_frame = cpu_frame
-    self.done = done
+    self.soc_config_frame = soc_config_frame
+    self.gen_soc_config = gen_soc_config
 
   def create_noc(self):
-    self.pack(side=LEFT,fill=BOTH,expand=YES)
+    #self.pack(side=LEFT,fill=BOTH,expand=YES)
     if isInt(self.ROWS.get()) == False or isInt(self.COLS.get()) == False:
        return
     #destroy current topology
@@ -566,15 +631,15 @@ class NoCFrame(Pmw.ScrolledFrame):
       self.noc_tiles = []
       self.row_frames = []
     #create new topology
-    self.noc.create_topology(self.noc_frame, int(self.ROWS.get()), int(self.COLS.get()))
+    self.noc.create_topology(self.right_panel, int(self.ROWS.get()), int(self.COLS.get()))
     for y in range(0, int(self.ROWS.get())):
-      self.row_frames.append(Frame(self.noc_frame, borderwidth=2, relief=RIDGE))
+      self.row_frames.append(ctk.CTkFrame(self.right_panel))
       self.row_frames[y].pack(side=TOP)
       self.noc_tiles.append([])
       for x in range(0, int(self.COLS.get())):
-        self.noc_tiles[y].append(Frame(self.row_frames[y], borderwidth=2, relief=RIDGE))
+        self.noc_tiles[y].append(ctk.CTkFrame(self.row_frames[y]))
         self.noc_tiles[y][x].pack(side=LEFT)
-        Label(self.noc_tiles[y][x], text="("+str(y)+","+str(x)+")").pack()
+        # Label(self.noc_tiles[y][x], text="("+str(y)+","+str(x)+")").pack()
         self.create_tile(self.noc_tiles[y][x], self.noc.topology[y][x])
         if len(self.noc.topology[y][x].ip_type.get()) == 0:
           self.noc.topology[y][x].ip_type.set("empty") # default value
@@ -582,7 +647,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     for y in range(0, int(self.ROWS.get())):
       for x in range(0, int(self.COLS.get())):
         tile = self.noc.topology[y][x]
-        tile.ip_type.trace('w', self.changed)
+        # tile.ip_type.trace('w', self.changed)
     self.soc.IPs = Components(self.soc.TECH, self.noc.dma_noc_width.get(), self.soc.CPU_ARCH.get())
     self.soc.update_list_of_ips()
     self.changed()
