@@ -112,5 +112,7 @@ void esp_set_acc_yx_table(struct esp_device *dev, struct esp_device *srcs, unsig
 #define esp_p2p_set_mcast_ndests(_dev, _n) iowrite32(_dev, MCAST_REG, ioread32(_dev, MCAST_REG) | ((MCAST_MASK_NDESTS & (_n - 1)) << MCAST_SHIFT_NDESTS))
 #define esp_yx_reg_set_y(_dev, _y, _n, _i) iowrite32(_dev, YX_REG + _n, ioread32(_dev, YX_REG + _n) | (_y << (_i * 2 * YX_WIDTH + YX_WIDTH)))
 #define esp_yx_reg_set_x(_dev, _x, _n, _i) iowrite32(_dev, YX_REG + _n, ioread32(_dev, YX_REG + _n) | (_x << (_i * 2 * YX_WIDTH)))
+#define esp_p2p_set_mcast_packet(_dev, _n) iowrite32(_dev, MCAST_REG, ioread32(_dev, MCAST_REG) | ((MCAST_MASK_PACKET & _n) << MCAST_SHIFT_PACKET))
+#define esp_p2p_set_mcast_packet_size(_dev, _n) iowrite32(_dev, MCAST_REG, ioread32(_dev, MCAST_REG) | ((MCAST_MASK_PACKET_SIZE & (_n - 2)) << MCAST_SHIFT_PACKET_SIZE))
 
 #endif /* __ESP_PROBE_H__ */

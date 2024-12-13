@@ -64,11 +64,14 @@ package esp_acc_regmap is
   constant SPANDEX_REG : integer range 0 to MAXREGNUM - 1 := 12;
 
   -- bank(13)       : MCAST_REG (mulitcast configuration)
-  -- |3            0|
-  -- | MCAST NDESTS |
+  -- |8                 5|4            4|3            0|
+  -- | MCAST PACKET_SIZE | MCAST PACKET | MCAST NDESTS |
   constant MCAST_REG : integer range 0 to MAXREGNUM - 1 := 13;
   constant MCAST_BIT_DESTS : integer range 0 to 31 := 0;
   constant MCAST_WIDTH_DESTS : integer range 0 to 31 := 4;
+  constant MCAST_BIT_PACKET : integer range 0 to 31 := 4;
+  constant MCAST_BIT_PACKET_SIZE : integer range 0 to 31 := 5;
+  constant MCAST_WIDTH_PACKET_SIZE : integer range 0 to 31 := 4;
 
   -- bank(16 to 95) : USR (user defined)
 

@@ -56,7 +56,8 @@ module lookahead_router_multicast
     parameter int unsigned DataWidth = 64,
     parameter int unsigned PortWidth = DataWidth + $bits(noc::preamble_t),
     parameter bit [4:0] Ports = noc::AllPorts,
-    parameter integer DEST_SIZE = 6
+    parameter integer DEST_SIZE = 6,
+    parameter integer QUEUE_SIZE = 4
     )
   (
    input  logic clk,
@@ -85,6 +86,9 @@ module lookahead_router_multicast
 
   localparam int unsigned ReservedWidth =
     DataWidth - (1 + DEST_SIZE) * $bits(noc::xy_t) - $bits(noc::message_t) - DEST_SIZE - $bits(noc::direction_t);
+
+  parameter int unsigned CreditsWidth = $clog2(QUEUE_SIZE + 1);
+  typedef logic [4:0][CreditsWidth-1:0] credits_t;
 
   // Modified the structure to add more destinations and a valid bit for each destination
   typedef struct packed {
@@ -133,20 +137,29 @@ module lookahead_router_multicast
   logic [4:0][4:0] final_routing_request;  // ri lint_check_waive NOT_READ
   logic [4:0][4:0] next_hop_routing;
 
+  //mcast arbiter logic
+  logic [4:0][4:0] bp_frr, case_a, case_b, case_c, unicast_req, new_final_routing_request, granted_req;
+  logic [4:0][2:0] routing_sum_vertical_b;
+  logic [4:0][2:0] routing_sum_horizontal_initial;
+  logic [4:0] mcast_input_initial;
+  logic [4:0] unicast_req_OR;
+  logic [4:0] mcast_input_a, mcast_input_c, conflict_output_b, grant_mcast, grant_mcast_arbiter;
+  logic grant_valid_mcast;
+
   logic [4:0][3:0] transp_final_routing_request;
 
   logic [4:0][4:0] enhanc_routing_configuration;
+  logic [4:0][4:0] saved_enhanc_routing_configuration;
 
-  logic [4:0][3:0] routing_configuration;
-  logic [4:0][3:0] saved_routing_configuration;
-  logic [4:0][3:0] grant, granted;
-  logic [4:0][4:0] transp_grant;
+  logic [4:0][3:0] grant;
   logic [4:0] grant_valid;
-  logic [4:0][4:0] backpressure_tmp;
+  logic [4:0][4:0] backpressure_mcast_tmp;
 
   logic [4:0][4:0] rd_fifo;
-  logic [4:0] no_backpressure_all;
+  logic [4:0] no_backpressure_mcast;
   logic [4:0] no_backpressure_single;
+
+  logic [4:0] backpressure_single;
   logic [4:0] rd_fifo_or;
 
   logic [4:0] in_unvalid_flit;
@@ -157,9 +170,9 @@ module lookahead_router_multicast
   logic [4:0] empty;
   logic [4:0] wr_fifo;
 
-  noc::noc_port_t [4:0] input_direction;
+  noc::noc_port_t [4:0] input_direction; 
 
-  noc::credits_t credits;
+  credits_t credits;
 
   noc::direction_t [4:0] current_routing;
 
@@ -167,9 +180,11 @@ module lookahead_router_multicast
 
   logic [4:0] forwarding_tail;
   logic [4:0] forwarding_head;
+  logic [4:0] forwarding_tail_input;
   logic [4:0] forwarding_in_progress;
   logic [4:0] insert_lookahead_routing;
   logic [4:0] sample_routing_config;
+  logic [4:0] reset_arbiter, rst_arbiter;
 
   assign data_in[noc::kNorthPort] = data_n_in;
   assign data_in[noc::kSouthPort] = data_s_in;
@@ -218,7 +233,7 @@ module lookahead_router_multicast
       router_fifo
         #(
           .BypassEnable(FifoBypassEnable),
-          .Depth(noc::PortQueueDepth),
+          .Depth(QUEUE_SIZE),
           .Width(PortWidth)
           )
       input_queue (
@@ -251,6 +266,15 @@ module lookahead_router_multicast
 
       assign final_routing_request[g_i] = in_valid_head[g_i] ? fifo_head[g_i].header.routing :
                                             saved_routing_request[g_i];
+      assign bp_frr[g_i] = ((final_routing_request[g_i] & no_backpressure_single) == final_routing_request[g_i]) ? final_routing_request[g_i] : '0;	//possible change: put bp_frr logic right before output arbiters? --> if no_backpressure comes in late, this will get messy
+      assign routing_sum_horizontal_initial[g_i] = bp_frr[g_i][0] + bp_frr[g_i][1] + bp_frr[g_i][2] + bp_frr[g_i][3] + bp_frr[g_i][4];
+      assign mcast_input_initial[g_i] = routing_sum_horizontal_initial[g_i][2] | routing_sum_horizontal_initial[g_i][1];
+      assign unicast_req[g_i] = {5{~mcast_input_initial[g_i]}} & bp_frr[g_i];
+
+      assign granted_req[g_i] = {5{grant_mcast_arbiter[g_i]}} & final_routing_request[g_i];
+      assign new_final_routing_request[g_i] = case_c[g_i] | granted_req[g_i] | unicast_req[g_i];
+      assign forwarding_tail_input[g_i] = fifo_head[g_i].header.preamble.tail & ~in_unvalid_flit[g_i];
+      assign grant_mcast_arbiter[g_i] = grant_valid_mcast & grant_mcast[g_i];
 
       // AckNack: stop data at input port if FIFO is full
       // CreditBased: send credits when reading from the input FIFO
@@ -269,48 +293,91 @@ module lookahead_router_multicast
       assign rd_fifo_or[g_i] = '0;
       assign wr_fifo[g_i] = '0;
       assign in_valid_head[g_i] = 1'b0;
-
+      assign granted_req[g_i] = '0;
+      assign new_final_routing_request[g_i] = '0;
+      assign routing_sum_horizontal_initial[g_i] = '0;
+      assign mcast_input_initial[g_i] = '0;
+      assign forwarding_tail_input[g_i] = 1'b0;
+      assign grant_mcast_arbiter[g_i] = 1'b0;
+      assign unicast_req[g_i] = '0;
+      assign bp_frr[g_i] = '0;
     end // if (Ports[g_i])
 
   end  // for gen_input_fifo
+
+  always_comb begin
+    for (int i = 0; i < 5; i++) begin
+      mcast_input_a[i] = mcast_input_initial[i];
+      for (int j = 0; j < 5; j++) begin
+        if ((noc::int2noc_port(i) != input_direction[j]) && (state[j] != kReservePort)) begin
+          mcast_input_a[i] &= ~(final_routing_request[i][j] & mcast_input_initial[i]);
+        end//end if
+      end//end j for
+      case_a[i] = final_routing_request[i] & {5{mcast_input_a[i]}};
+    end//end i for
+
+//  unicasts have priority
+    for (int i = 0; i < 5; i++) begin//i = input
+      case_b[i] = case_a[i];
+      for (int j = 0; j < 5; j++) begin//j = output
+        case_b[i] &= {5{~(case_b[i][j] & unicast_req_OR[j])}};
+      end//end j for
+    end//end i for
+
+
+    for (int i = 0; i < 5; i++) begin	//i = output
+      routing_sum_vertical_b[i] = case_b[0][i] + case_b[1][i] + case_b[2][i] + case_b[3][i] + case_b[4][i];
+      conflict_output_b[i] = routing_sum_vertical_b[i][2] | routing_sum_vertical_b[i][1];
+    end//end i for
+
+    for (int i = 0; i < 5; i++) begin//i = input
+      mcast_input_c[i] = '0;
+      case_c[i] = case_b[i];
+      for (int j = 0; j < 5; j++) begin//j = output
+        if (conflict_output_b[j]) begin
+          case_c[i] &= {5{~case_c[i][j]}};
+          mcast_input_c[i] |= case_b[i][j];
+        end//end if
+      end//end j for
+    end//end i for
+  end//end always_comb
+
+router_mcast_arbiter mcast_arbiter_i (
+  .clk(clk),
+  .rst(rst),
+  .request(mcast_input_c),
+  .forwarding_head(in_valid_head),
+  .forwarding_tail(forwarding_tail_input),
+  .reset_arbiter(reset_arbiter),
+  .grant(grant_mcast),
+  .grant_valid(grant_valid_mcast)
+);  
 
   //////////////////////////////////////////////////////////////////////////////
   // Output crossbar and arbitration
   //////////////////////////////////////////////////////////////////////////////
   for (g_i = 0; g_i < 5; g_i++) begin : gen_output_control
     genvar g_j;
-    for (g_j = 0; g_j < 5; g_j++) begin : gen_transpose_routing
-      if (g_j < g_i) begin : gen_transpose_routin_j_lt_i
-        assign transp_grant[g_j][g_i] = granted[g_i][g_j];
-      end else if (g_j > g_i) begin : gen_transpose_routin_j_gt_i
-        assign transp_grant[g_j][g_i] = granted[g_i][g_j-1];
-      end else begin : gen_transpose_routin_j_eq_i
-        assign transp_grant[g_j][g_i] = 1'b0;
-      end
-    end // for gen_transpose_routing
-
     if (Ports[g_i]) begin : gen_output_port_enabled
-
+      assign unicast_req_OR[g_i] = unicast_req[0][g_i] | unicast_req[1][g_i] | unicast_req[2][g_i] | unicast_req[3][g_i] | unicast_req[4][g_i];
       for (g_j = 0; g_j < 5; g_j++) begin : gen_transpose_routing
         // transpose current routing request for easier accesss, but
         // allow routing only to output port different from input port
         if (g_j < g_i) begin : gen_transpose_routin_j_lt_i
-          assign transp_final_routing_request[g_i][g_j] = final_routing_request[g_j][g_i];
-          assign enhanc_routing_configuration[g_i][g_j] = routing_configuration[g_i][g_j];
+          assign transp_final_routing_request[g_i][g_j] = new_final_routing_request[g_j][g_i];
+          assign enhanc_routing_configuration[g_i][g_j] = grant[g_i][g_j];
         end else if (g_j > g_i) begin : gen_transpose_routin_j_gt_i
-          assign transp_final_routing_request[g_i][g_j-1] = final_routing_request[g_j][g_i];
-          assign enhanc_routing_configuration[g_i][g_j] = routing_configuration[g_i][g_j-1];
+          assign transp_final_routing_request[g_i][g_j-1] = new_final_routing_request[g_j][g_i];
+          assign enhanc_routing_configuration[g_i][g_j] = grant[g_i][g_j-1];
         end else begin : gen_transpose_routin_j_eq_i
           assign enhanc_routing_configuration[g_i][g_j] = 1'b0;
         end
       end // for gen_transpose_routing
 
-      assign input_direction[g_i] = noc::get_direction(enhanc_routing_configuration[g_i]);
-
       // Arbitration
       router_arbiter arbiter_i (
         .clk(clk),
-        .rst(rst),
+        .rst(rst_arbiter[g_i]),
         .request(transp_final_routing_request[g_i]),
         .forwarding_head(forwarding_head[g_i]),
         .forwarding_tail(forwarding_tail[g_i]),
@@ -318,23 +385,14 @@ module lookahead_router_multicast
         .grant_valid(grant_valid[g_i])
       );
 
-      always_ff @(posedge clk) begin
-        if (rst) begin
-          granted[g_i] = '0;
-        end else begin
-          if (grant_valid[g_i] && no_backpressure_single[g_i]) begin
-            granted[g_i] = grant[g_i];
-          end else if (forwarding_tail[g_i]) begin
-            granted[g_i] = '0;
-          end
-        end
-      end
+      assign rst_arbiter[g_i] = rst || reset_arbiter[g_i];
+      assign input_direction[g_i] = noc::get_direction(saved_enhanc_routing_configuration[g_i]);
 
-      assign rd_fifo[g_i][noc::kNorthPort] = no_backpressure_all[g_i] && forwarding_in_progress[g_i] && (enhanc_routing_configuration[g_i] == noc::goNorth);
-      assign rd_fifo[g_i][noc::kSouthPort] = no_backpressure_all[g_i] && forwarding_in_progress[g_i] && (enhanc_routing_configuration[g_i] == noc::goSouth);
-      assign rd_fifo[g_i][noc::kEastPort] = no_backpressure_all[g_i] && forwarding_in_progress[g_i] && (enhanc_routing_configuration[g_i] == noc::goEast);
-      assign rd_fifo[g_i][noc::kWestPort] = no_backpressure_all[g_i] && forwarding_in_progress[g_i] && (enhanc_routing_configuration[g_i] == noc::goWest);
-      assign rd_fifo[g_i][noc::kLocalPort] = no_backpressure_all[g_i] && forwarding_in_progress[g_i] && (enhanc_routing_configuration[g_i] == noc::goLocal);
+      assign rd_fifo[g_i][noc::kNorthPort] = no_backpressure_mcast[g_i] && forwarding_in_progress[g_i] && saved_enhanc_routing_configuration[g_i][noc::kNorthPort];
+      assign rd_fifo[g_i][noc::kSouthPort] = no_backpressure_mcast[g_i] && forwarding_in_progress[g_i] && saved_enhanc_routing_configuration[g_i][noc::kSouthPort];
+      assign rd_fifo[g_i][noc::kEastPort] = no_backpressure_mcast[g_i] && forwarding_in_progress[g_i] && saved_enhanc_routing_configuration[g_i][noc::kEastPort];
+      assign rd_fifo[g_i][noc::kWestPort] = no_backpressure_mcast[g_i] && forwarding_in_progress[g_i] && saved_enhanc_routing_configuration[g_i][noc::kWestPort];
+      assign rd_fifo[g_i][noc::kLocalPort] = no_backpressure_mcast[g_i] && forwarding_in_progress[g_i] && saved_enhanc_routing_configuration[g_i][noc::kLocalPort];
 
       always_comb begin
         destination_arr_temp[g_i] = 'b0;
@@ -347,12 +405,19 @@ module lookahead_router_multicast
 
       // Sample current routing configuration
       always_ff @(posedge clk) begin
-        if (forwarding_in_progress[g_i] | sample_routing_config[g_i]) begin
-          saved_routing_configuration[g_i] <= routing_configuration[g_i];
+        if (rst) begin
+          saved_enhanc_routing_configuration[g_i] <= '0;
         end
-        else if (forwarding_tail[g_i])
-          saved_routing_configuration[g_i] <= 'h0;
+        else begin
+          if (sample_routing_config[g_i]) begin
+            saved_enhanc_routing_configuration[g_i] <= enhanc_routing_configuration[g_i];
+          end
+          else if (state[g_i] == kReservePort) begin
+            saved_enhanc_routing_configuration[g_i] <= '0;
+          end
+        end
       end
+
 
       // Set to overwrite routing info only on the head flit
       always_ff @(posedge clk) begin
@@ -360,10 +425,10 @@ module lookahead_router_multicast
           // First flit must be head
           insert_lookahead_routing[g_i] <= 1'b1;
         end else begin
-          if (forwarding_tail[g_i] && forwarding_in_progress[g_i]) begin
+          if (forwarding_tail[g_i]) begin
             // Next flit will be head (convers single-flit packet)
             insert_lookahead_routing[g_i] <= 1'b1;
-          end else if (forwarding_head[g_i] && forwarding_in_progress[g_i]) begin
+          end else if (forwarding_head[g_i]) begin
             // Next flit will not be head
             insert_lookahead_routing[g_i] <= 1'b0;
           end
@@ -379,7 +444,7 @@ module lookahead_router_multicast
       for (int j = 0; j < 5; j++) begin
         fifo_head_temp[g_i][j] = fifo_head[j].header.preamble.head ? fifo_head[j].header : fifo_head[j].flit;
         // j is the current input port for output port g_i
-        if (enhanc_routing_configuration[g_i] == (1 << j)) begin
+        if (saved_enhanc_routing_configuration[g_i][j]) begin
 	    // invalidate destinations that are no longer on the current multicast path
           if (noc::int2noc_port(g_i) == noc::kNorthPort) begin
             for (int index = 0; index < DEST_SIZE; index++) begin
@@ -460,7 +525,7 @@ module lookahead_router_multicast
         last_flit[g_i] <= '0;
       end else begin
         if (FifoBypassEnable) begin
-          if (no_backpressure_all[g_i] & forwarding_in_progress[g_i] & ~out_unvalid_flit[g_i]) begin
+          if (no_backpressure_mcast[g_i] & forwarding_in_progress[g_i] & ~out_unvalid_flit[g_i]) begin
             last_flit[g_i] <= data_out_crossbar[g_i];
           end
         end else begin
@@ -473,48 +538,50 @@ module lookahead_router_multicast
 
     // Flow control
     for (g_j = 0 ; g_j < 5; g_j++) begin
-      assign backpressure_tmp[g_i][g_j] = ((g_i == g_j) || ((|enhanc_routing_configuration[g_i])
-                 && (enhanc_routing_configuration[g_j] == enhanc_routing_configuration[g_i])))
-                 && (FifoBypassEnable ? stop_in[g_j] : credits[g_j] == '0);
+      if (g_i == g_j) begin
+        assign backpressure_mcast_tmp[g_i][g_j] = backpressure_single[g_j];
+      end else begin
+        assign backpressure_mcast_tmp[g_i][g_j] = (state[g_i] != kReservePort) && (saved_enhanc_routing_configuration[g_i] == saved_enhanc_routing_configuration[g_j]) && backpressure_single[g_j];
+      end
     end
-    assign no_backpressure_single[g_i] = FifoBypassEnable ? ~stop_in[g_i] : credits != '0;
-    assign no_backpressure_all[g_i] = ~(|backpressure_tmp[g_i]);
+    
+    assign backpressure_single[g_i] = FifoBypassEnable ? stop_in[g_i] : credits == '0;
+    assign no_backpressure_single[g_i] = ~backpressure_single[g_i];
+    assign no_backpressure_mcast[g_i] = ~(|backpressure_mcast_tmp[g_i]);
     assign forwarding_tail[g_i] = data_out_crossbar[g_i].header.preamble.tail &
-                                   ~out_unvalid_flit[g_i] & no_backpressure_all[g_i];
+                                   ~out_unvalid_flit[g_i] & no_backpressure_mcast[g_i];
     assign forwarding_head[g_i] = data_out_crossbar[g_i].header.preamble.head &
-                                    ~out_unvalid_flit[g_i] & no_backpressure_all[g_i];
+                                    ~out_unvalid_flit[g_i] & forwarding_in_progress[g_i];
+
 
     always_comb begin : flow_control_fsm
       new_state[g_i] = state[g_i];
-      routing_configuration[g_i] = '0;
       forwarding_in_progress[g_i] = 1'b0;
       sample_routing_config[g_i] = 1'b0;
+      reset_arbiter[g_i] = 1'b0;
 
       unique case (state[g_i])
         kReservePort : begin
-            if (grant_valid[g_i] & no_backpressure_single[g_i]) begin
-                routing_configuration[g_i] = grant[g_i];
-                sample_routing_config[g_i] = 1'b1;
-                new_state[g_i] = kHeadFlit;
-            end
+          if (grant_valid[g_i]) begin
+            sample_routing_config[g_i] = 1'b1;
+            new_state[g_i] = kHeadFlit;
+          end
         end
 
         kHeadFlit : begin
-          routing_configuration[g_i] = saved_routing_configuration[g_i];
-          if (((transp_grant[input_direction[g_i]] & final_routing_request[input_direction[g_i]]) ==
-                final_routing_request[input_direction[g_i]]) & no_backpressure_all[g_i]) begin
             // First flit of a new packet can be forwarded
+          if (no_backpressure_mcast[g_i]) begin
             forwarding_in_progress[g_i] = 1'b1;
-            if (~data_out_crossbar[g_i].header.preamble.tail) begin
-              // Non-single-flit packet; expecting more payload flit
-              new_state[g_i] = kPayloadFlits;
-            end
+            // Non-single-flit packet; expecting more payload flit
+            new_state[g_i] = kPayloadFlits;
+          end else begin
+            reset_arbiter[g_i] = 1'b1;
+            new_state[g_i] = kReservePort;
           end
         end
 
         kPayloadFlits : begin
           // Payload of a packet is being forwarded; do not change routing configuration
-          routing_configuration[g_i] = saved_routing_configuration[g_i];
           forwarding_in_progress[g_i] = 1'b1;
           if (forwarding_tail[g_i]) begin
               // Next flit must be head
@@ -540,10 +607,10 @@ module lookahead_router_multicast
       always_ff @(posedge clk) begin
         if (rst) begin
           data_void_out[g_i] <= 1'b1;
-        end else begin
+        end else begin	
           if (~forwarding_in_progress[g_i] && no_backpressure_single[g_i]) begin
             data_void_out[g_i] <= 1'b1;
-          end else if (no_backpressure_all[g_i]) begin
+          end else if (no_backpressure_mcast[g_i]) begin
             data_void_out[g_i] <= out_unvalid_flit[g_i];
           end else if (no_backpressure_single[g_i]) begin
             data_void_out[g_i] <= 1'b1;
@@ -552,11 +619,11 @@ module lookahead_router_multicast
       end
       assign credits[g_i] = '0;
     end else begin : gen_data_void_out_creditbased
-      assign data_void_out[g_i] = forwarding_in_progress[g_i] & no_backpressure_all[g_i] ?
+      assign data_void_out[g_i] = forwarding_in_progress[g_i] & no_backpressure_mcast[g_i] ?
                                   out_unvalid_flit[g_i] : 1'b1;
       always_ff @(posedge clk) begin
         if (rst) begin
-          credits[g_i] = noc::PortQueueDepth;
+          credits[g_i] = QUEUE_SIZE;
         end else begin
           if (~data_void_out[g_i]) begin
             credits[g_i] = credits[g_i] - stop_in[g_i];
@@ -572,17 +639,15 @@ module lookahead_router_multicast
     end  else begin : gen_input_port_disabled
       assign grant_valid[g_i] = '0;
       assign grant[g_i] = '0;
-      assign granted[g_i] = '0;
       assign data_void_out[g_i] = '1;
       assign out_unvalid_flit[g_i] = '1;
       assign data_out_crossbar[g_i] = '0;
       assign last_flit[g_i] = '0;
-      assign routing_configuration[g_i] = '0;
-      assign saved_routing_configuration[g_i] = '0;
       assign rd_fifo[g_i] = '0;
-      assign backpressure_tmp[g_i] = '0;
-      assign no_backpressure_all[g_i] = '1;
+      assign backpressure_mcast_tmp[g_i] = '0;
+      assign no_backpressure_mcast[g_i] = '1;
       assign no_backpressure_single[g_i] = '1;
+      assign backpressure_single[g_i] = '0;
       assign forwarding_tail[g_i] = '0;
       assign forwarding_head[g_i] = '0;
       assign forwarding_in_progress[g_i] = '0;
@@ -598,6 +663,9 @@ module lookahead_router_multicast
       assign state[g_i] = kReservePort;
       assign sample_routing_config[g_i] = '0;
       assign input_direction[g_i] = noc::kNorthPort;
+      assign reset_arbiter[g_i] = '0;
+      assign rst_arbiter[g_i] = '0;
+      assign unicast_req_OR[g_i] = '0;
     end // block: gen_output_port_enabled
 
   end // for gen_output_control
@@ -636,7 +704,7 @@ module lookahead_router_multicast
       data_out_crossbar[g_i].header.preamble.head)
       else $error("Fail: a_expect_head_flit");
     a_credits_in_range: assert property (@(posedge clk) disable iff(rst)
-      credits[g_i] <= noc::PortQueueDepth)
+      credits[g_i] <= QUEUE_SIZE)
       else $error("Fail: a_enhanc_routing_configuration_onehot");
    end
 

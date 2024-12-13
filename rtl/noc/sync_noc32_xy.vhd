@@ -13,7 +13,8 @@ entity sync_noc32_xy is
   generic (
     PORTS     : std_logic_vector(4 downto 0);
     HAS_SYNC  : integer range 0 to 1 := 0;
-    DEST_SIZE : integer := 4);
+    DEST_SIZE : integer := 4;
+    QUEUE_SIZE: integer := 4);
   port (
     clk           : in  std_logic;
     clk_tile      : in  std_logic;
@@ -49,7 +50,8 @@ architecture mesh of sync_noc32_xy is
       width        : integer;
       depth        : integer;
       ports        : std_logic_vector(4 downto 0);
-      DEST_SIZE    : integer
+      DEST_SIZE    : integer;
+      QUEUE_SIZE   : integer
 );
     port (
       clk           : in  std_logic;
@@ -110,7 +112,8 @@ architecture mesh of sync_noc32_xy is
           width        => MISC_NOC_FLIT_SIZE,
           depth        => ROUTER_DEPTH,
           ports        => PORTS,
-          DEST_SIZE    => DEST_SIZE
+          DEST_SIZE    => DEST_SIZE,
+	  QUEUE_SIZE   => QUEUE_SIZE
 	)
       port map (
           clk           => clk,
