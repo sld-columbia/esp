@@ -1118,7 +1118,7 @@ begin  -- rtl
               end if;
 	      if p2p_mcast_packet = '1' then
 	        clear_burst_count_mcast <= '1';
-	      end if
+	      end if;
               clear_burst_count <= '1';
               dma_tran_done <= '1';
               dma_next <= running;
