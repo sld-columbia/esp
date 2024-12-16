@@ -1793,7 +1793,7 @@ def gen_noc_interface(acc, noc_width, template_dir, out_dir, is_axi):
       elif tline.find("-- <<axi_unused>>") >= 0:
         tie_unused_axi(f, acc, noc_width)
       elif tline.find("-- <<accelerator_instance>>") >= 0:
-        f.write("  " + acc.name + "_rlt_i: " + acc.name)
+        f.write("  " + acc.name + "_rtl_i: " + acc.name)
         if is_axi:
           f.write("_wrapper\n")
           write_axi_acc_port_map(f, acc, noc_width)

@@ -48,9 +48,9 @@ void dummy::load_input()
 
             uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
 #if (DMA_WORD_PER_BEAT == 0)
-            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE, source);
+            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
 #else
-            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE, source);
+            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
 #endif
             offset += len;
 
@@ -136,9 +136,9 @@ void dummy::store_output()
 
             uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
 #if (DMA_WORD_PER_BEAT == 0)
-            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE, ndests);
+            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
 #else
-            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE, ndests);
+            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
 #endif
             offset += len;
 

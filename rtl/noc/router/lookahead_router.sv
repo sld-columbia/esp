@@ -55,7 +55,8 @@ module lookahead_router
     parameter noc::noc_flow_control_t FlowControl = noc::kFlowControlAckNack,
     parameter int unsigned DataWidth = 32,
     parameter int unsigned PortWidth = DataWidth + $bits(noc::preamble_t),
-    parameter bit [4:0] Ports = noc::AllPorts
+    parameter bit [4:0] Ports = noc::AllPorts,
+    parameter integer QUEUE_SIZE = 4
     )
   (
    input  logic clk,
@@ -84,6 +85,9 @@ module lookahead_router
 
   localparam int unsigned ReservedWidth =
     DataWidth - 2*$bits(noc::xy_t) - $bits(noc::message_t) - $bits(noc::direction_t);
+
+  parameter int unsigned CreditsWidth = $clog2(QUEUE_SIZE + 1);
+  typedef logic [4:0][CreditsWidth-1:0] credits_t;
 
   typedef struct packed {
     noc::xy_t source;
@@ -143,7 +147,7 @@ module lookahead_router
   logic [4:0] empty;
   logic [4:0] wr_fifo;
 
-  noc::credits_t credits;
+  credits_t credits;
 
   logic [4:0] forwarding_tail;
   logic [4:0] forwarding_head;
@@ -192,7 +196,7 @@ module lookahead_router
       router_fifo
         #(
           .BypassEnable(FifoBypassEnable),
-          .Depth(noc::PortQueueDepth),
+          .Depth(QUEUE_SIZE),
           .Width(PortWidth)
           )
       input_queue (
@@ -446,7 +450,7 @@ module lookahead_router
                                     out_unvalid_flit[g_i] : 1'b1;
         always_ff @(posedge clk) begin
           if (rst) begin
-            credits[g_i] = noc::PortQueueDepth;
+            credits[g_i] = QUEUE_SIZE;
           end else begin
             if (~data_void_out[g_i]) begin
               credits[g_i] = credits[g_i] - stop_in[g_i];
@@ -513,7 +517,7 @@ module lookahead_router
       data_out_crossbar[g_i].header.preamble.head)
       else $error("Fail: a_expect_head_flit");
     a_credits_in_range: assert property (@(posedge clk) disable iff(rst)
-      credits[g_i] <= noc::PortQueueDepth)
+      credits[g_i] <= QUEUE_SIZE)
       else $error("Fail: a_enhanc_routing_configuration_onehot");
   end
 
