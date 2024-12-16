@@ -21,9 +21,9 @@ struct dma_info_t {
     uint32_t index;
     uint32_t length;
     ac_int<3,false> size;
-    ac_int<5,false> user;
+    ac_int<6,false> user;
 
-    static const unsigned int width = 32+32+3+5 ;
+    static const unsigned int width = 32+32+3+6 ;
     template <unsigned int Size> void Marshall(Marshaller<Size> &m) {
         m &index;
         m &length;
@@ -34,7 +34,7 @@ struct dma_info_t {
     dma_info_t()
         : index(0), length(0), size(0), user(0) { }
 
-    dma_info_t(uint32_t i, uint32_t l, ac_int<3,false> s, ac_int<5,false> u)
+    dma_info_t(uint32_t i, uint32_t l, ac_int<3,false> s, ac_int<6,false> u)
         : index(i), length(l), size(s), user(u) { }
 
     dma_info_t(const dma_info_t &other)

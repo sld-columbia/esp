@@ -80,7 +80,7 @@ entity esp_acc_dma is
     rd_index      : in  std_logic_vector(31 downto 0);
     rd_length     : in  std_logic_vector(31 downto 0);
     rd_size       : in  std_logic_vector(2 downto 0);
-    rd_source     : in  std_logic_vector(4 downto 0);
+    rd_source     : in  std_logic_vector(5 downto 0);
     rd_grant      : out std_ulogic;
     bufdin_ready  : in  std_ulogic;
     bufdin_data   : out std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -89,7 +89,7 @@ entity esp_acc_dma is
     wr_index      : in  std_logic_vector(31 downto 0);
     wr_length     : in  std_logic_vector(31 downto 0);
     wr_size       : in  std_logic_vector(2 downto 0);
-    wr_ndests     : in  std_logic_vector(4 downto 0);
+    wr_ndests     : in  std_logic_vector(5 downto 0);
     wr_grant      : out std_ulogic;
     bufdout_ready : out std_ulogic;
     bufdout_data  : in  std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -653,14 +653,14 @@ begin  -- rtl
       if sample_rd = '1' then
         size_r <= rd_size;
         source_r <= to_integer(unsigned(rd_source));
-        if rd_source = conv_std_logic_vector(0, 5) then
+        if rd_source = conv_std_logic_vector(0, 6) then
           p2p_load <= bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P);
         else
           p2p_load <= '1';
         end if;
       elsif sample_wr   = '1' then
         size_r <= wr_size;
-        if wr_ndests = conv_std_logic_vector(0, 5) then
+        if wr_ndests = conv_std_logic_vector(0, 6) then
           p2p_mcast_ndests <= to_integer(unsigned(bankreg(MCAST_REG)(MCAST_BIT_DESTS + MCAST_WIDTH_DESTS - 1 downto MCAST_BIT_DESTS)));
           p2p_store <= bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P);
         else

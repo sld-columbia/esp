@@ -27,7 +27,7 @@ struct dma_info_t {
     ac_int<3, false> size;
 
     // User
-    ac_int<5, false> user;
+    ac_int<6, false> user;
 };
 
 #endif // __ESP_DMA_INFO_HPP__

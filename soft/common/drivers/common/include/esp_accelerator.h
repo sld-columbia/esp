@@ -72,7 +72,7 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 
 /* bank(13)       : Point-to-point configuration */
 #define MCAST_REG 0x34
-#define MCAST_MASK_NDESTS 0xF
+#define MCAST_MASK_NDESTS 0x1F
 #define MCAST_SHIFT_NDESTS 0
 
 /* bank(16 to 95) : USR (user defined) */
