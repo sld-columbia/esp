@@ -40,7 +40,8 @@ entity router is
     width        : integer                      := 34;
     depth        : integer                      := 4;
     ports        : std_logic_vector(4 downto 0) := "11111";
-    DEST_SIZE    : integer
+    DEST_SIZE    : integer;
+    QUEUE_SIZE   : integer
     );
   port(
     clk : in std_logic;
@@ -77,7 +78,8 @@ architecture behavior of router is
       FlowControl : std_logic;
       Width       : integer;
       Ports       : std_logic_vector(4 downto 0);
-      DEST_SIZE   : integer
+      DEST_SIZE   : integer;
+      QUEUE_SIZE  : integer
       );
     port(
       clk : in std_logic;
@@ -112,7 +114,8 @@ begin
       FlowControl => to_std_logic(flow_control),
       Width       => width,
       Ports       => Ports,
-      DEST_SIZE   => DEST_SIZE)
+      DEST_SIZE   => DEST_SIZE,
+      QUEUE_SIZE  => QUEUE_SIZE)
     port map (
       clk           => clk,
       rst           => rst,

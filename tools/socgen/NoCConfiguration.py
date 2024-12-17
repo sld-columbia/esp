@@ -232,6 +232,7 @@ class NoC():
     self.dma_noc_width = IntVar()
     self.multicast_en = IntVar()
     self.max_mcast_dests = IntVar()
+    self.queue_size = IntVar()
     self.monitor_ddr = IntVar()
     self.monitor_mem = IntVar()
     self.monitor_inj = IntVar()
@@ -332,8 +333,10 @@ class NoCFrame(Pmw.ScrolledFrame):
     max_multicast_choices = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32"]
     Label(self.noc_config_frame, text = "Maximum Multicast Destinations: ", height=1).pack()
     OptionMenu(self.noc_config_frame, self.noc.max_mcast_dests, *max_multicast_choices).pack()
+    queue_size_choices = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"]
+    Label(self.noc_config_frame, text = "NoC Router FIFO Queue Depth: ", height=1).pack()
+    OptionMenu(self.noc_config_frame, self.noc.queue_size, *queue_size_choices).pack()
     Button(self.noc_config_frame, text = "Config", command=self.create_noc).pack(side=TOP)
-
     Label(self.noc_config_frame, height=1).pack()
     Checkbutton(self.noc_config_frame, text="Monitor DDR bandwidth", variable=self.noc.monitor_ddr, anchor=W, width=20).pack()
     Checkbutton(self.noc_config_frame, text="Monitor memory access", variable=self.noc.monitor_mem, anchor=W, width=20).pack()
