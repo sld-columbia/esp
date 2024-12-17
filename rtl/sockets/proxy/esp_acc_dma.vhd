@@ -1174,7 +1174,6 @@ begin  -- rtl
             clear_word_count <= '1';
             if preamble = PREAMBLE_TAIL and tlb_count = bankreg(PT_NCHUNK_REG) - 1 then
               clear_burst_count <= '1';
---              clear_p2p_count <= '1';
               clear_tlb_count <= '1';
               tlb_valid <= '1';
               dma_next <= idle;
@@ -1194,7 +1193,6 @@ begin  -- rtl
                 dma_tran_done <= '1';
                 dma_next <= running;
                 clear_burst_count <= '1';
---                clear_p2p_count <= '1';
               end if;
             end if;
           end if;
