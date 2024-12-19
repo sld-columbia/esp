@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
 # This script taks the formatted list of pads' location (see utils/scripts/asic/reformat.sh)
-# and generates a VHDL package containing constant bit vectors to be passed to the pad wrappers instances.
+# and generates a VHDL package containing constant bit vectors to be
+# passed to the pad wrappers instances.
 
 import os.path
 import glob
@@ -37,9 +38,14 @@ fp.write("package pads_loc is\n\n")
 
 for p in pads:
     if len(pads[p]) == 1:
-        fp.write("  constant " + p + "_pad_loc : std_logic := '" + str(pads[p][0]) + "';\n")
+        fp.write("  constant " +
+                 p +
+                 "_pad_loc : std_logic := '" +
+                 str(pads[p][0]) +
+                 "';\n")
     else:
-        s = "  constant " + p + "_pad_loc : std_logic_vector(" + str(len(pads[p]) - 1) + " downto 0) := \""
+        s = "  constant " + p + \
+            "_pad_loc : std_logic_vector(" + str(len(pads[p]) - 1) + " downto 0) := \""
         pd = collections.OrderedDict(sorted(pads[p].items(), reverse=True))
         for k in pd:
             s += str(pd[k])
