@@ -20,63 +20,61 @@ struct dma_info_t {
 
     uint32_t index;
     uint32_t length;
-    ac_int<3,false> size;
-    ac_int<6,false> user;
+    ac_int<3, false> size;
+    ac_int<6, false> user;
 
-    static const unsigned int width = 32+32+3+6 ;
-    template <unsigned int Size> void Marshall(Marshaller<Size> &m) {
+    static const unsigned int width = 32 + 32 + 3 + 6;
+    template <unsigned int Size> void Marshall(Marshaller<Size> &m)
+    {
         m &index;
         m &length;
         m &size;
         m &user;
     }
 
-    dma_info_t()
-        : index(0), length(0), size(0), user(0) { }
+    dma_info_t() : index(0), length(0), size(0), user(0) {}
 
-    dma_info_t(uint32_t i, uint32_t l, ac_int<3,false> s, ac_int<6,false> u)
-        : index(i), length(l), size(s), user(u) { }
+    dma_info_t(uint32_t i, uint32_t l, ac_int<3, false> s, ac_int<6, false> u) :
+        index(i), length(l), size(s), user(u)
+    {
+    }
 
-    dma_info_t(const dma_info_t &other)
-        : index(other.index), length(other.length), size(other.size), user(other.user) { }
+    dma_info_t(const dma_info_t &other) :
+        index(other.index), length(other.length), size(other.size), user(other.user)
+    {
+    }
 
     // Operators
 
     // Assign operator
-    dma_info_t& operator=(const dma_info_t &other)
+    dma_info_t &operator=(const dma_info_t &other)
     {
-        index = other.index;
+        index  = other.index;
         length = other.length;
-        size = other.size;
-        user = other.user;
+        size   = other.size;
+        user   = other.user;
         return *this;
     }
 
     // Equals operator
     inline bool operator==(const dma_info_t &rhs) const
     {
-        return ((rhs.index == index)
-                && (rhs.length == length)
-                && (rhs.size == size)
-                && (rhs.user == user));
+        return ((rhs.index == index) && (rhs.length == length) && (rhs.size == size) &&
+                (rhs.user == user));
     }
-
 
     // Friend zone
 
     // Dump operator
-    friend ostream& operator<<(ostream &os, dma_info_t const &dma_info)
+    friend ostream &operator<<(ostream &os, dma_info_t const &dma_info)
     {
-        os << "{" << dma_info.index  << ","
-           << dma_info.length  << ","
-           << dma_info.size  << ","
-           << dma_info.user  << "}";
+        os << "{" << dma_info.index << "," << dma_info.length << "," << dma_info.size << ","
+           << dma_info.user << "}";
         return os;
     }
 
     // Makes this type traceable by SystemC
-    inline friend void sc_trace(sc_trace_file *tf, const dma_info_t &v,
-                                const std::string &name)
+    inline friend void sc_trace(sc_trace_file *tf, const dma_info_t &v, const std::string &name)
     {
 
         std::stringstream sstm_c;
@@ -89,7 +87,6 @@ struct dma_info_t {
         sstm_c << name << ".user";
         sc_trace(tf, v.user, sstm_c.str());
     }
-
 };
 
 #endif

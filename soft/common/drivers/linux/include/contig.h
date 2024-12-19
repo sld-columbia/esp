@@ -13,7 +13,7 @@
 
 /* enforce strict typecheck */
 struct contig_handle_struct {
-	char unused;
+    char unused;
 };
 typedef struct contig_handle_struct *contig_handle_t;
 
@@ -30,7 +30,8 @@ typedef struct contig_handle_struct *contig_handle_t;
  * Returns 0 on success or -1 on error, setting errno.
  */
 void *contig_alloc(unsigned long size, contig_handle_t *handle);
-void *contig_alloc_policy(struct contig_alloc_params params, unsigned long size, contig_handle_t *handle);
+void *contig_alloc_policy(struct contig_alloc_params params, unsigned long size,
+                          contig_handle_t *handle);
 
 /**
  * contig_free - free a contiguous buffer
@@ -48,7 +49,6 @@ void contig_free(contig_handle_t handle);
  * handle that is valid in kernel space.
  */
 contig_khandle_t contig_to_khandle(contig_handle_t handle);
-
 
 /**
  * contig_to_most_allocated - get on which ddr node most chunks have
@@ -79,15 +79,14 @@ void contig_copy_to(contig_handle_t handle, unsigned long offset, void *from, un
  */
 void contig_copy_from(void *to, contig_handle_t handle, unsigned long offset, unsigned long size);
 
-#define DEF_CONTIG_READ(funcname_, type_)				\
-	static inline type_						\
-	funcname_(contig_handle_t handle, unsigned long offs)		\
-	{								\
-		type_ ret;						\
-									\
-		contig_copy_from(&ret, handle, offs, sizeof(ret));	\
-		return ret;						\
-	}
+#define DEF_CONTIG_READ(funcname_, type_)                                     \
+    static inline type_ funcname_(contig_handle_t handle, unsigned long offs) \
+    {                                                                         \
+        type_ ret;                                                            \
+                                                                              \
+        contig_copy_from(&ret, handle, offs, sizeof(ret));                    \
+        return ret;                                                           \
+    }
 
 /**
  * contig_read32 - read a uint32_t from a contig buffer
@@ -98,15 +97,14 @@ void contig_copy_from(void *to, contig_handle_t handle, unsigned long offset, un
  */
 DEF_CONTIG_READ(contig_read32, uint32_t)
 DEF_CONTIG_READ(contig_read16, uint16_t)
-DEF_CONTIG_READ(contig_read8,  uint8_t)
+DEF_CONTIG_READ(contig_read8, uint8_t)
 DEF_CONTIG_READ(contig_read64, uint64_t)
 
-#define DEF_CONTIG_WRITE(funcname_, type_)				\
-	static inline void						\
-	funcname_(type_ val, contig_handle_t handle, unsigned long offs)\
-	{								\
-		contig_copy_to(handle, offs, &val, sizeof(val));	\
-	}
+#define DEF_CONTIG_WRITE(funcname_, type_)                                              \
+    static inline void funcname_(type_ val, contig_handle_t handle, unsigned long offs) \
+    {                                                                                   \
+        contig_copy_to(handle, offs, &val, sizeof(val));                                \
+    }
 
 /**
  * contig_write32 - write a uint32_t to a contig buffer
@@ -116,7 +114,7 @@ DEF_CONTIG_READ(contig_read64, uint64_t)
  */
 DEF_CONTIG_WRITE(contig_write32, uint32_t)
 DEF_CONTIG_WRITE(contig_write16, uint16_t)
-DEF_CONTIG_WRITE(contig_write8,  uint8_t)
+DEF_CONTIG_WRITE(contig_write8, uint8_t)
 DEF_CONTIG_WRITE(contig_write64, uint64_t)
 
 #endif /* CONTIG_H */

@@ -12,7 +12,7 @@ extern frame_param frame;
 extern uint8_t deinterleaved_bits[MAX_ENCODED_BITS];
 extern uint8_t DECODER_VERIF_DATA[7000][4][64];
 
-extern uint8_t result[MAX_ENCODED_BITS]; // This is generous; only need 12264 entries?	
+extern uint8_t result[MAX_ENCODED_BITS]; // This is generous; only need 12264 entries?
 
 void decode_wrapper();
 

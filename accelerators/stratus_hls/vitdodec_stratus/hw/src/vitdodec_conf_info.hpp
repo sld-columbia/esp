@@ -9,32 +9,27 @@
 //
 // Configuration parameters for the accelerator.
 //
-class conf_info_t
-{
-public:
-
+class conf_info_t {
+  public:
     //
     // constructors
     //
     conf_info_t()
     {
         /* <<--ctor-->> */
-        this->cbps = 48;
+        this->cbps       = 48;
         this->ntraceback = 5;
-        this->data_bits = 288;
+        this->data_bits  = 288;
     }
 
     conf_info_t(
         /* <<--ctor-args-->> */
-        int32_t cbps, 
-        int32_t ntraceback, 
-        int32_t data_bits
-        )
+        int32_t cbps, int32_t ntraceback, int32_t data_bits)
     {
         /* <<--ctor-custom-->> */
-        this->cbps = cbps;
+        this->cbps       = cbps;
         this->ntraceback = ntraceback;
-        this->data_bits = data_bits;
+        this->data_bits  = data_bits;
     }
 
     // equals operator
@@ -48,21 +43,20 @@ public:
     }
 
     // assignment operator
-    inline conf_info_t& operator=(const conf_info_t& other)
+    inline conf_info_t &operator=(const conf_info_t &other)
     {
         /* <<--assign-->> */
-        cbps = other.cbps;
+        cbps       = other.cbps;
         ntraceback = other.ntraceback;
-        data_bits = other.data_bits;
+        data_bits  = other.data_bits;
         return *this;
     }
 
     // VCD dumping function
-    friend void sc_trace(sc_trace_file *tf, const conf_info_t &v, const std::string &NAME)
-    {}
+    friend void sc_trace(sc_trace_file *tf, const conf_info_t &v, const std::string &NAME) {}
 
     // redirection operator
-    friend ostream& operator << (ostream& os, conf_info_t const &conf_info)
+    friend ostream &operator<<(ostream &os, conf_info_t const &conf_info)
     {
         os << "{";
         /* <<--print-->> */
@@ -73,10 +67,10 @@ public:
         return os;
     }
 
-        /* <<--params-->> */
-        int32_t cbps;
-        int32_t ntraceback;
-        int32_t data_bits;
+    /* <<--params-->> */
+    int32_t cbps;
+    int32_t ntraceback;
+    int32_t data_bits;
 };
 
 #endif // __VITDODEC_CONF_INFO_HPP__

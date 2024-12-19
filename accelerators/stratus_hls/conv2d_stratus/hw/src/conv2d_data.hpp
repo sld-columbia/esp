@@ -16,13 +16,13 @@ const unsigned int FPDATA_FL = DATA_WIDTH - FPDATA_IL;
 
 #elif defined(FLOAT_POINT)
 
-#if (DATA_WIDTH == 32)
+    #if (DATA_WIDTH == 32)
 const unsigned int FPDATA_ML = 23;
 const unsigned int FPDATA_EL = 8;
-#elif (DATA_WIDTH == 64)
+    #elif (DATA_WIDTH == 64)
 const unsigned int FPDATA_ML = 52;
 const unsigned int FPDATA_EL = 11;
-#endif
+    #endif
 
 #endif
 

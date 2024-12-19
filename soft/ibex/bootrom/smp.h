@@ -2,13 +2,13 @@
 
 // The hart that non-SMP tests should run on
 #ifndef NONSMP_HART
-#define NONSMP_HART 0
+    #define NONSMP_HART 0
 #endif
 
 // The maximum number of HARTs this code supports
 #define CLINT_CTRL_ADDR 0x2000000
 #ifndef MAX_HARTS
-#define MAX_HARTS 256
+    #define MAX_HARTS 256
 #endif
 #define CLINT_END_HART_IPI CLINT_CTRL_ADDR + (MAX_HARTS * 4)
 

@@ -69,7 +69,8 @@ void nightvision::load_input()
                     HLS_UNROLL_SIMPLE;
                     // Write to PLM
                     mem_buff_1[i + k] =
-                        data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG).to_uint();
+                        data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG)
+                            .to_uint();
                     mem_buff_2[i + k] = 0;
                 }
             }
@@ -169,7 +170,7 @@ void nightvision::compute_kernel()
     uint32_t n_Cols;
     uint32_t plm_size;
     uint32_t index_last_row;
-    bool     do_dwt;
+    bool do_dwt;
 
     // Reset
     {
@@ -209,8 +210,7 @@ void nightvision::compute_kernel()
         kernel_nf(n_Rows, n_Cols);
         kernel_hist(n_Rows, n_Cols);
         kernel_histEq(n_Rows, n_Cols);
-        if (do_dwt)
-            kernel_dwt(n_Rows, n_Cols);
+        if (do_dwt) kernel_dwt(n_Rows, n_Cols);
 
         this->compute_store_handshake();
     }

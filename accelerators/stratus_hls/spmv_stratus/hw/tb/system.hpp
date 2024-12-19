@@ -4,7 +4,6 @@
 #ifndef __SYSTEM_HPP__
 #define __SYSTEM_HPP__
 
-
 #include "spmv_conf_info.hpp"
 #include "spmv_debug_info.hpp"
 #include "spmv.hpp"
@@ -15,21 +14,19 @@
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "spmv_wrap.h"
+    #include "spmv_wrap.h"
 #endif
 
 #define REPORT_THRESHOLD 10
-#define MAX_REL_ERROR 0.003
-#define MAX_ABS_ERROR 0.05
-#define IN_FILE "../tb/inputs/in.data"
-#define CHK_FILE "../tb/outputs/chk.data"
+#define MAX_REL_ERROR    0.003
+#define MAX_ABS_ERROR    0.05
+#define IN_FILE          "../tb/inputs/in.data"
+#define CHK_FILE         "../tb/outputs/chk.data"
 
 const size_t MEM_SIZE = 50000000;
 
-class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
-{
-public:
-
+class system_t : public esp_system<DMA_WIDTH, MEM_SIZE> {
+  public:
     // ACC instance
 #ifdef CADENCE
     spmv_wrapper *acc;
@@ -39,27 +36,26 @@ public:
 
     // Constructor
     SC_HAS_PROCESS(system_t);
-    system_t(sc_module_name name)
-	: esp_system<DMA_WIDTH, MEM_SIZE>(name)
-        {
-	    // ACC
+    system_t(sc_module_name name) : esp_system<DMA_WIDTH, MEM_SIZE>(name)
+    {
+        // ACC
 #ifdef CADENCE
-	    acc = new spmv_wrapper("spmv_wrapper");
+        acc = new spmv_wrapper("spmv_wrapper");
 #else
-	    acc = new spmv("spmv_wrapper");
+        acc = new spmv("spmv_wrapper");
 #endif
-	    // Binding ACC
-	    acc->clk(clk);
-	    acc->rst(acc_rst);
-	    acc->dma_read_ctrl(dma_read_ctrl);
-	    acc->dma_write_ctrl(dma_write_ctrl);
-	    acc->dma_read_chnl(dma_read_chnl);
-	    acc->dma_write_chnl(dma_write_chnl);
-	    acc->conf_info(conf_info);
-	    acc->conf_done(conf_done);
-	    acc->acc_done(acc_done);
-	    acc->debug(debug);
-        }
+        // Binding ACC
+        acc->clk(clk);
+        acc->rst(acc_rst);
+        acc->dma_read_ctrl(dma_read_ctrl);
+        acc->dma_write_ctrl(dma_write_ctrl);
+        acc->dma_read_chnl(dma_read_chnl);
+        acc->dma_write_chnl(dma_write_chnl);
+        acc->conf_info(conf_info);
+        acc->conf_done(conf_done);
+        acc->acc_done(acc_done);
+        acc->debug(debug);
+    }
 
     // Processes
 
@@ -86,7 +82,7 @@ public:
     uint32_t max_nonzero;
     uint32_t mtx_len;
     uint32_t vals_plm_size;
-    bool     vect_fits_plm;
+    bool vect_fits_plm;
 
     // Memory position
     uint32_t rows_addr;

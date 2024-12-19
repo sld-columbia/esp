@@ -12,18 +12,16 @@
 
 #include "esp_templates.hpp"
 
-const size_t MEM_SIZE = 262144 / (DMA_WIDTH/8);
+const size_t MEM_SIZE = 262144 / (DMA_WIDTH / 8);
 
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "fft_wrap.h"
+    #include "fft_wrap.h"
 #endif
 
-class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
-{
-public:
-
+class system_t : public esp_system<DMA_WIDTH, MEM_SIZE> {
+  public:
     // ACC instance
 #ifdef CADENCE
     fft_wrapper *acc;
@@ -33,8 +31,7 @@ public:
 
     // Constructor
     SC_HAS_PROCESS(system_t);
-    system_t(sc_module_name name)
-        : esp_system<DMA_WIDTH, MEM_SIZE>(name)
+    system_t(sc_module_name name) : esp_system<DMA_WIDTH, MEM_SIZE>(name)
     {
         // ACC
 #ifdef CADENCE
@@ -55,10 +52,10 @@ public:
         acc->debug(debug);
 
         /* <<--params-default-->> */
-        log_len = 8;
-        len = (1 << log_len);
-        do_peak = 0;
-        do_bitrev = 1;
+        log_len    = 8;
+        len        = (1 << log_len);
+        do_peak    = 0;
+        do_bitrev  = 1;
         batch_size = 4;
     }
 

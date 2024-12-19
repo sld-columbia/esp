@@ -13,20 +13,16 @@
 
 #include "utils/esp_handshake.hpp"
 
-class nightvision : public esp_accelerator_3P<DMA_WIDTH>
-{
+class nightvision : public esp_accelerator_3P<DMA_WIDTH> {
   public:
     // Output <-> Input
     handshake_t accel_ready;
 
     // Constructor
     SC_HAS_PROCESS(nightvision);
-    nightvision(const sc_module_name &name)
-        : esp_accelerator_3P<DMA_WIDTH>(name)
-        , cfg("config")
-        , accel_ready("accel_ready")
-        , min_bin(0)
-        , max_bin(0)
+    nightvision(const sc_module_name &name) :
+        esp_accelerator_3P<DMA_WIDTH>(name), cfg("config"), accel_ready("accel_ready"), min_bin(0),
+        max_bin(0)
     {
         // Signal binding
         cfg.bind_with(*this);
@@ -62,12 +58,13 @@ class nightvision : public esp_accelerator_3P<DMA_WIDTH>
     void kernel_hist(uint32_t n_Rows, uint32_t n_Cols);
     void kernel_histEq(uint32_t n_Rows, uint32_t n_Cols);
     void kernel_dwt(uint32_t n_Rows, uint32_t n_Cols);
-    void dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t buff1[PLM_IMG_SIZE], int16_t buff2[PLM_IMG_SIZE]);
+    void dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t buff1[PLM_IMG_SIZE],
+                           int16_t buff2[PLM_IMG_SIZE]);
     void dwt_col_transpose(uint32_t n_Rows, uint32_t n_Cols);
 
     // -- Private local memories
-    int16_t  mem_buff_1[PLM_IMG_SIZE];
-    int16_t  mem_buff_2[PLM_IMG_SIZE];
+    int16_t mem_buff_1[PLM_IMG_SIZE];
+    int16_t mem_buff_2[PLM_IMG_SIZE];
     uint32_t mem_hist_1[PLM_HIST_SIZE];
     uint32_t mem_hist_2[PLM_HIST_SIZE];
 

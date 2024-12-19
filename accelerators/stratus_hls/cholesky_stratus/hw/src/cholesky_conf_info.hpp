@@ -9,10 +9,8 @@
 //
 // Configuration parameters for the accelerator.
 //
-class conf_info_t
-{
-public:
-
+class conf_info_t {
+  public:
     //
     // constructors
     //
@@ -24,8 +22,7 @@ public:
 
     conf_info_t(
         /* <<--ctor-args-->> */
-        int32_t rows
-    )
+        int32_t rows)
     {
         /* <<--ctor-custom-->> */
         this->rows = rows;
@@ -40,7 +37,7 @@ public:
     }
 
     // assignment operator
-    inline conf_info_t& operator=(const conf_info_t& other)
+    inline conf_info_t &operator=(const conf_info_t &other)
     {
         /* <<--assign-->> */
         rows = other.rows;
@@ -48,11 +45,10 @@ public:
     }
 
     // VCD dumping function
-    friend void sc_trace(sc_trace_file *tf, const conf_info_t &v, const std::string &NAME)
-    {}
+    friend void sc_trace(sc_trace_file *tf, const conf_info_t &v, const std::string &NAME) {}
 
     // redirection operator
-    friend ostream& operator << (ostream& os, conf_info_t const &conf_info)
+    friend ostream &operator<<(ostream &os, conf_info_t const &conf_info)
     {
         os << "{";
         /* <<--print-->> */
@@ -61,8 +57,8 @@ public:
         return os;
     }
 
-        /* <<--params-->> */
-        int32_t rows;
+    /* <<--params-->> */
+    int32_t rows;
 };
 
 #endif // __CHOLESKY_CONF_INFO_HPP__

@@ -6,45 +6,37 @@
 
 #if defined(STRATUS_HLS)
 
-#if defined(HLS_DIRECTIVES_BASIC)
+    #if defined(HLS_DIRECTIVES_BASIC)
 
-#define HLS_LOAD_INPUT_REUSE_LOOP		\
-    HLS_UNROLL_LOOP(OFF)
-#define HLS_LOAD_INPUT_BATCH_LOOP		\
-    HLS_UNROLL_LOOP(OFF)
-#define HLS_LOAD_INPUT_LOOP			\
-    HLS_UNROLL_LOOP(OFF)
-#define HLS_LOAD_DMA				\
-    HLS_DEFINE_PROTOCOL("load-dma-protocol")
+        #define HLS_LOAD_INPUT_REUSE_LOOP HLS_UNROLL_LOOP(OFF)
+        #define HLS_LOAD_INPUT_BATCH_LOOP HLS_UNROLL_LOOP(OFF)
+        #define HLS_LOAD_INPUT_LOOP       HLS_UNROLL_LOOP(OFF)
+        #define HLS_LOAD_DMA              HLS_DEFINE_PROTOCOL("load-dma-protocol")
 
-#define HLS_STORE_OUTPUT_BATCH_LOOP		\
-    HLS_UNROLL_LOOP(OFF)
-#define HLS_STORE_OUTPUT_LOOP			\
-    HLS_UNROLL_LOOP(OFF)
-#define HLS_STORE_DMA				\
-    HLS_DEFINE_PROTOCOL("store-dma-protocol")
+        #define HLS_STORE_OUTPUT_BATCH_LOOP HLS_UNROLL_LOOP(OFF)
+        #define HLS_STORE_OUTPUT_LOOP       HLS_UNROLL_LOOP(OFF)
+        #define HLS_STORE_DMA               HLS_DEFINE_PROTOCOL("store-dma-protocol")
 
-#define HLS_UNROLL_LOOP_SIMPLE                  \
-    HLS_UNROLL_LOOP(ON)
+        #define HLS_UNROLL_LOOP_SIMPLE HLS_UNROLL_LOOP(ON)
 
-#else
+    #else
 
-#error Unsupported or undefined HLS configuration
+        #error Unsupported or undefined HLS configuration
 
-#endif /* HLS_DIRECTIVES_* */
+    #endif /* HLS_DIRECTIVES_* */
 
 #else /* !STRATUS_HLS */
 
-#define HLS_LOAD_INPUT_REUSE_LOOP
-#define HLS_LOAD_INPUT_BATCH_LOOP
-#define HLS_LOAD_INPUT_LOOP
-#define HLS_LOAD_DMA
+    #define HLS_LOAD_INPUT_REUSE_LOOP
+    #define HLS_LOAD_INPUT_BATCH_LOOP
+    #define HLS_LOAD_INPUT_LOOP
+    #define HLS_LOAD_DMA
 
-#define HLS_STORE_OUTPUT_BATCH_LOOP
-#define HLS_STORE_OUTPUT_LOOP
-#define HLS_STORE_DMA
+    #define HLS_STORE_OUTPUT_BATCH_LOOP
+    #define HLS_STORE_OUTPUT_LOOP
+    #define HLS_STORE_DMA
 
-#define HLS_UNROLL_LOOP_SIMPLE
+    #define HLS_UNROLL_LOOP_SIMPLE
 
 #endif /* STRATUS_HLS */
 

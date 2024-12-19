@@ -48,17 +48,17 @@ system_t *testbench = NULL;
 std::string image_A_path    = "../../data/lena-480x640.txt";
 std::string image_out_path  = "../../data/out-480x640.txt";
 std::string image_gold_path = "../../data/gold-480x640.txt";
-uint32_t    n_Images        = 1;
-uint32_t    n_Rows          = 480;
-uint32_t    n_Cols          = 640;
-bool        do_validation   = true;
-bool        do_dwt          = true;
+uint32_t n_Images           = 1;
+uint32_t n_Rows             = 480;
+uint32_t n_Cols             = 640;
+bool do_validation          = true;
+bool do_dwt                 = true;
 
 extern void esc_elaborate()
 {
     // Creating the whole system
-    testbench = new system_t("testbench", image_A_path, image_out_path, n_Images, n_Rows, n_Cols, image_gold_path,
-                             do_validation, do_dwt);
+    testbench = new system_t("testbench", image_A_path, image_out_path, n_Images, n_Rows, n_Cols,
+                             image_gold_path, do_validation, do_dwt);
 }
 
 extern void esc_cleanup()
@@ -90,13 +90,14 @@ int sc_main(int argc, char *argv[])
         if (argc == 7) {
             do_validation   = true;
             image_gold_path = argv[6];
-        } else {
+        }
+        else {
             do_validation = false;
         }
 
         do_dwt = false;
-
-    } else {
+    }
+    else {
         fprintf(stderr, "Wrong arguments.\n");
         fprintf(stderr, "Expected arguments: image_A_path (string), image_out_path (string),\n");
         fprintf(stderr, "n_Images, n_Rows, n_Cols, [optional: image_gold_path (string)].\n");
@@ -106,7 +107,7 @@ int sc_main(int argc, char *argv[])
 
     esc_elaborate();
 
-    sc_clock        clk("clk", CLOCK_PERIOD, SC_PS);
+    sc_clock clk("clk", CLOCK_PERIOD, SC_PS);
     sc_signal<bool> rst("rst");
 
     testbench->clk(clk);

@@ -26,7 +26,8 @@ void nightvision::kernel_nf(uint32_t n_Rows, uint32_t n_Cols)
             for (int i = -1; i <= 1; i++) {
                 for (int j = -1; j <= 1; j++) {
                     pxl_list[k++] = mem_buff_1[(r + i) * n_Cols + c + j];
-                    // ESP_REPORT_INFO("nf %d:%d::%d - %d", r, c, (r+i) * n_Cols + c + j, pxl_list[k-1]);
+                    // ESP_REPORT_INFO("nf %d:%d::%d - %d", r, c, (r+i) * n_Cols + c + j,
+                    // pxl_list[k-1]);
                 }
             }
             // Sort the array of 9 elements
@@ -44,8 +45,7 @@ void nightvision::kernel_nf(uint32_t n_Rows, uint32_t n_Cols)
             uint32_t index    = r * n_Cols + c;
             mem_buff_2[index] = pxl_list[4];
 
-            if (pxl_list[4] > max_bin)
-                max_bin = pxl_list[4];
+            if (pxl_list[4] > max_bin) max_bin = pxl_list[4];
         }
     }
 
@@ -80,7 +80,8 @@ void nightvision::kernel_hist(uint32_t n_Rows, uint32_t n_Cols)
         if (temp >= n_Bins) {
             uint32_t tmp           = mem_hist_1[n_Bins - 1] + 1;
             mem_hist_1[n_Bins - 1] = tmp;
-        } else {
+        }
+        else {
             uint32_t tmp     = mem_hist_1[temp] + 1;
             mem_hist_1[temp] = tmp;
         }
@@ -168,11 +169,11 @@ void nightvision::dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t bu
     // printf("------- Start dwt_row_transpose -------\n");
 
     uint32_t cur;
-    int16_t  temp1;
-    int16_t  temp2;
-    int16_t  temp3;
-    int16_t  temp4;
-    int16_t  temp5;
+    int16_t temp1;
+    int16_t temp2;
+    int16_t temp3;
+    int16_t temp4;
+    int16_t temp5;
 
     for (uint32_t i = 0; i < n_Rows; i++) {
         // Predict the odd pixels using linear interpolation of the even pixels

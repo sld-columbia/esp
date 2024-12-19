@@ -13,18 +13,16 @@
 #include "esp_templates.hpp"
 
 #define MAX_BUFFERS_FULL 4
-const size_t MEM_SIZE = MAX_BUFFERS_FULL * (2 * 262144) / (DMA_WIDTH/8);
+const size_t MEM_SIZE = MAX_BUFFERS_FULL * (2 * 262144) / (DMA_WIDTH / 8);
 
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "fft2_wrap.h"
+    #include "fft2_wrap.h"
 #endif
 
-class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
-{
-public:
-
+class system_t : public esp_system<DMA_WIDTH, MEM_SIZE> {
+  public:
     // ACC instance
 #ifdef CADENCE
     fft2_wrapper *acc;
@@ -34,8 +32,7 @@ public:
 
     // Constructor
     SC_HAS_PROCESS(system_t);
-    system_t(sc_module_name name)
-        : esp_system<DMA_WIDTH, MEM_SIZE>(name)
+    system_t(sc_module_name name) : esp_system<DMA_WIDTH, MEM_SIZE>(name)
     {
         // ACC
 #ifdef CADENCE
@@ -57,19 +54,19 @@ public:
 
         /* <<--params-default-->> */
         // use_input_files = 1
-        //logn_samples = 6;
-        //num_ffts = 46;
+        // logn_samples = 6;
+        // num_ffts = 46;
 
         use_input_files = 0;
-        logn_samples = 12;
-        num_ffts = 15;
+        logn_samples    = 12;
+        num_ffts        = 15;
 
-        //use_input_files = 1;
-        //logn_samples = 6;
-        //num_ffts = 1;
-        num_samples = (1 << logn_samples);
-        do_inverse = 0;
-        do_shift = 0;
+        // use_input_files = 1;
+        // logn_samples = 6;
+        // num_ffts = 1;
+        num_samples  = (1 << logn_samples);
+        do_inverse   = 0;
+        do_shift     = 0;
         scale_factor = 1;
     }
 

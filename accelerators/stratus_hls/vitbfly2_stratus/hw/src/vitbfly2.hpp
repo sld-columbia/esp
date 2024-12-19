@@ -15,16 +15,13 @@
 
 // Include generated header files for PLM here
 
-class vitbfly2 : public esp_accelerator_3P<DMA_WIDTH>
-{
-public:
+class vitbfly2 : public esp_accelerator_3P<DMA_WIDTH> {
+  public:
     // Output <-> Input
 
     // Constructor
     SC_HAS_PROCESS(vitbfly2);
-    vitbfly2(const sc_module_name& name)
-        : esp_accelerator_3P<DMA_WIDTH>(name)
-        , cfg("config")
+    vitbfly2(const sc_module_name &name) : esp_accelerator_3P<DMA_WIDTH>(name), cfg("config")
     {
         // Signal binding
         cfg.bind_with(*this);
@@ -65,6 +62,5 @@ public:
 
     // Private state variables
 };
-
 
 #endif /* __VITBFLY2_HPP__ */
