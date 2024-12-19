@@ -24,115 +24,116 @@
 // - Depth: depth of the FIFO
 // - Width: bit-width of data_in and data_out
 //
-module router_fifo
-  #(
+module router_fifo #(
     parameter bit BypassEnable = 1'b1,
     parameter int unsigned Depth = 4,
     parameter int unsigned Width = 8
-    )
-  (
-   input logic clk,
-   input logic rst,
-   input logic rdreq,
-   input logic wrreq,
-   input logic [Width-1:0] data_in,
-   output logic empty,
-   output logic full,
-   output logic [Width-1:0] data_out
-   );
+) (
+    input logic clk,
+    input logic rst,
+    input logic rdreq,
+    input logic wrreq,
+    input logic [Width-1:0] data_in,
+    output logic empty,
+    output logic full,
+    output logic [Width-1:0] data_out
+);
 
-  logic [Depth-1:0][Width-1:0] mem;
+    logic [Depth-1:0][Width-1:0] mem;
 
-  // Read pointer for FIFO head
-  logic [$clog2(Depth+1)-1:0] head;
-  logic [$clog2(Depth+1)-1:0] head_next;
+    // Read pointer for FIFO head
+    logic [$clog2(Depth+1)-1:0] head;
+    logic [$clog2(Depth+1)-1:0] head_next;
 
-  // One hot mask for FIFO tail and tilization
-  logic [Depth-1:0] tail;
-  logic [Depth:0] used;
+    // One hot mask for FIFO tail and tilization
+    logic [Depth-1:0] tail;
+    logic [Depth:0] used;
 
-  logic valid_read;
-  logic valid_write;
-  logic [Width-1:0] data_out_nobypass;
+    logic valid_read;
+    logic valid_write;
+    logic [Width-1:0] data_out_nobypass;
 
-  genvar g_i;
+    genvar g_i;
 
-  assign valid_read = rdreq & ~empty;
-  assign valid_write = BypassEnable & empty ? wrreq & ~rdreq : wrreq & ~full;
-  assign data_out = BypassEnable & empty ? data_in : data_out_nobypass;
+    assign valid_read  = rdreq & ~empty;
+    assign valid_write = BypassEnable & empty ? wrreq & ~rdreq : wrreq & ~full;
+    assign data_out    = BypassEnable & empty ? data_in : data_out_nobypass;
 
-  // Update head
-  assign head_next = head == (Depth - 1'b1) ? '0 : head + 1'b1;
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      head <= '0;
-    end else if (valid_read) begin
-      head <= head_next;
-    end
-  end
-
-  // Update tail
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      tail[Depth-1:1] <= '0;
-      tail[0] <= 1'b1;
-    end else if (valid_write) begin
-      tail[Depth-1:1] <= tail[Depth-2:0];
-      tail[0] <= tail[Depth-1];
-    end
-  end
-
-  // Update FIFO state
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      used[Depth:1] <= '0;
-      used[0] <= 1'b1;
-    end else begin
-      if (valid_write & ~valid_read) begin
-        used[Depth:1] <= used[Depth-1:0];
-        used[0] <= 1'b0;
-      end else if (~valid_write & valid_read) begin
-        used[Depth-1:0] <= used[Depth:1];
-        used[Depth] <= 1'b0;
-      end
-    end
-  end
-
-  assign empty = used[0];
-  assign full = used[Depth];
-
-  // Write
-  for (g_i = 0; g_i < Depth; g_i++) begin : gen_fifo_write
+    // Update head
+    assign head_next   = head == (Depth - 1'b1) ? '0 : head + 1'b1;
     always_ff @(posedge clk) begin
-      if (rst) begin
-        mem[g_i] <= '0;
-      end else if (valid_write & tail[g_i]) begin
-        mem[g_i] <= data_in;
-      end
+        if (rst) begin
+            head <= '0;
+        end else if (valid_read) begin
+            head <= head_next;
+        end
     end
-  end
 
-  // Read
-  assign data_out_nobypass = mem[head];  // ri lint_check_waive VAR_INDEX_RANGE
+    // Update tail
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            tail[Depth-1:1] <= '0;
+            tail[0]         <= 1'b1;
+        end else if (valid_write) begin
+            tail[Depth-1:1] <= tail[Depth-2:0];
+            tail[0]         <= tail[Depth-1];
+        end
+    end
 
-  //
-  // Assertions
-  //
+    // Update FIFO state
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            used[Depth:1] <= '0;
+            used[0]       <= 1'b1;
+        end else begin
+            if (valid_write & ~valid_read) begin
+                used[Depth:1] <= used[Depth-1:0];
+                used[0]       <= 1'b0;
+            end else if (~valid_write & valid_read) begin
+                used[Depth-1:0] <= used[Depth:1];
+                used[Depth]     <= 1'b0;
+            end
+        end
+    end
+
+    assign empty = used[0];
+    assign full  = used[Depth];
+
+    // Write
+    for (g_i = 0; g_i < Depth; g_i++) begin : gen_fifo_write
+        always_ff @(posedge clk) begin
+            if (rst) begin
+                mem[g_i] <= '0;
+            end else if (valid_write & tail[g_i]) begin
+                mem[g_i] <= data_in;
+            end
+        end
+    end
+
+    // Read
+    assign data_out_nobypass = mem[head];  // ri lint_check_waive VAR_INDEX_RANGE
+
+    //
+    // Assertions
+    //
 
 `ifndef SYNTHESIS
-// pragma coverage off
-//VCS coverage off
+    // pragma coverage off
+    //VCS coverage off
 
-  // FIFO is in good state
-  a_head_lt_depth: assert property (@(posedge clk) disable iff(rst) head < Depth)
+    // FIFO is in good state
+    a_head_lt_depth :
+    assert property (@(posedge clk) disable iff (rst) head < Depth)
     else $error("Fail: a_head_lt_depth");
-  a_tail_onehot: assert property (@(posedge clk) disable iff(rst) $onehot(tail))
+    a_tail_onehot :
+    assert property (@(posedge clk) disable iff (rst) $onehot(tail))
     else $error("Fail: a_tail_onehot");
-  a_used_onehot: assert property (@(posedge clk) disable iff(rst) $onehot(used))
+    a_used_onehot :
+    assert property (@(posedge clk) disable iff (rst) $onehot(used))
     else $error("Fail: a_used_onehot");
 
-// pragma coverage on
-//VCS coverage on
-`endif // ~SYNTHESIS
+    // pragma coverage on
+    //VCS coverage on
+`endif  // ~SYNTHESIS
 
 endmodule
