@@ -23,361 +23,708 @@ from soc import *
 from socmap_gen import *
 from mmi64_gen import *
 
-def print_usage():
-  print("Usage                    : ./esp_creator.py <arch_bits> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
-  print("")
-  print("")
-  print("      <arch_bits>        : Word size for CPU architecture (32 for Leon3/Ibex, 64 for Ariane)")
-  print("      <tech_type>        : Technology type (fpga or asic)")
-  print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
-  print("      <linux_mac>        : MAC Address for Linux network interface")
-  print("      <leon3_stack>      : Stack Pointer for LEON3")
-  print("      <fpga_board>       : Target FPGA board")
-  print("      <emu_tech>         : Target technology override for FPGA emulation of ASIC design")
-  print("      <emu_freq>         : Ethernet MDC scaler override for FPGA emulation of ASIC design")
-  print("")
 
-#Configuration Frame (top-left)
+def print_usage():
+    print("Usage                    : ./esp_creator.py <arch_bits> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
+    print("")
+    print("")
+    print("      <arch_bits>        : Word size for CPU architecture (32 for Leon3/Ibex, 64 for Ariane)")
+    print("      <tech_type>        : Technology type (fpga or asic)")
+    print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
+    print("      <linux_mac>        : MAC Address for Linux network interface")
+    print("      <leon3_stack>      : Stack Pointer for LEON3")
+    print("      <fpga_board>       : Target FPGA board")
+    print("      <emu_tech>         : Target technology override for FPGA emulation of ASIC design")
+    print("      <emu_freq>         : Ethernet MDC scaler override for FPGA emulation of ASIC design")
+    print("")
+
+# Configuration Frame (top-left)
+
+
 class ConfigFrame(Frame):
 
-  def __init__(self, soc, top_frame):
+    def __init__(self, soc, top_frame):
 
-    Frame.__init__(self, top_frame, width=75, borderwidth=2, relief=RIDGE) 
-    self.pack(side=LEFT, expand=NO, fill=Y)
+        Frame.__init__(self, top_frame, width=75, borderwidth=2, relief=RIDGE)
+        self.pack(side=LEFT, expand=NO, fill=Y)
 
-    Label(self, text="Technology", font="TkDefaultFont 11 bold").pack(side=TOP)
-    
-    tech_config_frame = Frame(self)
-    tech_config_frame.pack(side=TOP)
+        Label(
+            self,
+            text="Technology",
+            font="TkDefaultFont 11 bold").pack(
+            side=TOP)
 
-    self.tech_label = Label(tech_config_frame, text="Target technology: ").grid(row=1, column=1)
-    self.tech_label = Label(tech_config_frame, text=soc.TECH, fg="darkgreen").grid(row=2, column=1)
+        tech_config_frame = Frame(self)
+        tech_config_frame.pack(side=TOP)
 
-    ttk.Separator(self, orient="horizontal").pack(anchor="nw", fill=X, pady=10)
+        self.tech_label = Label(
+            tech_config_frame,
+            text="Target technology: ").grid(
+            row=1,
+            column=1)
+        self.tech_label = Label(
+            tech_config_frame,
+            text=soc.TECH,
+            fg="darkgreen").grid(
+            row=2,
+            column=1)
 
-    Label(self, text="FPGA Prototyping", font="TkDefaultFont 11 bold").pack(side=TOP)
-    
-    fpga_config_frame = Frame(self)
-    fpga_config_frame.pack(side=TOP)
+        ttk.Separator(
+            self,
+            orient="horizontal").pack(
+            anchor="nw",
+            fill=X,
+            pady=10)
 
-    self.fpga_label = Label(fpga_config_frame, text="Target FPGA board: ").grid(row=1, column=1)
-    self.fpga_label = Label(fpga_config_frame, text=soc.FPGA_BOARD, fg="darkgreen").grid(row=2, column=1)
-    
+        Label(
+            self,
+            text="FPGA Prototyping",
+            font="TkDefaultFont 11 bold").pack(
+            side=TOP)
+
+        fpga_config_frame = Frame(self)
+        fpga_config_frame.pack(side=TOP)
+
+        self.fpga_label = Label(
+            fpga_config_frame,
+            text="Target FPGA board: ").grid(
+            row=1,
+            column=1)
+        self.fpga_label = Label(
+            fpga_config_frame,
+            text=soc.FPGA_BOARD,
+            fg="darkgreen").grid(
+            row=2,
+            column=1)
+
+
 class CacheFrame(Frame):
 
-  def __init__(self, soc, top_frame, main_frame):
-    self.soc = soc
-    Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE)
-    self.pack(side=LEFT, expand=NO, fill=Y)
-    Label(self, text = "Cache Hierarchy ", font="TkDefaultFont 11 bold").pack(side = TOP)
+    def __init__(self, soc, top_frame, main_frame):
+        self.soc = soc
+        Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE)
+        self.pack(side=LEFT, expand=NO, fill=Y)
+        Label(
+            self,
+            text="Cache Hierarchy ",
+            font="TkDefaultFont 11 bold").pack(
+            side=TOP)
 
-    cache_config_frame = Frame(self)
-    cache_config_frame.pack(side=TOP)
+        cache_config_frame = Frame(self)
+        cache_config_frame.pack(side=TOP)
 
-    sets_choices = [32, 64, 128, 256, 512, 1024, 2048, 4096, 8192]
-    l2_ways_choices = [2, 4, 8]
-    llc_ways_choices = [4, 8, 16]
-    cache_choices = ["ESP RTL", "SPANDEX HLS", "ESP HLS"]
-    cache_line_choices = ["128", "256", "512"]
+        sets_choices = [32, 64, 128, 256, 512, 1024, 2048, 4096, 8192]
+        l2_ways_choices = [2, 4, 8]
+        llc_ways_choices = [4, 8, 16]
+        cache_choices = ["ESP RTL", "SPANDEX HLS", "ESP HLS"]
+        cache_line_choices = ["128", "256", "512"]
 
-    Label(cache_config_frame, text = "Caches: ").grid(row=1, column=1)
-    Checkbutton(cache_config_frame, text="", variable=soc.cache_en,
-                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=1, column=2)
-    Label(cache_config_frame, text = "Implementation: ").grid(row=2, column=1)
-    OptionMenu(cache_config_frame, soc.cache_impl, *cache_choices, command=main_frame.update_noc_config).grid(row=2,column=2)
-    Label(cache_config_frame, text = "L2 SETS: ").grid(row=3, column=1)
-    OptionMenu(cache_config_frame, soc.l2_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=3, column=2)
-    Label(cache_config_frame, text = "L2 WAYS: ").grid(row=4, column=1)
-    OptionMenu(cache_config_frame, soc.l2_ways, *l2_ways_choices, command=main_frame.update_noc_config).grid(row=4, column=2)
-    Label(cache_config_frame, text = "LLC SETS (per mem tile): ").grid(row=5, column=1)
-    OptionMenu(cache_config_frame, soc.llc_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=5, column=2)
-    Label(cache_config_frame, text = "LLC WAYS: ").grid(row=6, column=1)
-    OptionMenu(cache_config_frame, soc.llc_ways, *llc_ways_choices, command=main_frame.update_noc_config).grid(row=6, column=2)
-    Label(cache_config_frame, text = "ACC L2 SETS: ").grid(row=7, column=1)
-    OptionMenu(cache_config_frame, soc.acc_l2_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=7, column=2)
-    Label(cache_config_frame, text = "ACC L2 WAYS: ").grid(row=8, column=1)
-    OptionMenu(cache_config_frame, soc.acc_l2_ways, *l2_ways_choices, command=main_frame.update_noc_config).grid(row=8, column=2)
-    Label(cache_config_frame, text = "Cache Line Size: ").grid(row=9, column=1)
-    OptionMenu(cache_config_frame, soc.cache_line_size, *cache_line_choices, command=main_frame.update_noc_config).grid(row=9, column=2)
+        Label(cache_config_frame, text="Caches: ").grid(row=1, column=1)
+        Checkbutton(
+            cache_config_frame,
+            text="",
+            variable=soc.cache_en,
+            onvalue=1,
+            offvalue=0,
+            command=main_frame.update_noc_config).grid(
+            row=1,
+            column=2)
+        Label(
+            cache_config_frame,
+            text="Implementation: ").grid(
+            row=2,
+            column=1)
+        OptionMenu(
+            cache_config_frame,
+            soc.cache_impl,
+            *cache_choices,
+            command=main_frame.update_noc_config).grid(
+            row=2,
+            column=2)
+        Label(cache_config_frame, text="L2 SETS: ").grid(row=3, column=1)
+        OptionMenu(
+            cache_config_frame,
+            soc.l2_sets,
+            *sets_choices,
+            command=main_frame.update_noc_config).grid(
+            row=3,
+            column=2)
+        Label(cache_config_frame, text="L2 WAYS: ").grid(row=4, column=1)
+        OptionMenu(
+            cache_config_frame,
+            soc.l2_ways,
+            *l2_ways_choices,
+            command=main_frame.update_noc_config).grid(
+            row=4,
+            column=2)
+        Label(
+            cache_config_frame,
+            text="LLC SETS (per mem tile): ").grid(
+            row=5,
+            column=1)
+        OptionMenu(
+            cache_config_frame,
+            soc.llc_sets,
+            *sets_choices,
+            command=main_frame.update_noc_config).grid(
+            row=5,
+            column=2)
+        Label(cache_config_frame, text="LLC WAYS: ").grid(row=6, column=1)
+        OptionMenu(
+            cache_config_frame,
+            soc.llc_ways,
+            *llc_ways_choices,
+            command=main_frame.update_noc_config).grid(
+            row=6,
+            column=2)
+        Label(cache_config_frame, text="ACC L2 SETS: ").grid(row=7, column=1)
+        OptionMenu(
+            cache_config_frame,
+            soc.acc_l2_sets,
+            *sets_choices,
+            command=main_frame.update_noc_config).grid(
+            row=7,
+            column=2)
+        Label(cache_config_frame, text="ACC L2 WAYS: ").grid(row=8, column=1)
+        OptionMenu(
+            cache_config_frame,
+            soc.acc_l2_ways,
+            *l2_ways_choices,
+            command=main_frame.update_noc_config).grid(
+            row=8,
+            column=2)
+        Label(
+            cache_config_frame,
+            text="Cache Line Size: ").grid(
+            row=9,
+            column=1)
+        OptionMenu(
+            cache_config_frame,
+            soc.cache_line_size,
+            *cache_line_choices,
+            command=main_frame.update_noc_config).grid(
+            row=9,
+            column=2)
+
 
 class PeripheralFrame(Frame):
 
-  def __init__(self, soc, top_frame, main_frame):
-    self.soc = soc
+    def __init__(self, soc, top_frame, main_frame):
+        self.soc = soc
 
-    #
-    # Peripherals
-    #
-    Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE)
-    self.pack(side=LEFT, expand=NO, fill=Y)
-    Label(self, text = "Peripherals ", font="TkDefaultFont 11 bold").pack(side = TOP)
+        #
+        # Peripherals
+        #
+        Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE)
+        self.pack(side=LEFT, expand=NO, fill=Y)
+        Label(
+            self,
+            text="Peripherals ",
+            font="TkDefaultFont 11 bold").pack(
+            side=TOP)
 
-    periph_config_frame = Frame(self)
-    periph_config_frame.pack(side=TOP)
+        periph_config_frame = Frame(self)
+        periph_config_frame.pack(side=TOP)
 
-    # UART
-    Label(periph_config_frame, text = "UART ", fg="darkgreen").grid(row=1, column=1)
+        # UART
+        Label(
+            periph_config_frame,
+            text="UART ",
+            fg="darkgreen").grid(
+            row=1,
+            column=1)
 
-    # JTAG
-    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-      Label(periph_config_frame, text = "JTAG (test) :").grid(row=2, column=1)
-      Checkbutton(periph_config_frame, text="", variable=soc.jtag_en,
-                  onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=2, column=2)
-    else:
-      Label(periph_config_frame, text = "No JTAG (test) ", fg="red").grid(row=2, column=1)
+        # JTAG
+        if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+            Label(
+                periph_config_frame,
+                text="JTAG (test) :").grid(
+                row=2,
+                column=1)
+            Checkbutton(
+                periph_config_frame,
+                text="",
+                variable=soc.jtag_en,
+                onvalue=1,
+                offvalue=0,
+                command=main_frame.update_noc_config).grid(
+                row=2,
+                column=2)
+        else:
+            Label(
+                periph_config_frame,
+                text="No JTAG (test) ",
+                fg="red").grid(
+                row=2,
+                column=1)
 
-    # Ethernet
-    # if soc.HAS_SGMII == 1:
-    #   eth_text = "Ethernet (use SGMII): "
-    # else:
-    #   eth_text = "Ethernet (no SGMII): "
+        # Ethernet
+        # if soc.HAS_SGMII == 1:
+        #   eth_text = "Ethernet (use SGMII): "
+        # else:
+        #   eth_text = "Ethernet (no SGMII): "
 
-    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-        Label(periph_config_frame, text = "Ethernet :").grid(row=3, column=1)
-        Checkbutton(periph_config_frame, text="", variable=soc.eth_en,
-                    onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=3, column=2)
-    else:
-        Label(periph_config_frame, text = "Ethernet", fg="darkgreen").grid(row=3, column=1)
+        if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+            Label(periph_config_frame, text="Ethernet :").grid(row=3, column=1)
+            Checkbutton(
+                periph_config_frame,
+                text="",
+                variable=soc.eth_en,
+                onvalue=1,
+                offvalue=0,
+                command=main_frame.update_noc_config).grid(
+                row=3,
+                column=2)
+        else:
+            Label(
+                periph_config_frame,
+                text="Ethernet",
+                fg="darkgreen").grid(
+                row=3,
+                column=1)
 
-    iolink_width_choices = [8, 16, 32]
-    mem_link_width_choices = [ARCH_BITS]
+        iolink_width_choices = [8, 16, 32]
+        mem_link_width_choices = [ARCH_BITS]
 
-    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-        Label(periph_config_frame, text = "Custom IO Link:").grid(row=4, column=1)
-        Checkbutton(periph_config_frame, text="", variable=soc.iolink_en,
-                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=4, column=2)
-        Label(periph_config_frame, text = "IO Link Width: ").grid(row=5, column=1)
-        OptionMenu(periph_config_frame, soc.iolink_width, *iolink_width_choices, command=main_frame.update_noc_config).grid(row=5, column=2)
-    else:
-        Label(periph_config_frame, text = "No Custom IO Link", fg="red").grid(row=4, column=1)
+        if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+            Label(
+                periph_config_frame,
+                text="Custom IO Link:").grid(
+                row=4,
+                column=1)
+            Checkbutton(
+                periph_config_frame,
+                text="",
+                variable=soc.iolink_en,
+                onvalue=1,
+                offvalue=0,
+                command=main_frame.update_noc_config).grid(
+                row=4,
+                column=2)
+            Label(
+                periph_config_frame,
+                text="IO Link Width: ").grid(
+                row=5,
+                column=1)
+            OptionMenu(
+                periph_config_frame,
+                soc.iolink_width,
+                *iolink_width_choices,
+                command=main_frame.update_noc_config).grid(
+                row=5,
+                column=2)
+        else:
+            Label(
+                periph_config_frame,
+                text="No Custom IO Link",
+                fg="red").grid(
+                row=4,
+                column=1)
 
-    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-        Label(periph_config_frame, text = "FPGA Memory Link", fg="darkgreen").grid(row=6, column=1)
-    else:
-        Label(periph_config_frame, text = "No FPGA Memory Link", fg="red").grid(row=5, column=1)
+        if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+            Label(
+                periph_config_frame,
+                text="FPGA Memory Link",
+                fg="darkgreen").grid(
+                row=6,
+                column=1)
+        else:
+            Label(
+                periph_config_frame,
+                text="No FPGA Memory Link",
+                fg="red").grid(
+                row=5,
+                column=1)
 
-    # SVGA
-    if soc.FPGA_BOARD.find("profpga") != -1 and (soc.TECH == "virtex7" or soc.TECH == "virtexu"):
-      Label(periph_config_frame, text = "SVGA: ").grid(row=6, column=1)
-      Checkbutton(periph_config_frame, text="", variable=soc.svga_en,
-                  onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=6, column=2)
-    else:
-      Label(periph_config_frame, text = "No SVGA", fg="red").grid(row=7, column=1)
+        # SVGA
+        if soc.FPGA_BOARD.find(
+                "profpga") != -1 and (soc.TECH == "virtex7" or soc.TECH == "virtexu"):
+            Label(periph_config_frame, text="SVGA: ").grid(row=6, column=1)
+            Checkbutton(
+                periph_config_frame,
+                text="",
+                variable=soc.svga_en,
+                onvalue=1,
+                offvalue=0,
+                command=main_frame.update_noc_config).grid(
+                row=6,
+                column=2)
+        else:
+            Label(
+                periph_config_frame,
+                text="No SVGA",
+                fg="red").grid(
+                row=7,
+                column=1)
 
-    #
-    # Debug Link
-    #
-    ttk.Separator(self, orient="horizontal").pack(anchor="nw", fill=X, pady=10)
-    Label(self, text = "Debug Link ", font="TkDefaultFont 11 bold").pack(side=TOP)
+        #
+        # Debug Link
+        #
+        ttk.Separator(
+            self,
+            orient="horizontal").pack(
+            anchor="nw",
+            fill=X,
+            pady=10)
+        Label(
+            self,
+            text="Debug Link ",
+            font="TkDefaultFont 11 bold").pack(
+            side=TOP)
 
-    Label(self, text = "Ethernet link (EDCL)").pack(side = TOP)
+        Label(self, text="Ethernet link (EDCL)").pack(side=TOP)
 
-    dsu_config_frame = Frame(self)
-    dsu_config_frame.pack(side=TOP, pady=5)
+        dsu_config_frame = Frame(self)
+        dsu_config_frame.pack(side=TOP, pady=5)
 
-    Label(dsu_config_frame, text="IP address (hex): ").grid(row=2, column=1)
-    self.DSU_IP = Entry(dsu_config_frame, width=10)
-    self.DSU_IP.grid(row=2, column=2)
-    Label(dsu_config_frame, text="IP address (dec): ").grid(row=3, column=1)
-    self.DSU_IP_DEC = Label(dsu_config_frame, text=soc.IP_ADDR, fg="darkgreen").grid(row=3, column=2)
-    Label(dsu_config_frame, text="MAC address (hex): ").grid(row=4, column=1)
-    self.DSU_ETH = Entry(dsu_config_frame, width=13)
-    self.DSU_ETH.grid(row=4, column=2)
+        Label(
+            dsu_config_frame,
+            text="IP address (hex): ").grid(
+            row=2,
+            column=1)
+        self.DSU_IP = Entry(dsu_config_frame, width=10)
+        self.DSU_IP.grid(row=2, column=2)
+        Label(
+            dsu_config_frame,
+            text="IP address (dec): ").grid(
+            row=3,
+            column=1)
+        self.DSU_IP_DEC = Label(
+            dsu_config_frame,
+            text=soc.IP_ADDR,
+            fg="darkgreen").grid(
+            row=3,
+            column=2)
+        Label(
+            dsu_config_frame,
+            text="MAC address (hex): ").grid(
+            row=4,
+            column=1)
+        self.DSU_ETH = Entry(dsu_config_frame, width=13)
+        self.DSU_ETH.grid(row=4, column=2)
 
-  def update_frame(self):
-    if len(self.soc.dsu_ip) == 8 and len(self.soc.dsu_eth) == 12:
-      self.DSU_IP.insert(0, self.soc.dsu_ip)
-      self.DSU_ETH.insert(0, self.soc.dsu_eth)
+    def update_frame(self):
+        if len(self.soc.dsu_ip) == 8 and len(self.soc.dsu_eth) == 12:
+            self.DSU_IP.insert(0, self.soc.dsu_ip)
+            self.DSU_ETH.insert(0, self.soc.dsu_eth)
+
 
 class CpuFrame(Frame):
 
-  def set_cpu_specific_labels(self, soc):
+    def set_cpu_specific_labels(self, soc):
 
-    if soc.CPU_ARCH.get() == "ariane":
-      self.fpu_label.config(text="ETH FPnew", fg="darkgreen")
-    elif soc.CPU_ARCH.get() == "leon3" and soc.LEON3_HAS_FPU == "7":
-      self.fpu_label.config(text="SLD FPU", fg="darkgreen")
-    elif soc.CPU_ARCH.get() == "leon3" and soc.LEON3_HAS_FPU == "(1+0)":
-      self.fpu_label.config(text="GRFPU", fg="darkgreen")
-    else:
-      self.fpu_label.config(text="None", fg="red")
-    
-  def __init__(self, soc, top_frame, main_frame):
-    self.soc = soc
-    Frame.__init__(self, top_frame, width=70, borderwidth=2, relief=RIDGE)
-    self.pack(side=LEFT, expand=NO, fill=Y)
-    Label(self, text = "CPU ", font="TkDefaultFont 11 bold").pack(side=TOP)
+        if soc.CPU_ARCH.get() == "ariane":
+            self.fpu_label.config(text="ETH FPnew", fg="darkgreen")
+        elif soc.CPU_ARCH.get() == "leon3" and soc.LEON3_HAS_FPU == "7":
+            self.fpu_label.config(text="SLD FPU", fg="darkgreen")
+        elif soc.CPU_ARCH.get() == "leon3" and soc.LEON3_HAS_FPU == "(1+0)":
+            self.fpu_label.config(text="GRFPU", fg="darkgreen")
+        else:
+            self.fpu_label.config(text="None", fg="red")
 
-    self.cpu_frame = Frame(self)
-    self.cpu_frame.pack(side=TOP, pady=5)
+    def __init__(self, soc, top_frame, main_frame):
+        self.soc = soc
+        Frame.__init__(self, top_frame, width=70, borderwidth=2, relief=RIDGE)
+        self.pack(side=LEFT, expand=NO, fill=Y)
+        Label(self, text="CPU ", font="TkDefaultFont 11 bold").pack(side=TOP)
 
-    cpu_choices = ["leon3", "ariane", "ibex"]
+        self.cpu_frame = Frame(self)
+        self.cpu_frame.pack(side=TOP, pady=5)
 
-    Label(self.cpu_frame, text = "Core: ").grid(row=1, column=1)
-    Pmw.OptionMenu(self.cpu_frame, menubutton_textvariable=soc.CPU_ARCH,
-                   items=cpu_choices, command=main_frame.update_noc_config).grid(row=1, column=2)
+        cpu_choices = ["leon3", "ariane", "ibex"]
 
-    Label(self.cpu_frame, text="FPU: ").grid(row=2, column=1)
-    self.fpu_label = Label(self.cpu_frame, text="None", fg="red")
-    self.fpu_label.grid(row=2, column=2)
-    self.set_cpu_specific_labels(soc)
-    
-    ttk.Separator(self, orient="horizontal").pack(anchor="nw", fill=X, pady=10)
+        Label(self.cpu_frame, text="Core: ").grid(row=1, column=1)
+        Pmw.OptionMenu(
+            self.cpu_frame,
+            menubutton_textvariable=soc.CPU_ARCH,
+            items=cpu_choices,
+            command=main_frame.update_noc_config).grid(
+            row=1,
+            column=2)
 
-    Label(self, text = "Shared Local Memory ", font="TkDefaultFont 11 bold").pack(side=TOP)
+        Label(self.cpu_frame, text="FPU: ").grid(row=2, column=1)
+        self.fpu_label = Label(self.cpu_frame, text="None", fg="red")
+        self.fpu_label.grid(row=2, column=2)
+        self.set_cpu_specific_labels(soc)
 
-    slm_config_frame = Frame(self)
-    slm_config_frame.pack(side=TOP, pady=5)
+        ttk.Separator(
+            self,
+            orient="horizontal").pack(
+            anchor="nw",
+            fill=X,
+            pady=10)
 
-    slm_kbytes_choices = [64, 128, 256, 512, 1024, 2048, 4096]
+        Label(
+            self,
+            text="Shared Local Memory ",
+            font="TkDefaultFont 11 bold").pack(
+            side=TOP)
 
-    Label(slm_config_frame, text = "KB per tile: ").grid(row=1, column=1)
-    OptionMenu(slm_config_frame, soc.slm_kbytes, *slm_kbytes_choices, command=main_frame.update_noc_config).grid(row=1, column=2)
+        slm_config_frame = Frame(self)
+        slm_config_frame.pack(side=TOP, pady=5)
 
-    ttk.Separator(self, orient="horizontal").pack(anchor="nw", fill=X, pady=10)
+        slm_kbytes_choices = [64, 128, 256, 512, 1024, 2048, 4096]
 
-    Label(self, text = "Accelerators ", font="TkDefaultFont 11 bold").pack(side = TOP, pady=5)
-    Label(self, text = "Data allocation strategy:").pack(side = TOP)
-    Radiobutton(self, text = "Big physical area", variable = soc.transfers, value = 0).pack(side = TOP)
-    Radiobutton(self, text = "Scatter/Gather  ", variable = soc.transfers, value = 1).pack(side = TOP)
+        Label(slm_config_frame, text="KB per tile: ").grid(row=1, column=1)
+        OptionMenu(
+            slm_config_frame,
+            soc.slm_kbytes,
+            *slm_kbytes_choices,
+            command=main_frame.update_noc_config).grid(
+            row=1,
+            column=2)
+
+        ttk.Separator(
+            self,
+            orient="horizontal").pack(
+            anchor="nw",
+            fill=X,
+            pady=10)
+
+        Label(
+            self,
+            text="Accelerators ",
+            font="TkDefaultFont 11 bold").pack(
+            side=TOP,
+            pady=5)
+        Label(self, text="Data allocation strategy:").pack(side=TOP)
+        Radiobutton(
+            self,
+            text="Big physical area",
+            variable=soc.transfers,
+            value=0).pack(
+            side=TOP)
+        Radiobutton(
+            self,
+            text="Scatter/Gather  ",
+            variable=soc.transfers,
+            value=1).pack(
+            side=TOP)
+
 
 class AdvancedFrame(Frame):
 
-  def __init__(self, soc, top_frame, main_frame):
-    self.soc = soc
+    def __init__(self, soc, top_frame, main_frame):
+        self.soc = soc
 
-    #
-    # Advanced configuration
-    #
-    Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE)
-    self.pack(side=LEFT, expand=NO, fill=Y)
-    Label(self, text = "Clock strategy ", font="TkDefaultFont 11 bold").pack(side = TOP)
+        #
+        # Advanced configuration
+        #
+        Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE)
+        self.pack(side=LEFT, expand=NO, fill=Y)
+        Label(
+            self,
+            text="Clock strategy ",
+            font="TkDefaultFont 11 bold").pack(
+            side=TOP)
 
-    advanced_config_frame = Frame(self)
-    advanced_config_frame.pack(side=TOP)
+        advanced_config_frame = Frame(self)
+        advanced_config_frame.pack(side=TOP)
 
-    # Clock Strategy
-    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
-      Label(advanced_config_frame, text = "Dual external").grid(row=1, column=2)
-      Radiobutton(advanced_config_frame, text="", variable=soc.clk_str, value = 0, command=main_frame.update_noc_config).grid(row=1, column=1)
-      Label(advanced_config_frame, text = "Multi DCO").grid(row=2, column=2)
-      Radiobutton(advanced_config_frame, text="", variable=soc.clk_str, value = 1, command=main_frame.update_noc_config).grid(row=2, column=1)
-      Label(advanced_config_frame, text = "Single DCO").grid(row=3, column=2)
-      Radiobutton(advanced_config_frame, text="", variable=soc.clk_str, value = 2, command=main_frame.update_noc_config).grid(row=3, column=1)
-    else:
-      Label(advanced_config_frame, text = "Dual external clocks (NoC and Tile)", fg="darkgreen").pack(side = TOP)
+        # Clock Strategy
+        if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+            Label(
+                advanced_config_frame,
+                text="Dual external").grid(
+                row=1,
+                column=2)
+            Radiobutton(
+                advanced_config_frame,
+                text="",
+                variable=soc.clk_str,
+                value=0,
+                command=main_frame.update_noc_config).grid(
+                row=1,
+                column=1)
+            Label(
+                advanced_config_frame,
+                text="Multi DCO").grid(
+                row=2,
+                column=2)
+            Radiobutton(
+                advanced_config_frame,
+                text="",
+                variable=soc.clk_str,
+                value=1,
+                command=main_frame.update_noc_config).grid(
+                row=2,
+                column=1)
+            Label(
+                advanced_config_frame,
+                text="Single DCO").grid(
+                row=3,
+                column=2)
+            Radiobutton(
+                advanced_config_frame,
+                text="",
+                variable=soc.clk_str,
+                value=2,
+                command=main_frame.update_noc_config).grid(
+                row=3,
+                column=1)
+        else:
+            Label(
+                advanced_config_frame,
+                text="Dual external clocks (NoC and Tile)",
+                fg="darkgreen").pack(
+                side=TOP)
 #      Label(advanced_config_frame, text = "No multi DCO clocks (CS-GALS)", fg="red").pack(side = TOP)
 #      Label(advanced_config_frame, text = "No single DCO clock ", fg="red").pack(side = TOP)
 #      soc.clk_str.set(0)
 
+
 class EspCreator(Frame):
 
-  def __init__(self, master, _soc):
-    self.soc = _soc
-    self.noc = self.soc.noc
-    self.master = master
+    def __init__(self, master, _soc):
+        self.soc = _soc
+        self.noc = self.soc.noc
+        self.master = master
 
-    # Create scroll bar
-    self.y_axis_scrollbar = Scrollbar(self.master)
-    self.x_axis_scrollbar = Scrollbar(self.master, orient='horizontal')
+        # Create scroll bar
+        self.y_axis_scrollbar = Scrollbar(self.master)
+        self.x_axis_scrollbar = Scrollbar(self.master, orient='horizontal')
 
-    # Create canvas with yscrollcommmand from scrollbar, use xscrollcommand for horizontal scroll
-    self.main_canvas = Canvas(self.master, yscrollcommand=self.y_axis_scrollbar.set,
-                              xscrollcommand=self.x_axis_scrollbar.set)
+        # Create canvas with yscrollcommmand from scrollbar, use xscrollcommand
+        # for horizontal scroll
+        self.main_canvas = Canvas(self.master,
+                                  yscrollcommand=self.y_axis_scrollbar.set,
+                                  xscrollcommand=self.x_axis_scrollbar.set)
 
-    # Configure and pack/grid scrollbar to master
-    self.y_axis_scrollbar.config(command=self.main_canvas.yview)
-    self.y_axis_scrollbar.pack(side=RIGHT, fill=BOTH, expand=NO)
-    self.x_axis_scrollbar.config(command=self.main_canvas.xview)
-    self.x_axis_scrollbar.pack(side=BOTTOM, fill=BOTH, expand=NO)
+        # Configure and pack/grid scrollbar to master
+        self.y_axis_scrollbar.config(command=self.main_canvas.yview)
+        self.y_axis_scrollbar.pack(side=RIGHT, fill=BOTH, expand=NO)
+        self.x_axis_scrollbar.config(command=self.main_canvas.xview)
+        self.x_axis_scrollbar.pack(side=BOTTOM, fill=BOTH, expand=NO)
 
-    # This is the frame all content will go to. The 'master' of the frame is the canvas
-    self.ParentFrame = Frame(self.main_canvas, borderwidth=5, relief=RIDGE)
-    self.ParentFrame.pack(side=TOP, expand=YES, fill=BOTH)
-        
-    # Place canvas on app pack/grid
-    self.main_canvas.pack(side=TOP, fill=BOTH, expand=YES)
+        # This is the frame all content will go to. The 'master' of the frame
+        # is the canvas
+        self.ParentFrame = Frame(self.main_canvas, borderwidth=5, relief=RIDGE)
+        self.ParentFrame.pack(side=TOP, expand=YES, fill=BOTH)
 
-    # create_window draws the Frame on the canvas. Imagine it as another pack/grid
-    self.main_canvas.create_window((0, 0), window=self.ParentFrame, anchor=E)
+        # Place canvas on app pack/grid
+        self.main_canvas.pack(side=TOP, fill=BOTH, expand=YES)
 
-    #, width=self.master.winfo_screenwidth(), height=self.master.winfo_screenheight())
-    
-    #.:: creating the general layout
-    #top frame (configuration of SoC and peripherals)
-    self.top_frame = Frame(self.ParentFrame, borderwidth=5, relief=RIDGE) 
-    self.top_frame.pack(side=TOP, expand=YES,  padx=10, pady=5, ipadx=5, ipady=5, fill=BOTH)    
-    #bottom frame (configuration of components)
-    self.bottom_frame = Frame(self.ParentFrame, borderwidth=5, relief=RIDGE)
-    self.bottom_frame.pack(side=TOP, expand=YES,  padx=10, pady=5, ipadx=5, ipady=5, fill=BOTH)    
-    #message frame
-    self.message_frame = Frame(self.ParentFrame, borderwidth=5, relief=RIDGE)
-    self.message_frame.pack(side=TOP, expand=YES,  padx=10, pady=5, ipadx=5, ipady=5, fill=BOTH)
-    self.message_bar = Frame(self.message_frame)
-    self.message_bar.pack(side=LEFT,fill=BOTH,expand=YES)
-    self.message_buttons = Frame(self.message_frame, width=50)
-    self.message_buttons.pack(side=RIGHT, expand=YES, fill=BOTH)
-    #final button
-    self.done = Button(self.message_buttons, text="Generate SoC config", width=25, state=DISABLED, command=self.generate_files)
-    self.done.pack(side=RIGHT)
+        # create_window draws the Frame on the canvas. Imagine it as another
+        # pack/grid
+        self.main_canvas.create_window(
+            (0, 0), window=self.ParentFrame, anchor=E)
 
-    #.:: creating the configuration frame (read-only)
-    cfg_frame = ConfigFrame(self.soc, self.top_frame) 
-    #.:: creating the CPU frame
-    self.cpu_frame = CpuFrame(self.soc, self.top_frame, self)
-    #.:: creating the cache frame
-    self.cache_frame = CacheFrame(self.soc, self.top_frame, self)
-    #.:: creating the peripherals frame
-    self.peripheral_frame = PeripheralFrame(self.soc, self.top_frame, self)
-    self.peripheral_frame.update_frame()
-    #.:: creating the advanced configuration frame
-    self.advanced_config_frame = AdvancedFrame(self.soc, self.top_frame, self)
+        # , width=self.master.winfo_screenwidth(), height=self.master.winfo_screenheight())
 
-    #noc frame
-    self.bottom_frame_noccfg = NoCFrame(self.soc, self.bottom_frame) 
-    self.bottom_frame_noccfg.noc_config_frame.pack(side=LEFT, expand=NO, fill=Y)
-    self.bottom_frame_noccfg.create_noc()
-    self.done.config(state=DISABLED)
+        # .:: creating the general layout
+        # top frame (configuration of SoC and peripherals)
+        self.top_frame = Frame(self.ParentFrame, borderwidth=5, relief=RIDGE)
+        self.top_frame.pack(
+            side=TOP,
+            expand=YES,
+            padx=10,
+            pady=5,
+            ipadx=5,
+            ipady=5,
+            fill=BOTH)
+        # bottom frame (configuration of components)
+        self.bottom_frame = Frame(
+            self.ParentFrame,
+            borderwidth=5,
+            relief=RIDGE)
+        self.bottom_frame.pack(
+            side=TOP,
+            expand=YES,
+            padx=10,
+            pady=5,
+            ipadx=5,
+            ipady=5,
+            fill=BOTH)
+        # message frame
+        self.message_frame = Frame(
+            self.ParentFrame, borderwidth=5, relief=RIDGE)
+        self.message_frame.pack(
+            side=TOP,
+            expand=YES,
+            padx=10,
+            pady=5,
+            ipadx=5,
+            ipady=5,
+            fill=BOTH)
+        self.message_bar = Frame(self.message_frame)
+        self.message_bar.pack(side=LEFT, fill=BOTH, expand=YES)
+        self.message_buttons = Frame(self.message_frame, width=50)
+        self.message_buttons.pack(side=RIGHT, expand=YES, fill=BOTH)
+        # final button
+        self.done = Button(
+            self.message_buttons,
+            text="Generate SoC config",
+            width=25,
+            state=DISABLED,
+            command=self.generate_files)
+        self.done.pack(side=RIGHT)
 
-    #message box
-    self.message=Text(self.message_bar, width = 150, height = 7, wrap = WORD)
-    self.message.pack()
-    self.bottom_frame_noccfg.set_message(self.message, cfg_frame, self.cpu_frame, self.done)   
+        # .:: creating the configuration frame (read-only)
+        cfg_frame = ConfigFrame(self.soc, self.top_frame)
+        # .:: creating the CPU frame
+        self.cpu_frame = CpuFrame(self.soc, self.top_frame, self)
+        # .:: creating the cache frame
+        self.cache_frame = CacheFrame(self.soc, self.top_frame, self)
+        # .:: creating the peripherals frame
+        self.peripheral_frame = PeripheralFrame(self.soc, self.top_frame, self)
+        self.peripheral_frame.update_frame()
+        # .:: creating the advanced configuration frame
+        self.advanced_config_frame = AdvancedFrame(
+            self.soc, self.top_frame, self)
 
-    self.bottom_frame_noccfg.update_frame()
+        # noc frame
+        self.bottom_frame_noccfg = NoCFrame(self.soc, self.bottom_frame)
+        self.bottom_frame_noccfg.noc_config_frame.pack(
+            side=LEFT, expand=NO, fill=Y)
+        self.bottom_frame_noccfg.create_noc()
+        self.done.config(state=DISABLED)
 
-    # Call this method after every update to the canvas
-    self.update_scroll_region()
+        # message box
+        self.message = Text(self.message_bar, width=150, height=7, wrap=WORD)
+        self.message.pack()
+        self.bottom_frame_noccfg.set_message(
+            self.message, cfg_frame, self.cpu_frame, self.done)
 
-  def update_scroll_region(self):
-    ''' Call after every update to content in self.main_canvas '''
-    self.master.update()
-    self.main_canvas.config(scrollregion=self.main_canvas.bbox('all'))
+        self.bottom_frame_noccfg.update_frame()
 
-  def update_noc_config(self, *args):
-    if soc.CPU_ARCH.get() == "ariane":
-      self.soc.ARCH_BITS = 64
-    else:
-      self.soc.ARCH_BITS = 32
-    self.soc.IPs = Components(self.soc.TECH, self.noc.dma_noc_width.get(), soc.CPU_ARCH.get())
-    self.soc.update_list_of_ips()
-    self.soc.changed()
-    self.bottom_frame_noccfg.changed()
+        # Call this method after every update to the canvas
+        self.update_scroll_region()
 
-  def generate_files(self):
-    self.bottom_frame_noccfg.changed()
-    self.generate_socmap()
-    self.generate_mmi64_regs()
-    if os.path.isfile(".esp_config.bak") == True:
-      shutil.move(".esp_config.bak", ".esp_config")
+    def update_scroll_region(self):
+        ''' Call after every update to content in self.main_canvas '''
+        self.master.update()
+        self.main_canvas.config(scrollregion=self.main_canvas.bbox('all'))
 
-  def generate_socmap(self):
-    self.soc.write_config(self.peripheral_frame.DSU_IP.get(), self.peripheral_frame.DSU_ETH.get())
-    esp_config = soc_config(soc)
-    create_socmap(esp_config, soc)
+    def update_noc_config(self, *args):
+        if soc.CPU_ARCH.get() == "ariane":
+            self.soc.ARCH_BITS = 64
+        else:
+            self.soc.ARCH_BITS = 32
+        self.soc.IPs = Components(
+            self.soc.TECH,
+            self.noc.dma_noc_width.get(),
+            soc.CPU_ARCH.get())
+        self.soc.update_list_of_ips()
+        self.soc.changed()
+        self.bottom_frame_noccfg.changed()
 
-  def generate_mmi64_regs(self):
-      create_mmi64_regs(soc)
+    def generate_files(self):
+        self.bottom_frame_noccfg.changed()
+        self.generate_socmap()
+        self.generate_mmi64_regs()
+        if os.path.isfile(".esp_config.bak"):
+            shutil.move(".esp_config.bak", ".esp_config")
+
+    def generate_socmap(self):
+        self.soc.write_config(
+            self.peripheral_frame.DSU_IP.get(),
+            self.peripheral_frame.DSU_ETH.get())
+        esp_config = soc_config(soc)
+        create_socmap(esp_config, soc)
+
+    def generate_mmi64_regs(self):
+        create_mmi64_regs(soc)
+
 
 if len(sys.argv) != 9:
     print_usage()
@@ -394,18 +741,30 @@ EMU_FREQ = sys.argv[8]
 
 root = Tk()
 root.title("ESP SoC Generator")
-soc = SoC_Config(ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, True)
+soc = SoC_Config(
+    ARCH_BITS,
+    TECH_TYPE,
+    TECH,
+    LINUX_MAC,
+    LEON3_STACK,
+    FPGA_BOARD,
+    EMU_TECH,
+    EMU_FREQ,
+    True)
 
 root.geometry("1024x768")
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()
 root.geometry("%dx%d+0+0" % (w, h))
 app = EspCreator(root, soc)
 
+
 def on_closing():
-  if messagebox.askokcancel("Quit", "Do you want to quit?"):
-    soc.write_config(app.peripheral_frame.DSU_IP.get(), app.peripheral_frame.DSU_ETH.get())
-    root.destroy()
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        soc.write_config(
+            app.peripheral_frame.DSU_IP.get(),
+            app.peripheral_frame.DSU_ETH.get())
+        root.destroy()
+
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
-

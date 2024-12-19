@@ -6,6 +6,7 @@
 import sys
 import random
 
+
 def gen(is_transposed, batch_size, rowsA, colsA, colsB, name):
 
     # define range of random matrix elements values
@@ -19,7 +20,7 @@ def gen(is_transposed, batch_size, rowsA, colsA, colsB, name):
     matrixA.write("0 ")  # is_transposed
     matrixA.write(str(batch_size) + " ")  # batch_size
     matrixA.write(str(rowsA) + " ")  # rowsA
-    matrixA.write(str(colsA) + "\n") # colsA
+    matrixA.write(str(colsA) + "\n")  # colsA
 
     for i in range(0, batch_size * rowsA * colsA):
         val = random.randint(-value_range, value_range)
@@ -35,7 +36,7 @@ def gen(is_transposed, batch_size, rowsA, colsA, colsB, name):
     matrixB.write(str(is_transposed) + " ")  # is_transposed
     matrixB.write(str(batch_size) + " ")  # batch_size
     matrixB.write(str(colsA) + " ")  # colsA
-    matrixB.write(str(colsB) + "\n") # colsB
+    matrixB.write(str(colsB) + "\n")  # colsB
 
     for i in range(0, batch_size * colsA * colsB):
         val = random.randint(-value_range, value_range)
@@ -44,6 +45,7 @@ def gen(is_transposed, batch_size, rowsA, colsA, colsB, name):
         barec_i += 1
 
     matrixB.close()
+
 
 def main():
 
@@ -57,7 +59,7 @@ def main():
 
     # Generate medium sized matrices
     gen(1,
-        random.randint( 1, 1),
+        random.randint(1, 1),
         random.randint(32, 32) * 2,
         random.randint(32, 32) * 2,
         random.randint(32, 32) * 2,
@@ -65,7 +67,7 @@ def main():
 
     # Generate large sized matrices
     gen(1,
-        random.randint( 1,   1),
+        random.randint(1, 1),
         random.randint(128, 128) * 2,
         random.randint(128, 128) * 2,
         random.randint(128, 128) * 2,
@@ -82,9 +84,9 @@ def main():
     # Generate matrices with single column matrix A and single row matrix B
     gen(1,
         random.randint(1, 1),
-        random.randint(64,64) * 2,
+        random.randint(64, 64) * 2,
         1,
-        random.randint(64,64) * 2,
+        random.randint(64, 64) * 2,
         "testC")
 
     # Generate matrices with non-transposed matrix B
@@ -112,6 +114,7 @@ def main():
         "testNTL")
 
     print("Info: input successfully generated")
+
 
 if __name__ == "__main__":
     main()

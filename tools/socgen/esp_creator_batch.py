@@ -17,19 +17,21 @@ from soc import *
 from socmap_gen import *
 from mmi64_gen import *
 
+
 def print_usage():
-  print("Usage                    : ./esp_creator_batch.py <arch_bits> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
-  print("")
-  print("")
-  print("      <arch_bits>        : Word size for CPU architecture (32 for Leon3/Ibex, 64 for Ariane)")
-  print("      <tech_type>        : Technology type (fpga or asic)")
-  print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
-  print("      <linux_mac>        : MAC Address for Linux network interface")
-  print("      <leon3_stack>      : Stack Pointer for LEON3")
-  print("      <fpga_board>       : Target FPGA board")
-  print("      <emu_tech>         : Target technology override for FPGA emulation of ASIC design")
-  print("      <emu_freq>         : Ethernet MDC scaler override for FPGA emulation of ASIC design")
-  print("")
+    print("Usage                    : ./esp_creator_batch.py <arch_bits> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
+    print("")
+    print("")
+    print("      <arch_bits>        : Word size for CPU architecture (32 for Leon3/Ibex, 64 for Ariane)")
+    print("      <tech_type>        : Technology type (fpga or asic)")
+    print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
+    print("      <linux_mac>        : MAC Address for Linux network interface")
+    print("      <leon3_stack>      : Stack Pointer for LEON3")
+    print("      <fpga_board>       : Target FPGA board")
+    print("      <emu_tech>         : Target technology override for FPGA emulation of ASIC design")
+    print("      <emu_freq>         : Ethernet MDC scaler override for FPGA emulation of ASIC design")
+    print("")
+
 
 if len(sys.argv) != 9:
     print_usage()
@@ -45,7 +47,16 @@ EMU_TECH = sys.argv[7]
 EMU_FREQ = sys.argv[8]
 
 root = Tk()
-soc = SoC_Config(ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, False)
+soc = SoC_Config(
+    ARCH_BITS,
+    TECH_TYPE,
+    TECH,
+    LINUX_MAC,
+    LEON3_STACK,
+    FPGA_BOARD,
+    EMU_TECH,
+    EMU_FREQ,
+    False)
 
 esp_config = soc_config(soc)
 create_socmap(esp_config, soc)

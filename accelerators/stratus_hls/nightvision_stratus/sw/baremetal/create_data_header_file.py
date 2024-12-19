@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-#with open('../../data/lena-480x640.txt', 'r') as fileA:
+# with open('../../data/lena-480x640.txt', 'r') as fileA:
 with open('../../data/lena-120x160.txt', 'r') as fileA:
     lines = fileA.readlines()
 
@@ -17,7 +17,7 @@ for l in lines:
 
 print("")
 
-#with open('gold-480x640.txt', 'r') as fileG:
+# with open('gold-480x640.txt', 'r') as fileG:
 with open('gold-120x160.txt', 'r') as fileG:
     lines = fileG.readlines()
 
@@ -30,4 +30,3 @@ for l in lines:
     print(" = %s" % (l.rstrip('\n')), end='')
     print(";")
     i += 1
-
