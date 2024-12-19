@@ -355,7 +355,7 @@ for d in $dirs; do
     if [[ "$FLOW" == "rtl" && "$d" != "hls" ]]; then
 	sed -i "s/<accelerator_name>/$LOWER/g" */*
 	sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" */*
-	sed -i "s/<acc_full_name>/$LOWERFULL/g" */*
+	sed -i "s/acc_full_name/$LOWERFULL/g" */*
 	sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" */*
     elif [ "$FLOW" != "rtl" ]; then
 	find . -type f -exec sed -i "s/<accelerator_name>/$LOWER/g" {} +
