@@ -8,8 +8,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-typedef struct
-{
+typedef struct {
     double *data;
 
     size_t *dims;
@@ -20,44 +19,37 @@ typedef struct
 
 } double_matrix_t;
 
-__attribute__((unused))
-static void create_double_matrix_t(double_matrix_t
-  **matrix, size_t *dims, size_t dim)
+__attribute__((unused)) static void create_double_matrix_t(double_matrix_t **matrix, size_t *dims,
+                                                           size_t dim)
 {
     unsigned i, size = 1;
 
     for (i = 0; i < dim; ++i)
         size *= dims[i];
 
-    (*matrix) = (double_matrix_t*)
-      malloc(sizeof(double_matrix_t));
+    (*matrix) = (double_matrix_t *)malloc(sizeof(double_matrix_t));
 
-    (*matrix)->data = (double*)
-       malloc(sizeof(double) * size);
+    (*matrix)->data = (double *)malloc(sizeof(double) * size);
 
-    (*matrix)->dims = (size_t*)
-       malloc(sizeof(size_t) * dim);
+    (*matrix)->dims = (size_t *)malloc(sizeof(size_t) * dim);
 
     (*matrix)->dim = dim;
     for (i = 0; i < dim; ++i)
-       (*matrix)->dims[i] = dims[i];
+        (*matrix)->dims[i] = dims[i];
 }
 
-
-__attribute__((unused))
-static int store_double_matrix_t(double_matrix_t *matrix, const char *file)
+__attribute__((unused)) static int store_double_matrix_t(double_matrix_t *matrix, const char *file)
 {
     unsigned int i, size = 1;
 
-    FILE *fp = fopen(file, "w");
+    FILE *fp       = fopen(file, "w");
     FILE *fp_barec = fopen("golden.h", "w");
 
     if (!fp) { return -1; }
 
     fprintf(fp, "%zu ", matrix->dim);
 
-    for (i = 0; i < matrix->dim; ++i)
-    {
+    for (i = 0; i < matrix->dim; ++i) {
         fprintf(fp, "%zu ", matrix->dims[i]);
 
         size *= matrix->dims[i];
@@ -78,8 +70,7 @@ static int store_double_matrix_t(double_matrix_t *matrix, const char *file)
     return 0;
 }
 
-__attribute__((unused))
-static int load_double_matrix_t(double_matrix_t **matrix, const char *file)
+__attribute__((unused)) static int load_double_matrix_t(double_matrix_t **matrix, const char *file)
 {
     unsigned int i, size = 1;
 
@@ -87,25 +78,21 @@ static int load_double_matrix_t(double_matrix_t **matrix, const char *file)
 
     if (!fp) { return -1; }
 
-    *matrix = (double_matrix_t*)
-      malloc(sizeof(double_matrix_t));
+    *matrix = (double_matrix_t *)malloc(sizeof(double_matrix_t));
 
     fscanf(fp, "%zu\n", &((*matrix)->dim));
 
     fscanf(fp, "%zu\n", &((*matrix)->is_transposed));
 
-    (*matrix)->dims = (size_t*) malloc(
-      sizeof(size_t) * (*matrix)->dim);
+    (*matrix)->dims = (size_t *)malloc(sizeof(size_t) * (*matrix)->dim);
 
-    for (i = 0; i < (*matrix)->dim; ++i)
-    {
+    for (i = 0; i < (*matrix)->dim; ++i) {
         fscanf(fp, "%zu\n", &((*matrix)->dims[i]));
 
         size *= (*matrix)->dims[i];
     }
 
-    (*matrix)->data = (double*)
-      malloc(sizeof(double) * size);
+    (*matrix)->data = (double *)malloc(sizeof(double) * size);
 
     for (i = 0; i < size; ++i)
         fscanf(fp, "%lf", &((*matrix)->data[i]));
@@ -115,8 +102,7 @@ static int load_double_matrix_t(double_matrix_t **matrix, const char *file)
     return 0;
 }
 
-__attribute__((unused))
-static void free_double_matrix_t(double_matrix_t **matrix)
+__attribute__((unused)) static void free_double_matrix_t(double_matrix_t **matrix)
 {
     free((*matrix)->data);
     free((*matrix)->dims);
@@ -124,4 +110,3 @@ static void free_double_matrix_t(double_matrix_t **matrix)
 }
 
 #endif // __PVC_DOUBLE_MATRIX_T_H__
-

@@ -60,17 +60,13 @@ static bool nightvision_xfer_input_ok(struct esp_device *esp, void *arg)
 {
     struct nightvision_stratus_access *a = arg;
 
-    if (a->nimages > MAX_NIMAGES)
-        return false;
+    if (a->nimages > MAX_NIMAGES) return false;
 
-    if (a->rows > MAX_ROWS)
-        return false;
+    if (a->rows > MAX_ROWS) return false;
 
-    if (a->cols > MAX_COLS)
-        return false;
+    if (a->cols > MAX_COLS) return false;
 
-    if (a->do_dwt != 0 && a->do_dwt != 1)
-        return false;
+    if (a->do_dwt != 0 && a->do_dwt != 1) return false;
 
     return true;
 }
@@ -78,19 +74,17 @@ static bool nightvision_xfer_input_ok(struct esp_device *esp, void *arg)
 static int nightvision_probe(struct platform_device *pdev)
 {
     struct nightvision_stratus_device *nightvision;
-    struct esp_device *                esp;
-    int                                rc;
+    struct esp_device *esp;
+    int rc;
 
     nightvision = kzalloc(sizeof(*nightvision), GFP_KERNEL);
-    if (nightvision == NULL)
-        return -ENOMEM;
+    if (nightvision == NULL) return -ENOMEM;
     esp         = &nightvision->esp;
     esp->module = THIS_MODULE;
     esp->number = nightvision_devs;
     esp->driver = &nightvision_driver;
     rc          = esp_device_register(esp, pdev);
-    if (rc)
-        goto err;
+    if (rc) goto err;
 
     nightvision_devs++;
     return 0;
@@ -101,7 +95,7 @@ err:
 
 static int __exit nightvision_remove(struct platform_device *pdev)
 {
-    struct esp_device *                esp         = platform_get_drvdata(pdev);
+    struct esp_device *esp                         = platform_get_drvdata(pdev);
     struct nightvision_stratus_device *nightvision = to_nightvision(esp);
 
     esp_device_unregister(esp);

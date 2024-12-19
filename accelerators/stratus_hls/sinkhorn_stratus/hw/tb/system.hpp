@@ -15,18 +15,16 @@
 
 #include "esp_templates.hpp"
 
-const size_t MEM_SIZE = 205000 / (DMA_WIDTH/8);
+const size_t MEM_SIZE = 205000 / (DMA_WIDTH / 8);
 
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "sinkhorn_wrap.h"
+    #include "sinkhorn_wrap.h"
 #endif
 
-class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
-{
-public:
-
+class system_t : public esp_system<DMA_WIDTH, MEM_SIZE> {
+  public:
     // ACC instance
 #ifdef CADENCE
     sinkhorn_wrapper *acc;
@@ -36,26 +34,12 @@ public:
 
     // Constructor
     SC_HAS_PROCESS(system_t);
-    system_t(sc_module_name name,
-             uint32_t p_rows,
-             uint32_t q_cols,
-             uint32_t m_rows,
-             float gamma,
-             uint32_t maxiter,
-             uint32_t p2p_in,
-             uint32_t p2p_out,
-             uint32_t p2p_iter,
-             uint32_t store_state)
-        : esp_system<DMA_WIDTH, MEM_SIZE>(name)
-        , p_rows(p_rows)
-        , q_cols(q_cols)
-        , m_rows(m_rows)
-        , gamma(gamma)
-        , maxiter(maxiter)
-        , p2p_in(p2p_in)
-        , p2p_out(p2p_out)
-        , p2p_iter(p2p_iter)
-        , store_state(store_state)
+    system_t(sc_module_name name, uint32_t p_rows, uint32_t q_cols, uint32_t m_rows, float gamma,
+             uint32_t maxiter, uint32_t p2p_in, uint32_t p2p_out, uint32_t p2p_iter,
+             uint32_t store_state) :
+        esp_system<DMA_WIDTH, MEM_SIZE>(name),
+        p_rows(p_rows), q_cols(q_cols), m_rows(m_rows), gamma(gamma), maxiter(maxiter),
+        p2p_in(p2p_in), p2p_out(p2p_out), p2p_iter(p2p_iter), store_state(store_state)
     {
         // ACC
 #ifdef CADENCE
@@ -93,14 +77,14 @@ public:
     // Accelerator-specific data
 
     // Configuration parameters
-    uint32_t p_rows; // output rows dimension and cols for input X
-    uint32_t q_cols;   // output cols dimension and cols for input Y
-    uint32_t m_rows;   // rows dimension for inputs X and Y
-    float gamma; // float constant for computation of K matrix
-    uint32_t maxiter; // number of iterations for kernel computing a and b vectors
-    uint32_t p2p_in; // expect input in p2p mode
-    uint32_t p2p_out; // expect output in p2p mode
-    uint32_t p2p_iter; // number of iterations in p2p mode
+    uint32_t p_rows;      // output rows dimension and cols for input X
+    uint32_t q_cols;      // output cols dimension and cols for input Y
+    uint32_t m_rows;      // rows dimension for inputs X and Y
+    float gamma;          // float constant for computation of K matrix
+    uint32_t maxiter;     // number of iterations for kernel computing a and b vectors
+    uint32_t p2p_in;      // expect input in p2p mode
+    uint32_t p2p_out;     // expect output in p2p mode
+    uint32_t p2p_iter;    // number of iterations in p2p mode
     uint32_t store_state; // defines whoch store state the accelerator is in
 
     uint32_t inX_words_adj;
@@ -115,8 +99,7 @@ public:
     FPDATA *inY;
     FPDATA *in;
     FPDATA *out;
-//    int32_t *gold;
-
+    //    int32_t *gold;
 
     // Output
     float *P;

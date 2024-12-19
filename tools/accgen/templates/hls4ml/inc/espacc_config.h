@@ -8,10 +8,10 @@
 // Data type
 
 #define IS_TYPE_FIXED_POINT 1
-#define FRAC_BITS /* <<--frac-bits-->> */
-#define IS_TYPE_UINT 0
-#define IS_TYPE_INT 0
-#define IS_TYPE_FLOAT 0
+#define FRAC_BITS           /* <<--frac-bits-->> */
+#define IS_TYPE_UINT        0
+#define IS_TYPE_INT         0
+#define IS_TYPE_FLOAT       0
 
 // In/out arrays
 

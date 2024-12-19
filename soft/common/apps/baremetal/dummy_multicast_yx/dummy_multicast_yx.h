@@ -5,9 +5,9 @@
 #define __DUMMY_MULTICAST_P2P_H__
 
 #ifdef __riscv
-#define ACC_BASE_ADDR 0x60010000
+    #define ACC_BASE_ADDR 0x60010000
 #else
-#define ACC_BASE_ADDR 0x80010000
+    #define ACC_BASE_ADDR 0x80010000
 #endif
 #define ACC_OFFSET 0x100
 

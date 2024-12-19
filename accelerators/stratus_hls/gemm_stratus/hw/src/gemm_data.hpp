@@ -7,8 +7,8 @@
 #include <systemc.h>
 
 #ifdef WORD_SIZE
-#define WORDS_PER_DMA (DMA_WIDTH / WORD_SIZE)
-#define WORDS_PER_DMA_LOG (slog_2<WORDS_PER_DMA>::value)
+    #define WORDS_PER_DMA     (DMA_WIDTH / WORD_SIZE)
+    #define WORDS_PER_DMA_LOG (slog_2<WORDS_PER_DMA>::value)
 #endif
 
 // Data types
@@ -22,13 +22,13 @@ typedef sc_dt::sc_int<WORD_SIZE> PLM_WORD;
 
 #elif defined(FLOAT_POINT)
 
-#if (WORD_SIZE == 32)
+    #if (WORD_SIZE == 32)
 const unsigned int FPDATA_ML = 23;
 const unsigned int FPDATA_EL = 8;
-#elif (WORD_SIZE == 64)
+    #elif (WORD_SIZE == 64)
 const unsigned int FPDATA_ML = 52;
 const unsigned int FPDATA_EL = 11;
-#endif
+    #endif
 
 typedef sc_dt::sc_uint<WORD_SIZE> PLM_WORD;
 

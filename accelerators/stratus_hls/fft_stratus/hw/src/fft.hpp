@@ -13,26 +13,23 @@
 #include "fft_directives.hpp"
 
 #define __round_mask(x, y) ((y)-1)
-#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+#define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 /* <<--defines-->> */
 #define LOG_LEN_MAX 12
-#define LEN_MAX (1 << LOG_LEN_MAX)
-#define DATA_WIDTH FX_WIDTH
+#define LEN_MAX     (1 << LOG_LEN_MAX)
+#define DATA_WIDTH  FX_WIDTH
 #if (FX_WIDTH == 64)
-#define DMA_SIZE SIZE_DWORD
+    #define DMA_SIZE SIZE_DWORD
 #elif (FX_WIDTH == 32)
-#define DMA_SIZE SIZE_WORD
+    #define DMA_SIZE SIZE_WORD
 #endif // FX_WIDTH
 #define PLM_IN_WORD (LEN_MAX << 1)
 
-class fft : public esp_accelerator_3P<DMA_WIDTH>
-{
-public:
+class fft : public esp_accelerator_3P<DMA_WIDTH> {
+  public:
     // Constructor
     SC_HAS_PROCESS(fft);
-    fft(const sc_module_name& name)
-    : esp_accelerator_3P<DMA_WIDTH>(name)
-        , cfg("config")
+    fft(const sc_module_name &name) : esp_accelerator_3P<DMA_WIDTH>(name), cfg("config")
     {
         // Signal binding
         cfg.bind_with(*this);
@@ -67,8 +64,6 @@ public:
     sc_dt::sc_int<DATA_WIDTH> PLM_IN_PONG[PLM_IN_WORD];
     sc_dt::sc_int<DATA_WIDTH> PLM_OUT_PING[PLM_IN_WORD];
     sc_dt::sc_int<DATA_WIDTH> PLM_OUT_PONG[PLM_IN_WORD];
-
 };
-
 
 #endif /* __FFT_HPP__ */

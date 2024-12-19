@@ -16,7 +16,7 @@
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "gemm_wrap.h"
+    #include "gemm_wrap.h"
 #endif
 
 // Testbench constants
@@ -26,10 +26,8 @@
 
 const size_t MEM_SIZE = 50000000;
 
-class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
-{
-public:
-
+class system_t : public esp_system<DMA_WIDTH, MEM_SIZE> {
+  public:
     // ACC instance
 #ifdef CADENCE
     gemm_wrapper *acc;
@@ -39,27 +37,26 @@ public:
 
     // Constructor
     SC_HAS_PROCESS(system_t);
-    system_t(sc_module_name name)
-	: esp_system<DMA_WIDTH, MEM_SIZE>(name)
-        {
-	    // ACC
+    system_t(sc_module_name name) : esp_system<DMA_WIDTH, MEM_SIZE>(name)
+    {
+        // ACC
 #ifdef CADENCE
-	    acc = new gemm_wrapper("gemm_wrapper");
+        acc = new gemm_wrapper("gemm_wrapper");
 #else
-	    acc = new gemm("gemm_wrapper");
+        acc = new gemm("gemm_wrapper");
 #endif
-	    // Binding ACC
-	    acc->clk(clk);
-	    acc->rst(acc_rst);
-	    acc->dma_read_ctrl(dma_read_ctrl);
-	    acc->dma_write_ctrl(dma_write_ctrl);
-	    acc->dma_read_chnl(dma_read_chnl);
-	    acc->dma_write_chnl(dma_write_chnl);
-	    acc->conf_info(conf_info);
-	    acc->conf_done(conf_done);
-	    acc->acc_done(acc_done);
-	    acc->debug(debug);
-	}
+        // Binding ACC
+        acc->clk(clk);
+        acc->rst(acc_rst);
+        acc->dma_read_ctrl(dma_read_ctrl);
+        acc->dma_write_ctrl(dma_write_ctrl);
+        acc->dma_read_chnl(dma_read_chnl);
+        acc->dma_write_chnl(dma_write_chnl);
+        acc->conf_info(conf_info);
+        acc->conf_done(conf_done);
+        acc->acc_done(acc_done);
+        acc->debug(debug);
+    }
 
     // Processes
 
@@ -93,16 +90,16 @@ public:
     uint32_t indexB;
 
     // Input matrix 1
-    double_matrix_t * matrix_inA;
+    double_matrix_t *matrix_inA;
 
     // Input matrix 2
-    double_matrix_t * matrix_inB;
+    double_matrix_t *matrix_inB;
 
     // Output matrix (acc)
-    double_matrix_t * matrix_out;
+    double_matrix_t *matrix_out;
 
     // Output matrix (pvc)
-    double_matrix_t * matrix_out_gold;
+    double_matrix_t *matrix_out_gold;
 
     // Other Functions
 };

@@ -2,15 +2,15 @@
 main()
 
 {
-        /* report_start(); */
+    /* report_start(); */
 
-        base_test();
-    
-	/* ramfill(); */
-	/* leon3_test(1, 0x80000200, 0); */
-	/* irqtest(0x80000200); */
-	/* apbuart_test(0x80000100); */
-	/* gptimer_test(0x80000300); */
+    base_test();
 
-	/* report_end(); */
+    /* ramfill(); */
+    /* leon3_test(1, 0x80000200, 0); */
+    /* irqtest(0x80000200); */
+    /* apbuart_test(0x80000100); */
+    /* gptimer_test(0x80000300); */
+
+    /* report_end(); */
 }

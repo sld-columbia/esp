@@ -11,18 +11,16 @@
 
 #include "esp_templates.hpp"
 #include "fpdata.hpp"
-const size_t MEM_SIZE = 33554432 / (DMA_WIDTH/8);
+const size_t MEM_SIZE = 33554432 / (DMA_WIDTH / 8);
 
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "cholesky_wrap.h"
+    #include "cholesky_wrap.h"
 #endif
 
-class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
-{
-public:
-
+class system_t : public esp_system<DMA_WIDTH, MEM_SIZE> {
+  public:
     // ACC instance
 #ifdef CADENCE
     cholesky_wrapper *acc;
@@ -32,8 +30,7 @@ public:
 
     // Constructor
     SC_HAS_PROCESS(system_t);
-    system_t(sc_module_name name)
-        : esp_system<DMA_WIDTH, MEM_SIZE>(name)
+    system_t(sc_module_name name) : esp_system<DMA_WIDTH, MEM_SIZE>(name)
     {
         // ACC
 #ifdef CADENCE

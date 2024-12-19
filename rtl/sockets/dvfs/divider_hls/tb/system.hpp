@@ -6,10 +6,8 @@
 
 #define TEST_SAMPLES 10
 
-class system_t : public sc_module
-{
-public:
-
+class system_t : public sc_module {
+  public:
     sc_in<bool> clk;
     sc_in<bool> rstn;
 
@@ -21,12 +19,9 @@ public:
 
     // Constructor
     SC_HAS_PROCESS(system_t);
-    system_t(sc_module_name name)
-        : sc_module(name)
-        , err(0)
-        , dividend_ch("dividend_ch")
-        , divisor_ch("divisor_ch")
-        , quotient_ch("quotient_ch")
+    system_t(sc_module_name name) :
+        sc_module(name), err(0), dividend_ch("dividend_ch"), divisor_ch("divisor_ch"),
+        quotient_ch("quotient_ch")
     {
         SC_CTHREAD(source, clk.pos());
         reset_signal_is(rstn, false);

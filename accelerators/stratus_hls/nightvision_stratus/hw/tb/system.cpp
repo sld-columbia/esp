@@ -63,9 +63,8 @@ void system_t::config_proc()
         dump_memory();
 
         if (do_validation) {
-            if (validate()) {
-                ESP_REPORT_ERROR("validation failed!");
-            } else {
+            if (validate()) { ESP_REPORT_ERROR("validation failed!"); }
+            else {
                 ESP_REPORT_INFO("validation passed!");
             }
         }
@@ -104,12 +103,12 @@ void system_t::load_memory()
     //  |  in/out image n_Images (int32)  |  | img_size (in bytes)
     //  ===================================  v
 
-    int       i, j, k;
-    int       n_Pixels = n_Rows * n_Cols;
-    uint16_t *imgA     = (uint16_t *)calloc(n_Pixels, sizeof(uint16_t));
-    uint16_t  val      = 0;
-    FILE *    fileA    = NULL;
-    int       mem_i;
+    int i, j, k;
+    int n_Pixels   = n_Rows * n_Cols;
+    uint16_t *imgA = (uint16_t *)calloc(n_Pixels, sizeof(uint16_t));
+    uint16_t val   = 0;
+    FILE *fileA    = NULL;
+    int mem_i;
 
     // -- Read images
     if ((fileA = fopen(image_A_path.c_str(), "r")) == (FILE *)NULL) {
@@ -142,9 +141,9 @@ void system_t::load_memory()
 
 void system_t::dump_memory()
 {
-    int   i, j, k;
-    int   n_Pixels = n_Rows * n_Cols;
-    int   mem_j;
+    int i, j, k;
+    int n_Pixels = n_Rows * n_Cols;
+    int mem_j;
     FILE *fileOut = NULL;
 
     // Store output file
@@ -160,10 +159,14 @@ void system_t::dump_memory()
             for (k = 0; k < WORDS_PER_DMA; k++) {
                 if (do_dwt)
                     fprintf(fileOut, "%u\n",
-                            mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG).to_int());
+                            mem[mem_j]
+                                .range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG)
+                                .to_int());
                 else
                     fprintf(fileOut, "%u\n",
-                            mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG).to_uint());
+                            mem[mem_j]
+                                .range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG)
+                                .to_uint());
             }
             mem_j++;
         }
@@ -178,12 +181,12 @@ int system_t::validate()
     ESP_REPORT_INFO("---- validate ----");
 
     uint32_t i, j;
-    int      val      = 0;
-    uint32_t errors   = 0;
-    int      n_Pixels = n_Rows * n_Cols;
+    int val         = 0;
+    uint32_t errors = 0;
+    int n_Pixels    = n_Rows * n_Cols;
 
-    int * imgGold  = (int *)calloc(n_Pixels, sizeof(int));
-    int * imgOut   = (int *)calloc(n_Pixels, sizeof(int));
+    int *imgGold   = (int *)calloc(n_Pixels, sizeof(int));
+    int *imgOut    = (int *)calloc(n_Pixels, sizeof(int));
     FILE *fileGold = NULL;
     FILE *fileOut  = NULL;
 
@@ -221,16 +224,16 @@ int system_t::validate()
     for (j = 0; j < n_Images; j++) {
         for (i = 0; i < n_Pixels; i++) {
             if (imgOut[i] != imgGold[i]) {
-                //                ESP_REPORT_INFO("Error: i = %d\tOut = %d\tGold = %d\n", i, imgOut[i], imgGold[i]);
+                //                ESP_REPORT_INFO("Error: i = %d\tOut = %d\tGold = %d\n", i,
+                //                imgOut[i], imgGold[i]);
                 errors++;
             }
         }
     }
 
     ESP_REPORT_INFO("====================================================");
-    if (errors) {
-        ESP_REPORT_INFO("Errors: %d out of %d pixel(s) not match.", errors, n_Pixels);
-    } else {
+    if (errors) { ESP_REPORT_INFO("Errors: %d out of %d pixel(s) not match.", errors, n_Pixels); }
+    else {
         ESP_REPORT_INFO("Correct!!");
     }
     ESP_REPORT_INFO("====================================================");

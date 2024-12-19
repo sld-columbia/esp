@@ -1,5 +1,5 @@
-//Copyright (c) 2011-2024 Columbia University, System Level Design Group
-//SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2011-2024 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
 
 #ifndef __TESTBENCH_HPP__
 #define __TESTBENCH_HPP__
@@ -14,19 +14,19 @@
 #include "esp_dma_controller.hpp"
 
 #define __round_mask(x, y) ((y)-1)
-#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+#define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 
 SC_MODULE(testbench)
 {
     sc_in<bool> CCS_INIT_S1(clk);
     sc_in<bool> CCS_INIT_S1(rst_bar);
 
-    Connections::Out<conf_info_t>        CCS_INIT_S1(conf_info);
-    Connections::Out<ac_int<DMA_WIDTH>>       CCS_INIT_S1(dma_read_chnl);
-    Connections::In<ac_int<DMA_WIDTH>>        CCS_INIT_S1(dma_write_chnl);
-    Connections::In<dma_info_t >        CCS_INIT_S1(dma_read_ctrl);
-    Connections::In<dma_info_t >        CCS_INIT_S1(dma_write_ctrl);
-    sc_in<bool>     CCS_INIT_S1(acc_done);
+    Connections::Out<conf_info_t> CCS_INIT_S1(conf_info);
+    Connections::Out<ac_int<DMA_WIDTH>> CCS_INIT_S1(dma_read_chnl);
+    Connections::In<ac_int<DMA_WIDTH>> CCS_INIT_S1(dma_write_chnl);
+    Connections::In<dma_info_t> CCS_INIT_S1(dma_read_ctrl);
+    Connections::In<dma_info_t> CCS_INIT_S1(dma_write_ctrl);
+    sc_in<bool> CCS_INIT_S1(acc_done);
 
     sc_signal<bool> acc_rst;
 
@@ -34,14 +34,13 @@ SC_MODULE(testbench)
     ac_int<DMA_WIDTH> *mem;
 
     // DMA controller instace
-    esp_dma_controller<DMA_WIDTH, MEM_SIZE > *dmac;
+    esp_dma_controller<DMA_WIDTH, MEM_SIZE> *dmac;
 
     // SC_CTOR(testbench) {
     SC_HAS_PROCESS(testbench);
-    testbench(const sc_module_name& name):
-        sc_module(name)
-        , mem(new ac_int<DMA_WIDTH>[MEM_SIZE])
-        , dmac(new esp_dma_controller<DMA_WIDTH, MEM_SIZE>("dma-controller", mem))
+    testbench(const sc_module_name &name) :
+        sc_module(name), mem(new ac_int<DMA_WIDTH>[MEM_SIZE]),
+        dmac(new esp_dma_controller<DMA_WIDTH, MEM_SIZE>("dma-controller", mem))
     {
 
         SC_THREAD(proc);
@@ -58,10 +57,9 @@ SC_MODULE(testbench)
         dmac->acc_rst(acc_rst);
 
         /* <<--params-default-->> */
-        mac_n = 1;
+        mac_n   = 1;
         mac_vec = 8;
         mac_len = 16;
-
     }
 
     void proc(void);
@@ -71,17 +69,13 @@ SC_MODULE(testbench)
     uint32_t mac_vec;
     uint32_t mac_len;
 
-
     uint32_t in_words_adj;
     uint32_t out_words_adj;
     uint32_t in_size;
     uint32_t out_size;
-    ac_int<DATA_WIDTH,false> *in;
-    ac_int<DATA_WIDTH,false> *out;
-    ac_int<DATA_WIDTH,false> *gold ; // all DATA_WIDTH
-
-
+    ac_int<DATA_WIDTH, false> *in;
+    ac_int<DATA_WIDTH, false> *out;
+    ac_int<DATA_WIDTH, false> *gold; // all DATA_WIDTH
 };
 
 #endif
-

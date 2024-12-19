@@ -6,24 +6,23 @@
 #ifndef __ESP_ACCELERATOR_H__
 #define __ESP_ACCELERATOR_H__
 
-#define BIT(nr)			(1UL << (nr))
+#define BIT(nr) (1UL << (nr))
 
 #ifndef __KERNEL__
-#define __round_mask(x, y) ((y)-1)
-#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+    #define __round_mask(x, y) ((y)-1)
+    #define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 #endif
-
 
 /***
  * ESP accelerator common definitions and registers offset
  ***/
 
 /* bank(0): CMD (reset if cleared) */
-#define CMD_REG 0x00
+#define CMD_REG        0x00
 #define CMD_MASK_START BIT(0)
 
 /* bank(1): STATUS (idle when cleared) - Read only */
-#define STATUS_REG 0x04
+#define STATUS_REG       0x04
 #define STATUS_MASK_RUN  BIT(0)
 #define STATUS_MASK_DONE BIT(1)
 #define STATUS_MASK_ERR  BIT(2)
@@ -48,16 +47,22 @@
 
 /* bank(8)        : Type of coherence (None, LLC, Full) - Read only */
 #define COHERENCE_REG 0x20
-enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_COH_FULL, ACC_COH_AUTO};
+enum accelerator_coherence {
+    ACC_COH_NONE = 0,
+    ACC_COH_LLC,
+    ACC_COH_RECALL,
+    ACC_COH_FULL,
+    ACC_COH_AUTO
+};
 
 /* bank(9)       : Point-to-point configuration */
-#define P2P_REG 0x24
-#define P2P_MASK_NSRCS 0x3
-#define P2P_MASK_SRC_IS_P2P BIT(2)
-#define P2P_MASK_DST_IS_P2P BIT(3)
-#define P2P_MASK_SRCS_YX 0x7
-#define P2P_BIT_SRCS_YX 4
-#define YX_WIDTH 4
+#define P2P_REG              0x24
+#define P2P_MASK_NSRCS       0x3
+#define P2P_MASK_SRC_IS_P2P  BIT(2)
+#define P2P_MASK_DST_IS_P2P  BIT(3)
+#define P2P_MASK_SRCS_YX     0x7
+#define P2P_BIT_SRCS_YX      4
+#define YX_WIDTH             4
 #define P2P_SHIFT_SRCS_Y(_n) (P2P_BIT_SRCS_YX + YX_WIDTH + _n * 2 * YX_WIDTH)
 #define P2P_SHIFT_SRCS_X(_n) (P2P_BIT_SRCS_YX + _n * 2 * YX_WIDTH)
 
@@ -71,23 +76,23 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 #define SPANDEX_REG 0x30
 
 /* bank(13)       : Point-to-point configuration */
-#define MCAST_REG 0x34
-#define MCAST_MASK_NDESTS 0x1F
-#define MCAST_SHIFT_NDESTS 0
-#define MCAST_MASK_PACKET 0x1
-#define MCAST_SHIFT_PACKET 5
-#define MCAST_MASK_PACKET_SIZE 0xF
+#define MCAST_REG               0x34
+#define MCAST_MASK_NDESTS       0x1F
+#define MCAST_SHIFT_NDESTS      0
+#define MCAST_MASK_PACKET       0x1
+#define MCAST_SHIFT_PACKET      5
+#define MCAST_MASK_PACKET_SIZE  0xF
 #define MCAST_SHIFT_PACKET_SIZE 6
 
 /* bank(16 to 95) : USR (user defined) */
 
 /* YX_REGs contain a mapping from an accelerator number to a physical tile coordinate */
 /* bank(96)       : YX_REG - LSBs reserved for local tile's coordinates */
-#define YX_REG 0x180
+#define YX_REG     0x180
 #define YX_SHIFT_X 0
 #define YX_SHIFT_Y 4
 #define YX_MASK_YX 0xF
-#define YX_WIDTH 4
+#define YX_WIDTH   4
 
 /* bank(97)       : YX_REG_2 */
 #define YX_REG_2 0x184

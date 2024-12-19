@@ -43,7 +43,9 @@ void system_t::config_proc()
         ESP_REPORT_TIME(begin_time, "BEGIN - vitbfly2");
 
         // Wait the termination of the accelerator
-        do { wait(); } while (!acc_done.read());
+        do {
+            wait();
+        } while (!acc_done.read());
         debug_info_t debug_code = debug.read();
 
         // Print information about end time
@@ -60,11 +62,8 @@ void system_t::config_proc()
     {
         dump_memory(); // store the output in more suitable data structure if needed
         // check the results with the golden model
-        if (validate())
-        {
-            ESP_REPORT_ERROR("validation failed!");
-        } else
-        {
+        if (validate()) { ESP_REPORT_ERROR("validation failed!"); }
+        else {
             ESP_REPORT_INFO("validation passed!");
         }
     }
@@ -109,10 +108,10 @@ void system_t::load_memory()
     //  ==========================================  v
 
     // -- Read images
-    int n_membytes = 6 * 64;  // The above 6 64-byte memories
-    uint8_t *theMem = (uint8_t *) calloc(n_membytes, sizeof(uint8_t));
-    uint8_t *m_mm0     = &(theMem[  0]);
-    uint8_t *m_mm1     = &(theMem[ 64]);
+    int n_membytes     = 6 * 64; // The above 6 64-byte memories
+    uint8_t *theMem    = (uint8_t *)calloc(n_membytes, sizeof(uint8_t));
+    uint8_t *m_mm0     = &(theMem[0]);
+    uint8_t *m_mm1     = &(theMem[64]);
     uint8_t *m_pp0     = &(theMem[128]);
     uint8_t *m_pp1     = &(theMem[192]);
     uint8_t *m_d_brtab = &(theMem[256]);
@@ -124,16 +123,14 @@ void system_t::load_memory()
     uint8_t val = 0;
     FILE *fileA = NULL;
 
-    if((fileA = fopen(input_data_path.c_str(), "r")) == (FILE*)NULL)
-    {
+    if ((fileA = fopen(input_data_path.c_str(), "r")) == (FILE *)NULL) {
         ESP_REPORT_ERROR("[Err] could not open %s", input_data_path.c_str());
         fclose(fileA);
     }
 
     i = 0;
     fscanf(fileA, "%u,", &val);
-    while(!feof(fileA))
-    {
+    while (!feof(fileA)) {
         theMem[i++] = val;
         fscanf(fileA, "%u,", &val);
     }
@@ -166,26 +163,24 @@ int system_t::validate()
     ESP_REPORT_INFO("---- validate ----");
 
     uint32_t errors = 0;
-    int n_membytes = 4 * 64;  // This is only in/out : mm0, mm1, pp0, pp1
+    int n_membytes  = 4 * 64; // This is only in/out : mm0, mm1, pp0, pp1
 
     // Compute golden output
-    uint *imgGold = (uint32_t*)calloc(n_membytes, sizeof(uint32_t));
+    uint *imgGold = (uint32_t *)calloc(n_membytes, sizeof(uint32_t));
 
     // -- Read the gold image
     FILE *fileGold = NULL;
-    if((fileGold = fopen(image_gold_test_path.c_str(), "r")) == (FILE*)NULL)
-    {
+    if ((fileGold = fopen(image_gold_test_path.c_str(), "r")) == (FILE *)NULL) {
         ESP_REPORT_ERROR("[Err] could not open %s", image_gold_test_path.c_str());
         fclose(fileGold);
     }
 
     ESP_REPORT_INFO("mem_image_gold_test_path: %s", image_gold_test_path.c_str());
 
-    uint32_t i = 0;
+    uint32_t i   = 0;
     uint32_t val = 0;
     fscanf(fileGold, "%u,", &val);
-    while(!feof(fileGold))
-    {
+    while (!feof(fileGold)) {
         imgGold[i++] = val;
         fscanf(fileGold, "%u,", &val);
     }
@@ -193,28 +188,23 @@ int system_t::validate()
     // Check for mismatches
     // -- Compare the output with gold image
     uint32_t mem_j = 0;
-    for(uint32_t j = 0 ; j < n_membytes ; j += WORDS_PER_DMA) {
+    for (uint32_t j = 0; j < n_membytes; j += WORDS_PER_DMA) {
         for (uint8_t k = 0; k < WORDS_PER_DMA; k++)
-            if (mem[mem_j].range(((k + 1) << 3) - 1, (k << 3)).to_int() != imgGold[j + k])
-            {
-                ESP_REPORT_INFO("Error: %u: %u %u.",
-                                mem_j, mem[mem_j].range(((k + 1) << 3) - 1, k << 3).to_int(), imgGold[j + k]);
+            if (mem[mem_j].range(((k + 1) << 3) - 1, (k << 3)).to_int() != imgGold[j + k]) {
+                ESP_REPORT_INFO("Error: %u: %u %u.", mem_j,
+                                mem[mem_j].range(((k + 1) << 3) - 1, k << 3).to_int(),
+                                imgGold[j + k]);
                 errors++;
             }
         mem_j++;
     }
 
     ESP_REPORT_INFO("====================================================");
-    if (errors)
-    {
-        ESP_REPORT_INFO("Errors: %d value(s) not match.", errors);
-    }
-    else
-    {
+    if (errors) { ESP_REPORT_INFO("Errors: %d value(s) not match.", errors); }
+    else {
         ESP_REPORT_INFO("Correct!!");
     }
     ESP_REPORT_INFO("====================================================");
-
 
     fclose(fileGold);
     ESP_REPORT_INFO("Validate completed");

@@ -16,15 +16,13 @@
 // Configuration parameters for the accelerator.
 //
 
-struct conf_info_t
-{
+struct conf_info_t {
 
     /* <<--params-->> */
 
-    AUTO_GEN_FIELD_METHODS(conf_info_t, ( \
-                               /* <<--params1-->> */
-                               ) )
-
+    AUTO_GEN_FIELD_METHODS(conf_info_t,
+                           (/* <<--params1-->> */
+                            ))
 };
 
 #endif // __MAC_CONF_INFO_HPP__

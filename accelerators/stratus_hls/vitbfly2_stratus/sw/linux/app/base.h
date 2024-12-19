@@ -30,6 +30,6 @@
  */
 
 void reset();
-uint8_t* depuncture(uint8_t *in);
+uint8_t *depuncture(uint8_t *in);
 
 #endif

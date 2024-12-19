@@ -8,6 +8,6 @@ void data_structures_setup()
 
     /* Setup for cache_fill() */
     for (i = 0; i < MAX_N_CPU; i++) {
-	cache_fill_matrix[i] = (int *) malloc(SETS * L2_WAYS * LINE_SIZE * 2);
+        cache_fill_matrix[i] = (int *)malloc(SETS * L2_WAYS * LINE_SIZE * 2);
     }
 }

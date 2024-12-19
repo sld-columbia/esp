@@ -17,10 +17,9 @@ int clkgate_enable(uint32_t coremask);
 
 /* Clock gate registers */
 struct grclkgate_regs {
-	uint32_t unlock;
-	uint32_t enable;
-	uint32_t reset;
+    uint32_t unlock;
+    uint32_t enable;
+    uint32_t reset;
 };
 
 #endif
-

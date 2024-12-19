@@ -7,13 +7,13 @@
 #define CONTIG_ALLOC_H
 
 #ifdef __KERNEL__
-#include <linux/compiler.h>
-#include <linux/ioctl.h>
+    #include <linux/compiler.h>
+    #include <linux/ioctl.h>
 #else
-#include <sys/ioctl.h>
-#ifndef __user
-#define __user
-#endif
+    #include <sys/ioctl.h>
+    #ifndef __user
+        #define __user
+    #endif
 #endif
 
 #define CONTIG_MAJOR 240
@@ -21,7 +21,7 @@
 
 /* enforce strict typecheck */
 struct contig_khandle_struct {
-	char unused;
+    char unused;
 };
 typedef struct contig_khandle_struct *contig_khandle_t;
 
@@ -38,9 +38,9 @@ typedef struct contig_khandle_struct *contig_khandle_t;
  *	controller.
  */
 enum contig_alloc_policy {
-	CONTIG_ALLOC_PREFERRED,
-	CONTIG_ALLOC_LEAST_LOADED,
-	CONTIG_ALLOC_BALANCED,
+    CONTIG_ALLOC_PREFERRED,
+    CONTIG_ALLOC_LEAST_LOADED,
+    CONTIG_ALLOC_BALANCED,
 };
 
 /**
@@ -48,7 +48,7 @@ enum contig_alloc_policy {
  * @first_ddr_node: first DDR controller chosen
  */
 struct contig_alloc_preferred {
-        int ddr_node;
+    int ddr_node;
 };
 
 /**
@@ -56,7 +56,7 @@ struct contig_alloc_preferred {
  * @threshold: DDR0 penalty
  */
 struct contig_alloc_least_loaded {
-        unsigned int threshold;
+    unsigned int threshold;
 };
 
 /**
@@ -65,8 +65,8 @@ struct contig_alloc_least_loaded {
  * @cluster_size: number of chunks in the clusters
  */
 struct contig_alloc_balanced {
-        unsigned int threshold;
-        unsigned int cluster_size;
+    unsigned int threshold;
+    unsigned int cluster_size;
 };
 
 /**
@@ -75,44 +75,45 @@ struct contig_alloc_balanced {
  * @pol: policy-specific struct
  */
 struct contig_alloc_params {
-        enum contig_alloc_policy policy;
-        union {
-                struct contig_alloc_preferred first;
-                struct contig_alloc_least_loaded lloaded;
-                struct contig_alloc_balanced balanced;
-        } pol;
+    enum contig_alloc_policy policy;
+    union {
+        struct contig_alloc_preferred first;
+        struct contig_alloc_least_loaded lloaded;
+        struct contig_alloc_balanced balanced;
+    } pol;
 };
 
 struct contig_alloc_req {
-	contig_khandle_t khandle; /* filled in by the kernel */
-	struct contig_alloc_params params;
-	unsigned long size;
-	unsigned long __user *arr;
-	void __user *mm; /* user-space only */
-	unsigned int n; /* filled in by the kernel */
-	int most_allocated; /* filled in by the kernel */
-	unsigned int n_max;
+    contig_khandle_t khandle; /* filled in by the kernel */
+    struct contig_alloc_params params;
+    unsigned long size;
+    unsigned long __user *arr;
+    void __user *mm;    /* user-space only */
+    unsigned int n;     /* filled in by the kernel */
+    int most_allocated; /* filled in by the kernel */
+    unsigned int n_max;
 };
 
-#define CONTIG_IOC_ALLOC	_IOWR('1', 0, struct contig_alloc_req)
-#define CONTIG_IOC_FREE		_IOR ('1', 1, contig_khandle_t)
-#define CONTIG_IOC_CHUNK_LOG	_IOW ('1', 2, unsigned long)
+#define CONTIG_IOC_ALLOC     _IOWR('1', 0, struct contig_alloc_req)
+#define CONTIG_IOC_FREE      _IOR('1', 1, contig_khandle_t)
+#define CONTIG_IOC_CHUNK_LOG _IOW('1', 2, unsigned long)
 
 #ifdef __KERNEL__
 
-#include <linux/list.h>
+    #include <linux/list.h>
 
 struct contig_desc {
-	unsigned long *arr;
-	dma_addr_t arr_dma_addr;
-	unsigned int n;
-	int most_allocated;
-	struct list_head desc_node;
-	struct list_head file_node;
-	struct list_head alloc_list;
+    unsigned long *arr;
+    dma_addr_t arr_dma_addr;
+    unsigned int n;
+    int most_allocated;
+    struct list_head desc_node;
+    struct list_head file_node;
+    struct list_head alloc_list;
 };
 
-extern struct contig_desc *contig_alloc(const struct contig_alloc_params *params, unsigned long size);
+extern struct contig_desc *contig_alloc(const struct contig_alloc_params *params,
+                                        unsigned long size);
 extern void contig_free(struct contig_desc *desc);
 extern struct contig_desc *contig_khandle_to_desc(contig_khandle_t khandle);
 

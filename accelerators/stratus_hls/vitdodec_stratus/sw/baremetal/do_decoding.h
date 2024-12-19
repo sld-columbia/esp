@@ -20,15 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-#undef VERBOSE_OUTPUT 
+#undef VERBOSE_OUTPUT
 
 #ifdef VERBOSE_OUTPUT
- #define VERBOSE(_x_) _x_;
+    #define VERBOSE(_x_) _x_;
 #else
- #define VERBOSE(_x_) ;
+    #define VERBOSE(_x_) ;
 #endif
 
-void do_decoding(int in_n_data_bits, int in_cbps, int in_ntraceback, unsigned char *inMemory, unsigned char *l_decoded);
+void do_decoding(int in_n_data_bits, int in_cbps, int in_ntraceback, unsigned char *inMemory,
+                 unsigned char *l_decoded);
 
 #endif

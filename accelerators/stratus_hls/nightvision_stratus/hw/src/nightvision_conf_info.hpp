@@ -9,8 +9,7 @@
 //
 // Configuration parameters for the accelerator.
 //
-class conf_info_t
-{
+class conf_info_t {
   public:
     uint32_t n_Images; // Rows of input image
     uint32_t n_Rows;   // Rows of input image
@@ -20,26 +19,18 @@ class conf_info_t
     //
     // constructors
     //
-    conf_info_t()
-        : n_Images(0)
-        , n_Rows(0)
-        , n_Cols(0)
-        , do_dwt(0)
-    {
-    }
+    conf_info_t() : n_Images(0), n_Rows(0), n_Cols(0), do_dwt(0) {}
 
-    conf_info_t(uint32_t nimages, uint32_t rows, uint32_t cols, uint32_t do_dwt)
-        : n_Images(nimages)
-        , n_Rows(rows)
-        , n_Cols(cols)
-        , do_dwt(do_dwt)
+    conf_info_t(uint32_t nimages, uint32_t rows, uint32_t cols, uint32_t do_dwt) :
+        n_Images(nimages), n_Rows(rows), n_Cols(cols), do_dwt(do_dwt)
     {
     }
 
     // equals operator
     inline bool operator==(const conf_info_t &rhs) const
     {
-        return (rhs.n_Images == n_Images) && (rhs.n_Rows == n_Rows) && (rhs.n_Cols == n_Cols) && (rhs.do_dwt == do_dwt);
+        return (rhs.n_Images == n_Images) && (rhs.n_Rows == n_Rows) && (rhs.n_Cols == n_Cols) &&
+            (rhs.do_dwt == do_dwt);
     }
 
     // assignment operator
