@@ -228,7 +228,7 @@ architecture rtl of esp_acc_dma is
   signal payload_length, payload_length_r    : dma_noc_flit_type;
   signal sample_flits                        : std_ulogic;
   signal sample_rd, sample_wr                : std_ulogic;
-  signal source_r                            : integer range 0 to 14;
+  signal source_r                            : integer range 0 to 31;
   signal size_r                              : std_logic_vector(2 downto 0);
   signal irq_header_i, irq_header            : misc_noc_flit_type;
   signal irq_info                            : std_logic_vector(RESERVED_WIDTH_MISC - 1 downto 0);
