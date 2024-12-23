@@ -647,8 +647,6 @@ class NoCFrame(Pmw.ScrolledFrame):
                 string += "INFO: Clock strategy: 1 DCO per tile plus 1 DCO for the NoC inside the IO tile. \n"
             if (self.soc.clk_str.get() == 2 and self.soc.TECH_TYPE == "asic"):
                 string += "INFO: Clock strategy: 1 DCO inside the IO tile for the full chip. \n"
-            if self.noc.multicast_en.get():
-                string += "INFO: Multicast NoC is in beta testing\n"
             if self.noc.dma_noc_width.get() != self.soc.ARCH_BITS:
                 string += "INFO: to enable accelerator private caches, DMA NoC width must match CPU architecture size (64 bits for Ariane, 32 for Leon3 and Ibex)\n"
             self.done.config(state=NORMAL)

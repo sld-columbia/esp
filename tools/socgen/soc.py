@@ -198,7 +198,7 @@ class SoC_Config():
         item = line.split()
         self.noc.max_mcast_dests.set(int(item[2]))
         line = fp.readline()
-        line = line.split()
+        item = line.split()
         self.noc.queue_size.set(int(item[2]))
         line = fp.readline()
         if line.find("CONFIG_CACHE_EN = y") != -1:
