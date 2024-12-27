@@ -261,6 +261,8 @@ class soc_config:
         self.linux_mac = soc.LINUX_MAC
         self.leon3_stack = soc.LEON3_STACK
         self.cpu_arch = soc.CPU_ARCH.get()
+        self.coh_noc_width = soc.noc.coh_noc_width.get()
+        self.dma_noc_width = soc.noc.dma_noc_width.get()
         self.ncpu = soc.noc.get_cpu_num(soc)
         self.nmem = soc.noc.get_mem_num(soc)
         self.nslm = soc.noc.get_slm_num(soc)
@@ -399,10 +401,15 @@ class soc_config:
                         acc_l2_id = acc_l2_id + 1
 
 
-def print_header(fp, package):
+def print_header(fp, package, comment_char):
     fp.write(
-        "-- Copyright (c) 2011-2024 Columbia University, System Level Design Group\n")
-    fp.write("-- SPDX-License-Identifier: Apache-2.0\n\n")
+        comment_char +
+        comment_char +
+        " Copyright (c) 2011-2024 Columbia University, System Level Design Group\n")
+    fp.write(
+        comment_char +
+        comment_char +
+        " SPDX-License-Identifier: Apache-2.0\n\n")
 
 
 def print_libs(fp, std_only):
@@ -492,9 +499,13 @@ def print_global_constants(fp, soc):
     else:
         fp.write("  constant GLOB_CPU_RISCV : integer range 0 to 1 := 1;\n")
     if soc.CPU_ARCH.get() == "ariane":
-        fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 1;\n\n")
+        fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 1;\n")
     else:
-        fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 0;\n\n")
+        fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 0;\n")
+    if soc.noc.coh_noc_width.get() == 32:
+        fp.write("  constant GLOB_YX_WIDTH : integer range 0 to 4 := 3;\n\n")
+    else:
+        fp.write("  constant GLOB_YX_WIDTH : integer range 0 to 4 := 4;\n\n")
 
 
 def print_constants(fp, soc, esp_config):
@@ -1970,7 +1981,7 @@ def print_tiles(fp, esp_config):
             " => \"" +
             uint_to_bin(
                 esp_config.tiles[i].col,
-                4) +
+                3 if esp_config.coh_noc_width == 32 or esp_config.dma_noc_width == 32 else 4) +
             "\"")
     fp.write("  );\n")
 
@@ -1985,7 +1996,7 @@ def print_tiles(fp, esp_config):
             " => \"" +
             uint_to_bin(
                 esp_config.tiles[i].row,
-                4) +
+                3 if esp_config.coh_noc_width == 32 or esp_config.dma_noc_width == 32 else 4) +
             "\"")
     fp.write("  );\n\n")
 
@@ -2286,7 +2297,12 @@ def print_soc_defines(fp, esp_config, soc):
         fp.write("#define MONITOR_BASE_ADDR 0x80090000\n")
     else:
         fp.write("#define MONITOR_BASE_ADDR 0x60090000\n")
-    fp.write("#define MONITOR_TILE_SIZE 0x200\n\n")
+    fp.write("#define MONITOR_TILE_SIZE 0x200\n")
+
+    if esp_config.coh_noc_width == 32 or esp_config.dma_noc_width == 32:
+        fp.write("#define YX_WIDTH 3\n\n")
+    else:
+        fp.write("#define YX_WIDTH 4\n\n")
 
     fp.write("#endif /* __SOC_DEFS_H__ */\n")
 
@@ -3565,12 +3581,21 @@ def print_load_script(fp, soc, esp_config):
     fp.write(" rtl_cache=" + str(soc.cache_rtl.get()))
 
 
+def print_verilog_constants(fp, soc, esp_config):
+    if esp_config.coh_noc_width == 32 or esp_config.dma_noc_width == 32:
+        fp.write("`define MAX_Y 8\n")
+        fp.write("`define MAX_X 8\n")
+    else:
+        fp.write("`define MAX_Y 16\n")
+        fp.write("`define MAX_X 16\n")
+
+
 def create_socmap(esp_config, soc):
 
     # Globals
     fp = open('esp_global.vhd', 'w')
 
-    print_header(fp, "esp_global")
+    print_header(fp, "esp_global", "-")
     print_libs(fp, True)
 
     fp.write("package esp_global is\n\n")
@@ -3582,10 +3607,20 @@ def create_socmap(esp_config, soc):
 
     print("Created global constants definition into 'esp_global.vhd'")
 
+    # Globals
+    fp = open('esp_global.svh', 'w')
+
+    print_header(fp, "socmap", "/")
+    print_verilog_constants(fp, soc, esp_config)
+
+    fp.close()
+
+    print("Created global verilog constants into 'esp_global.svh'")
+
     # SoC map
     fp = open('socmap.vhd', 'w')
 
-    print_header(fp, "socmap")
+    print_header(fp, "socmap", "-")
     print_libs(fp, False)
 
     fp.write("package socmap is\n\n")

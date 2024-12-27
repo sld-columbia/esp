@@ -11,8 +11,10 @@ use work.nocpackage.all;
 
 package esp_csr_pkg is
 
+  constant CPU_LOC_YX_WIDTH : integer := 4;
+
   constant NCPU_TILE_MAX : integer := 16;
-  constant ESP_CSR_WIDTH : integer := 143 + 2 * YX_WIDTH * NCPU_TILE_MAX;
+  constant ESP_CSR_WIDTH : integer := 143 + 2 * CPU_LOC_YX_WIDTH * NCPU_TILE_MAX;
 
   constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
   constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;

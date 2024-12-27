@@ -296,11 +296,13 @@ static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *
     iowrite32be(ioread32be(_dev->iomem + MCAST_REG) |                       \
                     ((MCAST_MASK_NDESTS & (_n - 1)) << MCAST_SHIFT_NDESTS), \
                 _dev->iomem + MCAST_REG)
-#define esp_yx_reg_set_y(_dev, _y, _n, _i)                                                      \
-    iowrite32be(ioread32be(_dev->iomem + YX_REG + _n) | (_y << (_i * 2 * YX_WIDTH + YX_WIDTH)), \
+#define esp_yx_reg_set_y(_dev, _y, _n, _i)                                 \
+    iowrite32be(ioread32be(_dev->iomem + YX_REG + _n) |                    \
+                    ((YX_MASK_YX & _y) << (_i * 2 * YX_WIDTH + YX_WIDTH)), \
                 _dev->iomem + YX_REG + _n)
-#define esp_yx_reg_set_x(_dev, _x, _n, _i)                                           \
-    iowrite32be(ioread32be(_dev->iomem + YX_REG + _n) | (_x << (_i * 2 * YX_WIDTH)), \
+#define esp_yx_reg_set_x(_dev, _x, _n, _i)                      \
+    iowrite32be(ioread32be(_dev->iomem + YX_REG + _n) |         \
+                    ((YX_MASK_YX & _x) << (_i * 2 * YX_WIDTH)), \
                 _dev->iomem + YX_REG + _n)
 
 static long esp_set_src(struct esp_device *esp, char *src_name, int src_index, int is_yx)

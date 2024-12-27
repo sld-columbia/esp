@@ -47,7 +47,7 @@ package nocpackage is
   constant HEADER_ROUTE_N : natural := 0;
 
   constant PREAMBLE_WIDTH      : natural := 2;
-  constant YX_WIDTH            : natural := 4;
+  constant YX_WIDTH            : natural := GLOB_YX_WIDTH;
   constant MSG_TYPE_WIDTH      : natural := 5;
   constant RESERVED_WIDTH      : natural := 8;
   constant RESERVED_WIDTH_MISC : natural := 6;
@@ -1053,11 +1053,11 @@ function create_header_mcast (
     -- initialize all local ports set
     ports := (others => '1');
     -- nord ports removed in top tiles
-    if local_y = "0000" then
+    if local_y = conv_std_logic_vector(0, YX_WIDTH) then
       ports(0) := '0';
     end if;
     -- west ports removed in left edge tiles
-    if local_x = "0000" then
+    if local_x = conv_std_logic_vector(0, YX_WIDTH) then
       ports(2) := '0';
     end if;
     if is_fpga(TECH) /= 0 then

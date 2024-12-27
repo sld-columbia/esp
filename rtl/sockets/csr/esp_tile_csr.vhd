@@ -93,7 +93,7 @@ architecture rtl of esp_tile_csr is
   -- CSRs
   signal config_r  : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
 
-  constant DEFAULT_CPU_LOC_OVR : std_logic_vector(NCPU_TILE_MAX * 2 * YX_WIDTH downto 0) := (others => '0');
+  constant DEFAULT_CPU_LOC_OVR : std_logic_vector(NCPU_TILE_MAX * 2 * CPU_LOC_YX_WIDTH downto 0) := (others => '0');
   -- CPU_Y(N-1) CPU_X(N-1) .... CPU_Y(0) CPU_X(0)    OVERWRITE DEFAULT FROM SOCMAP
 
   constant DEFAULT_ARIANE_HARTID : std_logic_vector(4 downto 0) :=

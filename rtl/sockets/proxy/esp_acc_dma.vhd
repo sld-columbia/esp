@@ -1364,9 +1364,9 @@ begin  -- rtl
           if rst = '0' then                   -- synchronous reset (active low)
             bankreg(i) <= bankdef(i);
           elsif i = YX_REG then
-            bankreg(i)(7 downto 0) <= local_y & local_x;
+            bankreg(i)(2 * YX_WIDTH - 1 downto 0) <= local_y & local_x;
             if sample(i) = '1' then
-              bankreg(i)(31 downto 6) <= bankin(i)(31 downto 6);
+              bankreg(i)(31 downto 2  * YX_WIDTH) <= bankin(i)(31 downto 2 * YX_WIDTH);
             end if;
           elsif sample(i) = '1' and rdonly_reg_mask(i) = '0' then
             bankreg(i) <= bankin(i);

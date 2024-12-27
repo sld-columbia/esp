@@ -1,4 +1,5 @@
 // This package defines constants, data types and functions for the NoC
+`include "esp_global.svh"
 
 package noc;
 
@@ -7,8 +8,8 @@ package noc;
     //
 
     // Coordinates
-    parameter int unsigned xMax = 16;
-    parameter int unsigned yMax = 16;
+    parameter int unsigned xMax = `MAX_X;
+    parameter int unsigned yMax = `MAX_Y;
 
     // Message Type
     parameter int unsigned messageTypeWidth = 5;
