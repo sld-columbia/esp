@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
-INCDIR = -I../include -I../../common/include
+INCDIR = -I../include -I../../common/include -I$(DESIGN_PATH)/socgen/esp
 
 ifeq ("$(CPU_ARCH)", "ariane")
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-

@@ -45,8 +45,8 @@
      * 40-295 - Distributed monitors (equal to the number of tiles NTILE_MAX)
      * 296-(NAPBS-1) - Accelerators
      */
-    #define NAPBSLV  128
-    #define NACC_MAX 44
+    #define NAPBSLV  512
+    #define NACC_MAX 216
 
     #define VENDOR_SLD 0xEB
 

@@ -304,7 +304,8 @@ void esp_p2p_init(struct esp_device *dev, struct esp_device *srcs, unsigned nsrc
 
 void esp_set_acc_yx_table(struct esp_device *dev, struct esp_device *srcs, unsigned nsrcs)
 {
-    for (int i = 1; i <= nsrcs; i++) {
+    int i;
+    for (i = 1; i <= nsrcs; i++) {
         // 4 YX coordinates per YX reg
         esp_yx_reg_set_y(dev, esp_get_y(&srcs[i - 1]), 4 * (i / 4), i % 4);
         esp_yx_reg_set_x(dev, esp_get_x(&srcs[i - 1]), 4 * (i / 4), i % 4);

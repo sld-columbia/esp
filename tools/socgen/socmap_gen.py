@@ -51,7 +51,7 @@ NTILE_MAX = 256
 # 24-39 - LLC cache controller (must change with NMEM_MAX)
 # 40-295 - Distributed monitors (equal to the number of tiles NTILE_MAX)
 # 296-(NAPBS-1) - Accelerators
-NACC_MAX = NAPBS - NCPU_MAX - NMEM_MAX - NTILE_MAX - 16
+NACC_MAX = NAPBS - NCPU_MAX - NMEM_MAX - NTILE_MAX - 8
 
 # Default device mapping
 RST_ADDR = dict()

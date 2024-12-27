@@ -11,7 +11,7 @@ endif
 CFLAGS ?= -O3
 CFLAGS += -fno-builtin-cos -fno-builtin-sin
 CFLAGS += -Wall -Werror
-CFLAGS += -I../include -I../../common/include
+CFLAGS += -I../include -I../../common/include -I$(DESIGN_PATH)/socgen/esp
 
 OUT := $(BUILD_PATH)/libtest.a
 OBJS := test.o le.o wami.o
