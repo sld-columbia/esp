@@ -349,7 +349,7 @@ static long esp_p2p_init(struct esp_device *esp, struct esp_access *access)
     if (access->p2p_store) {
         dev_dbg(esp->pdev, "P2P store enabled\n");
         esp_p2p_enable_dst(esp);
-        esp_p2p_set_mcast_ndests(esp, access->p2p_mcast_dests);
+        if (access->p2p_mcast_dests > 0) esp_p2p_set_mcast_ndests(esp, access->p2p_mcast_dests);
     }
 
     if (access->p2p_nsrcs != 0) {
