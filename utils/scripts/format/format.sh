@@ -301,8 +301,7 @@ format_all() {
 
     #TODO: re-enable VHDL in github actions
     if [ "$is_github_actions" = true ]; then
-        branch=$(git rev-parse --abbrev-ref HEAD)
-        modified_files=$(git diff --name-only origin/${branch}..HEAD \
+        modified_files=$(git diff --name-only HEAD^..HEAD \
             | grep -E '\.(c|h|cpp|hpp|py|v|sv)$')
     else
         modified_files=$(git status --porcelain \
