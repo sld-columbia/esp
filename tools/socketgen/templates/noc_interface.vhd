@@ -361,6 +361,7 @@ begin
       rdonly_reg_mask    => rdonly_reg_mask,
       exp_registers      => exp_registers,
       scatter_gather     => scatter_gather,
+      has_l2             => has_l2,
       tlb_entries        => tlb_entries)
     port map (
       rst                           => rst,
@@ -433,9 +434,18 @@ begin
   coherence_model_select: process (bank, dma_rcv_data, dma_rcv_valid, dma_snd_ready,
                                    dma_rcv_data_out, dma_rcv_empty, dma_snd_full,
                                    dma_rcv_rdreq_int, dma_snd_wrreq_int) is
-    variable coherence : integer range 0 to ACC_COH_FULL;
+    variable coherence, coherence_tmp : integer range 0 to ACC_COH_FULL;
   begin  -- process coherence_model_select
-    coherence := conv_integer(bank(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
+    coherence_tmp := conv_integer(bank(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
+
+    if CFG_LLC_ENABLE = 0 then
+      coherence := ACC_COH_NONE;
+    elsif has_l2 = 0 and coherence_tmp = ACC_COH_FULL then
+      coherence := ACC_COH_RECALL;
+    else
+      coherence := coherence_tmp;
+    end if;
+
     if coherence = ACC_COH_FULL then
       dma_rcv_data_out_int <= dma_rcv_data;
       dma_rcv_empty_int    <= not dma_rcv_valid;

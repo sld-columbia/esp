@@ -59,6 +59,7 @@ entity esp_acc_dma is
     rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1) := (others => '0');
     exp_registers      : integer range 0 to 1                 := 0;  -- Not implemented
     scatter_gather     : integer range 0 to 1                 := 1;
+    has_l2             : integer range 0 to 1                 := 1;
     tlb_entries        : integer                              := 256);
   port (
     rst           : in  std_ulogic;
@@ -192,6 +193,7 @@ architecture rtl of esp_acc_dma is
 
   -- Coherence
   signal coherence : integer range 0 to ACC_COH_FULL;
+  signal coherence_tmp : integer range 0 to ACC_COH_FULL;
 
   -- P2P
   signal p2p_src_index_r      : integer range 0 to 2;
@@ -434,14 +436,22 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- DMA packet
   -----------------------------------------------------------------------------
-  coherence <= conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
+  coherence_tmp <= conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
 
   coherence_model_select: process (bankreg, dma_rcv_rdreq_int, dma_rcv_data_out, dma_rcv_empty,
                                    dma_snd_wrreq_int, dma_snd_data_in_int, dma_snd_full,
                                    llc_coherent_dma_rcv_data_out, llc_coherent_dma_rcv_empty,
                                    llc_coherent_dma_snd_full, p2p_req_rcv_rdreq,
-                                   p2p_rsp_snd_wrreq, p2p_rsp_snd_data_in, coherence) is
+                                   p2p_rsp_snd_wrreq, p2p_rsp_snd_data_in, coherence_tmp) is
   begin  -- process coherence_model_select
+
+    if CFG_LLC_ENABLE = 0 then
+      coherence <= ACC_COH_NONE;
+    elsif has_l2 = 0 and coherence_tmp = ACC_COH_FULL then
+      coherence <= ACC_COH_RECALL;
+    else
+      coherence <= coherence_tmp;
+    end if;
 
     if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
       -- P2P requests (1 flit each) share the LLC-coherent DMA queues in output

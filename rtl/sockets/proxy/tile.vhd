@@ -734,6 +734,7 @@ package tile is
       rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1);
       exp_registers      : integer range 0 to 1;
       scatter_gather     : integer range 0 to 1;
+      has_l2             : integer range 0 to 1;
       tlb_entries        : integer);
     port (
       rst                           : in  std_ulogic;
