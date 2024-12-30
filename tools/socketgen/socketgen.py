@@ -559,14 +559,14 @@ def write_acc_interface(
         f.write("\n")
         f.write(
             "      dma_read_ctrl_rsc_dat      : out std_logic_vector(" +
-            str(71) +
+            str(72) +
             " downto 0);\n")
         f.write("      dma_read_ctrl_rsc_vld      : out std_ulogic;\n")
         f.write("      dma_read_ctrl_rsc_rdy      : in  std_ulogic;\n")
         f.write("\n")
         f.write(
             "      dma_write_ctrl_rsc_dat     : out std_logic_vector(" +
-            str(71) +
+            str(72) +
             " downto 0);\n")
         f.write("      dma_write_ctrl_rsc_vld     : out std_ulogic;\n")
         f.write("      dma_write_ctrl_rsc_rdy     : in  std_ulogic;\n")
@@ -600,14 +600,14 @@ def write_acc_interface(
         f.write("\n")
         f.write(
             "      dma_read_ctrl_msg          : out std_logic_vector(" +
-            str(71) +
+            str(72) +
             " downto 0);\n")
         f.write("      dma_read_ctrl_val          : out std_ulogic;\n")
         f.write("      dma_read_ctrl_rdy          : in  std_ulogic;\n")
         f.write("\n")
         f.write(
             "      dma_write_ctrl_msg         : out std_logic_vector(" +
-            str(71) +
+            str(72) +
             " downto 0);\n")
         f.write("      dma_write_ctrl_val         : out std_ulogic;\n")
         f.write("      dma_write_ctrl_rdy         : in  std_ulogic;\n")
