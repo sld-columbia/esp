@@ -149,6 +149,8 @@ architecture rtl of esp_acc_dma is
   constant dma_word_bits : integer := ncpu_log(dma_words);
   constant dma_word_pad : std_logic_vector(dma_word_bits - 1 downto 0) := (others => '0');
 
+  constant YX_REG_ENTRIES : integer := 36;
+
   -- Fix endianness
   function fix_endian (
     din : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -230,7 +232,7 @@ architecture rtl of esp_acc_dma is
   signal payload_length, payload_length_r    : dma_noc_flit_type;
   signal sample_flits                        : std_ulogic;
   signal sample_rd, sample_wr                : std_ulogic;
-  signal source_r                            : integer range 0 to 31;
+  signal source_r                            : integer range 0 to YX_REG_ENTRIES - 1;
   signal size_r                              : std_logic_vector(2 downto 0);
   signal irq_header_i, irq_header            : misc_noc_flit_type;
   signal irq_info                            : std_logic_vector(RESERVED_WIDTH_MISC - 1 downto 0);
