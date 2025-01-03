@@ -7,6 +7,46 @@ Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Calendar Versioning](https://calver.org/) with format
 `YYYY.MINOR.MICRO`.
 
+## [2025.1.0]
+
+### Added
+
+- **Architecture**
+  - New accelerator interface for fine-grained data access control (#237)
+  - Support for multiple simultaneous multicast messages (#247)
+
+- **Infrastructure**
+  - New linting scripts and GitHub actions flow (#242)
+
+- **Software**
+  - Example multicore baremetal application
+
+### Improved
+
+- **Architecture**
+  - Support for up to 256 tiles and 512 APB devices
+  - Moved NoC routers to top level of hierearchy (#238)
+  - Supoprt for up to 16 CPU tiles and 16 memory tiles
+  - Make number of cache ways more flexible
+  - Expand number of accelerator registers to 128
+  - Restrict unavailable accelerator coherence modes from HW
+
+- **Infrastructure**
+  - Support for up to 7 DDR controllers on proFPGA-xcvu19p board
+  - Linted all C, C++, Python, Verilog, and System Verilog files
+
+### Fixed
+
+- **Accelerator Design Flows**
+  - Fixed matchlib dependencies for Catpult HLS SystemC flow (#241)
+
+- **Architecture**
+  - Resolved synthesis warnings in caches and router
+  - Fixed a bug in DMA busy state of noc2ahbm module
+
+- **Infrastructure**
+  - Fixed issue in handling a large number of RTL files (#232)
+
 ## [2024.2.0]
 
 ### Added
