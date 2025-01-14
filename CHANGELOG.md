@@ -25,8 +25,8 @@ adheres to [Calendar Versioning](https://calver.org/) with format
 
 - **Architecture**
   - Support for up to 256 tiles and 512 APB devices
-  - Moved NoC routers to top level of hierearchy (#238)
-  - Supoprt for up to 16 CPU tiles and 16 memory tiles
+  - Moved NoC routers to top level of hierarchy (#238)
+  - Support for up to 16 CPU tiles and 16 memory tiles
   - Make number of cache ways more flexible
   - Expand number of accelerator registers to 128
   - Restrict unavailable accelerator coherence modes from HW
@@ -38,7 +38,7 @@ adheres to [Calendar Versioning](https://calver.org/) with format
 ### Fixed
 
 - **Accelerator Design Flows**
-  - Fixed matchlib dependencies for Catpult HLS SystemC flow (#241)
+  - Fixed matchlib dependencies for Catapult HLS SystemC flow (#241)
 
 - **Architecture**
   - Resolved synthesis warnings in caches and router
