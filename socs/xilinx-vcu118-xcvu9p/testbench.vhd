@@ -46,6 +46,22 @@ architecture behav of testbench is
       c0_ddr4_dq       : inout std_logic_vector(63 downto 0);
       c0_ddr4_dqs_c    : inout std_logic_vector(7 downto 0);
       c0_ddr4_dqs_t    : inout std_logic_vector(7 downto 0);
+      c1_sys_clk_p     : in    std_logic;
+      c1_sys_clk_n     : in    std_logic;
+      c1_ddr4_act_n    : out   std_logic;
+      c1_ddr4_adr      : out   std_logic_vector(16 downto 0);
+      c1_ddr4_ba       : out   std_logic_vector(1 downto 0);
+      c1_ddr4_bg       : out   std_logic_vector(0 downto 0);
+      c1_ddr4_cke      : out   std_logic_vector(0 downto 0);
+      c1_ddr4_odt      : out   std_logic_vector(0 downto 0);
+      c1_ddr4_cs_n     : out   std_logic_vector(0 downto 0);
+      c1_ddr4_ck_t     : out   std_logic_vector(0 downto 0);
+      c1_ddr4_ck_c     : out   std_logic_vector(0 downto 0);
+      c1_ddr4_reset_n  : out   std_logic;
+      c1_ddr4_dm_dbi_n : inout std_logic_vector(7 downto 0);
+      c1_ddr4_dq       : inout std_logic_vector(63 downto 0);
+      c1_ddr4_dqs_c    : inout std_logic_vector(7 downto 0);
+      c1_ddr4_dqs_t    : inout std_logic_vector(7 downto 0);
       gtrefclk_p       : in    std_logic;
       gtrefclk_n       : in    std_logic;
       txp              : out   std_logic;
@@ -71,6 +87,8 @@ architecture behav of testbench is
   signal reset        : std_ulogic := '1';
   signal c0_sys_clk_p : std_logic  := '0';
   signal c0_sys_clk_n : std_logic  := '1';
+  signal c1_sys_clk_p : std_logic  := '0';
+  signal c1_sys_clk_n : std_logic  := '1';
 
 -- DDR4
   signal c0_ddr4_act_n    : std_logic;
@@ -87,6 +105,20 @@ architecture behav of testbench is
   signal c0_ddr4_dq       : std_logic_vector(63 downto 0);
   signal c0_ddr4_dqs_c    : std_logic_vector(7 downto 0);
   signal c0_ddr4_dqs_t    : std_logic_vector(7 downto 0);
+  signal c1_ddr4_act_n    : std_logic;
+  signal c1_ddr4_adr      : std_logic_vector(16 downto 0);
+  signal c1_ddr4_ba       : std_logic_vector(1 downto 0);
+  signal c1_ddr4_bg       : std_logic_vector(0 downto 0);
+  signal c1_ddr4_cke      : std_logic_vector(0 downto 0);
+  signal c1_ddr4_odt      : std_logic_vector(0 downto 0);
+  signal c1_ddr4_cs_n     : std_logic_vector(0 downto 0);
+  signal c1_ddr4_ck_t     : std_logic_vector(0 downto 0);
+  signal c1_ddr4_ck_c     : std_logic_vector(0 downto 0);
+  signal c1_ddr4_reset_n  : std_logic;
+  signal c1_ddr4_dm_dbi_n : std_logic_vector(7 downto 0);
+  signal c1_ddr4_dq       : std_logic_vector(63 downto 0);
+  signal c1_ddr4_dqs_c    : std_logic_vector(7 downto 0);
+  signal c1_ddr4_dqs_t    : std_logic_vector(7 downto 0);
 
 -- SGMII Ethernet
   signal gtrefclk_p : std_logic := '0';
@@ -119,12 +151,18 @@ begin
   reset        <= '0'              after 2500 ns;
   c0_sys_clk_p <= not c0_sys_clk_p after 2 ns;
   c0_sys_clk_n <= not c0_sys_clk_n after 2 ns;
+  c1_sys_clk_p <= not c1_sys_clk_p after 2 ns;
+  c1_sys_clk_n <= not c1_sys_clk_n after 2 ns;
 
   -- DDR4 (memory simulation model does not emulate DDR behavior)
   c0_ddr4_dm_dbi_n <= (others => 'Z');
   c0_ddr4_dq       <= (others => 'Z');
   c0_ddr4_dqs_c    <= (others => 'Z');
   c0_ddr4_dqs_t    <= (others => 'Z');
+  c1_ddr4_dm_dbi_n <= (others => 'Z');
+  c1_ddr4_dq       <= (others => 'Z');
+  c1_ddr4_dqs_c    <= (others => 'Z');
+  c1_ddr4_dqs_t    <= (others => 'Z');
 
   -- Ethernet (We do not simulate any model of the PHY to speedup RTL simulation)
   gtrefclk_p <= not gtrefclk_p after 800 ps;
@@ -163,6 +201,22 @@ begin
       c0_ddr4_dq       => c0_ddr4_dq,
       c0_ddr4_dqs_c    => c0_ddr4_dqs_c,
       c0_ddr4_dqs_t    => c0_ddr4_dqs_t,
+      c1_sys_clk_p     => c1_sys_clk_p,
+      c1_sys_clk_n     => c1_sys_clk_n,
+      c1_ddr4_act_n    => c1_ddr4_act_n,
+      c1_ddr4_adr      => c1_ddr4_adr,
+      c1_ddr4_ba       => c1_ddr4_ba,
+      c1_ddr4_bg       => c1_ddr4_bg,
+      c1_ddr4_cke      => c1_ddr4_cke,
+      c1_ddr4_odt      => c1_ddr4_odt,
+      c1_ddr4_cs_n     => c1_ddr4_cs_n,
+      c1_ddr4_ck_t     => c1_ddr4_ck_t,
+      c1_ddr4_ck_c     => c1_ddr4_ck_c,
+      c1_ddr4_reset_n  => c1_ddr4_reset_n,
+      c1_ddr4_dm_dbi_n => c1_ddr4_dm_dbi_n,
+      c1_ddr4_dq       => c1_ddr4_dq,
+      c1_ddr4_dqs_c    => c1_ddr4_dqs_c,
+      c1_ddr4_dqs_t    => c1_ddr4_dqs_t,
       gtrefclk_p       => gtrefclk_p,
       gtrefclk_n       => gtrefclk_n,
       txp              => txp,

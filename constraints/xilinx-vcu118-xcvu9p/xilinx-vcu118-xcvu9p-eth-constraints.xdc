@@ -11,6 +11,7 @@ set_false_path -to [get_pins -hier -filter { name =~ */reset_sync_*/*/PRE}]
 
 # Recover clock names after elaboration
 set clkm_elab [get_clocks -of_objects [get_nets clkm]]
+set clkm_elab1 [get_clocks -of_objects [get_nets clkm1]]
 set refclk_elab [get_clocks -of_objects [get_nets chip_refclk]]
 set clk125m_elab [get_clocks -of_objects [get_nets -hierarchical clk125m]]
 
@@ -19,3 +20,4 @@ set clk125m_elab [get_clocks -of_objects [get_nets -hierarchical clk125m]]
 
 set_clock_groups -asynchronous -group [get_clocks ${clk125m_elab}] -group [get_clocks ${refclk_elab}]
 set_clock_groups -asynchronous -group [get_clocks ${clk125m_elab}] -group [get_clocks ${clkm_elab}]
+set_clock_groups -asynchronous -group [get_clocks ${clk125m_elab}] -group [get_clocks ${clkm_elab1}]

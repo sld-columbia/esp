@@ -18,18 +18,29 @@ set_property IOSTANDARD DIFF_SSTL12 [get_ports c0_sys_clk_p]
 set_property PACKAGE_PIN D12 [get_ports c0_sys_clk_n]
 set_property IOSTANDARD DIFF_SSTL12 [get_ports c0_sys_clk_n]
 
+set_property PACKAGE_PIN AW26 [get_ports c1_sys_clk_p]
+set_property IOSTANDARD DIFF_SSTL12 [get_ports c1_sys_clk_p]
+
+set_property PACKAGE_PIN AW27 [get_ports c1_sys_clk_n]
+set_property IOSTANDARD DIFF_SSTL12 [get_ports c1_sys_clk_n]
+
 set_property PACKAGE_PIN L19 [get_ports reset]
 set_property IOSTANDARD LVCMOS12 [get_ports reset]
 
 create_clock -period 4.0 [get_ports c0_sys_clk_p]
 set_input_jitter [get_clocks -of_objects [get_ports c0_sys_clk_p]] 0.05
 
+create_clock -period 4.0 [get_ports c1_sys_clk_p]
+set_input_jitter [get_clocks -of_objects [get_ports c1_sys_clk_p]] 0.05
+
 # Recover elaborated clock name
 set clkm_elab [get_clocks -of_objects [get_nets clkm]]
+set clkm_elab1 [get_clocks -of_objects [get_nets clkm1]]
 set refclk_elab [get_clocks -of_objects [get_nets chip_refclk]]
 
 # Declare asynchronous clocks
-set_clock_groups -asynchronous -group [get_clocks ${clkm_elab}] -group [get_clocks ${refclk_elab}]
+set_clock_groups -asynchronous -group [get_clocks ${clkm_elab}] -group [get_clocks ${refclk_elab}] \
+                               -group [get_clocks ${clkm_elab1}]
 
 
 # --- False paths

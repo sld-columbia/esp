@@ -562,13 +562,12 @@ class SoC_Config():
             self.HAS_SGMII = False
 
         # Define maximum number of memory tiles
-        if self.FPGA_BOARD.find("xilinx") != -1:
-            self.nmem_max = 1
-        elif self.FPGA_BOARD == "profpga-xc7v2000t":
+        self.nmem_max = 1
+        if self.FPGA_BOARD == "profpga-xc7v2000t" or self.FPGA_BOARD == "xilinx-vcu118-xcvu9p":
             self.nmem_max = 2
         elif self.FPGA_BOARD == "profpga-xcvu440":
             self.nmem_max = 4
-        else:
+        elif self.FPGA_BOARD == "profpga-xcvu19p":
             self.nmem_max = 7
 
         # Read GRLIB configurations
