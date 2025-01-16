@@ -1,10 +1,10 @@
 // Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
-#include "<accelerator_name>.hpp"
+#include "accelerator_name.hpp"
 #include <mc_scverify.h>
 
-void<acc_full_name>::config()
+void acc_full_name::config()
 {
     conf_info.Reset();
     conf1.ResetWrite();
@@ -38,7 +38,7 @@ void<acc_full_name>::config()
     }
 }
 
-void<acc_full_name>::load()
+void acc_full_name::load()
 {
     bool ping_pong = false;
     dma_read_chnl.Reset();
@@ -138,7 +138,7 @@ void<acc_full_name>::load()
     }
 }
 
-void<acc_full_name>::compute_dataReq()
+void acc_full_name::compute_dataReq()
 {
 
     bool ping_pong = false;
@@ -199,7 +199,7 @@ void<acc_full_name>::compute_dataReq()
     }
 }
 
-void<acc_full_name>::compute()
+void acc_full_name::compute()
 {
 
     bool ping_pong     = false;
@@ -272,7 +272,7 @@ void<acc_full_name>::compute()
     }
 }
 
-void<acc_full_name>::store_dataReq()
+void acc_full_name::store_dataReq()
 {
 
     bool ping_pong = false;
@@ -348,7 +348,7 @@ void<acc_full_name>::store_dataReq()
     }
 }
 
-void<acc_full_name>::store()
+void acc_full_name::store()
 {
 
     bool ping_pong = false;

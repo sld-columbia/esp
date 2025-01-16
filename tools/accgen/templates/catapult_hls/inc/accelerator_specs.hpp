@@ -9,7 +9,7 @@
 #include <nvhls_int.h>
 #include <nvhls_types.h>
 #include <nvhls_vector.h>
-#include "<accelerator_name>_conf_info.hpp"
+#include "accelerator_name_conf_info.hpp"
 #include "esp_dma_info_sysc.hpp"
 #include <ArbitratedScratchpadDP.h>
 

@@ -353,15 +353,15 @@ for d in $dirs; do
     fi
     
     if [[ "$FLOW" == "rtl" && "$d" != "hls" ]]; then
-	sed -i "s/<accelerator_name>/$LOWER/g" */*
-	sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" */*
-	sed -i "s/acc_full_name/$LOWERFULL/g" */*
-	sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" */*
+	sed -i "s/accelerator_name/$LOWER/g" */*
+	sed -i "s/ACCELERATOR_NAME/$UPPER/g" */*
+	sed -i "s/cc_full_name/$LOWERFULL/g" */*
+	sed -i "s/ACC_FULL_NAME/$UPPERFULL/g" */*
     elif [ "$FLOW" != "rtl" ]; then
-	find . -type f -exec sed -i "s/<accelerator_name>/$LOWER/g" {} +
-	find . -type f -exec sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" {} +
-	find . -type f -exec sed -i "s/<acc_full_name>/$LOWERFULL/g" {} +
-	find . -type f -exec sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" {} +
+	find . -type f -exec sed -i "s/accelerator_name/$LOWER/g" {} +
+	find . -type f -exec sed -i "s/ACCELERATOR_NAME/$UPPER/g" {} +
+	find . -type f -exec sed -i "s/acc_full_name/$LOWERFULL/g" {} +
+	find . -type f -exec sed -i "s/ACC_FULL_NAME/$UPPERFULL/g" {} +
     fi
 
 
@@ -731,10 +731,10 @@ for d in $dirs; do
 	rename acc_full $LOWERFULL *
     fi
 
-    sed -i "s/<accelerator_name>/$LOWER/g" *
-    sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
-    sed -i "s/<acc_full_name>/$LOWERFULL/g" *
-    sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" *
+    sed -i "s/accelerator_name/$LOWER/g" *
+    sed -i "s/ACCELERATOR_NAME/$UPPER/g" *
+    sed -i "s/acc_full_name/$LOWERFULL/g" *
+    sed -i "s/ACC_FULL_NAME/$UPPERFULL/g" *
 done
 
 ## Linux driver include file

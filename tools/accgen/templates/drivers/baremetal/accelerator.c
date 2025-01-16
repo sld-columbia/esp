@@ -14,8 +14,8 @@ typedef /* <<--token-type-->> */ token_t;
 
 static unsigned DMA_WORD_PER_BEAT(unsigned _st) { return (sizeof(void *) / _st); }
 
-#define SLD_     <ACCELERATOR_NAME> /* <<--id-->> */
-#define DEV_NAME "sld,<acc_full_name>"
+#define SLD_ACCELERATOR_NAME /* <<--id-->> */
+#define DEV_NAME             "sld,acc_full_name"
 
 /* <<--params-->> */
 
@@ -95,9 +95,9 @@ int main(int argc, char *argv[])
     // Search for the device
     printf("Scanning device tree... \n");
 
-    ndev = probe(&espdevs, VENDOR_SLD, SLD_<ACCELERATOR_NAME>, DEV_NAME);
+    ndev = probe(&espdevs, VENDOR_SLD, SLD_ACCELERATOR_NAME, DEV_NAME);
     if (ndev == 0) {
-        printf("<accelerator_name> not found\n");
+        printf("accelerator_name not found\n");
         return 0;
     }
 

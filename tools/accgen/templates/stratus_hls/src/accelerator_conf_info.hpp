@@ -1,8 +1,8 @@
 // Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef __ < ACCELERATOR_NAME> _CONF_INFO_HPP__
-#define __ <ACCELERATOR_NAME> _CONF_INFO_HPP__
+#ifndef __ACCELERATOR_NAME_CONF_INFO_HPP__
+#define __ACCELERATOR_NAME_CONF_INFO_HPP__
 
 #include <systemc.h>
 
@@ -52,4 +52,4 @@ class conf_info_t {
     /* <<--params-->> */
 };
 
-#endif // __<ACCELERATOR_NAME>_CONF_INFO_HPP__
+#endif // __ACCELERATOR_NAME_CONF_INFO_HPP__

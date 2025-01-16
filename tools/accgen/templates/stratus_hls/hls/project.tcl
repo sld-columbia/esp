@@ -60,7 +60,7 @@ set_attr clock_period $CLOCK_PERIOD
 #
 # System level modules to be synthesized
 #
-define_hls_module <accelerator_name> ../src/<accelerator_name>.cpp
+define_hls_module accelerator_name ../src/accelerator_name.cpp
 
 
 #
@@ -78,15 +78,15 @@ foreach dma [list 32 64] {
 
     define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma
 
-    define_sim_config "BEHAV_DMA$dma" "<accelerator_name> BEH" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
+    define_sim_config "BEHAV_DMA$dma" "accelerator_name BEH" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
 
     foreach cfg [list BASIC] {
 	set cname $cfg\_DMA$dma
-	define_hls_config <accelerator_name> $cname -io_config IOCFG_DMA$dma --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
+	define_hls_config accelerator_name $cname -io_config IOCFG_DMA$dma --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
 	if {$TECH_IS_XILINX == 1} {
-	    define_sim_config "$cname\_V" "<accelerator_name> RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV -verilog_top_modules glbl
+	    define_sim_config "$cname\_V" "accelerator_name RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV -verilog_top_modules glbl
 	} else {
-	    define_sim_config "$cname\_V" "<accelerator_name> RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
+	    define_sim_config "$cname\_V" "accelerator_name RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
 	}
     }
 }

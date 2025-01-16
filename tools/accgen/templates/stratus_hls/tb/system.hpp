@@ -4,10 +4,10 @@
 #ifndef __SYSTEM_HPP__
 #define __SYSTEM_HPP__
 
-#include "<accelerator_name>_conf_info.hpp"
-#include "<accelerator_name>_debug_info.hpp"
-#include "<accelerator_name>.hpp"
-#include "<accelerator_name>_directives.hpp"
+#include "accelerator_name_conf_info.hpp"
+#include "accelerator_name_debug_info.hpp"
+#include "accelerator_name.hpp"
+#include "accelerator_name_directives.hpp"
 
 #include "esp_templates.hpp"
 
@@ -16,16 +16,16 @@ const size_t MEM_SIZE = /* <<--mem-footprint-->> */ / (DMA_WIDTH / 8);
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-    #include "<accelerator_name>_wrap.h"
+    #include "accelerator_name_wrap.h"
 #endif
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE> {
   public:
     // ACC instance
 #ifdef CADENCE
-    <accelerator_name> _wrapper *acc;
+    accelerator_name_wrapper *acc;
 #else
-    <accelerator_name> *acc;
+    accelerator_name *acc;
 #endif
 
     // Constructor
@@ -34,9 +34,9 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE> {
     {
         // ACC
 #ifdef CADENCE
-        acc = new<accelerator_name> _wrapper("<accelerator_name>_wrapper");
+        acc = new accelerator_name_wrapper("accelerator_name_wrapper");
 #else
-        acc = new<accelerator_name>("<accelerator_name>_wrapper");
+        acc = new accelerator_name("accelerator_name_wrapper");
 #endif
         // Binding ACC
         acc->clk(clk);

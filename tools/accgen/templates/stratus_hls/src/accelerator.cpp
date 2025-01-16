@@ -1,16 +1,16 @@
 // Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
-#include "<accelerator_name>.hpp"
-#include "<accelerator_name>_directives.hpp"
+#include "accelerator_name.hpp"
+#include "accelerator_name_directives.hpp"
 
 // Functions
 
-#include "<accelerator_name>_functions.hpp"
+#include "accelerator_name_functions.hpp"
 
 // Processes
 
-void<accelerator_name>::load_input()
+void accelerator_name::load_input()
 {
 
     // Reset
@@ -119,7 +119,7 @@ void<accelerator_name>::load_input()
     }
 }
 
-void<accelerator_name>::store_output()
+void accelerator_name::store_output()
 {
     // Reset
     {
@@ -237,7 +237,7 @@ void<accelerator_name>::store_output()
     }
 }
 
-void<accelerator_name>::compute_kernel()
+void accelerator_name::compute_kernel()
 {
     // Reset
     {

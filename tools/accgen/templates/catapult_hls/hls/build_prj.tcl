@@ -38,15 +38,15 @@ solution file add "../tb/testbench.cpp" -exclude true
 solution file add "../tb/testbench.hpp" -exclude true
 solution file add "../tb/sc_main.cpp" -exclude true
 solution file add "../tb/system.hpp" -exclude true
-solution file add "../inc/<accelerator_name>_data_types.hpp"
+solution file add "../inc/accelerator_name_data_types.hpp"
 solution file add "../../../common/inc/esp_dma_info_sysc.hpp"
-solution file add "../inc/<accelerator_name>_conf_info.hpp"
-solution file add "../inc/<accelerator_name>.hpp"
-solution file add "../src/<accelerator_name>.cpp"
-solution file add "../inc/<accelerator_name>_specs.hpp"
+solution file add "../inc/accelerator_name_conf_info.hpp"
+solution file add "../inc/accelerator_name.hpp"
+solution file add "../src/accelerator_name.cpp"
+solution file add "../inc/accelerator_name_specs.hpp"
 solution file add "../inc/mem_wrap.hpp"
 
-solution file set ../inc/<accelerator_name>_specs.hpp -args -DDMA_WIDTH=$DMA_WIDTH
+solution file set ../inc/accelerator_name_specs.hpp -args -DDMA_WIDTH=$DMA_WIDTH
 
 #
 # Output

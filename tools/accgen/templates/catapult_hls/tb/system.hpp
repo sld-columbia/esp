@@ -6,13 +6,13 @@
 
 #pragma once
 
-#include "<accelerator_name>_data_types.hpp"
-#include "<accelerator_name>_specs.hpp"
-#include "<accelerator_name>_conf_info.hpp"
+#include "accelerator_name_data_types.hpp"
+#include "accelerator_name_specs.hpp"
+#include "accelerator_name_conf_info.hpp"
 #include "esp_dma_info_sysc.hpp"
 #include "esp_dma_controller.hpp"
 #include "testbench.hpp"
-#include "<accelerator_name>.hpp"
+#include "accelerator_name.hpp"
 #include <mc_scverify.h>
 
 SC_MODULE(system_t)
@@ -22,7 +22,7 @@ SC_MODULE(system_t)
 
     testbench testbench_inst;
 
-    CCS_DESIGN(<acc_full_name>) CCS_INIT_S1(acc);
+    CCS_DESIGN(acc_full_name) CCS_INIT_S1(acc);
 
     Connections::Combinational<ac_int<DMA_WIDTH>> CCS_INIT_S1(dma_read_chnl);
     Connections::Combinational<ac_int<DMA_WIDTH>> CCS_INIT_S1(dma_write_chnl);
