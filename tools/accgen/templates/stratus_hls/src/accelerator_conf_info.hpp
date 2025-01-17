@@ -14,7 +14,12 @@ class conf_info_t {
     //
     // constructors
     //
-    conf_info_t() { /* <<--ctor-->> */ }
+    conf_info_t(
+        /* <<--format-placeholder-->> */
+    )
+    {
+        /* <<--ctor-->> */
+    }
 
     conf_info_t(
         /* <<--ctor-args-->> */

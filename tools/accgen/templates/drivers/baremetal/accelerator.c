@@ -131,13 +131,7 @@ int main(int argc, char *argv[])
         printf("  ptable = %p\n", ptable);
         printf("  nchunk = %lu\n", NCHUNK(mem_size));
 
-#ifndef __riscv
         for (coherence = ACC_COH_NONE; coherence <= ACC_COH_RECALL; coherence++) {
-#else
-        {
-            /* TODO: Restore full test once ESP caches are integrated */
-            coherence = ACC_COH_NONE;
-#endif
             printf("  --------------------\n");
             printf("  Generate input...\n");
             init_buf(mem, gold);

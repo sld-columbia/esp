@@ -759,7 +759,7 @@ for key in ${!values[@]}; do
 	sed -i "/\/\* <<--regs-->> \*\//a #define ${register_name} 0x${reg_offset_hex}" ${f}
     done
     sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}iowrite32be(a->${key}, esp->iomem + ${register_name});" linux/driver/${LOWERFULL}.c
-    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}${indent}iowrite32(dev, ${register_name}, ${key});" baremetal/${LOWER}.c
+    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}${indent}${indent}iowrite32(dev, ${register_name}, ${key});" baremetal/${LOWER}.c
     user_reg_offset=$((user_reg_offset + 4))
 done
 
