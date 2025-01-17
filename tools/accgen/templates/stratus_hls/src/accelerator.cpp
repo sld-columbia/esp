@@ -1,16 +1,16 @@
 // Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
-#include "<accelerator_name>.hpp"
-#include "<accelerator_name>_directives.hpp"
+#include "accelerator_name.hpp"
+#include "accelerator_name_directives.hpp"
 
 // Functions
 
-#include "<accelerator_name>_functions.hpp"
+#include "accelerator_name_functions.hpp"
 
 // Processes
 
-void<accelerator_name>::load_input()
+void accelerator_name::load_input()
 {
 
     // Reset
@@ -61,9 +61,11 @@ void<accelerator_name>::load_input()
                 uint32_t len = rem > PLM_IN_WORD ? PLM_IN_WORD : rem;
 #if (DMA_WORD_PER_BEAT == 0)
                 // data word is wider than NoC links
-                dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+                dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE,
+                                    0);
 #else
-                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE,
+                                    0);
 #endif
                 offset += len;
 
@@ -119,7 +121,7 @@ void<accelerator_name>::load_input()
     }
 }
 
-void<accelerator_name>::store_output()
+void accelerator_name::store_output()
 {
     // Reset
     {
@@ -178,9 +180,11 @@ void<accelerator_name>::store_output()
                 uint32_t len = rem > PLM_OUT_WORD ? PLM_OUT_WORD : rem;
 #if (DMA_WORD_PER_BEAT == 0)
                 // data word is wider than NoC links
-                dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+                dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE,
+                                    0);
 #else
-                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE,
+                                    0);
 #endif
                 offset += len;
 
@@ -237,7 +241,7 @@ void<accelerator_name>::store_output()
     }
 }
 
-void<accelerator_name>::compute_kernel()
+void accelerator_name::compute_kernel()
 {
     // Reset
     {

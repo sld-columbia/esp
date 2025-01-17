@@ -661,13 +661,13 @@ def write_acc_interface(
             f.write("      in1_word_V_read            : out std_logic;\n")
         f.write(
             "      load_ctrl                  : out std_logic_vector (" +
-            str(95) +
+            str(127) +
             " downto 0);\n")
         f.write("      load_ctrl_ap_ack           : in  std_logic;\n")
         f.write("      load_ctrl_ap_vld           : out std_logic;\n")
         f.write(
             "      store_ctrl                 : out std_logic_vector (" +
-            str(95) +
+            str(127) +
             " downto 0);\n")
         f.write("      store_ctrl_ap_ack          : in  std_logic;\n")
         f.write("      store_ctrl_ap_vld          : out std_logic\n")
@@ -746,8 +746,8 @@ def write_ap_acc_signals(f):
     f.write("\n")
     f.write("-- signals for ctrl struct unpakc\n")
     f.write("\n")
-    f.write("signal dma_read_ctrl_data : std_logic_vector(95 downto 0);\n")
-    f.write("signal dma_write_ctrl_data : std_logic_vector(95 downto 0);\n")
+    f.write("signal dma_read_ctrl_data : std_logic_vector(127 downto 0);\n")
+    f.write("signal dma_write_ctrl_data : std_logic_vector(127 downto 0);\n")
     f.write("\n")
 
 

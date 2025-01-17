@@ -9,7 +9,7 @@
 #include <sstream>
 #include <ac_int.h>
 #include <ac_fixed.h>
-#include "<accelerator_name>_specs.hpp"
+#include "accelerator_name_specs.hpp"
 #include "auto_gen_port_info.h"
 
 //

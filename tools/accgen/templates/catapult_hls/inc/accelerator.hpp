@@ -7,14 +7,14 @@
 #pragma once
 
 #include "mem_wrap.hpp"
-#include "<accelerator_name>_data_types.hpp"
-#include "<accelerator_name>_specs.hpp"
-#include "<accelerator_name>_conf_info.hpp"
+#include "accelerator_name_data_types.hpp"
+#include "accelerator_name_specs.hpp"
+#include "accelerator_name_conf_info.hpp"
 
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 
-SC_MODULE(<acc_full_name>)
+SC_MODULE(acc_full_name)
 {
   public:
     sc_in<bool> CCS_INIT_S1(clk);
@@ -34,7 +34,7 @@ SC_MODULE(<acc_full_name>)
     void store_dataReq(void);
     void store(void);
 
-    SC_CTOR(<acc_full_name>) :
+    SC_CTOR(acc_full_name) :
         plm_in_ping("plm_in_ping"), plm_in_pong("plm_in_pong"), plm_out_ping("plm_out_ping"),
         plm_out_pong("plm_out_pong")
     {

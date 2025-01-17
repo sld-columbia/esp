@@ -1,8 +1,8 @@
 // Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef __ < ACCELERATOR_NAME> _DIRECTIVES_HPP__
-#define __ <ACCELERATOR_NAME> _DIRECTIVES_HPP__
+#ifndef __ACCELERATOR_NAME_DIRECTIVES_HPP__
+#define __ACCELERATOR_NAME_DIRECTIVES_HPP__
 
 #if (DMA_WIDTH == 32)
     #define DMA_BEAT_PER_WORD /* <<--dbpw32-->> */
@@ -46,4 +46,4 @@
 
 #endif /* STRATUS_HLS */
 
-#endif /* __<ACCELERATOR_NAME>_DIRECTIVES_HPP_ */
+#endif /* __ACCELERATOR_NAME_DIRECTIVES_HPP_ */

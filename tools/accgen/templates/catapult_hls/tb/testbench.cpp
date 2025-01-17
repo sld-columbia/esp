@@ -13,7 +13,7 @@ void testbench::proc()
     wait();
 
     CCS_LOG("--------------------------------");
-    CCS_LOG("ESP - <accelerator_name> [Catapult HLS SystemC]");
+    CCS_LOG("ESP - accelerator_name [Catapult HLS SystemC]");
     CCS_LOG("--------------------------------");
 
 #if (DMA_WORD_PER_BEAT == 0)

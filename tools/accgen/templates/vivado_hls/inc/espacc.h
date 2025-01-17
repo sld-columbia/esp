@@ -52,6 +52,7 @@ typedef struct dma_info {
     ap_uint<32> index;
     ap_uint<32> length;
     ap_uint<32> size;
+    ap_uint<32> user;
 } dma_info_t;
 
 // The 'size' variable of 'dma_info' indicates the bit-width of the words

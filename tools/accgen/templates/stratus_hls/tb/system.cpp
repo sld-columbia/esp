@@ -35,7 +35,7 @@ void system_t::config_proc()
     {
         // Print information about begin time
         sc_time begin_time = sc_time_stamp();
-        ESP_REPORT_TIME(begin_time, "BEGIN - <accelerator_name>");
+        ESP_REPORT_TIME(begin_time, "BEGIN - accelerator_name");
 
         // Wait the termination of the accelerator
         do {
@@ -45,7 +45,7 @@ void system_t::config_proc()
 
         // Print information about end time
         sc_time end_time = sc_time_stamp();
-        ESP_REPORT_TIME(end_time, "END - <accelerator_name>");
+        ESP_REPORT_TIME(end_time, "END - accelerator_name");
 
         esc_log_latency(sc_object::basename(), clock_cycle(end_time - begin_time));
         wait();

@@ -7,9 +7,9 @@
 #pragma once
 
 #include <systemc.h>
-#include "<accelerator_name>_conf_info.hpp"
-#include "<accelerator_name>_specs.hpp"
-#include "<accelerator_name>_data_types.hpp"
+#include "accelerator_name_conf_info.hpp"
+#include "accelerator_name_specs.hpp"
+#include "accelerator_name_data_types.hpp"
 #include "esp_dma_info_sysc.hpp"
 #include "esp_dma_controller.hpp"
 

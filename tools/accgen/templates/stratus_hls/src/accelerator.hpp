@@ -1,25 +1,25 @@
 // Copyright (c) 2011-2024 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef __ < ACCELERATOR_NAME> _HPP__
-#define __ <ACCELERATOR_NAME> _HPP__
+#ifndef __ACCELERATOR_NAME_HPP__
+#define __ACCELERATOR_NAME_HPP__
 
-#include "<accelerator_name>_conf_info.hpp"
-#include "<accelerator_name>_debug_info.hpp"
+#include "accelerator_name_conf_info.hpp"
+#include "accelerator_name_debug_info.hpp"
 
 #include "esp_templates.hpp"
 
-#include "<accelerator_name>_directives.hpp"
+#include "accelerator_name_directives.hpp"
 
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 /* <<--defines-->> */
 
-class<accelerator_name> : public esp_accelerator_3P<DMA_WIDTH> {
+class accelerator_name : public esp_accelerator_3P<DMA_WIDTH> {
   public:
     // Constructor
-    SC_HAS_PROCESS(<accelerator_name>);
-    <accelerator_name>(const sc_module_name &name) :
+    SC_HAS_PROCESS(accelerator_name);
+    accelerator_name(const sc_module_name &name) :
         esp_accelerator_3P<DMA_WIDTH>(name), cfg("config")
     {
         // Signal binding
@@ -40,7 +40,7 @@ class<accelerator_name> : public esp_accelerator_3P<DMA_WIDTH> {
     // Store the output data
     void store_output();
 
-    // Configure <accelerator_name>
+    // Configure accelerator_name
     esp_config_proc cfg;
 
     // Functions
@@ -52,4 +52,4 @@ class<accelerator_name> : public esp_accelerator_3P<DMA_WIDTH> {
     sc_dt::sc_int<DATA_WIDTH> plm_out_pong[PLM_OUT_WORD];
 };
 
-#endif /* __<ACCELERATOR_NAME>_HPP__ */
+#endif /* __ACCELERATOR_NAME_HPP__ */

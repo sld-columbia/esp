@@ -7,8 +7,8 @@
 #pragma once
 
 #include <systemc.h>
-#include "<accelerator_name>_specs.hpp"
-#include "<accelerator_name>_data_types.hpp"
+#include "accelerator_name_specs.hpp"
+#include "accelerator_name_data_types.hpp"
 
 template <unsigned int kNumBanks, unsigned int kNumReadPorts, unsigned int kNumWritePorts,
           unsigned int kEntriesPerBank, typename WordType, typename Address_type, typename DataWReq,

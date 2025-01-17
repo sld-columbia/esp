@@ -21,6 +21,7 @@ load_data:
     load_ctrl.index = dma_index;
     load_ctrl.length = dma_length;
     load_ctrl.size = SIZE_WORD_T;
+    load_ctrl.user = 0;
 
     for (unsigned i = 0; i < dma_length; i++) {
     load_label0:for(unsigned j = 0; j < VALUES_PER_WORD; j++) {
@@ -46,6 +47,7 @@ store_data:
     store_ctrl.index = dma_index;
     store_ctrl.length = dma_length;
     store_ctrl.size = SIZE_WORD_T;
+    store_ctrl.user = 0;
 
     for (unsigned i = 0; i < dma_length; i++) {
     store_label1:for(unsigned j = 0; j < VALUES_PER_WORD; j++) {
