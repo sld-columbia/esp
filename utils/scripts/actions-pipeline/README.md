@@ -1,45 +1,3 @@
-# ESP Linting and Regression Testing Workflows
-The scripts included in this directory are used as part of a GitHub Actions workflow triggered on PRs to the dev, main or master branches.
-Scripts under the /code-format directory are used for linting purposes, while the other scripts are used for regression testing.
-
-## Scripts
-### Code Formatting
-There are two scripts under [./code-format](https://github.com/marianabuhazi/esp/blob/regression-flow/utils/scripts/actions-pipeline/code-format/) that can be used by contributors to check their code for formatting violations, as well as to format code in place. These scripts could also be used as part of a Git hook or a GitHub Actions workflow.
-The scripts support formatting for the following languages: C/C++, Verilog/SystemVerilog, VHDL, and Python. 
-
-#### Format Newly-Modified Files 
-[format_modified.sh](https://github.com/marianabuhazi/esp/blob/regression-flow/utils/scripts/actions-pipeline/code-format/format_modified.sh) is a bash script that examines the Git status of the remote repository to identify files that the user has recently modified, added, or deleted. It then determines the file extension type (e.g., C/C++, VHDL, SystemVerilog/Verilog, or Python) and invokes an open-source linting tool for that language with the filename and other necessary arguments. The script offers flexibility through various flags, allowing users to report programming violations, as well as, fix formatting in-place. This tool plays a crucial role in maintaining ESP's readability, consistency, and bug-free nature. 
-``` 
-ESP format checker ✨🛠️
-Report violations or format files in-place.
-Usage: ./format_modified [OPTIONS]
-    -h            Display this help message
-    -f <file>     Fix formatting for file <file>
-    -c <file>     Check formatting for file <file>
-    -a            Apply to all
-    -g            Run as Github Actions workflow or pre-push hook
-```
-
-#### Format ESP Repo
-The [format_modified.sh](https://github.com/marianabuhazi/esp/blob/regression-flow/utils/scripts/actions-pipeline/code-format/format_modified.sh) script is useful for formatting new modifications to existing code. However, this implies that the code in the repository is already properly structured to begin with. In reality, our ESP repository lacks uniformity. To introduce formatting into the existing code, we have provided another script called [format_repo.sh](https://github.com/marianabuhazi/esp/blob/regression-flow/utils/scripts/actions-pipeline/code-format/format_repo.sh) which traverses through all directories in the ESP repository recursively, skipping over any directories that are Git submodules owned by another organization. The script identifies the file extension of each file within the current directory and formats it in-place by calling the appropriate open-source linter. 
-format_repo.sh is intended for one-time use. Additionally, it can significantly impact Git blame, potentially attributing all changes to a single contributor (whoever ran the script). To mitigate this, changes made by format_repo.sh should be committed separately and excluded from the blame.
-``` 
-ESP format checker ✨🛠️
-Recursively format all files in the /esp repository for a given file extension.
-Usage: [-t {c, cpp, vhdl, v, py}]
-Options:
-    -h, --help                        Display this help message.
-    -t, --type {c, cpp, vhdl, v, py}  Specify the type of files to format.
-```
-
-### Git Blame
-After processing the Pull Request, it's important to consider what commits we want to exclude from the Git Blame. In particular, it should be any commits that have modified/linted tracked files in bulk.
-To make this process easier, I have committed all the linting changes in 4 different commits in the `all-linted-files` branch. 
-These commit ids can be added to a file which can be excluded from the blame. [This tutorial](https://www.stefanjudis.com/today-i-learned/how-to-exclude-commits-from-git-blame/) is helpful in the process of excluding from the Git Blame.
-
-<img width="1171" alt="image" src="https://github.com/marianabuhazi/esp/assets/76821632/0618808b-f471-4647-ab60-7710094ee302">
-
-
 ### Regression Testing
 
 #### Get Modified Accelerators
@@ -104,6 +62,9 @@ jobs.
 ## Writing GitHub Actions YAML workflows
 YAML workflows execute sccripts upon a push or pull request to a repository's branch. There is one GitHub Actions YAML workflow under [.github/workflows/regresstion-test.yaml](https://github.com/marianabuhazi/esp/blob/regression-flow/.github/workflows/regression-test.yaml) that
 sets up the environment to run the tests (columbia-sld's ubuntu-small Docker image) and installs all the open-source linters. Then, it executes code formatting and testing scripts. 
+
+## Run manually
+The `regression` step in [.github/workflows/regresstion-test.yaml](https://github.com/marianabuhazi/esp/blob/regression-flow/.github/workflows/regression-test.yaml) includes the three steps that should be ran. First, run the 'Discover modified accelerators' step (./get_modified_accelerators.sh), then run HLS for all modified accelerators (./run_sims.sh). Lastly, generate the bitstream and program the FPGA (./run_esp-config.sh).
 
 ### Installing open-source tools
 #### vhdl-style-guide
