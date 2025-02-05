@@ -1,0 +1,10 @@
+{
+	"accelerators": [
+		{
+			"name": "dummy_stratus",
+			"path": "accelerators/stratus_hls/dummy_stratus",
+			"behavioral": "dummy_stratus-exe",
+			"hls": "dummy_stratus-hls"
+		}
+	]
+}
