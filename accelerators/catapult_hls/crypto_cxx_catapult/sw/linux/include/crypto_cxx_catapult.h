@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #ifndef _CRYPTO_CXX_CATAPULT_H_
 #define _CRYPTO_CXX_CATAPULT_H_

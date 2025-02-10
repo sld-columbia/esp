@@ -1,4 +1,4 @@
-/* Copyright 2019 Columbia University, SLD Group */
+/* Copyright 2025 Columbia University, SLD Group */
 
 #ifndef __HANDSHAKE_HPP__
 #define __HANDSHAKE_HPP__

@@ -1,4 +1,4 @@
-/* Copyright 2019 Columbia University SLD Group */
+/* Copyright 2025 Columbia University SLD Group */
 
 // Stratus fixed-point (HLS-r)
 #include <cynw_fixed.h>

@@ -1,5 +1,5 @@
 #!/bin/python
-# Copyright (c) 2011-2024 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 import numpy as np
 n = input("Enter Number of Rows in the Matrix : ")

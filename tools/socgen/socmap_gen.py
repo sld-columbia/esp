@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2024 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 from collections import defaultdict
@@ -405,7 +405,7 @@ def print_header(fp, package, comment_char):
     fp.write(
         comment_char +
         comment_char +
-        " Copyright (c) 2011-2024 Columbia University, System Level Design Group\n")
+        " Copyright (c) 2011-2025 Columbia University, System Level Design Group\n")
     fp.write(
         comment_char +
         comment_char +

@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2024 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 COMMON_PATH = $(ESP_ROOT)/accelerators/rtl/common
