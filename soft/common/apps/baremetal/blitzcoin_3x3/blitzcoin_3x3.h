@@ -78,7 +78,7 @@
 
     #define ACC_BASE_ADDR             0x60010000
     #define ACC_THIRD_PARTY_BASE_ADDR 0x60400000
-    #define ACC_OFFSET                0x100
+    #define ACC_OFFSET                0x200
     // Set accelerator ID (ACC_TILE_ID) according to the position of the accelerator in the
     // SoC. Acc IDs increment from left to right and from top to bottom.
     // Running for config
