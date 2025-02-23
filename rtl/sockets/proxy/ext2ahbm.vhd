@@ -105,23 +105,27 @@ architecture rtl of ext2ahbm is
   type ext_ahbm_fsm_t is record
     state   : ext_ahbm_state_t;
     count   : integer;
+    word_count   : integer;
     haddr   : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
     hwrite  : std_ulogic;
     hwdata  : std_logic_vector(ARCH_BITS - 1 downto 0);
     first_busy : std_ulogic;
     valid_data : std_ulogic;
     saved_data : std_logic_vector(ARCH_BITS - 1 downto 0);
+    data_line  : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   end record ext_ahbm_fsm_t;
 
   constant DEFAULT_EXT_AHBM : ext_ahbm_fsm_t := (
     state   => receive_address,
     count   => 0,
+    word_count   => 0,
     haddr   => (others => '0'),
     hwrite  => '0',
     hwdata  => (others => '0'),
     first_busy => '1',
     valid_data => '0',
-    saved_data => (others => '0')
+    saved_data => (others => '0'),
+    data_line  => (others => '0')
     );
 
   signal r, rin : ext_ahbm_fsm_t;
@@ -363,12 +367,18 @@ begin  -- architecture rtl
             if (granted and ahbmi.hready) = '1' then
               -- Increment address
               v.haddr := r.haddr + default_incr;
+              v.word_count := r.word_count + 1;
               -- Decrement word count
               v.count := r.count - 1;
+              if r.word_count = CFG_MEM_LINK_BITS / ARCH_BITS - 1 then
+                -- Pop ext queue
+                ext_rcv_rdreq <= '1';
+                -- Reset word count
+                v.word_count := 0;
+              end if;
               -- Set data
-              v.hwdata := fix_endian(ext_rcv_data_out);
-              -- Pop ext queue
-              ext_rcv_rdreq <= '1';
+              v.hwdata := fix_endian(ext_rcv_data_out((r.word_count + 1) * ARCH_BITS - 1 downto
+                                                      r.word_count * ARCH_BITS));
               -- Write data next cycle
               v.state := receive_data;
             end if;
@@ -402,6 +412,7 @@ begin  -- architecture rtl
           if ahbmi.hready = '1' then
             -- End of transaction
             v.state := receive_address;
+            v.word_count := 0;
           end if;
         elsif ext_rcv_empty = '0' then
           -- Continue with burst transaction
@@ -409,14 +420,19 @@ begin  -- architecture rtl
           if ahbmi.hready = '1' then
             -- Data bus acquired
             -- Set data
-            v.hwdata := fix_endian(ext_rcv_data_out);
-            -- Pop ext queue
-            ext_rcv_rdreq <= '1';
-            -- Increment address
+            v.hwdata := fix_endian(ext_rcv_data_out((r.word_count + 1) * ARCH_BITS - 1 downto r.word_count * ARCH_BITS));
+           -- Increment address
             v.haddr := r.haddr + default_incr;
+            v.word_count := r.word_count + 1;
             -- Decrement word count
             v.count := r.count - 1;
-          end if;
+            if r.word_count = CFG_MEM_LINK_BITS / ARCH_BITS - 1 then
+              -- Pop ext queue
+              ext_rcv_rdreq <= '1';
+              -- Reset word count
+              v.word_count := 0;
+             end if;
+           end if;
         else
           -- Data not received from chip
           ahbmo.htrans <= HTRANS_BUSY;
@@ -435,15 +451,16 @@ begin  -- architecture rtl
             -- Read data is valid
             -- Push ext queue
             if r.valid_data = '1' then
-              ext_snd_data_in <= r.saved_data;
+              v.data_line((r.word_count + 1) * ARCH_BITS - 1 downto r.word_count * arch_bits) := r.saved_data;
               v.valid_data := '0';
             else
-              ext_snd_data_in <= fix_endian(ahbmi.hrdata);
+              v.data_line((r.word_count + 1) * ARCH_BITS - 1 downto r.word_count * arch_bits) := fix_endian(ahbmi.hrdata);
             end if;
-
+            ext_snd_data_in <= v.data_line;
             ext_snd_wrreq   <= '1';
             -- End of transaction
             v.state := receive_address;
+            v.word_count := 0;
             receiving_fsm <= '1';
           end if;
         elsif (ext_snd_almost_full or ext_snd_full) = '0' then
@@ -453,16 +470,24 @@ begin  -- architecture rtl
             -- Read data is valid
             -- Push ext queue
             if r.valid_data = '1' then
-              ext_snd_data_in <= r.saved_data;
+              v.data_line((r.word_count + 1) * ARCH_BITS - 1 downto r.word_count * arch_bits) := r.saved_data;
               v.valid_data := '0';
             else
-              ext_snd_data_in <= fix_endian(ahbmi.hrdata);
+              v.data_line((r.word_count + 1) * ARCH_BITS - 1 downto r.word_count * arch_bits) := fix_endian(ahbmi.hrdata);
             end if;
-            ext_snd_wrreq   <= '1';
+
             -- Increment address
             v.haddr := r.haddr + default_incr;
+            ext_snd_data_in <= v.data_line;
+
             -- Decrement word count
             v.count := r.count - 1;
+            v.word_count := r.word_count + 1;
+            if r.word_count = CFG_MEM_LINK_BITS / ARCH_BITS - 1 then
+                -- Push data
+                ext_snd_wrreq   <= '1';
+                v.word_count := 0;
+            end if;
           end if;
         else
           -- ext queue is full

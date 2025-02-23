@@ -284,7 +284,7 @@ class PeripheralFrame(Frame):
                 column=1)
 
         iolink_width_choices = [8, 16, 32]
-        mem_link_width_choices = [ARCH_BITS]
+        mem_link_width_choices = [32, 64, 128, 256, 512]
 
         if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
             Label(
@@ -328,6 +328,13 @@ class PeripheralFrame(Frame):
                 fg="darkgreen").grid(
                 row=6,
                 column=1)
+            OptionMenu(
+                periph_config_frame,
+                soc.mem_link_width,
+                *mem_link_width_choices,
+                command=main_frame.update_noc_config).grid(
+                row=6,
+                column=2)
         else:
             Label(
                 periph_config_frame,

@@ -330,7 +330,11 @@ begin  -- architecture rtl
         if sample_tran_count = '1' then
           tran_count_reg <= tran_count;
         elsif tran_count_en = '1' then
-          tran_count_reg <= tran_count_reg - conv_std_logic_vector(1, 32);
+            if tran_count_reg < conv_std_logic_vector(CFG_MEM_LINK_BITS / ARCH_BITS, 32) then
+              tran_count_reg <= (others => '0');
+            else
+              tran_count_reg <= tran_count_reg - conv_std_logic_vector(CFG_MEM_LINK_BITS / ARCH_BITS, 32);
+            end if;
         end if;
       end if;
     end if;
@@ -430,8 +434,8 @@ begin  -- architecture rtl
           case req_reg is
             when llc_req =>
               -- Set length (cache line)
-              ext_snd_data_in <= conv_std_logic_vector(CFG_CACHE_LINE_SIZE / CFG_MEM_LINK_BITS, CFG_MEM_LINK_BITS);
-              tran_count <= conv_std_logic_vector(CFG_CACHE_LINE_SIZE / CFG_MEM_LINK_BITS, 32);
+              ext_snd_data_in <= conv_std_logic_vector(CFG_CACHE_LINE_SIZE / ARCH_BITS, CFG_MEM_LINK_BITS);
+              tran_count <= conv_std_logic_vector(CFG_CACHE_LINE_SIZE / ARCH_BITS, 32);
               -- Sample length
               sample_tran_count <= '1';
               -- Push ext queue
@@ -537,7 +541,7 @@ begin  -- architecture rtl
               end if;
 
             when dma_req =>
-              if tran_count_reg = X"00000001" then
+              if tran_count_reg <= conv_std_logic_vector(CFG_MEM_LINK_BITS / ARCH_BITS, 32) then
                 dma_snd_data_in(DMA_NOC_FLIT_SIZE - 1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
               else
                 dma_snd_data_in(DMA_NOC_FLIT_SIZE - 1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;

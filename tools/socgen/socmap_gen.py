@@ -600,7 +600,7 @@ def print_constants(fp, soc, esp_config):
 
     fp.write("  ------ Custom Memory Link to FPGA for DDR access\n")
     fp.write("  constant CFG_MEM_LINK_BITS : integer := " +
-             str(soc.ARCH_BITS) + ";\n\n")
+             str(soc.mem_link_width.get()) + ";\n\n")
 
     #
     fp.write("  ------ SVGA\n")
