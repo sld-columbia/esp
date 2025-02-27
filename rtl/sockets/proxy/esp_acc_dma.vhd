@@ -697,6 +697,9 @@ begin  -- rtl
           p2p_mcast_ndests <= to_integer(unsigned(wr_ndests)) - 1;
           p2p_store <= '1';
         end if;
+      elsif dma_tran_done = '1' then
+        p2p_load <= '0';
+        p2p_store <= '0';
       end if;
       if p2p_src_index_inc = '1' then
         if p2p_src_index_r = conv_integer(bankreg(P2P_REG)(P2P_BIT_NSRCS + P2P_WIDTH_NSRCS - 1 downto P2P_BIT_NSRCS)) then
