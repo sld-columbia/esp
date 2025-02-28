@@ -105,6 +105,9 @@ architecture rtl of iolink2ahbm is
   signal credit_in       : std_ulogic;
   signal credit_in_empty : std_ulogic;
   signal credit_received : std_ulogic;
+  signal credit_out      : std_ulogic;
+  signal credit_out_empty : std_ulogic;
+  signal send_credit      : std_ulogic;
 
   -- State delay
   type rcv_sync_type is record
@@ -296,10 +299,28 @@ begin  -- architecture rtl
   credits_out_reg : process (io_clk_out_int) is
   begin  -- process io_credit_out_reg
     if io_clk_out_int'event and io_clk_out_int = '1' then
-      io_credit_out <= io_rcv_rdreq;
+      io_credit_out <= send_credit;
     end if;
   end process credits_out_reg;
 
+  -----------------------------------------------------------------------------
+  -- Credits out
+  credits_out_fifo : inferred_async_fifo
+    generic map (
+      g_data_width => 1,
+      g_size       => 2 * QUEUE_DEPTH)
+    port map (
+      rst_n_i    => rstn,
+      clk_wr_i   => clk,
+      we_i       => io_rcv_rdreq,
+      d_i        => "0",
+      wr_full_o  => open,
+      clk_rd_i   => io_clk_out_int,
+      rd_i       => '1',
+      q_o(0)     => credit_out,
+      rd_empty_o => credit_out_empty);
+
+  send_credit <= credit_out nor credit_out_empty;
 
   -----------------------------------------------------------------------------
   -- Credits in
@@ -314,16 +335,16 @@ begin  -- architecture rtl
       d_i        => "0",
       wr_full_o  => open,
       rst_rd_n_i    => rstn,
-      clk_rd_i   => clk,
+      clk_rd_i   => io_clk_out_int,
       rd_i       => '1',
       q_o(0)     => credit_in,
       rd_empty_o => credit_in_empty);
 
   credit_received <= credit_in nor credit_in_empty;
 
-  process (clk) is
+  process (io_clk_out_int) is
   begin  -- process
-    if clk'event and clk = '1' then     -- rising clock edge
+    if io_clk_out_int'event and io_clk_out_int = '1' then     -- rising clock edge
       if rstn = '0' then
         credits <= QUEUE_DEPTH;
       else
