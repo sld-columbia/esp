@@ -83,6 +83,8 @@ for accelerator in "${!dma[@]}"; do
 		$fpga_run > "$run" 2>&1 &
 		minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
 		kill -9 "$socat_pid"
+
+		# TODO: Run fpga linux
 	else
 		echo -e "${BOLD}BITSTREAM GENERATION FAILED...${NC}"
 		echo -e "  - $accelerator"
