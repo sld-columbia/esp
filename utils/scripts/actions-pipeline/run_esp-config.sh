@@ -54,6 +54,8 @@ for accelerator in "${!dma[@]}"; do
 	echo -e "  ${EMOJI_CHECK} $accelerator"
 	make vivado-syn > "$vivado_syn" 2>&1
 
+	# TODO: make linux in background
+
 	# Run FPGA-program if bitstream gen suceeds
 	if [ -s "top.bit" ]; then
 		make fpga-program > "$fpga_program" 2>&1
@@ -80,13 +82,13 @@ for accelerator in "${!dma[@]}"; do
 		# Run fpga program in the background
 		echo -e "${BOLD}WRITING RESULTS TO MINICOM...${NC}"
 		echo ""
-		$fpga_run > "$run" 2>&1 &
-		minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
+		$fpga_run > "$run" 2>&1 &	# make fpga_run and kill minicom. runs in background.
+		minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1		# open and close the minicom. run in foreground.
 		kill -9 "$socat_pid"
-
-		# TODO: Run fpga linux
 	else
 		echo -e "${BOLD}BITSTREAM GENERATION FAILED...${NC}"
 		echo -e "  - $accelerator"
 	fi
+
+	# TODO: make fpga-run-linux
 done

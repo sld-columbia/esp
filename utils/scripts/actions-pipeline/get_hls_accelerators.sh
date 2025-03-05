@@ -32,6 +32,7 @@ for accelerator in "${accelerators[@]}"; do
         sizes+=("$size")
     done
     
+    # Sort by ASCII, rather than numeric values. TODO: sort -n
     sorted_sizes=($(printf "%s\n" "${sizes[@]}" | sort))
     dma["$accelerator"]="${sorted_sizes[-1]#*_*_}"
 done
