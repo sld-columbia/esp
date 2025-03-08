@@ -310,11 +310,12 @@ begin  -- architecture rtl
       g_data_width => 1,
       g_size       => 2 * QUEUE_DEPTH)
     port map (
-      rst_n_i    => rstn,
+      rst_wr_n_i    => rstn,
       clk_wr_i   => clk,
       we_i       => io_rcv_rdreq,
       d_i        => "0",
       wr_full_o  => open,
+      rst_rd_n_i    => rstn,
       clk_rd_i   => io_clk_out_int,
       rd_i       => '1',
       q_o(0)     => credit_out,
