@@ -621,9 +621,6 @@ class NoCFrame(Pmw.ScrolledFrame):
            (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1) and \
            (self.soc.cache_en.get() != 1 or self.soc.cache_line_size.get() >= self.noc.coh_noc_width.get()) and \
            (self.soc.cache_en.get() != 1 or self.soc.cache_line_size.get() >= self.noc.dma_noc_width.get()) and \
-           (self.soc.TECH != "asic" or self.soc.cache_line_size.get() >= self.soc.mem_link_width.get()) and \
-           (self.soc.TECH != "asic" or self.noc.coh_noc_width.get() >= self.soc.mem_link_width.get()) and \
-           (self.soc.TECH != "asic" or self.noc.dma_noc_width.get() >= self.soc.mem_link_width.get()) and \
            ((self.soc.cache_en.get() == 1) or (self.noc.coh_noc_width.get() == self.soc.ARCH_BITS)) and \
            (self.noc.coh_noc_width.get() >= self.soc.ARCH_BITS) and \
            (self.noc.dma_noc_width.get() >= self.soc.ARCH_BITS) and acc_impl_valid and \
@@ -631,13 +628,13 @@ class NoCFrame(Pmw.ScrolledFrame):
            (self.soc.jtag_en.get() == 0 or (self.noc.dma_noc_width.get() == 64 and self.noc.coh_noc_width.get() == 64)) and \
            ((self.soc.TECH != "asic" and self.soc.TECH != "inferred" and self.soc.ESP_EMU_TECH == "none")
             or tot_mem == 0 or self.soc.cache_en.get() == 1) and \
-           (not self.noc.multicast_en.get() or self.noc.dma_noc_width.get() > 256 or \
-           (self.noc.dma_noc_width.get() == 256 and self.noc.max_mcast_dests.get() <= 25) or \
-           (self.noc.dma_noc_width.get() == 128 and self.noc.max_mcast_dests.get() <= 11) or \
+           (not self.noc.multicast_en.get() or self.noc.dma_noc_width.get() > 256 or
+           (self.noc.dma_noc_width.get() == 256 and self.noc.max_mcast_dests.get() <= 25) or
+           (self.noc.dma_noc_width.get() == 128 and self.noc.max_mcast_dests.get() <= 11) or
            (self.noc.dma_noc_width.get() == 64 and self.noc.max_mcast_dests.get() <= 4)) and \
-           (self.soc.cache_line_size.get() >= self.soc.mem_link_width.get()) and \
-           (self.soc.mem_link_width.get() >= self.soc.ARCH_BITS) and \
-           (self.noc.dma_noc_width.get() >= self.soc.mem_link_width.get()):
+           ((self.soc.TECH != "asic" and self.soc.TECH != "inferred" and self.soc.ESP_EMU_TECH == "none") or self.soc.cache_line_size.get() >= self.soc.mem_link_width.get()) and \
+           ((self.soc.TECH != "asic" and self.soc.TECH != "inferred" and self.soc.ESP_EMU_TECH == "none") or self.soc.mem_link_width.get() >= self.soc.ARCH_BITS) and \
+           ((self.soc.TECH != "asic" and self.soc.TECH != "inferred" and self.soc.ESP_EMU_TECH == "none") or self.noc.dma_noc_width.get() >= self.soc.mem_link_width.get()):
             # Spandex beta warning
             if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
                 string += "INFO: Spandex cache hierarchy is in beta testing\n"
@@ -711,15 +708,6 @@ class NoCFrame(Pmw.ScrolledFrame):
             if (self.soc.cache_en.get() == 1 and self.soc.cache_line_size.get()
                     < self.noc.dma_noc_width.get()):
                 string += "ERROR: Cache line size must be greater than or equal to DMA NoC bitwidth.\n"
-            if (self.soc.TECH == "asic" and self.soc.cache_line_size.get()
-                    < self.soc.mem_link_width.get()):
-                string += "ERROR: Cache line size must be greater than or equal to mem link bitwidth.\n"
-            if (self.soc.TECH == "asic" and self.noc.coh_noc_width.get()
-                    < self.soc.mem_link_width.get()):
-                string += "ERROR: Coherence NoC bitwdith must be greater than or equal to mem link bitwidth.\n"
-            if (self.soc.TECH == "asic" and self.noc.dma_noc_width.get()
-                    < self.soc.mem_link_width.get()):
-                string += "ERROR: DMA NoC bitwdith must be greater than or equal to mem link bitwidth.\n"
             if (self.soc.cache_en.get() != 1) and (
                     self.noc.coh_noc_width.get() > self.soc.ARCH_BITS):
                 string += "ERROR: Caches must be enabled to support a coherence NoC width larger than the CPU architecture size.\n"
@@ -750,11 +738,14 @@ class NoCFrame(Pmw.ScrolledFrame):
             if (self.noc.multicast_en.get()
                     and self.noc.dma_noc_width.get() == 32):
                 string += "ERROR: 32-bit DMA NoC does not support multicast.\n"
-            if (self.soc.cache_line_size.get() < self.soc.mem_link_width.get()):
+            if ((self.soc.TECH == "asic" or self.soc.TECH == "inferred" or self.soc.ESP_EMU_TECH !=
+                    "none") and self.soc.cache_line_size.get() < self.soc.mem_link_width.get()):
                 string += "ERROR: FPGA memory link width must be less than or equal to cache line width\n"
-            if (self.soc.mem_link_width.get() < self.soc.ARCH_BITS):
+            if ((self.soc.TECH == "asic" or self.soc.TECH == "inferred" or self.soc.ESP_EMU_TECH !=
+                    "none") and self.soc.mem_link_width.get() < self.soc.ARCH_BITS):
                 string += "ERROR: FPGA memory link width must be greater than or equal to CPU architecture size\n"
-            if (self.noc.dma_noc_width.get() < self.soc.mem_link_width.get()):
+            if ((self.soc.TECH == "asic" or self.soc.TECH == "inferred" or self.soc.ESP_EMU_TECH !=
+                    "none") and self.noc.dma_noc_width.get() < self.soc.mem_link_width.get()):
                 string += "ERROR: FPGA memory link width must be less than or equal to DMA NoC width\n"
 
         # Update message box
