@@ -13,9 +13,10 @@ ESP_ROOT=$(realpath ../../../)
 esp_config="$ESP_ROOT/socs/xilinx-vc707-xc7vx485t/socgen/esp/.esp_config"
 fpga_run="$ESP_ROOT/utils/scripts/actions-pipeline/run_fpga_program.sh"
 fpga_run_linux="$ESP_ROOT/utils/scripts/actions-pipeline/run_fpga_linux.sh"
-logs="$ESP_ROOT/utils/scripts/actions-pipeline/logs"
+monitor="$ESP_ROOT/utils/scripts/actions-pipeline/helper/monitor_linux_boot.sh"
 
 # Specify logging directories. Clean up old log files.
+logs="$ESP_ROOT/utils/scripts/actions-pipeline/logs"
 if [ -d "$logs" ]; then
     rm -r "$logs"
 else
@@ -30,10 +31,11 @@ mkdir -p "$logs/soft"
 vivado_syn="$logs/hls/vivado_syn.log"
 fpga_program="$logs/fpga/fpga_program.log"
 run="$logs/fpga/fpga_run.log"
-minicom="$logs/minicom/minicom_soc.log"
+minicom="$logs/minicom/soc.log"
 soft="$logs/soft/soft.log"
 linux="$logs/soft/linux.log"
 run_linux="$logs/fpga/fpga_run_linux.log"
+boot_linux="$logs/soft/boot_linux.log"
 
 cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 
@@ -101,8 +103,10 @@ else
     echo ""
     echo "BITSTREAM GENERATION FAILED"
 fi
+### SoC flow end ###
 
-### Software Flow ###
+
+## Software Flow ###
 
 ## Prepare target ##
 # Clean
@@ -147,10 +151,22 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
     $fpga_run_linux > "$run_linux" 2>&1 &
 
+    # call helper to monitor linux boot progress. kill minicom if boot success.
+    $monitor > "$boot_linux" 2>&1 &
+    monitor_pid=$!
+
     # open minicom in foreground
     minicom="$logs/minicom/minicom_linux.log"
     minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
-    # minicom will NOT kill. stop minicom manually
+
+    # print monitor status
+    wait $monitor_pid
+    EXIT_CODE=$?
+    if [ $EXIT_CODE -eq 0 ]; then
+    echo "Monitor script detected successful boot"
+    else
+    echo "Monitor script detected boot failure or was terminated"
+    fi
 
     # clean up
     kill -9 "$socat_pid"

@@ -1,0 +1,139 @@
+ESP-Ariane boot loader
+
+
+OpenSBI v0.6
+   ____                    _____ ____ _____
+  / __ \                  / ____|  _ \_   _|
+ | |  | |_ __   ___ _ __ | (___ | |_) || |
+ | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+ | |__| | |_) |  __/ | | |____) | |_) || |_
+  \____/| .__/ \___|_| |_|_____/|____/_____|
+        | |
+        |_|
+
+Platform Name          : ESP+ARIANE RISC-V
+Platform HART Features : RV64ACDFIMSU
+Platform Max HARTs     : 16
+Current Hart           : 0
+Firmware Base          : 0x80000000
+Firmware Size          : 120 KB
+Runtime SBI Version    : 0.2
+
+MIDELEG : 0x0000000000000222
+MEDELEG : 0x000000000000b109
+[    0.000000] OF: fdt: Ignoring memory range 0x80000000 - 0x80200000
+[    0.000000] Linux version 5.1.0-gb842fcc582e0 (cc5210@thecaptain.cs.columbia.edu) (gcc version 8.3.0 (GCC)) #4 PREEMPT Mon Mar 10 12:50:47 EDT 2025
+[    0.000000] initrd not found or empty - disabling initrd
+[    0.000000] Reserved memory: created DMA memory pool at 0x00000000a0000000, size 2 MiB
+[    0.000000] OF: reserved mem: initialized node buffer@a0000000, compatible id shared-dma-pool
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080200000-0x000000009fffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080200000-0x000000009fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080200000-0x000000009fffffff]
+[    0.000000] software IO TLB: mapped [mem 0x9b8fd000-0x9f8fd000] (64MB)
+[    0.000000] elf_hwcap is 0x112d
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 128775
+[    0.000000] Kernel command line: earlyprintk
+[    0.000000] Dentry cache hash table entries: 65536 (order: 7, 524288 bytes)
+[    0.000000] Inode-cache hash table entries: 32768 (order: 6, 262144 bytes)
+[    0.000000] Sorting __ex_table...
+[    0.000000] Memory: 436252K/522240K available (3908K kernel code, 230K rwdata, 1151K rodata, 5980K init, 794K bss, 85988K reserved, 0K cma-reserved)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] NR_IRQS: 0, nr_irqs: 0, preallocated irqs: 0
+[    0.000000] plic: mapped 16 interrupts with 1 handlers for 2 contexts.
+[    0.000000] riscv_timer_init_dt: Registering clocksource cpuid [0] hartid [0]
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x5c40939b5, max_idle_ns: 440795202646 ns
+[    0.000368] sched_clock: 64 bits at 25MHz, resolution 40ns, wraps every 4398046511100ns
+[    0.521122] printk: console [ttyS0] enabled
+[    0.535331] Calibrating delay loop (skipped), value calculated using timer frequency.. 50.00 BogoMIPS (lpj=250000)
+[    0.567394] pid_max: default: 32768 minimum: 301
+[    0.595597] Mount-cache hash table entries: 1024 (order: 1, 8192 bytes)
+[    0.616628] Mountpoint-cache hash table entries: 1024 (order: 1, 8192 bytes)
+[    0.664584] *** VALIDATE proc ***
+[    0.726657] devtmpfs: initialized
+[    0.777162] random: get_random_bytes called from setup_net+0x32/0x150 with crng_init=0
+[    0.811097] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.842438] futex hash table entries: 256 (order: 0, 6144 bytes)
+[    0.876716] NET: Registered protocol family 16
+[    1.155753] usbcore: registered new interface driver usbfs
+[    1.175332] usbcore: registered new interface driver hub
+[    1.194970] usbcore: registered new device driver usb
+[    1.237700] clocksource: Switched to clocksource riscv_clocksource
+[    1.311350] NET: Registered protocol family 2
+[    1.357766] tcp_listen_portaddr_hash hash table entries: 256 (order: 0, 4096 bytes)
+[    1.387134] TCP established hash table entries: 4096 (order: 3, 32768 bytes)
+[    1.412445] TCP bind hash table entries: 4096 (order: 3, 32768 bytes)
+[    1.435712] TCP: Hash tables configured (established 4096 bind 4096)
+[    1.460301] UDP hash table entries: 256 (order: 1, 8192 bytes)
+[    1.479696] UDP-Lite hash table entries: 256 (order: 1, 8192 bytes)
+[    1.506537] NET: Registered protocol family 1
+[    1.540934] RPC: Registered named UNIX socket transport module.
+[    1.559932] RPC: Registered udp transport module.
+[    1.574734] RPC: Registered tcp transport module.
+[    1.590660] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[   20.774703] workingset: timestamp_bits=62 max_order=17 bucket_order=0
+[   21.251783] NFS: Registering the id_resolver key type
+[   21.268879] Key type id_resolver registered
+[   21.282289] Key type id_legacy registered
+[   21.295521] nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+[   21.673582] io scheduler mq-deadline registered
+[   21.690625] io scheduler kyber registered
+[   23.985667] Serial: GRLIB APBUART driver
+[   24.010347] 60000100.uart: ttyS0 at MMIO 0x60000100 (irq = 3, base_baud = 3125000) is a GRLIB/APBUART
+[   24.045957] grlib-apbuart at 0x60000100, irq 3
+[   24.079046] libphy: Fixed MDIO Bus: probed
+[   24.122769] libphy: greth-mdio: probed
+[   24.143352] grlib-greth 60080000.greth: assigned reserved memory node buffer@a0000000
+[   24.189853] ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+[   24.228718] usbcore: registered new interface driver usbhid
+[   24.246264] usbhid: USB HID core driver
+[   24.297323] NET: Registered protocol family 10
+[   24.354433] Segment Routing with IPv6
+[   24.370252] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[   24.415292] NET: Registered protocol family 17
+[   24.437050] Key type dns_resolver registered
+[   24.619621] Freeing unused kernel memory: 5980K
+[   24.633966] This architecture does not have kernel memory protection.
+[   24.654124] Run /init as init process
+mount: mounting devpts on /dev/pts failed: No such device
+Starting logging: OK
+Initializing random number generator... [   28.603109] random: dd: uninitialized urandom read (512 bytes read)
+done.
+Starting network: udhcpc: started, v1.29.3
+udhcpc: sending discover
+udhcpc: sending select for 192.168.1.122
+udhcpc: lease of 192.168.1.122 obtained, lease time 86400
+deleting routers
+adding dns 192.168.1.1
+OK
+Starting dropbear sshd: [   35.076594] random: dropbear: uninitialized urandom read (32 bytes read)
+OK
+[   35.627239] contig_alloc: loading out-of-tree module taints kernel.
+vitdodec_stratus 2907 0 - Live 0xffffffd0042ca000 (O)
+vitbfly2_stratus 2779 0 - Live 0xffffffd0042c3000 (O)
+synth_stratus 3020 0 - Live 0xffffffd0042bc000 (O)
+svd_vivado 2946 0 - Live 0xffffffd0042b5000 (O)
+spmv_stratus 3045 0 - Live 0xffffffd0042ae000 (O)
+sort_stratus 3008 0 - Live 0xffffffd0042a7000 (O)
+sinkhorn_stratus 2971 0 - Live 0xffffffd0042a0000 (O)
+nightvision_stratus 3014 0 - Live 0xffffffd004299000 (O)
+mriq_stratus 2887 0 - Live 0xffffffd004292000 (O)
+mac_sysc_catapult 2882 0 - Live 0xffffffd00428b000 (O)
+gemm_stratus 2951 0 - Live 0xffffffd004284000 (O)
+fft_stratus 2882 0 - Live 0xffffffd00407a000 (O)
+fft2_stratus 2887 0 - Live 0xffffffd004073000 (O)
+dummy_stratus 2892 0 - Live 0xffffffd00406c000 (O)
+crypto_cxx_catapult 3025 0 - Live 0xffffffd004065000 (O)
+conv2d_stratus 2961 0 - Live 0xffffffd00405e000 (O)
+cholesky_stratus 2843 0 - Live 0xffffffd004057000 (O)
+adder_vivado 2828 0 - Live 0xffffffd004050000 (O)
+esp 10494 18 vitdodec_stratus,vitbfly2_stratus,synth_stratus,svd_vivado,spmv_stratus,sort_stratus,sinkhorn_stratus,nightvision_stratus,mriq_stratus,mac_sysc_catapult,gemm_stratus,fft_stratus,fft2_stratus,dummy_stratus,crypto_cxx_catapult,conv2d_stratus,cholesky_stratus,adder_vivado, Live 0xffffffd004045000 (O)
+esp_private_cache 4895 1 esp, Live 0xffffffd004038000 (O)
+esp_cache 4492 1 esp, Live 0xffffffd004031000 (O)
+contig_alloc 10890 1 esp, Live 0xffffffd004009000 (O)
+
+Welcome to ESP
+esp login: 
