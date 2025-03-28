@@ -52,7 +52,7 @@ do
     done
 done < $esp_config
 
-#for ((i=0; i<num_acc_tiles; i++)) 
+#for ((i=0; i<num_acc_tiles; i++))
 #do
 #echo " new accelerator $i is ${new_accelerators[${i},0]}  ${new_accelerators[${i},1]};"
 #done
@@ -123,7 +123,7 @@ do
             echo "  io_y               : local_yx := tile_y(io_tile_id);">> $acc_dir/acc_$i.vhd;
             echo "  io_x               : local_yx := tile_x(io_tile_id);">> $acc_dir/acc_$i.vhd;
             echo "  pindex             : integer  := 1;">> $acc_dir/acc_$i.vhd;
-            echo "  irq_type           : integer  := tile_irq_type(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd; 
+            echo "  irq_type           : integer  := tile_irq_type(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd;
             echo "  scatter_gather     : integer range 0 to 1  := CFG_SCATTER_GATHER;">> $acc_dir/acc_$i.vhd;
             echo "  sets               : integer  := CFG_ACC_L2_SETS;">> $acc_dir/acc_$i.vhd;
             echo "  ways               : integer  := CFG_ACC_L2_WAYS;">> $acc_dir/acc_$i.vhd;
@@ -132,9 +132,9 @@ do
             echo "  cache_y            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_y;">> $acc_dir/acc_$i.vhd;
             echo "  cache_x            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_x;">> $acc_dir/acc_$i.vhd;
             echo "  has_l2             : integer range 0 to 1 := tile_has_l2(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd;
-            echo "  has_dvfs           : integer range 0 to 1 := tile_has_dvfs(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd; 
-            echo "  has_pll            : integer range 0 to 1 := tile_has_pll(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd; 
-            echo "  extra_clk_buf      : integer range 0 to 1 := extra_clk_buf(${new_accelerators[$i,0]}));">> $acc_dir/acc_$i.vhd; 
+            echo "  has_dvfs           : integer range 0 to 1 := tile_has_dvfs(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd;
+            echo "  has_pll            : integer range 0 to 1 := tile_has_pll(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd;
+            echo "  extra_clk_buf      : integer range 0 to 1 := extra_clk_buf(${new_accelerators[$i,0]}));">> $acc_dir/acc_$i.vhd;
             skip_params=20;
         elif [[ $skip_params -ne 0 ]]; then
             skip_params=$((skip_params-1));
@@ -160,13 +160,13 @@ do
             break;
         fi
     done
-    
+
     #extract the name of old tiles and do the same parsing (name and type)
     modified_tile=$(echo ${modified_accelerators[$i,0]} | awk -F'[_]' '{print($2)}');
     old_acc_name=$(echo ${old_accelerators[$parent_tile,1]} | awk -F'[_]' '{print($1)}');
     old_acc_type=$(echo ${old_accelerators[$parent_tile,1]} | awk -F'[_]' '{print($2)}');
     old_acc_def=$(echo "sld_"$old_acc_name | awk '{print toupper($0)}');
-    
+
     #extract the tile id from old acc tile and assign them to new acc
     if [[ $old_acc_type == "stratus" ]]; then
         sw_src="$1/accelerators/stratus_hls/$old_acc_name"_"$old_acc_type/sw/baremetal/$old_acc_name".c"";
@@ -179,11 +179,11 @@ do
     else
         echo "unknown type of accelerator";
     fi
-    
+
 
     if [[ $acc_type == "stratus" ]]; then
-        temp_sw_dest="$1/accelerators/stratus_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name"_dpr.c""; 
-        sw_dest="$1/accelerators/stratus_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name".c""; 
+        temp_sw_dest="$1/accelerators/stratus_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name"_dpr.c"";
+        sw_dest="$1/accelerators/stratus_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name".c"";
     elif [[ $acc_type == "vivado" ]]; then
         temp_sw_dest="$1/accelerators/vivado_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name"_dpr.c"";
         sw_dest="$1/accelerators/vivado_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name".c"";
@@ -196,9 +196,9 @@ do
     else
         echo "unknown type of accelerator";
     fi
-    
+
     echo " " > $temp_sw_dest;
-    
+
     while IFS= read -r line; do
         if [[ $line  == "#define $old_acc_def"* ]]; then
             new_acc_id=$(echo $line | awk '{print($3)}');
@@ -207,7 +207,7 @@ do
             break;
         fi
     done < $sw_src
-    
+
     while IFS= read -r line; do
         if [[ "$line"  == "/* DPR patch:"* ||  "$line"  == "For non-DPR"* || "$line" == "//#define $acc_def"* ]]; then
             continue;
@@ -218,10 +218,10 @@ do
             printf "%s\n" "$new_line" >> $temp_sw_dest;
         else
             printf "%s\n" "$line" >> $temp_sw_dest;
-    
+
         fi
     done < $sw_dest
-    
+
     cp $temp_sw_dest $sw_dest;
     rm $temp_sw_dest;
 done
@@ -286,7 +286,7 @@ syn_include_file="$1/socs/$2/vivado/setup.tcl";
 syn_include="$tcl_dir/synth_include.tcl";
 rm -rf $syn_include;
 
-while read line 
+while read line
 do
     for word in $line
     do
@@ -304,12 +304,14 @@ echo "set tclHome \"$tcl_dir\" " >> $dpr_syn_tcl; #\"$1/socs/common/Tcl\" " >> $
 echo "set tclDir \$tclHome " >> $dpr_syn_tcl;
 echo "set projDir \"$1/socs/$2/vivado_dpr\" " >> $dpr_syn_tcl;
 echo "source \$tclDir/design_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
+#echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/synth_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/impl_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/pr_utils.tcl" >> $dpr_syn_tcl;
+#echo "source \$tclDir/pr_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/dfx_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/hd_floorplan_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/hd_utils.tcl" >> $dpr_syn_tcl;
+#echo "source \$tclDir/hd_floorplan_utils.tcl" >> $dpr_syn_tcl;
 
 echo " " >> $dpr_syn_tcl;
 
@@ -319,7 +321,8 @@ echo "check_part \$part" >> $dpr_syn_tcl;
 
 echo "set run.topSynth  0" >> $dpr_syn_tcl;
 echo "set run.rmSynth   1" >> $dpr_syn_tcl;
-echo "set run.prImpl    1" >> $dpr_syn_tcl;
+#echo "set run.prImpl    1" >> $dpr_syn_tcl;
+echo "set run.dfxImpl    1" >> $dpr_syn_tcl;
 echo "set run.prVerify  1" >> $dpr_syn_tcl;
 echo "set run.writeBitstream 1" >> $dpr_syn_tcl;
 
@@ -400,7 +403,7 @@ syn_include_file="$1/socs/$2/vivado/setup.tcl";
 syn_include="$tcl_dir/synth_include.tcl";
 rm -rf $syn_include;
 
-while read line 
+while read line
 do
     for word in $line
     do
@@ -421,9 +424,11 @@ echo "source \$tclDir/design_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/synth_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/impl_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/pr_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/hd_floorplan_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/dfx_utils.tcl" >> $dpr_syn_tcl;
+#echo "source \$tclDir/pr_utils.tcl" >> $dpr_syn_tcl;
+#echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/hd_utils.tcl" >> $dpr_syn_tcl;
+#echo "source \$tclDir/hd_floorplan_utils.tcl" >> $dpr_syn_tcl;
 
 echo " " >> $dpr_syn_tcl;
 
@@ -433,7 +438,8 @@ echo "check_part \$part" >> $dpr_syn_tcl;
 
 echo "set run.topSynth  0" >> $dpr_syn_tcl;
 echo "set run.rmSynth   0" >> $dpr_syn_tcl;
-echo "set run.prImpl    1" >> $dpr_syn_tcl;
+#echo "set run.prImpl    1" >> $dpr_syn_tcl;
+echo "set run.dfxImpl    1" >> $dpr_syn_tcl;
 echo "set run.prVerify  1" >> $dpr_syn_tcl;
 echo "set run.writeBitstream 1" >> $dpr_syn_tcl;
 
@@ -510,21 +516,22 @@ echo "#################################################################### " >> 
 
 echo "add_implementation top_dpr " >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr top        \$top" >> $dpr_syn_tcl;
-echo "set_attribute impl top_dpr pr.impl      1" >> $dpr_syn_tcl;
+#echo "set_attribute impl top_dpr pr.impl      1" >> $dpr_syn_tcl;
+echo "set_attribute impl top_dpr dfx.impl      1" >> $dpr_syn_tcl;
 if [[ "$2" == "xilinx-vcu118-xcvu9p" ]]; then
     echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/par/mig.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
 elif [[ $2 == "xilinx-vcu128-xcvu37p" ]]; then
 echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
-else    
-    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/mig/user_design/constraints/mig.xdc ]]" >> $dpr_syn_tcl;
+else
+    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/mig/user_design/constraints/mig.xdc ]]" >> $dpr_syn_tcl;
 fi;
 
 #if [[ "$2" == "xilinx-vcu118-xcvu9p" ]]; then
 #   echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/par/mig.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
 #elif [[ $2 == "xilinx-vcu128-xcvu37p" ]]; then
 #echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
-#else    
-#    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/mig/user_design/constraints/mig.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
+#else
+#    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/mig/user_design/constraints/mig.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
 #fi;
 #echo "set_property SEVERITY {Warning} [get_drc_checks HDPR-41]" >> $dpr_syn_tcl;
 
@@ -560,7 +567,8 @@ else
 echo -e "\t DPR: No accelerator tile was modified ";
     exit;
 fi;
-echo "set_attribute impl top_dpr impl       \${run.prImpl}" >> $dpr_syn_tcl;
+#echo "set_attribute impl top_dpr impl       \${run.prImpl}" >> $dpr_syn_tcl;
+echo "set_attribute impl top_dpr impl       \${run.dfxImpl}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr verify     \${run.prVerify}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr bitstream  \${run.writeBitstream}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr cfgmem.icap     1 " >> $dpr_syn_tcl;
@@ -573,16 +581,18 @@ function gen_bs_script() {
 bs_gen_script=$1/socs/$2/vivado_dpr/bs.tcl;
 
     echo " " > $bs_gen_script;
-    
+
     echo "open_checkpoint Implement/top_dpr/top_route_design.dcp" >> $bs_gen_script;
     echo "write_bitstream -force -bin_file Bitstreams/acc_bs" >> $bs_gen_script;
-    echo "source [get_property REPOSITORY [get_ipdefs *prc:1.3]]/xilinx/prc_v1_3/tcl/api.tcl" >> $bs_gen_script;
-    
+    #echo "source [get_property REPOSITORY [get_ipdefs *prc:1.3]]/xilinx/prc_v1_3/tcl/api.tcl" >> $bs_gen_script;
+    echo "source [get_property REPOSITORY [get_ipdefs *dfx_controller:1.0]]/xilinx/dfx_controller_v1_0/tcl/api.tcl" >> $bs_gen_script;
+
     for((i=0; i<$num_acc_tiles; i++)) do
+        echo "puts \"MG: Writing bitstream to Bitstreams/${new_accelerators[$i,1]}.partial.bin\"" >> $bs_gen_script
         if [[ $arch == "leon3" ]]; then
-            echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin" >> $bs_gen_script;
+            echo "dfx_controller_v1_0::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin" >> $bs_gen_script;
         else
-            echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin -bs 1" >> $bs_gen_script;
+            echo "dfx_controller_v1_0::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin -bs 1" >> $bs_gen_script;
         fi
     done
 }
@@ -592,27 +602,28 @@ pbs_map=$1/socs/$2/socgen/esp/pbs_map.h;
 pbs_path=$1/socs/$2/partial_bitstreams;
 
     for((i=0; i<$num_acc_tiles; i++)) do
-        cp $1/socs/$2/vivado_dpr/Bitstreams/${new_accelerators[$i,1]}.bin $1/socs/$2/partial_bitstreams; 
+        echo "Expecting to find $1/socs/$2/vivado_dpr/Bitstreams/${new_accelerators[$i,1]}.bin"
+        cp $1/socs/$2/vivado_dpr/Bitstreams/${new_accelerators[$i,1]}.bin $1/socs/$2/partial_bitstreams/${new_accelerators[$i,1]}.bin
     done
-    
+
 
 num_pbs=$(cd $1/socs/$2/partial_bitstreams && (ls | wc -l));
 pbs_addr=0;
 array=$(ls -ls $1/socs/$2/partial_bitstreams)
-    
+
     echo " " > $pbs_map;
     echo "pbs_map bs_descriptor [$num_pbs] = { " >> $pbs_map;
-    
+
     for FILE in $pbs_path/*; do
         pbs_name=$(basename $FILE | awk -F'[.]' '{print($1)}');
-        pbs_size=$(echo `ls -ls $FILE` | awk '{print($6)}'); 
+        pbs_size=$(echo `ls -ls $FILE` | awk '{print($6)}');
         pbs_tile_id=$(echo $pbs_name | awk -F'[_]' '{print($3)}');
         echo "{\"$pbs_name\", $pbs_size, $pbs_addr, $pbs_tile_id}, " >> $pbs_map;
         pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET));
         echo "file is $pbs_size $pbs_tile_id $pbs_name";
     done
     echo "};" >>$pbs_map;
-    
+
 }
 
 function load_bs() {
@@ -630,7 +641,7 @@ do
                pbs_base_addr=0x50000000;
             else
                #pbs_base_addr=0x04000000
-               pbs_base_addr=0xB0000000; 
+               pbs_base_addr=0xB0000000;
             fi
         fi
     done
@@ -639,10 +650,10 @@ done < $esp_config
 num_pbs=$(cd $1/socs/$2/partial_bitstreams && (ls | wc -l));
 pbs_addr=$pbs_base_addr;
 pbs_path=$1/socs/$2/partial_bitstreams;
-        
+
     for FILE in $pbs_path/*; do
         pbs_name=$(basename $FILE);
-        pbs_size=$(echo `ls -ls $FILE` | awk '{print($6)}'); 
+        pbs_size=$(echo `ls -ls $FILE` | awk '{print($6)}');
         $1/socs/$2/socgen/esp/esplink --load -a $pbs_addr  -i $1/socs/$2/partial_bitstreams/$pbs_name;
         pbs_base_addr=$pbs_addr;
         pbs_addr=$(($pbs_base_addr + $pbs_size + $PBS_DDR_OFFSET));
@@ -658,7 +669,8 @@ lut_keyword=LUTs*;
 bram_keyword=Block;
 dsp_keyword=""DSPs;
 
-LUT_TOLERANCE=1000;
+# MG - increased tolerance to account for lack of PARTPINS in pblock
+LUT_TOLERANCE=4000;
 BRAM_TOLERANCE=40;
 DSP_TOLERANCE=40;
 
@@ -667,8 +679,8 @@ for ((i=0; i<$num_acc_tiles; i++))
 do
     while read line
     do
-    lut_match=$(echo ${line} | awk '{print($3)}'); 
-    dsp_match=$(echo ${line} | awk '{print($2)}'); 
+    lut_match=$(echo ${line} | awk '{print($3)}');
+    dsp_match=$(echo ${line} | awk '{print($2)}');
     bram_match=$(echo ${line} | awk '{print($2)}');
 
     if [[ "$lut_match" == "$lut_keyword" ]]; then
@@ -677,7 +689,7 @@ do
         res_consumption["$i,0"]=$clb;
         #echo "found CLB $lut $clb";
     fi;
-  
+
     if [[ "$device" == "xc7vx485t-ffg1761-2" ]]; then
         if [[ "$dsp_match" == "$dsp_keyword" ]]; then
             dsp=$(echo ${line} | awk '{print($4)}');
@@ -685,7 +697,7 @@ do
             res_consumption["$i,2"]=$dsp;
             #echo "found DSP $dsp";
         fi;
-    else 
+    else
     #TODO this should be for DSP matching for VCU118 and VCu128
         if [[ "$dsp_aux_match" == "$dsp_keyword" ]] && [[ $dsp_match == "DSP48E2" ]]; then
             dsp=$(echo ${dsp_line} | awk '{print($4)}');
@@ -701,8 +713,8 @@ do
         bram=$(echo $bram $BRAM_TOLERANCE | awk '{print $1 + $2}');
         res_consumption["$i,1"]=$bram;
         #echo "found BRAM $bram";
-    fi; 
-    
+    fi;
+
     dsp_aux_match=$dsp_match;
     dsp_line=$line;
     bram_aux_match=$bram_match;
@@ -760,27 +772,35 @@ regenerate_fplan=0;
                 if [[ "$tile_id_new" == "$tile_id_old" ]]; then
                     if [[ "${lut_new%%.*}" -gt "${lut_old%%.*}" ]] || [[ "${bram_new%%.*}" -gt "${bram_old%%.*}" ]] || [[ "${dsp_new%%.*}" -gt "${dsp_old%%.*}" ]]; then
                         regenerate_fplan=1;
-                        break;    
+                        break;
                     fi;
                 fi;
             done < $res_req_old;
         done < $res_req_new;
-    done 
+    done
 
 }
 
 if [ "$4" == "BBOX" ]; then
-    extract_acc $1 $2 $3 
+    extract_acc $1 $2 $3
     initialize_acc_tiles $1 $2 $3
     initialize_bbox_tiles $1 $2 $3
 
-elif [ "$4" == "DPR" ]; then 
+elif [ "$4" == "IMPL_BBOX" ]; then
+    extract_acc $1 $2 $3
+    initialize_acc_tiles $1 $2 $3
+    add_acc_prj_file $1 $2 $3
+    parse_synth_report $1 $2 $3 $4
+    gen_floorplan $1 $2 $3 $4
+    gen_impl_script $1 $2 $3 $4
+
+elif [ "$4" == "DPR" ]; then
     extract_acc $1 $2 $3
     initialize_acc_tiles $1 $2 $3
     add_acc_prj_file $1 $2 $3
     gen_synth_script $1 $2 $3 $4
 
-elif [ "$4" == "IMPL_DPR" ]; then 
+elif [ "$4" == "IMPL_DPR" ]; then
     extract_acc $1 $2 $3
     initialize_acc_tiles $1 $2 $3
     add_acc_prj_file $1 $2 $3
@@ -790,9 +810,9 @@ elif [ "$4" == "IMPL_DPR" ]; then
 
     #gen_dpr $1 $2 $3 $4
 elif [ "$4" == "ACC" ]; then
-    extract_acc $1 $2 $3; 
-    extract_acc_old $1 $2 $3; 
-    diff_accelerators $1 $2 $3; 
+    extract_acc $1 $2 $3;
+    extract_acc_old $1 $2 $3;
+    diff_accelerators $1 $2 $3;
     initialize_acc_tiles $1 $2 $3
     add_acc_prj_file $1 $2 $3
     gen_synth_script $1 $2 $3 $4
@@ -801,38 +821,38 @@ elif [ "$4" == "ACC" ]; then
     #gen_dpr $1 $2 $3 $4;
 
 elif [ "$4" == "IMPL_ACC" ]; then
-    extract_acc $1 $2 $3; 
-    extract_acc_old $1 $2 $3; 
-    diff_accelerators $1 $2 $3; 
+    extract_acc $1 $2 $3;
+    extract_acc_old $1 $2 $3;
+    diff_accelerators $1 $2 $3;
     initialize_acc_tiles $1 $2 $3;
     patch_acc_devid $1 $2 $3 $4;
     add_acc_prj_file $1 $2 $3;
     parse_synth_report $1 $2 $3 $4;
     acc_fplan $1 $2 $3 $4;
     if [ "$regenerate_fplan" == "1" ]; then
-        gen_floorplan $1 $2 $3 $4;      
+        gen_floorplan $1 $2 $3 $4;
     fi;
     gen_impl_script $1 $2 $3 $4;
-   
+
 elif [ "$4" == "GEN_BS" ]; then
-    extract_acc $1 $2 $3; 
-    extract_acc_old $1 $2 $3; 
-    diff_accelerators $1 $2 $3; 
+    extract_acc $1 $2 $3;
+    extract_acc_old $1 $2 $3;
+    diff_accelerators $1 $2 $3;
     gen_bs_script $1 $2 $3 $4;
 
 elif [ "$4" == "GEN_HDR" ]; then
     extract_acc $1 $2 $3
     gen_bs_descriptor $1 $2 $3 $4
-     
+
 elif [ "$4" == "LOAD_BS" ]; then
     load_bs $1 $2 $3 $4
 
-elif [ $4 == "test" ]; then
+elif [ "$4" == "test" ]; then
     extract_acc $1 $2 $3
     extract_acc_old $1 $2 $3
-    diff_accelerators $1 $2 $3 
+    diff_accelerators $1 $2 $3
     #patch_acc_devid $1 $2 $3 $4
-    #gen_bs_script $1 $2 $3 $4 
+    #gen_bs_script $1 $2 $3 $4
     #gen_bs_descriptor $1 $2 $3 $4
     #load_bs $1 $2 $3 $4
     initialize_acc_tiles $1 $2 $3

@@ -1,7 +1,7 @@
 #include "prc_utils.h"
 #include "soc_defs.h"
 #include "soc_locs.h"
-#include "monitors.h"
+#include <monitors.h>
 #include <pbs_map.h>
 #include <prc_aux.h>
 
@@ -9,7 +9,9 @@
 #define APB_BASE_ADDR 0x60000000
 #endif
 
+#define DPR_VERBOSE
 //#define MEASURE_RECONF_TIME
+
 static struct esp_device esp_tile_decoupler;
 static struct esp_device esp_prc;
 struct pbs_map *pb_map;

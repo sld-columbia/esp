@@ -1,4 +1,3 @@
-###############################################################
 ### Source scripts need for implementation
 ###############################################################
 source $tclDir/synthesize.tcl
@@ -7,7 +6,6 @@ source $tclDir/synthesize.tcl
 ### Parse PRJ and add all files 
 ###############################################################
 proc add_prj { prj } {
-   upvar resultDir resultDir
    global srcDir
 
    if {[file exists $prj]} {
@@ -40,7 +38,7 @@ proc add_prj { prj } {
             }
             if {[file exists ${srcDir}/$file]} {
                set file ${srcDir}/$file
-               command "add_files $file" "$resultDir/add_files.log"
+               command "add_files $file" "add_files.log"
                if {[string match -nocase $type "vhdl"]} {
                   command "set_property LIBRARY $lib \[get_files $file\]"
                }
@@ -49,7 +47,6 @@ proc add_prj { prj } {
                }
                if {[string match -nocase $type "header"]} {
                    command "set_property FILE_TYPE {Verilog Header} \[get_files $file\]"
-                   command "set_property IS_GLOBAL_INCLUDE TRUE \[get_files $file\]"
                }
             } elseif {[file exists $file]} {
                command "add_files $file"
@@ -85,9 +82,9 @@ proc add_bd { files } {
    upvar resultDir resultDir
 
    foreach file $files {
-      if {[string length file] > 0} { 
+      if {[string length file] > 0} {
          if {[file exists $file]} {
-            set bd_split [split $file "/"] 
+            set bd_split [split $file "/"]
             set bd [lindex $bd_split end]
             set bdName [lindex [split $bd "."] 0]
             if {[regexp {.*\.tcl} $file]} {
@@ -98,7 +95,7 @@ proc add_bd { files } {
                command "generate_target all \[get_files $file]" "$resultDir/${bdName}_generate.log"
             }
          } else {
-            set errMsg "\nERROR: Could not find specified BD file: $file" 
+            set errMsg "\nERROR: Could not find specified BD file: $file"
             error $errMsg
          }
       }
@@ -167,4 +164,5 @@ proc add_vhdl { vhdl } {
       error $errMsg
    }
 }
+
 

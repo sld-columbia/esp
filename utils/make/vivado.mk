@@ -1,6 +1,9 @@
 # Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
+BOARD_SUFFIX ?=
+BOARD_DIR = $(BOARD)$(BOARD_SUFFIX)
+
 ### Constaints ###
 ifneq ("$(OVR_TECHLIB)","")
 XDC_SUFFIX = -fpga-proxy
@@ -72,10 +75,10 @@ endif
 		echo "add_files $$dat" >> $@; \
 	done;
 ### Replace tile with a blackbox if a DPR implementation is chosen
-	@echo $(SPACES)"DPR generating bbox sources"; 
+	@echo $(SPACES)"DPR generating bbox sources";
 	@if [ "$(DPR_ENABLED)" = "y" ]; then \
 	    	echo $(SPACES)"DPR generating bbox sources"; \
-        	/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) BBOX; \
+        	/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) BBOX; \
 	fi;
 
 
@@ -351,7 +354,7 @@ vivado-gui-emu: vivado-setup-emu
 	vivado $(DESIGN)-chip-emu.xpr; \
 	cd ../;
 
-vivado-syn: vivado-setup 
+vivado-syn: vivado-setup
 	$(QUIET_INFO)echo "launching Vivado implementation script"
 	@cd vivado; \
 	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../$(VIVADO_LOGS)/vivado_syn.log; \
@@ -370,13 +373,13 @@ vivado-syn: vivado-setup
         $(RM) static_config.tcl; \
         echo "set part $(DEVICE) " >> static_config.tcl; \
         echo "set board $(BOARD) " >> static_config.tcl; \
-		echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
-		if [  $(BOARD) == xilinx-vc707-xc7vx485t ]; then \
-			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_v7/prc_ctrlr_v7.xci" >> static_config.tcl; \
+	echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
+	if [ "$(BOARD)" = xilinx-vc707-xc7vx485t ]; then \
+		echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_v7/prc_ctrlr_v7.xci" >> static_config.tcl; \
         else \
-			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_us/prc_ctrlr_us.xci" >> static_config.tcl; \
-		fi;\
-		if [ $(BOARD) == xilinx-vcu128-xcvu37p ]; then \
+		echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_us/prc_ctrlr_us.xci" >> static_config.tcl; \
+	fi;\
+	if [ "$(BOARD)" = xilinx-vcu128-xcvu37p ]; then \
             echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig_clamshell/mig_clamshell.xci" >> static_config.tcl; \
             echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii_vcu128/sgmii_vcu128.xci" >> static_config.tcl; \
         else \
@@ -392,8 +395,8 @@ vivado-syn: vivado-setup
         echo $(SPACES)"DPR: creating Vivado dpr directory"; \
         $(RM) vivado_dpr; \
         $(RM) partial_bitstreams;\
-		mkdir -p partial_bitstreams;\
-		mkdir -p vivado_dpr; \
+               mkdir -p partial_bitstreams;\
+               mkdir -p vivado_dpr; \
         mkdir -p vivado_dpr/Bitstreams; \
         mkdir -p vivado_dpr/Checkpoint; \
         mkdir -p vivado_dpr/Implement; \
@@ -402,23 +405,28 @@ vivado-syn: vivado-setup
         cp ./socgen/esp/.esp_config vivado_dpr/; \
         cp $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
         echo $(SPACES)"DPR : launching setup script for Vivado DPR flow";  \
-        /bin/bash $(ESP_ROOT)/tools/dpr_tools//process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) DPR;  \
-        cd vivado_dpr; \
-        vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) DPR;  \
+		cd vivado_dpr; \
+		vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
         cd ../; \
-		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) IMPL_DPR;  \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) $(IMPL_ARG);  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_syn_dpr.log; \
-		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) GEN_BS;  \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_BS;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source bs.tcl | tee ../vivado_syn_dpr.log; \
 		cd ../ ; \
 		cp res_reqs.csv vivado_dpr/ ; \
-		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) GEN_HDR;  \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_HDR;  \
     fi;
 
 vivado-syn-dpr: DPR_ENABLED = y
+vivado-syn-dpr: IMPL_ARG = IMPL_DPR
 vivado-syn-dpr: vivado-syn
+
+vivado-syn-dpr-bbox: DPR_ENABLED = y
+vivado-syn-dpr-bbox: IMPL_ARG = IMPL_BBOX
+vivado-syn-dpr-bbox: vivado-syn
 
 vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl
 	$(QUIET_INFO)echo "launching setup script for Vivado DPR flow"
@@ -427,21 +435,21 @@ vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl
         echo $(SPACES)"DPR: you should run vivado-syn-dpr first"; \
     else \
         echo $(SPACES)"INFO starting DPR flow"; \
-        /bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) ACC;  \
+        /bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) ACC;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
         cd ../ ; \
-		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) IMPL_ACC;  \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) IMPL_ACC;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_impl_dpr.log; \
         cd ../ ; \
-        /bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) GEN_BS;  \
+        /bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_BS;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source bs.tcl | tee ../vivado_syn_dpr.log; \
         cd ../ ; \
 		cp ./socgen/esp/.esp_config vivado_dpr/; \
 		cp res_reqs.csv vivado_dpr/ ; \
-		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) GEN_HDR;  \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_HDR;  \
     fi;
 
 vivado-syn-emu: vivado-setup-emu

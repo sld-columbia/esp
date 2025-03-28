@@ -8,13 +8,12 @@ proc synthesize { module } {
    global synthDir
    global srcDir
    global verbose
-   global RFH
-   
+   global tclDir
+
    set moduleName  [get_attribute module $module moduleName]
    set topLevel    [get_attribute module $module top_level]
    set prj         [get_attribute module $module prj]
    set includes    [get_attribute module $module includes]
-   puts "#MG for $module, includes are $includes"
    set generics    [get_attribute module $module generics]
    set vlogHeaders [get_attribute module $module vlog_headers]
    set vlogDefines [get_attribute module $module vlog_defines]
@@ -31,20 +30,19 @@ proc synthesize { module } {
 
    set resultDir "$synthDir/$module"
 
+   # Make the synthesis directory if needed
+   if {![file exists $synthDir]} {
+      file mkdir $synthDir
+   }
    # Clean-out and re-make the synthesis directory for this module
-   command "file mkdir $synthDir"
-   command "file delete -force $resultDir"
-   command "file mkdir $resultDir"
+   file delete -force $resultDir
+   file mkdir $resultDir
    
    #Open local log files
    set rfh [open "$resultDir/run.log" w]
    set cfh [open "$resultDir/command.log" w]
    set wfh [open "$resultDir/critical.log" w]
    
-   set vivadoVer [version]
-   puts $rfh "Info: Running Vivado version $vivadoVer"
-   puts $RFH "Info: Running Vivado version $vivadoVer"
-
    command "puts \"#HD: Running synthesis for block $module\""
    puts "\tWriting results to: $resultDir"
    set synth_start [clock seconds]
@@ -57,18 +55,18 @@ proc synthesize { module } {
    #Create in-memory project
    command "create_project -in_memory -part $part" "$resultDir/create_project.log"
 
-   #Turn on source management for mod ref
-   command "set_property source_mgmt_mode All \[current_project\]"
-
    if {[info exists board] && [llength $board]} {
       command "set_property board_part $board \[current_project\]"
    }
+   
+   puts "tcl dir in synth is $tclDir"
+   source $tclDir/synth_include.tcl
 
    #### Setup any IP Repositories 
    if {$ipRepo != ""} {
       puts "\tLoading IP Repositories:\n\t+ [join $ipRepo "\n\t+ "]"
       command "set_property IP_REPO_PATHS \{$ipRepo\} \[current_fileset\]" "$resultDir/temp.log"
-      command "update_ip_catalog" "$resultDir/temp.log"
+      command "update_ip_catalog" "$resultsDir/temp.log"
    }
    
    set start_time [clock seconds]
@@ -148,12 +146,12 @@ proc synthesize { module } {
    
    #### Set Verilog Defines
    if {$vlogDefines != ""} {
-      command "set_property verilog_define \{$vlogDefines\} \[current_fileset\]"
+      command "set_property verilog_define $vlogDefines \[current_fileset\]"
    }
    
    #### Set Include Directories
    if {$includes != ""} {
-      command "set_property include_dirs \{$includes\} \[current_fileset\]"
+      command "set_property include_dirs \"$includes\" \[current_fileset\]"
    }
    
    #### Set Generics
@@ -173,7 +171,7 @@ proc synthesize { module } {
    log_time synth_design $start_time $end_time 0 "$moduleName $options"
    
    set start_time [clock seconds]
-   command "write_checkpoint -force $resultDir/${moduleName}_synth.dcp" "$resultDir/write_checkpoint.log"
+   command "write_checkpoint -force $resultDir/${moduleName}_synth.dcp" "$resultDir/temp.log"
    set end_time [clock seconds]
    log_time write_checkpiont $start_time $end_time 0 "Write out synthesis DCP"
    

@@ -1,37 +1,33 @@
-#Detect if file is being sourced from "design.tcl", and create log files if so
-if {[info exists tclDir]} {
-   set runLog "run"
-   set commandLog "command"
-   set criticalLog "critical"
+set runLog "run"
+set commandLog "command"
+set criticalLog "critical"
 
-   set logs [list $runLog $commandLog $criticalLog]
-   foreach log $logs {
-      if {[file exists ${log}.log]} {
-         file copy -force $log.log ${log}_prev.log
-      }
+set logs [list $runLog $commandLog $criticalLog]
+foreach log $logs {
+   if {[file exists ${log}.log]} {
+      file copy -force $log.log ${log}_prev.log
    }
-
-   set RFH [open "$runLog.log" w]
-   set CFH [open "$commandLog.log" w]
-   set WFH [open "$criticalLog.log" w]
 }
+
+set RFH [open "$runLog.log" w]
+set CFH [open "$commandLog.log" w]
+set WFH [open "$criticalLog.log" w]
 
 ###############################################################
 ### Log time of various commands to run log
 ###############################################################
-proc log_time {phase start_time end_time {header 0} {notes ""}} {
+proc log_time {phase start_time end_time {header 0} {notes ""} } {
    global RFH
    upvar #1 rfh rfh
 
    if {![info exists rfh]} {
       set rfh "stdout"
    }
-
    #Define widths of each column
    set widthCol1 19
    set widthCol2 13
    set widthCol3 25
-   set widthCol4 85
+   set widthCol4 65
 
    #Calculate times based of passed in times
    set total_seconds [expr $end_time - $start_time]
@@ -42,35 +38,60 @@ proc log_time {phase start_time end_time {header 0} {notes ""}} {
       puts $rfh "\n| [string repeat - $widthCol1] | [string repeat - $widthCol2] | [string repeat - $widthCol3] | [string repeat - $widthCol4] |"
       puts $rfh [format "| %-*s | %-*s | %-*s | %-*s |" $widthCol1 "Phase" $widthCol2 "Time in Phase" $widthCol3 "Time\/Date" $widthCol4 "Description"]
       puts $rfh "| [string repeat - $widthCol1] | [string repeat - $widthCol2] | [string repeat - $widthCol3] | [string repeat - $widthCol4] |"
-      if {[info exists RFH]} {
-         puts $RFH "\n| [string repeat - $widthCol1] | [string repeat - $widthCol2] | [string repeat - $widthCol3] | [string repeat - $widthCol4] |"
-         puts $RFH [format "| %-*s | %-*s | %-*s | %-*s |" $widthCol1 "Phase" $widthCol2 "Time in Phase" $widthCol3 "Time\/Date" $widthCol4 "Description"]
-         puts $RFH "| [string repeat - $widthCol1] | [string repeat - $widthCol2] | [string repeat - $widthCol3] | [string repeat - $widthCol4] |"
-      }
+      puts $RFH "\n| [string repeat - $widthCol1] | [string repeat - $widthCol2] | [string repeat - $widthCol3] | [string repeat - $widthCol4] |"
+      puts $RFH [format "| %-*s | %-*s | %-*s | %-*s |" $widthCol1 "Phase" $widthCol2 "Time in Phase" $widthCol3 "Time\/Date" $widthCol4 "Description"]
+      puts $RFH "| [string repeat - $widthCol1] | [string repeat - $widthCol2] | [string repeat - $widthCol3] | [string repeat - $widthCol4] |"
    }
 
    if {[string match $phase final]} {
       set time "[format %02d [expr $total_hours]]h:[format %02d [expr $total_minutes-($total_hours*60)]]m:[format %02d [expr $total_seconds-($total_minutes*60)]]s"
-      puts $rfh "Total time:\t\t$time\n\n"
-      if {[info exists RFH]} {
-         puts $RFH "Total time:\t\t$time\n\n"
-      }
+      puts $rfh "Total time:\t\t$time"
+      puts $RFH "Total time:\t\t$time"
    } else {
       set time "[format %02d [expr $total_hours]]h:[format %02d [expr $total_minutes-($total_hours*60)]]m:[format %02d [expr $total_seconds-($total_minutes*60)]]s"
       set date "[clock format $start_time -format {%H:%M:%S %a %b %d %Y}]"
       puts $rfh [format "| %-*s | %-*s | %-*s | %-*s |" $widthCol1 "$phase" $widthCol2 "$time" $widthCol3 "$date" $widthCol4 "$notes"]
       puts $rfh "| [string repeat - $widthCol1] | [string repeat - $widthCol2] | [string repeat - $widthCol3] | [string repeat - $widthCol4] |"
-      if {[info exists RFH]} {
-         puts $RFH [format "| %-*s | %-*s | %-*s | %-*s |" $widthCol1 "$phase" $widthCol2 "$time" $widthCol3 "$date" $widthCol4 "$notes"]
-         puts $RFH "| [string repeat - $widthCol1] | [string repeat - $widthCol2] | [string repeat - $widthCol3] | [string repeat - $widthCol4] |"
-      } 
+      puts $RFH [format "| %-*s | %-*s | %-*s | %-*s |" $widthCol1 "$phase" $widthCol2 "$time" $widthCol3 "$date" $widthCol4 "$notes"]
+      puts $RFH "| [string repeat - $widthCol1] | [string repeat - $widthCol2] | [string repeat - $widthCol3] | [string repeat - $widthCol4] |"
    } 
-   if {[info exists RFH]} {
-      flush $RFH
+   flush $rfh
+   flush $RFH
+}
+
+###############################################################
+### Log data from command logs to run log
+###############################################################
+proc log_data {impl instance} {
+   global implDir RFH
+   upvar #1 rfh rfh
+   
+   set resultDir $implDir/$impl
+      
+   set route_log $resultDir/${instance}_route_design.log
+   if {[file exists $route_log]} {
+      set log_fh [open $route_log r]
+      set log_data [read $log_fh]
+      close $log_fh
+      set log_lines [split $log_data "\n" ]
+      set timing ""
+      foreach line $log_lines {
+         if {[string match "*Route 35-57*" $line]} {
+            set timing $line
+         }
+      }
+      if {[llength $timing]} {
+         puts $rfh "\t$timing"
+         puts $RFH "\t$timing"
+      }
+   } else {
+      puts $rfh "Could not find route_design log file \"$route_log\"."
+      puts $RFH "Could not find route_design log file \"$route_log\"."
    }
-   if {![string match $rfh "stdout"]} {
-      flush $rfh
-   }
+   puts $rfh "\n"
+   puts $RFH "\n"
+   flush $rfh
+   flush $RFH
 }
 
 ###############################################################
@@ -82,34 +103,45 @@ proc log_time {phase start_time end_time {header 0} {notes ""}} {
 ### Print command to STDOUT if verbose > 1 
 ###############################################################
 proc command { command  {log ""} {quiet 0} } {
-   global verbose CFH
+   global verbose CFH RFH
    upvar #1 cfh cfh
+   upvar #1 rfh rfh
    
+   if {![info exists rfh]} {
+      set rfh "stdout"
+   }
    if {![info exists cfh]} {
       set cfh "stdout"
    }
-
+   if {![info exists RFH]} {
+      set RFH "stdout"
+   }
    if {![info exists CFH]} {
       set CFH "stdout"
    }
 
-   #Write all commands to command.log if file hanlde exists
+   #Write all commans to command.log if file hanlde exists
    if {![string match $cfh "stdout"]} {
-      if {[llength $log]} {
-         puts $cfh "$command \> $log"
-      } else {
-         puts $cfh $command
-      }
+      puts $cfh $command
       flush $cfh
    }
    if {![string match $CFH "stdout"]} {
-      if {[llength $log]} {
-         puts $CFH "$command \> $log"
-      } else {
-         puts $CFH $command
-      }
+      puts $CFH $command
       flush $CFH
    }
+
+   #Write "puts" commands to the run.log as well
+#   if {[string match [lindex [split $command] 0] "puts"]} {
+#      set putString [lindex $command 1]
+#      if {[string match "#HD:*" $putString] && !$verbose} {
+#         puts $putString
+#      }
+#      if {![string match $rfh "stdout"]} {
+#         puts $rfh $putString
+#         puts $RFH $putString
+#         flush $RFH
+#      }
+#   }
 
    #ignore new-line, comments, or if verbose=0 (to generate scripts only)
    if {[string match "\n" $command] || [string match "#*" $command] || !$verbose} {
@@ -123,7 +155,6 @@ proc command { command  {log ""} {quiet 0} } {
    set commandName [lindex [split $command] 0]
    if {[llength $log] > 0} {
       if { [catch "$command > $log" errMsg] && !$quiet } {
-         puts "#HD: Command \'$commandName\' failed! Parsing $log for relavant messages"
          parse_log $log
          regexp {(\.*.*)(\..*)} $log matched logName logType
          #If design is open write out a debug DCP
@@ -160,105 +191,42 @@ proc parse_log { log } {
    upvar #1 wfh wfh
    upvar #1 rfh rfh
 
-   set warningFiles ""
-   if {[info exists WFH]} {
-      lappend warningFiles $WFH
+   if {![info exists rfh]} {
+      set rfh "stdout"
    }
-   if {[info exists wfh]} {
-      lappend warningFiles $wfh
+   if {![info exists wfh]} {
+      set wfh "stdout"
    }
-
-   set runFiles ""
-   if {[info exists rfh]} {
-      lappend runFiles $rfh
-   }
-   if {[info exists RFH]} {
-      lappend runFiles $RFH
-   }
-
-   set log_data ""
-   set log_lines ""
    if {[file exists $log]} {
       set lfh [open $log r]
       set log_data [read $lfh]
       close $lfh
       set log_lines [split $log_data "\n" ]
-   } else {
-      puts "ERROR: Could not find specified log file \"$log\"."
-   }
-
-   foreach fh $warningFiles {
-      puts $fh "\t#HD: Parsing log file \"$log\":"
+      puts $wfh "\t#HD: Parsing log file \"$log\":"
+      puts $WFH "\t#HD: Parsing log file \"$log\":"
       foreach line $log_lines {
          if {[string match "CRITICAL WARNING*" $line]} {
-            puts $fh "\t$line"
+            puts $wfh "\t$line"
+            puts $WFH "\t$line"
          }
-      }
-      puts $fh "\n"
-      flush $fh
-   }
-
-   foreach fh $runFiles {
-      foreach line $log_lines {
+         if {[string match "WARNING \[Route 35-328\]*" $line]} {
+            puts $rfh "\t$line"
+            puts $RFH "\t$line"
+         }
          if {[string match "ERROR:*" $line]} {
-            puts $fh $line
+            puts $rfh $line
+            puts $RFH $line
             puts $line
          }
       }
-      flush $fh
-   }
-
-}
-
-###############################################################
-### Proc to parse timing summary (report or string) for timing 
-###############################################################
-proc getTimingInfo { {report {}} } {
-   global RFH
-   upvar #1 rfh rfh
-
-   if {![info exists RFH]} {
-      set RFH "stdout"
-   }
-
-   if {$report == {}} { 
-      set report [split [report_timing_summary -no_detailed_paths -no_check_timing -no_header -return_string] \n]
    } else {
-      set report [split $report \n]
+      puts $wfh "ERROR: Could not find specified log file \"$log\"."
+      puts $WFH "ERROR: Could not find specified log file \"$log\"."
    }
-
-   foreach {wns tns tnsFailingEp tnsTotalEp whs ths thsFailingEp thsTotalEp wpws tpws tpwsFailingEp tpwsTotalEp} [list {N/A} {N/A} {N/A} {N/A} {N/A} {N/A} {N/A} {N/A} {N/A} {N/A} {N/A} {N/A}] { 
-      break 
-   }
-   if {[set i [lsearch -regexp $report {Design Timing Summary}]] != -1} {
-      foreach {wns tns tnsFailingEp tnsTotalEp whs ths thsFailingEp thsTotalEp wpws tpws tpwsFailingEp tpwsTotalEp} [regexp -inline -all -- {\S+} [lindex $report [expr $i + 6]]] { 
-         break 
-      }
-   }
-   puts "Setup:\n\t| WNS=$wns | TNS=$tns | Failing Endpoints=$tnsFailingEp | Total Endpoints=$tnsTotalEp |"
-   puts "Hold:\n\t| WHS=$whs | THS=$ths | Failing Endpoints=$thsFailingEp | Total Endpoints=$thsTotalEp |"
-   puts "Pulse Width:\n\t | WPWS=$wpws | TPWS=$tpws | Failing Endpoints=$tpwsFailingEp | Total Endpoints=$tpwsTotalEp |\n\n"
-   puts $RFH "Setup:\n\t| WNS=$wns | TNS=$tns | Failing Endpoints=$tnsFailingEp | Total Endpoints=$tnsTotalEp |"
-   puts $RFH "Hold:\n\t| WHS=$whs | THS=$ths | Failing Endpoints=$thsFailingEp | Total Endpoints=$thsTotalEp |"
-   puts $RFH "Pulse Width:\n\t | WPWS=$wpws | TPWS=$tpws | Failing Endpoints=$tpwsFailingEp | Total Endpoints=$tpwsTotalEp |\n\n"
-   puts $rfh "Setup:\n\t| WNS=$wns | TNS=$tns | Failing Endpoints=$tnsFailingEp | Total Endpoints=$tnsTotalEp |"
-   puts $rfh "Hold:\n\t| WHS=$whs | THS=$ths | Failing Endpoints=$thsFailingEp | Total Endpoints=$thsTotalEp |"
-   puts $rfh "Pulse Width:\n\t | WPWS=$wpws | TPWS=$tpws | Failing Endpoints=$tpwsFailingEp | Total Endpoints=$tpwsTotalEp |\n\n"
-}
-
-###############################################################
-### Read specified file, split per line, and return list 
-###############################################################
-proc read_file_lines {file} {
-   if {![file exists $file]} {
-      puts "Error: Specified file $file does not exist. Please check path."
-      return
-   }
-   set fh [open $file r]
-   set fileData [read $fh]
-   close $fh
-   set fileLines [split $fileData "\n" ]
-   return $fileLines
+   puts $wfh "\n"
+   puts $WFH "\n"
+   flush $wfh
+   flush $WFH
 }
 
 #################################################
@@ -289,8 +257,8 @@ proc read_file_lines {file} {
 #################################################
 proc print_table { args } {
    set args [join $args]
-   set title "Table"
    set FH "stdout"
+   set title "Table"
 
    #Override defaults with command options
    set argLength [llength $args]
@@ -305,7 +273,6 @@ proc print_table { args } {
                       incr rowCount
                      }
          {-file}     {set FH [open $value w]}
-         {-handle}   {upvar $value FH}
          {-help}     {set     helpMsg "Description:"
                       lappend helpMsg "Prints out a table in order the Rows are specified.\n"
                       lappend helpMsg "Syntax:"
