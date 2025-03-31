@@ -97,6 +97,8 @@ $(BUILD_PATH)/%.bin: $(BUILD_PATH)/%.exe
 
 ifneq ($(CONFIG_PRC_EN),)
 BUILD_PRC: $(SRCS_PRC)
+	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../monitors MODE=BAREC \
+			 $(MAKE) -B -C $(DRIVERS)/../common/monitors
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../prc $(MAKE) -C $(DRIVERS)/prc
 endif
 

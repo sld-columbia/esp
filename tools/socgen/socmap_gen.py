@@ -2572,6 +2572,7 @@ def print_load_script(fp, soc, esp_config):
   fp.write("insmod esp_cache.ko\n")
   fp.write("insmod esp_private_cache.ko\n")
   fp.write("insmod esp.ko")
+  fp.write("\ninsmod esp_dpr.ko");
   fp.write(" line_bytes=16")
   fp.write(" l2_sets=" + str(soc.l2_sets.get()))
   fp.write(" l2_ways=" + str(soc.l2_ways.get()))
