@@ -11,8 +11,8 @@ EMOJI_CHECK="\xE2\x9C\x94"
 source /opt/cad/scripts/tools_env.sh
 ESP_ROOT=$(realpath ../../../)
 esp_config="$ESP_ROOT/socs/xilinx-vc707-xc7vx485t/socgen/esp/.esp_config"
-fpga_run="$ESP_ROOT/utils/scripts/actions-pipeline/run_fpga_program.sh"
-fpga_run_linux="$ESP_ROOT/utils/scripts/actions-pipeline/run_fpga_linux.sh"
+fpga_run="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_program.sh"
+fpga_run_linux="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_linux.sh"
 monitor="$ESP_ROOT/utils/scripts/actions-pipeline/helper/monitor_linux_boot.sh"
 
 # Specify logging directories. Clean up old log files.
@@ -27,6 +27,7 @@ mkdir -p "$logs/hls"
 mkdir -p "$logs/fpga"
 mkdir -p "$logs/minicom"
 mkdir -p "$logs/soft"
+mkdir -p "$logs/config"
 
 vivado_syn="$logs/hls/vivado_syn.log"
 fpga_program="$logs/fpga/fpga_program.log"
