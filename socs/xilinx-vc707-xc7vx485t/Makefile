@@ -63,7 +63,7 @@ ESPLINK_IP ?= 128.59.22.75
 ESPLINK_PORT ?= 46307
 
 # MAC address for Linux if using IP address reservation (e.g. 00aabb33cc77)
-# LINUX_MAC ?=
+LINUX_MAC ?= 000A3502CB80
 
 
 ### Include global Makefile ###
