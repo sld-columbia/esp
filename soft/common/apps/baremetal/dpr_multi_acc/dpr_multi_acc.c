@@ -13,10 +13,11 @@
 #include "mac.h"
 #include "adder.h"
 
-#define NUM_ACC_INVOC_ITER 5
-//#define RUN_LOOP
+#define NUM_ACC_INVOC_ITER 1
+#define RUN_LOOP
 
-#define SLD_ACC_TILE_1 0x98
+#define SLD_ACC_TILE_ADDER 0x98
+#define SLD_ACC_TILE_MAC 0x98
 #define DEV_NAME_ADDER "sld,adder_vivado"
 #define DEV_NAME_MAC "sld,mac_vivado"
 
@@ -33,6 +34,8 @@ int main(int argc, char * argv[])
 	unsigned **ptable_adder, **ptable_mac;
 	token_t *mem_adder, *mem_gold_adder;
     token_t *mem_mac, *mem_gold_mac;
+
+  printf("Hello from dpr_multi_acc\n");
 
     //MAC
     if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
@@ -156,7 +159,7 @@ int main(int argc, char * argv[])
     // Search for the device
     printf("Scanning device tree... \n");
 
-    ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_1, DEV_NAME_MAC);
+    ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_MAC, DEV_NAME_MAC);
     if (ndev == 0) {
         printf("mac not found\n");
         return 0;
