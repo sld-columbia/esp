@@ -83,25 +83,50 @@ do
 done < $esp_config_old
 }
 
+function set_acc_name_gbox() {
+    num_acc_tiles=0
+    while read line
+    do
+        for word in $line
+        do
+            if [[ $word == *"TILE_"* ]]; then
+                _line=( $line )
+                tile_token=${_line[0]}
+                tile_index=${_line[2]}
+                tile_type=${_line[3]}
+                acc_name=${_line[4]}
+                acc_name+="_$tile_index"
+                if [[ $tile_type == "acc" ]]; then
+                    new_accelerators["$num_acc_tiles,0"]=$tile_index;
+                    new_accelerators["$num_acc_tiles,1"]="tile_blanked_${tile_index}";
+                    ((num_acc_tiles++));
+                fi
+    #            echo "$tile_token $tile_index $tile_type $acc_name $1 $2 $3 ";
+            fi
+        done
+    done < $esp_config
+}
+
 #function to figure out which acc_tile is changed in the new .esp_config
-#TODO: this func relies on name change of acc_tiles to mark change, this is 
-#obvioulsy insufficient when the same acc_tile is modified without a name change
+#TODO: this func relies on name change of acc_tiles to mark change, this is
+#obviously insufficient when the same acc_tile is modified without a name change
 function diff_accelerators() {
 for ((i=0; i<$num_acc_tiles; i++))
 do
+    echo "$i: new accelerator is ${new_accelerators[$i,1]}, old is ${old_accelerators[$i,1]}"
     if [ "${new_accelerators[$i,1]}" != "${old_accelerators[$i,1]}" ]; then
         modified_accelerators[$num_modified_acc_tiles,0]=${new_accelerators[$i,0]};
         modified_accelerators[$num_modified_acc_tiles,1]=${new_accelerators[$i,1]};
         ((num_modified_acc_tiles++));
     fi
-       
-done 
+
+done
 
     echo -e "\t DPR: number of modified tiles is equal to $num_modified_acc_tiles "
 }
 
 #This function initializes the specific accelerator tiles from the template acc_dpr.vhd
-#initialization refers to replacing the default parameters of the template acc with 
+#initialization refers to replacing the default parameters of the template acc with
 #acc specific parameters
 function initialize_acc_tiles() {
 for ((i=0; i<$num_acc_tiles; i++))
@@ -542,11 +567,18 @@ if [[ "$4" == "IMPL_DPR" ]]; then
         echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/tile_acc_1/acc_top_inst implement ] \\" >>  $dpr_syn_tcl;
     done
     echo "]"  >> $dpr_syn_tcl;
+elif [[ "$4" == "IMPL_BBOX" ]]; then
+    echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  implement ] \\" >> $dpr_syn_tcl;
+    for ((i=0; i<$num_acc_tiles; i++))
+    do
+        echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/tile_acc_1/acc_top_inst greybox ] \\" >>  $dpr_syn_tcl;
+    done
+    echo "]"  >> $dpr_syn_tcl;
 elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
     if  [[ $regenerate_fplan == 1 ]]; then
-        echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  implement ] \\" >> $dpr_syn_tcl; 
+        echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  implement ] \\" >> $dpr_syn_tcl;
     else
-        echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  import ] \\" >> $dpr_syn_tcl; 
+        echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  import ] \\" >> $dpr_syn_tcl;
     fi
 
     for ((i=0, j=0; j<$num_acc_tiles; j++))
@@ -641,7 +673,7 @@ do
                pbs_base_addr=0x50000000;
             else
                #pbs_base_addr=0x04000000
-               pbs_base_addr=0xB0000000;
+               pbs_base_addr=0xA0000000;
             fi
         fi
     done
@@ -785,14 +817,8 @@ if [ "$4" == "BBOX" ]; then
     extract_acc $1 $2 $3
     initialize_acc_tiles $1 $2 $3
     initialize_bbox_tiles $1 $2 $3
-
-elif [ "$4" == "IMPL_BBOX" ]; then
-    extract_acc $1 $2 $3
-    initialize_acc_tiles $1 $2 $3
     add_acc_prj_file $1 $2 $3
-    parse_synth_report $1 $2 $3 $4
-    gen_floorplan $1 $2 $3 $4
-    gen_impl_script $1 $2 $3 $4
+    gen_synth_script $1 $2 $3 $4
 
 elif [ "$4" == "DPR" ]; then
     extract_acc $1 $2 $3
@@ -804,6 +830,9 @@ elif [ "$4" == "IMPL_DPR" ]; then
     extract_acc $1 $2 $3
     initialize_acc_tiles $1 $2 $3
     add_acc_prj_file $1 $2 $3
+    if [ "$5" == "BBOX" ]; then
+        set_acc_name_gbox $1 $2 $3
+    fi;
     parse_synth_report $1 $2 $3 $4
     gen_floorplan $1 $2 $3 $4
     gen_impl_script $1 $2 $3 $4
@@ -837,11 +866,17 @@ elif [ "$4" == "IMPL_ACC" ]; then
 elif [ "$4" == "GEN_BS" ]; then
     extract_acc $1 $2 $3;
     extract_acc_old $1 $2 $3;
+    if [ "$5" == "BBOX" ]; then
+        set_acc_name_gbox $1 $2 $3
+    fi;
     diff_accelerators $1 $2 $3;
     gen_bs_script $1 $2 $3 $4;
 
 elif [ "$4" == "GEN_HDR" ]; then
     extract_acc $1 $2 $3
+    if [ "$5" == "BBOX" ]; then
+        set_acc_name_gbox $1 $2 $3
+    fi;
     gen_bs_descriptor $1 $2 $3 $4
 
 elif [ "$4" == "LOAD_BS" ]; then
@@ -867,3 +902,5 @@ elif [ "$4" == "test" ]; then
     #echo " regenarate after parse is $regenerate_fplan";
     #gen_floorplan $1 $2 $3 $4
 fi;
+
+echo "process_dpr done $*"

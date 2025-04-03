@@ -4,6 +4,7 @@
 #include <monitors.h>
 #include <pbs_map.h>
 #include <prc_aux.h>
+#include <esplink.h>
 
 #ifdef __riscv
 #define APB_BASE_ADDR 0x60000000
@@ -151,7 +152,7 @@ static void set_trigger(unsigned pbs_id)
     else
         printf("[PRC DRIVER]: Error arming trigger \n");
 #ifdef DPR_VERBOSE
-    printf("[PRC DRIVER]: PBS addr -- 0x%08x \n", (unsigned) pb_map[pbs_id].pbs_addr);
+    printf("[PRC DRIVER]: PBS addr -- 0x%08x (offset 0x%08x) \n", (unsigned) pb_map[pbs_id].pbs_addr, PBS_BASE_ADDR);
     printf("[PRC DRIVER]: PBS size -- 0x%08x \n", pb_map[pbs_id].pbs_size);
 #endif
 }
