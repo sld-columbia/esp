@@ -21,8 +21,8 @@ fi
 while true; do
   if grep -q "$SUCCESS_PATTERN" "$minicom"; then
     echo "Boot completed successfully!"
-    killall -u $(whoami) minicom
-    sleep 3
+    # killall -u $(whoami) minicom
+    # sleep 3
     exit 0
   fi
   

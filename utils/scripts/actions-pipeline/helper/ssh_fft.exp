@@ -1,7 +1,7 @@
 #!/usr/bin/expect -f
 
-# Usage: ./ssh_login_fft.exp <port> <username> <hostname> <password>
-# Usage: ./ssh_login_fft.exp 5502 root espgate.cs.columbia.edu openesp
+# Usage: ./ssh_fft.exp <port> <username> <hostname> <password>
+# Usage: ./ssh_fft.exp 5502 root espgate.cs.columbia.edu openesp
 
 # Get command line arguments
 if {$argc < 4} {
