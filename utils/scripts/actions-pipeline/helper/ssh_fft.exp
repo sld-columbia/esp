@@ -1,5 +1,6 @@
 #!/usr/bin/expect -f
 
+# original ssh command: ssh -p 5502 root@espgate.cs.columbia.edu
 # Usage: ./ssh_fft.exp <port> <username> <hostname> <password>
 # Usage: ./ssh_fft.exp 5502 root espgate.cs.columbia.edu openesp
 
@@ -8,7 +9,6 @@ if {$argc < 4} {
     puts "Usage: $argv0 port username hostname password"
     exit 1
 }
-
 set port [lindex $argv 0]
 set username [lindex $argv 1]
 set hostname [lindex $argv 2]
@@ -50,7 +50,7 @@ expect {
     }
 }
 
-# change directory
+# Change directory in SSH
 set fftpath "../examples/multifft"
 set fftfile "multifft.exe"
 
@@ -67,7 +67,7 @@ expect {
     }
 }
 
-# Check if file exists
+# Try execute FFT
 send "if \[ -f \"$fftfile\" \]; then echo \"FILE_EXISTS\"; else echo \"FILE_NOT_FOUND\"; fi\r"
 expect {
     "FILE_EXISTS" {
@@ -82,13 +82,11 @@ expect {
     }
 }
 
-# Execute file
+# Execute FFT file
 expect -re "\\\$|#|>"
 send "./$fftfile\r"
-# interact
 
-# Set up a loop to handle the prompts
-# set checkpoint -1  # Wait indefinitely for the pattern
+# Set up a loop to handle the prompts of FFT
 
 # This expect command will loop automatically due to exp_continue
 expect {
@@ -96,17 +94,25 @@ expect {
         send "\r"
         exp_continue
     }
+    -re "\\\$|#|>" {
+        # Exit ssh (Takes time, like 10 sec, but yes it will exit.)
+        send "exit\r"
+        expect eof
+        exit 0
+    }
     eof {
         # End of file reached - program has terminated
         puts "Program has completed execution"
     }
     timeout {
-        # This shouldn't happen with timeout -1, but just in case
+        # Timeout, force exit
         puts "Timeout occurred"
     }
 }
 
+# Exit ssh (Takes time, like 10 sec, but yes it will exit.)
+send "exit\r"
 exit 0
 
-# Now interactive with the remote system
-interact
+# Now manually interactive with the remote system
+# interact

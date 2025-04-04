@@ -5,7 +5,7 @@
 # Env setup
 ESP_ROOT=$(realpath ../../)
 logs="$ESP_ROOT/utils/scripts/actions-pipeline/logs"
-minicom="$logs/minicom/minicom_linux.log"
+minicom="$logs/minicom/linux_boot.log"
 
 # Target
 SUCCESS_PATTERN="Welcome to ESP"
@@ -21,8 +21,8 @@ fi
 while true; do
   if grep -q "$SUCCESS_PATTERN" "$minicom"; then
     echo "Boot completed successfully!"
-    # killall -u $(whoami) minicom
-    # sleep 3
+    killall -u $(whoami) minicom
+    sleep 3
     exit 0
   fi
   
