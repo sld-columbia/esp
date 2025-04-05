@@ -89,8 +89,11 @@ int main(int argc, char **argv)
 
     float *gold[3];
     token_t *buf[3];
+    int *fft_error = (int*)malloc(NACC * sizeof(int));
+    int fft_pass_count = 0;
 
     const float ERROR_COUNT_TH = 0.01;
+    const int P2P_COUNT_TH = 10;
 
     int k;
 
@@ -117,10 +120,14 @@ int main(int argc, char **argv)
 
     errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-    if (((float)errors / (float)len) > ERROR_COUNT_TH)
+    if (((float)errors / (float)len) > ERROR_COUNT_TH) {
         printf("  + TEST FAIL: exceeding error count threshold\n");
-    else
+        printf("  + OVERALL TEST RESULT: Non coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
+    }
+    else {
         printf("  + TEST PASS: not exceeding error count threshold\n");
+        printf("  + OVERALL TEST RESULT: Non coherent DMA: PASS (%d/%d)\n", errors, 2 * len);
+    }
 
     printf("\n============\n\n");
 
@@ -141,10 +148,14 @@ int main(int argc, char **argv)
 
     errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-    if (((float)errors / (float)len) > ERROR_COUNT_TH)
+    if (((float)errors / (float)len) > ERROR_COUNT_TH) {
         printf("  + TEST FAIL: exceeding error count threshold\n");
-    else
+        printf("  + OVERALL TEST RESULT: LLC-coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
+    }
+    else {
         printf("  + TEST PASS: not exceeding error count threshold\n");
+        printf("  + OVERALL TEST RESULT: LLC-coherent DMA: PASS (%d/%d)\n", errors, 2 * len);
+    }
 
     printf("\n============\n\n");
 
@@ -165,10 +176,14 @@ int main(int argc, char **argv)
 
     errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-    if (((float)errors / (float)len) > ERROR_COUNT_TH)
+    if (((float)errors / (float)len) > ERROR_COUNT_TH) {
         printf("  + TEST FAIL: exceeding error count threshold\n");
-    else
+        printf("  + OVERALL TEST RESULT: Fully-coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
+    }
+    else {
         printf("  + TEST PASS: not exceeding error count threshold\n");
+        printf("  + OVERALL TEST RESULT: Fully-coherent DMA: PASS (%d/%d)\n", errors, 2 * len);
+    }
 
     printf("\n============\n\n");
 
@@ -196,12 +211,28 @@ int main(int argc, char **argv)
 
     for (k = 0; k < NACC; k++) {
         errors = validate_buffer(&buf[k][out_offset], gold[k]);
+        fft_error[k] = errors;
 
         if (((float)errors / (float)(len * NACC)) > ERROR_COUNT_TH)
             printf("  + TEST FAIL fft.%d: exceeding error count threshold\n", k);
-        else
+        else {
             printf("  + TEST PASS fft.%d: not exceeding error count threshold\n", k);
+            fft_pass_count ++;
+        }
     }
+
+    if (fft_pass_count < NACC)
+        printf("  + OVERALL TEST RESULT: Concurrent execution: FAIL (%d/%d).", NACC - fft_pass_count, NACC);
+    else
+        printf("  + OVERALL TEST RESULT: Concurrent execution: PASS.");
+    for (k = 0; k < NACC; k++) {
+        errors = fft_error[k];
+        if (((float)errors / (float)(len * NACC)) > ERROR_COUNT_TH)
+            printf(" fft.%d: FAIL (%d/%d).", k, errors, 2 * len);
+        else
+            printf(" fft.%d: PASS (%d/%d).", k, errors, 2 * len);
+    }
+    printf("\n");
 
     printf("\n============\n\n");
 
@@ -225,10 +256,14 @@ int main(int argc, char **argv)
 
     errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-    if (((float)errors / (float)(len * NACC)) > ERROR_COUNT_TH)
-        printf("  + TEST FAIL: exceeding error count threshold\n");
-    else
-        printf("  + TEST PASS: not exceeding error count threshold\n");
+    if (errors > P2P_COUNT_TH) {
+        printf("  + TEST FAIL: exceeding error count threshold of %d\n", P2P_COUNT_TH);
+        printf("  + OVERALL TEST RESULT: Fully-coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
+    }
+    else {
+        printf("  + TEST FAIL: exceeding error count threshold of %d\n", P2P_COUNT_TH);
+        printf("  + OVERALL TEST RESULT: Fully-coherent DMA: PASS (%d/%d)\n", errors, 2 * len);
+    }
 
     printf("\n============\n\n");
 
@@ -236,6 +271,7 @@ int main(int argc, char **argv)
         free(gold[k]);
         esp_free(buf[k]);
     }
+    free(fft_error);
 
     return errors;
 }

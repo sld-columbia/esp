@@ -7,7 +7,7 @@ NC='\033[0m'
 BOLD='\033[1m'
 EMOJI_CHECK="\xE2\x9C\x94"
 
-### Env setup ###
+## Env setup ##
 source /opt/cad/scripts/tools_env.sh
 ESP_ROOT=$(realpath ../../../)
 esp_config="$ESP_ROOT/socs/xilinx-vc707-xc7vx485t/socgen/esp/.esp_config"
@@ -15,7 +15,7 @@ fpga_run="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_program.sh"
 fpga_run_linux="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_linux.sh"
 monitor="$ESP_ROOT/utils/scripts/actions-pipeline/helper/monitor_linux_boot.sh"
 
-# Specify logging directories. Clean up old log files.
+## Specify logging directories. Clean up old log files.
 logs="$ESP_ROOT/utils/scripts/actions-pipeline/logs"
 if [ -d "$logs" ]; then
     rm -r "$logs"
@@ -40,9 +40,9 @@ boot_linux="$logs/soft/boot_linux.log"
 
 cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 
-### SoC flow ###
+## SoC flow ##
 
-## HLS ##
+## HLS
 # Clean the vivado directory and bitstream
 echo ""
 echo -e "${BOLD}CLEANING VIVADO DIRECTORIES...${NC}"
@@ -61,7 +61,7 @@ echo ""
 echo -e "${BOLD}STARTING SoC HLS W/ ACCELERATOR...${NC}"
 make vivado-syn > "$vivado_syn" 2>&1
 
-## FPGA ##
+## FPGA
 # Check bitstream
 if [ -s "top.bit" ]; then
     echo ""
@@ -104,18 +104,17 @@ else
     echo ""
     echo "BITSTREAM GENERATION FAILED"
 fi
-### SoC flow end ###
+## SoC flow end ##
 
 
-## Software Flow ###
+## Software Flow ##
 
-## Prepare target ##
+## Prepare target
 # Clean
 echo ""
 echo -e "${BOLD}PRE MAKE LINUX CLEANUP...${NC}"
 make linux-distclean >/dev/null 2>&1
 # Make soft
-make soft
 echo ""
 echo -e "${BOLD}STARTING MAKE SOFT...${NC}"
 make soft > "$soft" 2>&1
