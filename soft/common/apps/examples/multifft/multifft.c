@@ -261,7 +261,7 @@ int main(int argc, char **argv)
         printf("  + OVERALL TEST RESULT: Fully-coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
     }
     else {
-        printf("  + TEST FAIL: exceeding error count threshold of %d\n", P2P_COUNT_TH);
+        printf("  + TEST PASS: not exceeding error count threshold of %d\n", P2P_COUNT_TH);
         printf("  + OVERALL TEST RESULT: Fully-coherent DMA: PASS (%d/%d)\n", errors, 2 * len);
     }
 

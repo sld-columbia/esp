@@ -57,7 +57,7 @@ set fftfile "multifft.exe"
 send "if \[ -d \"$fftpath\" \]; then echo \"DIR_EXISTS\"; else echo \"DIR_NOT_FOUND\"; fi\r"
 expect {
     "DIR_EXISTS" {
-        # Directory exists, continue with your commands
+        puts "Directory exists, continue with changing directory to ../examples/multifft"
         send "cd $fftpath\r"
     }
     "DIR_NOT_FOUND" {
@@ -71,7 +71,7 @@ expect {
 send "if \[ -f \"$fftfile\" \]; then echo \"FILE_EXISTS\"; else echo \"FILE_NOT_FOUND\"; fi\r"
 expect {
     "FILE_EXISTS" {
-        puts "File found."
+        puts "File found - multifft.exe"
     }
     "FILE_NOT_FOUND" {
         puts "Error: File not found!"
@@ -84,6 +84,7 @@ expect {
 
 # Execute FFT file
 expect -re "\\\$|#|>"
+puts "Execute multifft.exe"
 send "./$fftfile\r"
 
 # Set up a loop to handle the prompts of FFT

@@ -15,7 +15,7 @@ fpga_run="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_program.sh"
 fpga_run_linux="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_linux.sh"
 monitor="$ESP_ROOT/utils/scripts/actions-pipeline/helper/monitor_linux_boot.sh"
 
-## Specify logging directories. Clean up old log files.
+# Specify logging directories. Clean up old log files.
 logs="$ESP_ROOT/utils/scripts/actions-pipeline/logs"
 if [ -d "$logs" ]; then
     rm -r "$logs"
@@ -131,7 +131,7 @@ echo ""
 echo -e "${BOLD}STARTING MAKE LINUX...${NC}"
 make linux > "$linux" 2>&1
 
-## Run software ##
+## Run software
 # check make linux success
 if [ -s "./soft-build/ariane/linux.bin" ]; then
     echo ""

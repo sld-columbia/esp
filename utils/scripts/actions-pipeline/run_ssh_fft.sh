@@ -1,20 +1,26 @@
 #!/bin/bash
 
-### Output styles
+# Output styles
 NC='\033[0m' 
 BOLD='\033[1m'
 EMOJI_CHECK="\xE2\x9C\x94"
 
-### Env setup
-# source /opt/cad/scripts/tools_env.sh
+## Env setup
+source /opt/cad/scripts/tools_env.sh
 # make fft_stratus-hls
 ESP_ROOT=$(realpath ../../../)
 fpga_run="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_program.sh"
 fpga_run_linux="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_linux.sh"
 monitor="$ESP_ROOT/utils/scripts/actions-pipeline/helper/monitor_linux_boot.sh"
-run_ssh_fft="$ESP_ROOT/utils/scripts/actions-pipeline/helper/execute_ssh_fft.sh"
-# logs
+exe_ssh_fft="$ESP_ROOT/utils/scripts/actions-pipeline/helper/execute_ssh_fft.sh"
+
+# Specify logging directories. Some were created by previous action of testing soft.
 logs="$ESP_ROOT/utils/scripts/actions-pipeline/logs"
+mkdir -p "$logs"
+mkdir -p "$logs/hls"
+mkdir -p "$logs/fpga"
+mkdir -p "$logs/minicom"
+mkdir -p "$logs/soft"
 fpga_program="$logs/fpga/fpga_program.log"
 run="$logs/fpga/fpga_run.log"
 minicom="$logs/minicom/baremetal_hello.log"
@@ -25,17 +31,17 @@ ssh_fft="$logs/soft/ssh_fft.log"
 
 cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 
-# ### SoC config creation
-# # esp config
+## SoC config creation
+# TODO
 # make esp-xconfig
 
-# ### fft workflow ###
+# ## fft workflow
 # make linux-distclean
 # make linux
 # make examples
 # make linux
 
-# ### upload bitstream
+# ## upload bitstream
 # if [ -s "top.bit" ]; then
 #     echo ""
 #     echo "BITSTREAM IS FOUND"
@@ -77,62 +83,70 @@ cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 #     echo ""
 #     echo "BITSTREAM GENERATION FAILED"
 # fi
+# ## SoC flow end ##
+
+## Software Flow ##
+# suppose targets are prepared
+# make linux, make examples, make linux
+
+## Run Software
+if [ -s "./soft-build/ariane/linux.bin" ]; then
+    echo ""
+    echo "MAKE LINUX SUCCESS"
+
+    # open minicom session
+    echo ""
+    echo "TRY TO OPEN MINICOM..."
+    socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
+    socat_pid=$!
+    sleep 2
+    VIRTUAL_DEVICE=$(readlink ttyV0)
+
+    # make fpga-run-linux in background
+    echo ""
+    echo -e "${BOLD}BOOTING LINUX...${NC}"
+    cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
+    $fpga_run_linux > "$run_linux" 2>&1 &
+
+    # call helper to monitor linux boot progress. kill minicom if boot successfully.
+    $monitor > "$boot_linux" 2>&1 &
+    monitor_pid=$!
+
+    # open minicom in foreground
+    minicom="$logs/minicom/linux_boot.log"
+    minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
+
+    # print monitor status
+    wait $monitor_pid
+    EXIT_CODE=$?
+    if [ $EXIT_CODE -eq 0 ]; then
+        echo "Monitor script detected successful boot."
+
+        # execute fft
+        cd "$ESP_ROOT/utils/scripts/actions-pipeline/helper"
+        echo "SSH to FPGA and execute FFT"
+        $exe_ssh_fft > "$ssh_fft" 2>&1
+        echo "End of SSH_FFT"
+    else
+        echo "Monitor script detected boot failure or was terminated."
+        # manually kill panic linux
+    fi
+
+else
+    echo ""
+    echo "MAKE LINUX FAILED"
+fi
 
 
-### Run Software
-# if [ -s "./soft-build/ariane/linux.bin" ]; then
-#     echo ""
-#     echo "MAKE LINUX SUCCESS"
-
-#     # open minicom session
-#     echo ""
-#     echo "TRY TO OPEN MINICOM..."
-#     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
-#     socat_pid=$!
-#     sleep 2
-#     VIRTUAL_DEVICE=$(readlink ttyV0)
-
-#     # make fpga-run-linux in background
-#     echo ""
-#     echo -e "${BOLD}BOOTING LINUX...${NC}"
-#     cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
-#     $fpga_run_linux > "$run_linux" 2>&1 &
-
-#     # call helper to monitor linux boot progress. kill minicom if boot successfully.
-#     $monitor > "$boot_linux" 2>&1 &
-#     monitor_pid=$!
-
-#     # open minicom in foreground
-#     minicom="$logs/minicom/linux_boot.log"
-#     minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
-
-#     # print monitor status
-#     wait $monitor_pid
-#     EXIT_CODE=$?
-#     if [ $EXIT_CODE -eq 0 ]; then
-#         echo "Monitor script detected successful boot."
-#     else
-#         echo "Monitor script detected boot failure or was terminated."
-#         # manually kill panic linux
-#     fi
-
-# else
-#     echo ""
-#     echo "MAKE LINUX FAILED"
-# fi
-
-
-# ### Run SSH flow
+# ## SSH and FFT
 # if [ $EXIT_CODE -eq 0 ]; then
 #     # Linux had been booted
-#     # TODO: run ssh_fft script. redirect stdout. no need to open minicom.
-#     $run_ssh_fft > "$ssh_fft" 2>&1 &
+#     # TODO: run ssh_fft script. redirect stdout of ssh and fft. no need to open minicom to sun this.
+#     cd "$ESP_ROOT/utils/scripts/actions-pipeline/helper"
+#     $exe_ssh_fft > "$ssh_fft" 2>&1
 # else
 #     echo "Monitor script detected boot failure or was terminated"
 # fi
-
-cd "$ESP_ROOT/utils/scripts/actions-pipeline/helper"
-$run_ssh_fft > "$ssh_fft" 2>&1
 
 # # clean up
 # kill -9 "$socat_pid"
