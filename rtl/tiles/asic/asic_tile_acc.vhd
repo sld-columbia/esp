@@ -61,6 +61,7 @@ entity asic_tile_acc is
     dco_div_sel       : in std_logic_vector(2 downto 0);
     dco_freq_sel      : in std_logic_vector(1 downto 0);
     LDOCTRL           : in std_logic_vector(7 downto 0);
+    acc_activity      : out std_ulogic;
     -- NoC interface
     noc1_stop_in_tile       : out std_ulogic;
     noc1_stop_out_tile      : in  std_ulogic;
@@ -147,8 +148,6 @@ architecture rtl of asic_tile_acc is
   signal test6_input_port_s    : dma_noc_flit_type;
   signal test6_data_void_in_s  : std_ulogic;
   signal test6_stop_out_s      : std_ulogic;
-
-  signal acc_activity : std_ulogic;
 
 begin
 

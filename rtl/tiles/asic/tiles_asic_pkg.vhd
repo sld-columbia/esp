@@ -115,6 +115,7 @@ package tiles_asic_pkg is
       dco_div_sel       : in std_logic_vector(2 downto 0);
       dco_freq_sel      : in std_logic_vector(1 downto 0);
       LDOCTRL           : in std_logic_vector(7 downto 0);
+      acc_activity: out std_ulogic;
       -- Noc interface
       noc1_stop_in_tile       : out std_ulogic;
       noc1_stop_out_tile      : in  std_ulogic;
