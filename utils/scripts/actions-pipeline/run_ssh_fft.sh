@@ -28,6 +28,7 @@ linux="$logs/soft/linux.log"
 run_linux="$logs/fpga/fpga_run_linux.log"
 boot_linux="$logs/soft/boot_linux.log"
 ssh_fft="$logs/soft/ssh_fft.log"
+workflow_result="$logs/workflow_result.log"
 
 cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 
@@ -91,20 +92,17 @@ cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 
 ## Run Software
 if [ -s "./soft-build/ariane/linux.bin" ]; then
-    echo ""
-    echo "MAKE LINUX SUCCESS"
+    echo "Make Linux success" >> "$workflow_result"
 
     # open minicom session
-    echo ""
-    echo "TRY TO OPEN MINICOM..."
+    echo "Try to open minicom..."
     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
     socat_pid=$!
     sleep 2
     VIRTUAL_DEVICE=$(readlink ttyV0)
 
     # make fpga-run-linux in background
-    echo ""
-    echo -e "${BOLD}BOOTING LINUX...${NC}"
+    echo "Booting Linux..."
     cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
     $fpga_run_linux > "$run_linux" 2>&1 &
 
@@ -120,13 +118,17 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     wait $monitor_pid
     EXIT_CODE=$?
     if [ $EXIT_CODE -eq 0 ]; then
-        echo "Monitor script detected successful boot."
+        echo "Linux boot success"
+        echo "Linux boot success" >> "$workflow_result"
 
-        # execute fft
+        # execute ssh and fft
         cd "$ESP_ROOT/utils/scripts/actions-pipeline/helper"
         echo "SSH to FPGA and execute FFT"
         $exe_ssh_fft > "$ssh_fft" 2>&1
         echo "End of SSH_FFT"
+
+        # TODO: implement post-process fft result?
+        
     else
         echo "Monitor script detected boot failure or was terminated."
         # manually kill panic linux
