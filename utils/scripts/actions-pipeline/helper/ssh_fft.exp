@@ -1,6 +1,6 @@
 #!/usr/bin/expect -f
 
-# original ssh command: ssh -p 5502 root@espgate.cs.columbia.edu
+# original ssh command: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 5502 root@espgate.cs.columbia.edu
 # Usage: ./ssh_fft.exp <port> <username> <hostname> <password>
 # Usage: ./ssh_fft.exp 5502 root espgate.cs.columbia.edu openesp
 
@@ -18,7 +18,7 @@ set password [lindex $argv 3]
 set timeout 30
 
 # Start the SSH process with specific port
-spawn ssh -p $port $username@$hostname
+spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p $port $username@$hostname
 
 # Handle different possible login prompts
 expect {

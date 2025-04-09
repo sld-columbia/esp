@@ -93,7 +93,7 @@ int main(int argc, char **argv)
     int fft_pass_count = 0;
 
     const float ERROR_COUNT_TH = 0.01;
-    const int P2P_COUNT_TH = 10;
+    const int TESTING_COUNT_TH = 10;
 
     int k;
 
@@ -122,10 +122,14 @@ int main(int argc, char **argv)
 
     if (((float)errors / (float)len) > ERROR_COUNT_TH) {
         printf("  + TEST FAIL: exceeding error count threshold\n");
-        printf("  + OVERALL TEST RESULT: Non coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
     }
     else {
         printf("  + TEST PASS: not exceeding error count threshold\n");
+    }
+    if (errors > TESTING_COUNT_TH) {
+        printf("  + OVERALL TEST RESULT: Non coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
+    }
+    else {
         printf("  + OVERALL TEST RESULT: Non coherent DMA: PASS (%d/%d)\n", errors, 2 * len);
     }
 
@@ -150,10 +154,14 @@ int main(int argc, char **argv)
 
     if (((float)errors / (float)len) > ERROR_COUNT_TH) {
         printf("  + TEST FAIL: exceeding error count threshold\n");
-        printf("  + OVERALL TEST RESULT: LLC-coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
     }
     else {
         printf("  + TEST PASS: not exceeding error count threshold\n");
+    }
+    if (errors > TESTING_COUNT_TH) {
+        printf("  + OVERALL TEST RESULT: LLC-coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
+    }
+    else {
         printf("  + OVERALL TEST RESULT: LLC-coherent DMA: PASS (%d/%d)\n", errors, 2 * len);
     }
 
@@ -178,10 +186,14 @@ int main(int argc, char **argv)
 
     if (((float)errors / (float)len) > ERROR_COUNT_TH) {
         printf("  + TEST FAIL: exceeding error count threshold\n");
-        printf("  + OVERALL TEST RESULT: Fully-coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
     }
     else {
         printf("  + TEST PASS: not exceeding error count threshold\n");
+    }
+    if (errors > TESTING_COUNT_TH) {
+        printf("  + OVERALL TEST RESULT: Fully-coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
+    }
+    else {
         printf("  + OVERALL TEST RESULT: Fully-coherent DMA: PASS (%d/%d)\n", errors, 2 * len);
     }
 
@@ -215,10 +227,11 @@ int main(int argc, char **argv)
 
         if (((float)errors / (float)(len * NACC)) > ERROR_COUNT_TH)
             printf("  + TEST FAIL fft.%d: exceeding error count threshold\n", k);
-        else {
+        else
             printf("  + TEST PASS fft.%d: not exceeding error count threshold\n", k);
+        
+        if (errors < TESTING_COUNT_TH)
             fft_pass_count ++;
-        }
     }
 
     if (fft_pass_count < NACC)
@@ -227,7 +240,7 @@ int main(int argc, char **argv)
         printf("  + OVERALL TEST RESULT: Concurrent execution: PASS.");
     for (k = 0; k < NACC; k++) {
         errors = fft_error[k];
-        if (((float)errors / (float)(len * NACC)) > ERROR_COUNT_TH)
+        if (errors > TESTING_COUNT_TH)
             printf(" fft.%d: FAIL (%d/%d).", k, errors, 2 * len);
         else
             printf(" fft.%d: PASS (%d/%d).", k, errors, 2 * len);
@@ -256,12 +269,12 @@ int main(int argc, char **argv)
 
     errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-    if (errors > P2P_COUNT_TH) {
-        printf("  + TEST FAIL: exceeding error count threshold of %d\n", P2P_COUNT_TH);
+    if (errors > TESTING_COUNT_TH) {
+        printf("  + TEST FAIL: exceeding error count threshold of %d\n", TESTING_COUNT_TH);
         printf("  + OVERALL TEST RESULT: Fully-coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
     }
     else {
-        printf("  + TEST PASS: not exceeding error count threshold of %d\n", P2P_COUNT_TH);
+        printf("  + TEST PASS: not exceeding error count threshold of %d\n", TESTING_COUNT_TH);
         printf("  + OVERALL TEST RESULT: Fully-coherent DMA: PASS (%d/%d)\n", errors, 2 * len);
     }
 

@@ -16,6 +16,7 @@ exe_ssh_fft="$ESP_ROOT/utils/scripts/actions-pipeline/helper/execute_ssh_fft.sh"
 
 # Specify logging directories. Some were created by previous action of testing soft.
 logs="$ESP_ROOT/utils/scripts/actions-pipeline/logs"
+rm -rf "$logs"
 mkdir -p "$logs"
 mkdir -p "$logs/hls"
 mkdir -p "$logs/fpga"
@@ -44,12 +45,10 @@ cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 
 # ## upload bitstream
 # if [ -s "top.bit" ]; then
-#     echo ""
-#     echo "BITSTREAM IS FOUND"
+#     echo "BITSTREAM IS FOUND" >> "$workflow_result"
 
 #     # make fpga-program
-#     echo ""
-#     echo "TRYING TO PROGRAM FPGA..."
+#     echo "TRYING TO PROGRAM FPGA..." >> "$workflow_result"
 # 	make fpga-program > "$fpga_program" 2>&1
 #     if grep -q ERROR "$fpga_program"; then
 #         echo ""
@@ -60,16 +59,14 @@ cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 #     fi
 
 #     # open minicom session
-#     echo ""
-#     echo "TRY TO OPEN MINICOM..."
+#     echo "TRY TO OPEN MINICOM..." >> "$workflow_result"
 #     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
 #     socat_pid=$!
 #     sleep 2
 #     VIRTUAL_DEVICE=$(readlink ttyV0)
 
 #     # make fpga-run in background
-#     echo ""
-#     echo -e "${BOLD}WRITING BAREMETAL RESULTS TO MINICOM...${NC}"
+#     echo -e "WRITING BAREMETAL RESULTS TO MINICOM..." >> "$workflow_result"
 #     cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 #     $fpga_run > "$run" 2>&1 &
 
@@ -81,8 +78,7 @@ cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 #     kill -9 "$socat_pid"
 
 # else
-#     echo ""
-#     echo "BITSTREAM GENERATION FAILED"
+#     echo "BITSTREAM GENERATION FAILED" >> "$workflow_result"
 # fi
 # ## SoC flow end ##
 
@@ -92,17 +88,17 @@ cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 
 ## Run Software
 if [ -s "./soft-build/ariane/linux.bin" ]; then
-    echo "Make Linux success" >> "$workflow_result"
+    echo "MAKE LINUX SUCCESS" >> "$workflow_result"
 
     # open minicom session
-    echo "Try to open minicom..."
+    echo "TRY TO OPEN MINICOM..." >> "$workflow_result"
     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
     socat_pid=$!
     sleep 2
     VIRTUAL_DEVICE=$(readlink ttyV0)
 
     # make fpga-run-linux in background
-    echo "Booting Linux..."
+    echo "BOOTING LINUX..." >> "$workflow_result"
     cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
     $fpga_run_linux > "$run_linux" 2>&1 &
 
@@ -118,7 +114,7 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     wait $monitor_pid
     EXIT_CODE=$?
     if [ $EXIT_CODE -eq 0 ]; then
-        echo "Linux boot success" >> "$workflow_result"
+        echo "LINUX BOOT SUCCESS" >> "$workflow_result"
 
         # execute ssh and fft
         cd "$ESP_ROOT/utils/scripts/actions-pipeline/helper"
@@ -129,13 +125,12 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
         # TODO: implement post-process fft result?
         
     else
-        echo "Monitor script detected boot failure or was terminated."
+        echo "Monitor script detected boot failure or was terminated." >> "$workflow_result"
         # manually kill panic linux
     fi
 
 else
-    echo ""
-    echo "MAKE LINUX FAILED"
+    echo "MAKE LINUX FAILED" >> "$workflow_result"
 fi
 
 
