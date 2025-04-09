@@ -118,14 +118,13 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     wait $monitor_pid
     EXIT_CODE=$?
     if [ $EXIT_CODE -eq 0 ]; then
-        echo "Linux boot success"
         echo "Linux boot success" >> "$workflow_result"
 
         # execute ssh and fft
         cd "$ESP_ROOT/utils/scripts/actions-pipeline/helper"
-        echo "SSH to FPGA and execute FFT"
+        echo "SSH to FPGA and execute FFT" >> "$workflow_result"
         $exe_ssh_fft > "$ssh_fft" 2>&1
-        echo "End of SSH_FFT"
+        echo "End of SSH_FFT" >> "$workflow_result"
 
         # TODO: implement post-process fft result?
         
