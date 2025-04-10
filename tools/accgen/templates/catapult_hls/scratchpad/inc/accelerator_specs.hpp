@@ -13,34 +13,30 @@
 #include "esp_dma_info_sysc.hpp"
 #include <ArbitratedScratchpadDP.h>
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 /* <<--defines-->> */
 #define MEM_SIZE /* <<--mem-footprint-->> */ / (DMA_WIDTH / 8)
 
-#if (DMA_WIDTH == 32)
-    /* <<--defines_32-->> */
-    #define DMA_BEAT_PER_WORD /* <<--dbpw32-->> */
-    #define DMA_WORD_PER_BEAT /* <<--dwpb32-->> */
-    #define PLM_IN_WP         /* <<--inwp32-->> */
-    #define PLM_OUT_RP        /* <<--inwp32-->> */
-#elif (DMA_WIDTH == 64)
-    /* <<--defines_64-->> */
-    #define DMA_BEAT_PER_WORD /* <<--dbpw64-->> */
-    #define DMA_WORD_PER_BEAT /* <<--dwpb64-->> */
-    #define PLM_IN_WP         /* <<--inwp64-->> */
-    #define PLM_OUT_RP        /* <<--inwp64-->> */
-#endif
+#define DMA_BEAT_PER_WORD MAX(1, (DATA_WIDTH / DMA_WIDTH))
+#define DMA_WORD_PER_BEAT (DMA_WIDTH / DATA_WIDTH)
+#define PLM_IN_WP MAX(1, DMA_WORD_PER_BEAT)
+#define PLM_OUT_RP MAX(1, DMA_WORD_PER_BEAT)
 
 #define PLM_IN_RP  1
 #define PLM_OUT_WP 1
+
+#define IN_BKS MAX(PLM_IN_WP,PLM_IN_RP)
+#define OUT_BKS MAX(PLM_OUT_WP,PLM_OUT_RP)
 
 const unsigned int inwp    = PLM_IN_WP;
 const unsigned int inrp    = PLM_IN_RP;
 const unsigned int outwp   = PLM_OUT_WP;
 const unsigned int outrp   = PLM_OUT_RP;
-const unsigned int inbks   = PLM_IN_WP;
-const unsigned int outbks  = PLM_OUT_RP;
-const unsigned int inebks  = PLM_IN_WORD / PLM_IN_WP;
-const unsigned int outebks = PLM_OUT_WORD / PLM_OUT_RP;
+const unsigned int inbks   = IN_BKS;
+const unsigned int outbks  = OUT_BKS;
+const unsigned int inebks  = PLM_IN_WORD / IN_BKS;
+const unsigned int outebks = PLM_OUT_WORD / OUT_BKS;
 const unsigned int in_as   = nvhls::index_width<inbks * inebks>::val;
 const unsigned int out_as  = nvhls::index_width<outbks * outebks>::val;
 

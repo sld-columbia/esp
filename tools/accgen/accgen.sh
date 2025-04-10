@@ -153,6 +153,16 @@ NPARAMS=0
 
 ### Configuration registers
 if [ $FLOW != "hls4ml" ]; then
+    if [ $FLOW == "catapult_hls" ]; then
+	read -p "  * Select PLM coding style (${bold}a${normal}c_shared, ${bold}s${normal}cratchpad) ${def}[a]${normal}: " PLM_CS_SELECT
+	PLM_CS_SELECT=${PLM_CS_SELECT:-a}
+	case $PLM_CS_SELECT in
+	    [Aa]* ) PLM_CS="ac_shared";;
+	    [Ss]* ) PLM_CS="scratchpad";;
+	    * ) PLM_CS="ac_shared";;
+	esac
+    fi
+
     echo "  * Enter accelerator registers"
     read -p "    - register $NPARAMS name ${def}[size]${normal}: " param
     param=${param:-"size"}
@@ -305,6 +315,12 @@ ACC_DIR=$ESP_ROOT/accelerators/$FLOW_DIR/$LOWERFULL
 
 TEMPLATES_DIR=$ESP_ROOT/tools/accgen/templates/$FLOW
 
+
+if [ $FLOW == "catapult_hls" ]; then
+    TEMPLATES_DIR=$ESP_ROOT/tools/accgen/templates/$FLOW/$PLM_CS
+fi
+
+# echo $TEMPLATES_DIR
 mkdir -p $ACC_DIR/hw
 
 if [ "$FLOW" == "stratus_hls" ]; then
@@ -527,14 +543,14 @@ if [ "$FLOW" == "catapult_hls" ]; then
     sed -i "s/\/\* <<--mem-footprint-->> \*\//${memory_footprint}/g" ${LOWER}_specs.hpp
 
 
-    for d in ${dma_width[@]}; do
-	p=$(( (d+data_width-1)/data_width ))
-	dbpw=$(( (data_width+d-1)/d ))
-	dwpb=$(( d/data_width ))
-	sed -i "s/\/\* <<--dbpw${d}-->> \*\//${dbpw}/g" ${LOWER}_specs.hpp
-	sed -i "s/\/\* <<--dwpb${d}-->> \*\//${dwpb}/g " ${LOWER}_specs.hpp
-	sed -i "s/\/\* <<--inwp${d}-->> \*\//${p}/g" ${LOWER}_specs.hpp
-    done
+    # for d in ${dma_width[@]}; do
+    # 	p=$(( (d+data_width-1)/data_width ))
+    # 	dbpw=$(( (data_width+d-1)/d ))
+    # 	dwpb=$(( d/data_width ))
+    # 	sed -i "s/\/\* <<--dbpw${d}-->> \*\//${dbpw}/g" ${LOWER}_specs.hpp
+    # 	sed -i "s/\/\* <<--dwpb${d}-->> \*\//${dwpb}/g " ${LOWER}_specs.hpp
+    # 	sed -i "s/\/\* <<--inwp${d}-->> \*\//${p}/g" ${LOWER}_specs.hpp
+    # done
 
 fi
 
