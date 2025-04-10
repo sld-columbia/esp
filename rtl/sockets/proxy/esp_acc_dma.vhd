@@ -63,7 +63,8 @@ entity esp_acc_dma is
     tlb_entries        : integer                              := 256);
   port (
     rst           : in  std_ulogic;
-    clk           : in  std_ulogic;
+    tile_clk      : in  std_ulogic;
+    acc_clk       : in  std_ulogic;
     local_y       : in  local_yx;
     local_x       : in  local_yx;
     paddr         : in  integer range 0 to 4095;
@@ -134,6 +135,7 @@ end esp_acc_dma;
 
 architecture rtl of esp_acc_dma is
 
+  signal clk : std_ulogic;
 
   signal read_length : std_logic_vector(31 downto 0);
 
@@ -188,6 +190,7 @@ architecture rtl of esp_acc_dma is
   end fix_endian;
 
   -- Register bank
+  signal apbreg    : bank_type(0 to MAXREGNUM - 1);
   signal bankreg   : bank_type(0 to MAXREGNUM - 1);
   signal bankin    : bank_type(0 to MAXREGNUM - 1);
   signal sample    : std_logic_vector(0 to MAXREGNUM - 1);
@@ -372,6 +375,8 @@ architecture rtl of esp_acc_dma is
    --attribute mark_debug of skip_wait_p2p_req_in : signal is "true";
 
 begin  -- rtl
+
+  clk <= acc_clk;
 
   read_length <= rd_length;
 
@@ -1296,7 +1301,7 @@ begin  -- rtl
   end process;
 
   -------------------------------------------------------------------------------
-  -- DMA Controller APB Slave
+  -- DMA Controller APB Slave (synchronous to tile_clk)
   -------------------------------------------------------------------------------
 
   -- APB Interface
@@ -1313,23 +1318,23 @@ begin  -- rtl
     bank(i) <= bankreg(i);
   end generate reg_out;
 
-  drive_irq: process (clk, rst)
+  drive_irq: process (tile_clk, rst)
   begin  -- process drive_irq
     if rst = '0' then                   -- asynchronous reset (active low)
       irq <= '0';
       irqset <= '0';
-    elsif clk'event and clk = '1' then  -- rising clock edge
+    elsif tile_clk'event and tile_clk = '1' then  -- rising clock edge
       if irqset = '1' then
         irq <= '0';
-      elsif ((bankreg(STATUS_REG)(STATUS_BIT_DONE) or
-              bankreg(STATUS_REG)(STATUS_BIT_ERR)) = '1' and
+      elsif ((apbreg(STATUS_REG)(STATUS_BIT_DONE) or
+              apbreg(STATUS_REG)(STATUS_BIT_ERR)) = '1' and
              irqset = '0') then
         irq <= '1';
         irqset <=  '1';
       end if;
-      if ((bankreg(STATUS_REG)(STATUS_BIT_RUN) or
-           bankreg(STATUS_REG)(STATUS_BIT_DONE) or
-           bankreg(STATUS_REG)(STATUS_BIT_ERR)) = '0') then
+      if ((apbreg(STATUS_REG)(STATUS_BIT_RUN) or
+           apbreg(STATUS_REG)(STATUS_BIT_DONE) or
+           apbreg(STATUS_REG)(STATUS_BIT_ERR)) = '0') then
         -- Equivalent to clear IRQ
         irqset <= '0';
       end if;
@@ -1337,7 +1342,7 @@ begin  -- rtl
   end process drive_irq;
 
   -- rd/wr registers
-  process(apbi, bankreg)
+  process(apbi, apbreg)
     variable addr : integer range 0 to MAXREGNUM - 1;
   begin
     addr := conv_integer(apbi.paddr(8 downto 2));
@@ -1355,17 +1360,17 @@ begin  -- rtl
       end if;
     -- end if;
     bankin(addr) <= apbi.pwdata;
-    readdata <= bankreg(addr);
+    readdata <= apbreg(addr);
   end process;
 
   -- Status register
-  cmd_status: process (clk, rst)
+  cmd_status: process (tile_clk, rst)
   begin  -- process cmd_status
-    if clk'event and clk = '1' then  -- rising clock edge
+    if tile_clk'event and tile_clk = '1' then  -- rising clock edge
       if rst = '0' then                   -- asynchronous reset (active low)
-        bankreg(STATUS_REG) <= (others => '0');
+        apbreg(STATUS_REG) <= (others => '0');
       elsif sample_status = '1' then
-        bankreg(STATUS_REG) <= status;
+        apbreg(STATUS_REG) <= status;
       end if;
     end if;
   end process cmd_status;
@@ -1373,29 +1378,49 @@ begin  -- rtl
   -- Other registers
   registers: for i in 0 to MAXREGNUM - 1 generate
     written_from_noc: if i /= STATUS_REG and available_reg_mask(i) = '1' generate
-      process (clk)
+      process (tile_clk)
       begin  -- process
-        if clk'event and clk = '1' then  -- rising clock edge
+        if tile_clk'event and tile_clk = '1' then  -- rising clock edge
           if rst = '0' then                   -- synchronous reset (active low)
-            bankreg(i) <= bankdef(i);
+            apbreg(i) <= bankdef(i);
           elsif i = YX_REG then
-            bankreg(i)(2 * YX_WIDTH - 1 downto 0) <= local_y & local_x;
+            apbreg(i)(2 * YX_WIDTH - 1 downto 0) <= local_y & local_x;
             if sample(i) = '1' then
-              bankreg(i)(31 downto 2  * YX_WIDTH) <= bankin(i)(31 downto 2 * YX_WIDTH);
+              apbreg(i)(31 downto 2  * YX_WIDTH) <= bankin(i)(31 downto 2 * YX_WIDTH);
             end if;
           elsif sample(i) = '1' and rdonly_reg_mask(i) = '0' then
-            bankreg(i) <= bankin(i);
+            apbreg(i) <= bankin(i);
           end if;
         end if;
       end process;
     end generate written_from_noc;
   end generate registers;
 
+  -- unused registers
   unused_registers: for i in 0 to MAXREGNUM - 1 generate
     not_available: if available_reg_mask(i) = '0' generate
-      bankreg(i) <= (others => '0');
+      apbreg(i) <= (others => '0');
     end generate not_available;
   end generate unused_registers;
+
+  -- synchronize APB interface with accelerator
+  sync_registers: for i in 0 to MAXREGNUM - 1 generate
+    oen_reg_fifo : inferred_async_fifo
+      generic map (
+        g_data_width => 32,
+        g_size       => 2)
+      port map (
+        rst_wr_n_i => rst,
+        clk_wr_i   => tile_clk, -- write from NoC clock
+        we_i       => '1',
+        d_i        => apbreg(i),
+        wr_full_o  => open,
+        rst_rd_n_i => rst,
+        clk_rd_i   => clk, -- read from accelerator clock
+        rd_i       => '1',
+        q_o        => bankreg(i),
+        rd_empty_o => open);
+  end generate sync_registers;
 
   mon_dvfs.clk <= clk;
   mon_dvfs.vf <= "1000";

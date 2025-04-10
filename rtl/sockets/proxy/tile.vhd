@@ -395,7 +395,8 @@ package tile is
       tech : integer);
     port (
       rst                        : in  std_ulogic;
-      clk                        : in  std_ulogic;
+      tile_clk                   : in  std_ulogic;
+      acc_clk                    : in  std_ulogic;
       coherence_req_wrreq        : in  std_ulogic;
       coherence_req_data_in      : in  coh_noc_flit_type;
       coherence_req_full         : out std_ulogic;
@@ -752,7 +753,8 @@ package tile is
       tlb_entries        : integer);
     port (
       rst                           : in  std_ulogic;
-      clk                           : in  std_ulogic;
+      tile_clk                      : in  std_ulogic;
+      acc_clk                       : in  std_ulogic;
       local_y                       : in  local_yx;
       local_x                       : in  local_yx;
       paddr                         : in  integer;
@@ -917,6 +919,34 @@ package tile is
       burst     : in  std_ulogic;
       mon_dvfs  : out monitor_dvfs_type);
   end component;
+
+  component plle_drp
+    generic (
+      CLKFBOUT_MULT  : integer range 2 to 64 := 8;
+      CLKIN1_PERIOD  : real := 8.0;
+      CLKIN2_PERIOD  : real := 8.0;
+      CLKOUT0_DIVIDE : integer range 1 to 128 := 1;
+      CLKOUT1_DIVIDE : integer range 1 to 128 := 1;
+      CLKOUT2_DIVIDE : integer range 1 to 128 := 1;
+      CLKOUT3_DIVIDE : integer range 1 to 128 := 1;
+      CLKOUT4_DIVIDE : integer range 1 to 128 := 1;
+      CLKOUT5_DIVIDE : integer range 1 to 128 := 1;
+      NUM_OUT_CLOCKS : integer range 1 to 6   := 6);
+    port (
+      clk           : in  std_ulogic;
+      rst           : in  std_ulogic;
+      clk_feedthru0 : out std_ulogic;
+      clk_feedthru1 : out std_ulogic;
+      clk_feedthru2 : out std_ulogic;
+      clk_feedthru3 : out std_ulogic;
+      clk_feedthru4 : out std_ulogic;
+      clk_feedthru5 : out std_ulogic;
+      locked        : out std_ulogic;
+      clkin_sel     : in  std_ulogic;
+      dco_reconfig  : in  std_ulogic;
+      dco_hicycles  : in  std_logic_vector(5 downto 0)
+      );
+  end component plle_drp;
 
   component mem2ext is
     port (

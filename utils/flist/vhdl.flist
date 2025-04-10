@@ -119,6 +119,7 @@ sockets/dvfs/dvfs_top.vhd
 sockets/dvfs/dvfs_fsm.vhd
 sockets/dvfs/pm2noc.vhd
 sockets/dvfs/token_pm.vhd
+sockets/dvfs/plle_drp.vhd
 sockets/bus/patient_apbctrl.vhd
 sockets/bus/ahbmst.vhd
 sockets/bus/ahbtrace_mb.vhd

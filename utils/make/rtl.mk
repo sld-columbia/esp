@@ -32,7 +32,8 @@ else
 VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
 endif
 
-VHDL_SRCS += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.vhd" ))
+#VHDL_SRCS += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.vhd" ))
+VHDL_SRCS += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -regex ".*/[^\.]*.vhd" ))
 VHDL_SRCS += $(THIRDPARTY_VHDL)
 VHDL_SRCS += $(TOP_VHDL_RTL_SRCS)
 
@@ -62,8 +63,10 @@ ifeq ($(CONFIG_HAS_DVFS),y)
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/dvfs_vlog.flist), $(ESP_ROOT)/rtl/$(f))
 endif
 
-VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.v")))
-VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.sv")))
+#VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.v")))
+VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -regex ".*/[^\.]*.v")))
+#VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.sv")))
+VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -regex ".*/[^\.]*.sv")))
 VLOG_SRCS += $(THIRDPARTY_VLOG) $(THIRDPARTY_SVLOG)
 VLOG_SRCS += $(TOP_VLOG_RTL_SRCS)
 
@@ -71,19 +74,25 @@ SIM_VLOG_SRCS += $(VLOG_SRCS)
 SIM_VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/sim_vlog.flist), $(ESP_ROOT)/rtl/$(f))
 
 ifeq ($(TECHLIB), inferred)
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
+#SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
+SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -regex ".*/[^\.]*.v" ))
 else ifeq ($(TECH_TYPE), asic)
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/asic/verilog/ -name "*.v" ))
+#SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/asic/verilog/ -name "*.v" ))
+SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/asic/verilog/ -regex ".*/[^\.]*.v" ))
 else
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
+#SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
+SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -regex ".*/[^\.]*.v" ))
 endif
 
 ifeq ($(TECHLIB), inferred)
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.sv" ))
+#SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
+SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -regex ".*/[^\.]*.sv" ))
 else ifeq ($(TECH_TYPE), asic)
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/asic/verilog/ -name "*.sv" ))
+#SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/asic/verilog/ -name "*.v" ))
+SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/asic/verilog/ -regex ".*/[^\.]*.sv" ))
 else
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.sv" ))
+#SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
+SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -regex ".*/[^\.]*.sv" ))
 endif
 
 SIM_VLOG_SRCS += $(TOP_VLOG_SIM_SRCS)

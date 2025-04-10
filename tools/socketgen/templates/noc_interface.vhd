@@ -42,7 +42,8 @@ use std.textio.all;
     has_l2         : integer := 1);
   port (
     rst       : in  std_ulogic;
-    clk       : in  std_ulogic;
+    tile_clk  : in  std_ulogic;
+    acc_clk   : in  std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
     tile_id   : in  integer range 0 to CFG_TILES_NUM - 1;
@@ -109,6 +110,8 @@ use std.textio.all;
 end;
 
 -- <<architecture>>
+
+  signal clk : std_ulogic;
 
   -- Device ID and revision numner
   constant vendorid      : vendor_t               := VENDOR_SLD;
@@ -272,6 +275,8 @@ end;
 
 begin
 
+  clk <= acc_clk;
+
   interrupt_ack_rdreq <= '0';
 
   -- <<accelerator_instance>>
@@ -365,7 +370,8 @@ begin
       tlb_entries        => tlb_entries)
     port map (
       rst                           => rst,
-      clk                           => clk,
+      tile_clk                      => clk,
+      acc_clk                       => clk,
       local_y                       => local_y,
       local_x                       => local_x,
       paddr                         => paddr,

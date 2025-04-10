@@ -264,7 +264,7 @@ vivado/program.tcl: vivado
 	@echo "" >> $@
 	@echo "open_hw_manager" >> $@
 	@echo "connect_hw_server -url \$$fpga_host:\$$port" >> $@
-	@echo "puts \"Connected to \$$fpga_host\"" >> $@
+	@echo "puts \"Connected to \$$fpga_host:\$$port\"" >> $@
 	@echo "puts \"Searching for \$$part...\"" >> $@
 	@echo "" >> $@
 	@echo "foreach cable [get_hw_targets ] {" >> $@
