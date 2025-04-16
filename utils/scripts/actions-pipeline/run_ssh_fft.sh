@@ -31,56 +31,61 @@ boot_linux="$logs/soft/boot_linux.log"
 ssh_fft="$logs/soft/ssh_fft.log"
 workflow_result="$logs/workflow_result.log"
 
-cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
+soc_target="socs/xilinx-vc707-xc7vx485t"
+cd "$ESP_ROOT/$soc_target"
 
 ## SoC config creation
 # TODO
 # make esp-xconfig
 
-# ## fft workflow
+## fft workflow
 # make linux-distclean
 # make linux
 # make examples
 # make linux
 
-# ## upload bitstream
-# if [ -s "top.bit" ]; then
-#     echo "BITSTREAM IS FOUND" >> "$workflow_result"
+## upload bitstream
+if [ -s "top.bit" ]; then
+    echo "[PASS] Bitstream is found" >> "$workflow_result"
 
-#     # make fpga-program
-#     echo "TRYING TO PROGRAM FPGA..." >> "$workflow_result"
-# 	make fpga-program > "$fpga_program" 2>&1
-#     if grep -q ERROR "$fpga_program"; then
-#         echo ""
-#         echo -e "FPGA-PROGRAM FAILED..."
-#     else
-#         echo ""
-#         echo -e "FPGA-PROGRAM SUCCEEDED..."
-#     fi
+    # make fpga-program
+    echo "..... Try to program FPGA" >> "$workflow_result"
+	make fpga-program > "$fpga_program" 2>&1
+    if grep -q ERROR "$fpga_program"; then
+        echo "[FAIL] 'make fpga-program' failed" >> "$workflow_result"
+    else
+        echo "[PASS] 'make fpga-program' pass" >> "$workflow_result"
+    fi
 
-#     # open minicom session
-#     echo "TRY TO OPEN MINICOM..." >> "$workflow_result"
-#     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
-#     socat_pid=$!
-#     sleep 2
-#     VIRTUAL_DEVICE=$(readlink ttyV0)
+    # open minicom session
+    echo "..... Try to open minicom" >> "$workflow_result"
+    socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
+    socat_pid=$!
+    sleep 2
+    VIRTUAL_DEVICE=$(readlink ttyV0)
 
-#     # make fpga-run in background
-#     echo -e "WRITING BAREMETAL RESULTS TO MINICOM..." >> "$workflow_result"
-#     cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
-#     $fpga_run > "$run" 2>&1 &
+    # make fpga-run in background
+    echo -e "... Writing baremetal to minicom" >> "$workflow_result"
+    cd "$ESP_ROOT/$soc_target"
+    $fpga_run > "$run" 2>&1 &
 
-#     # open minicom in foreground
-#     minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
-#     # minicom will be killed when make fpga-run is done
+    # open minicom in foreground
+    minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
+    # minicom will be killed when make fpga-run is done
+    # check "hello" message
+    if grep -q "Hello from ESP!" "$minicom"; then
+        echo "[PASS] Baremetal hello message found" >> "$workflow_result"
+    else
+        echo "[FAIL] Baremetal hello message not found" >> "$workflow_result"
+    fi
 
-#     # clean up
-#     kill -9 "$socat_pid"
+    # clean up
+    kill -9 "$socat_pid"
 
-# else
-#     echo "BITSTREAM GENERATION FAILED" >> "$workflow_result"
-# fi
-# ## SoC flow end ##
+else
+    echo "[FAIL] Bitstream generation failed" >> "$workflow_result"
+fi
+## SoC flow end ##
 
 ## Software Flow ##
 # suppose targets are prepared
@@ -88,18 +93,18 @@ cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 
 ## Run Software
 if [ -s "./soft-build/ariane/linux.bin" ]; then
-    echo "MAKE LINUX SUCCESS" >> "$workflow_result"
+    echo "[PASS] 'make linux' pass" >> "$workflow_result"
 
     # open minicom session
-    echo "TRY TO OPEN MINICOM..." >> "$workflow_result"
+    echo "..... Try to open minicom" >> "$workflow_result"
     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
     socat_pid=$!
     sleep 2
     VIRTUAL_DEVICE=$(readlink ttyV0)
 
     # make fpga-run-linux in background
-    echo "BOOTING LINUX..." >> "$workflow_result"
-    cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
+    echo "..... Try to boot linux" >> "$workflow_result"
+    cd "$ESP_ROOT/$soc_target"
     $fpga_run_linux > "$run_linux" 2>&1 &
 
     # call helper to monitor linux boot progress. kill minicom if boot successfully.
@@ -114,38 +119,21 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     wait $monitor_pid
     EXIT_CODE=$?
     if [ $EXIT_CODE -eq 0 ]; then
-        echo "LINUX BOOT SUCCESS" >> "$workflow_result"
+        echo "[PASS] Linux boot pass" >> "$workflow_result"
 
         # execute ssh and fft
         cd "$ESP_ROOT/utils/scripts/actions-pipeline/helper"
-        echo "SSH to FPGA and execute FFT" >> "$workflow_result"
+        echo "..... Try ssh and run fft" >> "$workflow_result"
         $exe_ssh_fft > "$ssh_fft" 2>&1
-        echo "End of SSH_FFT" >> "$workflow_result"
+        echo "..... End of ssh and run fft" >> "$workflow_result"
 
         # TODO: implement post-process fft result?
-        
+        grep "FFT OVERALL TEST RESULT" "$ssh_fft" >> "$workflow_result"
     else
-        echo "Monitor script detected boot failure or was terminated." >> "$workflow_result"
+        echo "[FAIL] Linux boot fail" >> "$workflow_result"
         # manually kill panic linux
     fi
 
 else
-    echo "MAKE LINUX FAILED" >> "$workflow_result"
+    echo "[FAIL] 'make linux' fail" >> "$workflow_result"
 fi
-
-
-# ## SSH and FFT
-# if [ $EXIT_CODE -eq 0 ]; then
-#     # Linux had been booted
-#     # TODO: run ssh_fft script. redirect stdout of ssh and fft. no need to open minicom to sun this.
-#     cd "$ESP_ROOT/utils/scripts/actions-pipeline/helper"
-#     $exe_ssh_fft > "$ssh_fft" 2>&1
-# else
-#     echo "Monitor script detected boot failure or was terminated"
-# fi
-
-# # clean up
-# kill -9 "$socat_pid"
-
-# # kill minicom manually
-# # killall -u $(whoami) minicom

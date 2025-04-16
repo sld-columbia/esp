@@ -9,8 +9,9 @@ EMOJI_CHECK="\xE2\x9C\x94"
 
 ## Env setup ##
 source /opt/cad/scripts/tools_env.sh
+soc_target="socs/xilinx-vc707-xc7vx485t"
 ESP_ROOT=$(realpath ../../../)
-esp_config="$ESP_ROOT/socs/xilinx-vc707-xc7vx485t/socgen/esp/.esp_config"
+esp_config="$ESP_ROOT/$soc_target/socgen/esp/.esp_config"
 fpga_run="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_program.sh"
 fpga_run_linux="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_linux.sh"
 monitor="$ESP_ROOT/utils/scripts/actions-pipeline/helper/monitor_linux_boot.sh"
@@ -38,7 +39,7 @@ linux="$logs/soft/linux.log"
 run_linux="$logs/fpga/fpga_run_linux.log"
 boot_linux="$logs/soft/boot_linux.log"
 
-cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
+cd "$ESP_ROOT/$soc_target"
 
 ## SoC flow ##
 
@@ -46,7 +47,7 @@ cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
 # Clean the vivado directory and bitstream
 echo ""
 echo -e "${BOLD}CLEANING VIVADO DIRECTORIES...${NC}"
-cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
+cd "$ESP_ROOT/$soc_target"
 rm top.bit
 rm -rf vivado
 make clean >/dev/null 2>&1
@@ -90,7 +91,7 @@ if [ -s "top.bit" ]; then
     # make fpga-run in background
     echo ""
     echo -e "${BOLD}WRITING BAREMETAL RESULTS TO MINICOM...${NC}"
-    cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
+    cd "$ESP_ROOT/$soc_target"
     $fpga_run > "$run" 2>&1 &
 
     # open minicom in foreground
@@ -148,7 +149,7 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     # make fpga-run-linux in background
     echo ""
     echo -e "${BOLD}BOOTING LINUX...${NC}"
-    cd "$ESP_ROOT/socs/xilinx-vc707-xc7vx485t"
+    cd "$ESP_ROOT/$soc_target"
     $fpga_run_linux > "$run_linux" 2>&1 &
 
     # call helper to monitor linux boot progress. kill minicom if boot success.
