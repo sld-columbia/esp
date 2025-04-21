@@ -1,12 +1,20 @@
 #Copyright (c) 2011-2025 Columbia University, System Level Design Group
 #SPDX-License-Identifier: Apache-2.0
 
-project new -name $ACCELERATOR\_dma$DMA_WIDTH
+set proj_name "${ACCELERATOR}_dma${DMA_WIDTH}"
+set ccs_file "${proj_name}.ccs"
+
+if {[file exists $ccs_file]} {
+    project load $ccs_file
+} else {
+    project new -name $proj_name
+}
+
 set CSIM_RESULTS "./tb_data/catapult_csim_results.log"
 set RTL_COSIM_RESULTS "./tb_data/catapult_rtl_cosim_results.log"
 set sfd [file dir [info script]]
 
-solution new -state initial
+solution new -state new -solution solution.v1 ${ACCELERATOR}
 solution options defaults
 
 options set /Input/CppStandard c++11
