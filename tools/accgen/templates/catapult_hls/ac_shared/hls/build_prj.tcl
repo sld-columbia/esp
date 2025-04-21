@@ -14,8 +14,8 @@ set CSIM_RESULTS "./tb_data/catapult_csim_results.log"
 set RTL_COSIM_RESULTS "./tb_data/catapult_rtl_cosim_results.log"
 set sfd [file dir [info script]]
 
-solution new -state new -solution solution.v1 ${ACCELERATOR}
 solution options defaults
+solution new -state new -solution solution.v1 ${ACCELERATOR}
 
 options set /Input/CppStandard c++11
 options set /Input/CompilerFlags "-DCONNECTIONS_ACCURATE_SIM -DCONNECTIONS_NAMING_ORIGINAL -DHLS_CATAPULT"
