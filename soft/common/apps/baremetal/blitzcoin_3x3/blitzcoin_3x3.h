@@ -78,7 +78,7 @@
 
     #define ACC_BASE_ADDR             0x60010000
     #define ACC_THIRD_PARTY_BASE_ADDR 0x60400000
-    #define ACC_OFFSET                0x100
+    #define ACC_OFFSET                0x200
     // Set accelerator ID (ACC_TILE_ID) according to the position of the accelerator in the
     // SoC. Acc IDs increment from left to right and from top to bottom.
     // Running for config
@@ -186,7 +186,7 @@ unsigned token_counter_override[N_ACC];
 
 // Set of tests of the bare-metal app.
 // Uncomment the tests that you want to execute
-#define TEST_0 0
+//#define TEST_0 0
 //// basic test for coin exchange between 2 tiles
 #define TEST_1 1
 //// Test covering coin exchange for 6 tiles with Blitzcoin running parallel workloads on FFT,
