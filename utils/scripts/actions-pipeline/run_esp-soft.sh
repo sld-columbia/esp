@@ -19,7 +19,7 @@ monitor="$ESP_ROOT/utils/scripts/actions-pipeline/helper/monitor_linux_boot.sh"
 # Specify logging directories. Clean up old log files.
 logs="$ESP_ROOT/utils/scripts/actions-pipeline/logs"
 if [ -d "$logs" ]; then
-    rm -r "$logs"
+    rm -rf "$logs"
 else
     echo "Directory does not exist: $logs"
     mkdir -p "$logs"
@@ -47,7 +47,7 @@ cd "$ESP_ROOT/$soc_target"
 # Clean the vivado directory and bitstream
 echo -e "${BOLD}CLEANING VIVADO DIRECTORIES...${NC}"
 cd "$ESP_ROOT/$soc_target"
-rm top.bit
+rm -rf top.bit
 rm -rf vivado
 make clean >/dev/null 2>&1
 # Make esp config by default config
