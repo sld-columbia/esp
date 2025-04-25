@@ -61,10 +61,12 @@ esp_config="$logs/config/esp_config.log"
 echo -e "${BOLD}CREATING SoC CONFIG W/ ACCELERATOR...${NC}"
 make esp-config > "$esp_config" 2>&1
 
-echo -e "${BOLD}RUN make fft_stratus-hls...${NC}"
-make fft_stratus-hls > "$fft_stratus" 2>&1
-echo -e "${BOLD}RUN make accelerator...${NC}"
-make accelerators > "$acc" 2>&1
+# placed fft_stratus files into runner
+# echo -e "${BOLD}RUN make fft_stratus-hls...${NC}"
+# make fft_stratus-hls > "$fft_stratus" 2>&1
+# echo -e "${BOLD}RUN make accelerator...${NC}"
+# make accelerators > "$acc" 2>&1
+
 # Generate bitstream (*** takes time ***)
 echo -e "${BOLD}STARTING SoC HLS W/ ACCELERATOR...${NC}"
 make vivado-syn > "$vivado_syn" 2>&1
