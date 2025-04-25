@@ -1,0 +1,26 @@
+name: Regression Test Pro
+
+on:
+  push:
+    branches:
+      - regression-testing
+
+jobs:
+  regression-pro:
+    name: Regression Test Pro Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: regression-testing
+
+      - name: Test with hello
+        run: |
+          echo "hello"
+      
+      - name: Navigate to directory and check
+        run: |
+          ls
+        working-directory: ./utils/scripts/actions-pipeline
