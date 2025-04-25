@@ -31,6 +31,7 @@ mkdir -p "$logs/soft"
 mkdir -p "$logs/config"
 
 vivado_syn="$logs/hls/vivado_syn.log"
+acc="$logs/hls/make_acc.log"
 fpga_program="$logs/fpga/fpga_program.log"
 run="$logs/fpga/fpga_run.log"
 minicom="$logs/minicom/soc.log"
@@ -54,6 +55,8 @@ make clean >/dev/null 2>&1
 esp_config="$logs/config/esp_config.log"
 echo -e "${BOLD}CREATING SoC CONFIG W/ ACCELERATOR...${NC}"
 make esp-config > "$esp_config" 2>&1
+echo -e "${BOLD}RUN make accelerator...${NC}"
+make accelerators > "$acc" 2>&1
 # Generate bitstream (*** takes time ***)
 echo -e "${BOLD}STARTING SoC HLS W/ ACCELERATOR...${NC}"
 make vivado-syn > "$vivado_syn" 2>&1
