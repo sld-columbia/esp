@@ -22,8 +22,8 @@ if [ -d "$logs" ]; then
     rm -r "$logs"
 else
     echo "Directory does not exist: $logs"
+    mkdir -p "$logs"
 fi
-mkdir -p "$logs"
 mkdir -p "$logs/hls"
 mkdir -p "$logs/fpga"
 mkdir -p "$logs/minicom"
@@ -45,134 +45,118 @@ cd "$ESP_ROOT/$soc_target"
 
 ## HLS
 # Clean the vivado directory and bitstream
-echo ""
 echo -e "${BOLD}CLEANING VIVADO DIRECTORIES...${NC}"
 cd "$ESP_ROOT/$soc_target"
 rm top.bit
 rm -rf vivado
 make clean >/dev/null 2>&1
-echo ""
 # Make esp config by default config
 esp_config="$logs/config/esp_config.log"
-echo ""
 echo -e "${BOLD}CREATING SoC CONFIG W/ ACCELERATOR...${NC}"
 make esp-config > "$esp_config" 2>&1
 # Generate bitstream (*** takes time ***)
-echo ""
 echo -e "${BOLD}STARTING SoC HLS W/ ACCELERATOR...${NC}"
 make vivado-syn > "$vivado_syn" 2>&1
 
 ## FPGA
 # Check bitstream
 if [ -s "top.bit" ]; then
-    echo ""
-    echo "BITSTREAM IS FOUND"
+    echo "[PASS] BITSTREAM IS FOUND"
 
     # make fpga-program
-    echo ""
     echo "TRYING TO PROGRAM FPGA..."
 	make fpga-program > "$fpga_program" 2>&1
     if grep -q ERROR "$fpga_program"; then
-        echo ""
-        echo -e "FPGA-PROGRAM FAILED..."
+        echo "[FAIL] FPGA-PROGRAM FAIL"
     else
-        echo ""
-        echo -e "FPGA-PROGRAM SUCCEEDED..."
+        echo "[PASS] FPGA-PROGRAM SUCCEEDED"
+
+        # make fpga-run in foreground
+        echo -e "${BOLD}WRITING BAREMETAL RESULTS TO MINICOM...${NC}"
+        $fpga_run > "$run" 2>&1 &
+        if grep -q ERROR "$run"; then
+            echo "[FAIL] FPGA-RUN FAIL"
+        else
+            echo "[PASS] FPGA-RUN SUCCEEDED"
+        fi
     fi
 
-    # open minicom session
-    echo ""
-    echo "TRY TO OPEN MINICOM..."
-    socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
-    socat_pid=$!
-    sleep 2
-    VIRTUAL_DEVICE=$(readlink ttyV0)
+    # # open minicom session
+    # echo "TRY TO OPEN MINICOM..."
+    # socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
+    # socat_pid=$!
+    # sleep 2
+    # VIRTUAL_DEVICE=$(readlink ttyV0)
 
-    # make fpga-run in background
-    echo ""
-    echo -e "${BOLD}WRITING BAREMETAL RESULTS TO MINICOM...${NC}"
-    cd "$ESP_ROOT/$soc_target"
-    $fpga_run > "$run" 2>&1 &
+    # # open minicom in foreground
+    # minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
+    # # minicom will be killed when make fpga-run is done
 
-    # open minicom in foreground
-    minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
-    # minicom will be killed when make fpga-run is done
-
-    # clean up
-    kill -9 "$socat_pid"
+    # # clean up
+    # kill -9 "$socat_pid"
 
 else
-    echo ""
-    echo "BITSTREAM GENERATION FAILED"
+    echo "[FAIL] BITSTREAM GENERATION FAILED"
 fi
 ## SoC flow end ##
 
 
 ## Software Flow ##
 
-## Prepare target
-# Clean
-echo ""
-echo -e "${BOLD}PRE MAKE LINUX CLEANUP...${NC}"
-make linux-distclean >/dev/null 2>&1
-# Make soft
-echo ""
-echo -e "${BOLD}STARTING MAKE SOFT...${NC}"
-make soft > "$soft" 2>&1
-# Check make soft success
-if [ -s "./soft-build/ariane/ram.srec" ] && [ -s "./soft-build/ariane/systest.bin" ]; then
-    echo ""
-    echo "MAKE SOFT SUCCESS"
-else
-    echo ""
-    echo "MAKE SOFT FAILED"
-fi
-# Make linux
-echo ""
-echo -e "${BOLD}STARTING MAKE LINUX...${NC}"
-make linux > "$linux" 2>&1
+# ## Prepare target
+# # Clean
+# echo -e "${BOLD}PRE MAKE LINUX CLEANUP...${NC}"
+# make linux-distclean >/dev/null 2>&1
+# # Make soft
+# echo -e "${BOLD}STARTING MAKE SOFT...${NC}"
+# make soft > "$soft" 2>&1
+# # Check make soft success
+# if [ -s "./soft-build/ariane/ram.srec" ] && [ -s "./soft-build/ariane/systest.bin" ]; then
+#     echo "MAKE SOFT SUCCESS"
+# else
+#     echo "MAKE SOFT FAILED"
+# fi
+# # Make linux
+# echo -e "${BOLD}STARTING MAKE LINUX...${NC}"
+# make linux > "$linux" 2>&1
 
-## Run software
-# check make linux success
-if [ -s "./soft-build/ariane/linux.bin" ]; then
-    echo ""
-    echo "MAKE LINUX SUCCESS"
+# ## Run software
+# # check make linux success
+# if [ -s "./soft-build/ariane/linux.bin" ]; then
+#     echo "MAKE LINUX SUCCESS"
 
-    # open minicom session
-    echo ""
-    echo "TRY TO OPEN MINICOM..."
-    socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
-    socat_pid=$!
-    sleep 2
-    VIRTUAL_DEVICE=$(readlink ttyV0)
+#     # open minicom session
+#     echo "TRY TO OPEN MINICOM..."
+#     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
+#     socat_pid=$!
+#     sleep 2
+#     VIRTUAL_DEVICE=$(readlink ttyV0)
 
-    # make fpga-run-linux in background
-    echo ""
-    echo -e "${BOLD}BOOTING LINUX...${NC}"
-    cd "$ESP_ROOT/$soc_target"
-    $fpga_run_linux > "$run_linux" 2>&1 &
+#     # make fpga-run-linux in background
+#     echo -e "${BOLD}BOOTING LINUX...${NC}"
+#     cd "$ESP_ROOT/$soc_target"
+#     $fpga_run_linux > "$run_linux" 2>&1 &
 
-    # call helper to monitor linux boot progress. kill minicom if boot success.
-    $monitor > "$boot_linux" 2>&1 &
-    monitor_pid=$!
+#     # call helper to monitor linux boot progress. kill minicom if boot success.
+#     $monitor > "$boot_linux" 2>&1 &
+#     monitor_pid=$!
 
-    # open minicom in foreground
-    minicom="$logs/minicom/minicom_linux.log"
-    minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
+#     # open minicom in foreground
+#     minicom="$logs/minicom/minicom_linux.log"
+#     minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
 
-    # print monitor status
-    wait $monitor_pid
-    EXIT_CODE=$?
-    if [ $EXIT_CODE -eq 0 ]; then
-    echo "Monitor script detected successful boot"
-    else
-    echo "Monitor script detected boot failure or was terminated"
-    fi
+#     # print monitor status
+#     wait $monitor_pid
+#     EXIT_CODE=$?
+#     if [ $EXIT_CODE -eq 0 ]; then
+#     echo "Monitor script detected successful boot"
+#     else
+#     echo "Monitor script detected boot failure or was terminated"
+#     fi
 
-    # clean up
-    kill -9 "$socat_pid"
+#     # clean up
+#     kill -9 "$socat_pid"
 
-else
-    echo ""
-    echo "MAKE LINUX FAILED"
-fi
+# else
+#     echo "MAKE LINUX FAILED"
+# fi

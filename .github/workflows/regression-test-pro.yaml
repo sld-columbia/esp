@@ -16,11 +16,21 @@ jobs:
         with:
           ref: regression-testing
 
-      - name: Test with hello
+      - name: Test workflow with hello
         run: |
           echo "hello"
       
-      - name: Navigate to directory and check
+      - name: Grant permissions to actions-pipeline
         run: |
-          ls
+          chmod 700 *.sh
+        working-directory: ./utils/scripts/actions-pipeline
+      
+      - name: Grant permissions to helper
+        run: |
+          chmod 700 *.sh
+        working-directory: ./utils/scripts/actions-pipeline/helper
+      
+      - name: Run SoC flow script
+        run: |
+          ./run_esp-soft.sh
         working-directory: ./utils/scripts/actions-pipeline
