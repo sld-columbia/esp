@@ -11,6 +11,7 @@ EMOJI_CHECK="\xE2\x9C\x94"
 source /opt/cad/scripts/tools_env.sh
 soc_target="socs/xilinx-vc707-xc7vx485t"
 ESP_ROOT=$(realpath ../../../)
+defconfig="$ESP_ROOT/socs/defconfig/esp_xilinx-vc707-xc7vx485t_defconfig"
 esp_config="$ESP_ROOT/$soc_target/socgen/esp/.esp_config"
 fpga_run="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_program.sh"
 fpga_run_linux="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_linux.sh"
@@ -32,6 +33,7 @@ mkdir -p "$logs/config"
 
 vivado_syn="$logs/hls/vivado_syn.log"
 acc="$logs/hls/make_acc.log"
+fft_stratus="$logs/hls/make_acc.log"
 fpga_program="$logs/fpga/fpga_program.log"
 run="$logs/fpga/fpga_run.log"
 minicom="$logs/minicom/soc.log"
@@ -51,10 +53,16 @@ cd "$ESP_ROOT/$soc_target"
 rm -rf top.bit
 rm -rf vivado
 make clean >/dev/null 2>&1
+
 # Make esp config by default config
+cp "$defconfig" "$esp_config"
+
 esp_config="$logs/config/esp_config.log"
 echo -e "${BOLD}CREATING SoC CONFIG W/ ACCELERATOR...${NC}"
 make esp-config > "$esp_config" 2>&1
+
+echo -e "${BOLD}RUN make fft_stratus-hls...${NC}"
+make fft_stratus-hls > "$fft_stratus" 2>&1
 echo -e "${BOLD}RUN make accelerator...${NC}"
 make accelerators > "$acc" 2>&1
 # Generate bitstream (*** takes time ***)
