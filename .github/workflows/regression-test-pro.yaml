@@ -32,6 +32,7 @@ jobs:
       
       - name: Generate FFT for target FPGA
         run: |
+          source /opt/cad/scripts/tools_env.sh
           make fft_stratus-hls
         working-directory: ./socs/xilinx-vc707-xc7vx485t
 
