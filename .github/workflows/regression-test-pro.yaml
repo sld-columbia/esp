@@ -8,7 +8,7 @@ on:
 jobs:
   regression-pro:
     name: Regression Test Pro Test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
