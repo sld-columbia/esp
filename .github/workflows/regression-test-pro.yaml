@@ -30,6 +30,11 @@ jobs:
           chmod 700 *.sh
         working-directory: ./utils/scripts/actions-pipeline/helper
       
+      - name: Generate FFT for target FPGA
+        run: |
+          make fft_stratus-hls
+        working-directory: ./socs/xilinx-vc707-xc7vx485t
+
       - name: Run SoC flow script
         run: |
           ./run_esp-soft.sh
