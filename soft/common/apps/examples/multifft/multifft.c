@@ -293,9 +293,9 @@ int main(int argc, char **argv)
     strcat(fail_log, "\0");
 
     if (pass_test_count == total_test_count)
-        printf("FFT OVERALL TEST RESULT: PASS ALL! \n");
+        printf("[PASS] FFT OVERALL TEST RESULT: PASS ALL! \n");
     else {
-        printf("FFT OVERALL TEST RESULT: FAIL! ");
+        printf("[FAIL] FFT OVERALL TEST RESULT: FAIL! ");
         // detailed result
         printf("PASS %d: ", pass_test_count);
         printf("%s", pass_log);

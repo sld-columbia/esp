@@ -38,12 +38,6 @@ cd "$ESP_ROOT/$soc_target"
 # TODO
 # make esp-xconfig
 
-## fft workflow
-# make linux-distclean
-# make linux
-# make examples
-# make linux
-
 ## upload bitstream
 if [ -s "top.bit" ]; then
     echo "[PASS] Bitstream is found" >> "$workflow_result"
@@ -88,8 +82,12 @@ fi
 ## SoC flow end ##
 
 ## Software Flow ##
-# suppose targets are prepared
-# make linux, make examples, make linux
+## suppose targets are prepared
+## fft workflow
+# make linux-distclean
+# make linux
+# make examples
+# make linux
 
 ## Run Software
 if [ -s "./soft-build/ariane/linux.bin" ]; then
@@ -127,11 +125,11 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
         $exe_ssh_fft > "$ssh_fft" 2>&1
         echo "..... End of ssh and run fft" >> "$workflow_result"
 
-        # TODO: implement post-process fft result?
+        # redirect overall fft result into main workflow result file
         grep "FFT OVERALL TEST RESULT" "$ssh_fft" >> "$workflow_result"
     else
         echo "[FAIL] Linux boot fail" >> "$workflow_result"
-        # manually kill panic linux
+        killall -u $(whoami) minicom
     fi
 
 else
