@@ -94,7 +94,8 @@ package esp_csr_pkg is
       tp_acc_rst  : out std_ulogic;
       apbi        : in apb_slv_in_type;
       apbo        : out apb_slv_out_type;
-      prc_interrupt : in std_ulogic);
+      prc_interrupt : in std_ulogic;
+      dco_reconfig : out std_ulogic);
   end component;
 
 end esp_csr_pkg;

@@ -20,8 +20,8 @@ entity acc_tile_q is
     tech        : integer := virtex7);
   port (
     rst                        : in  std_ulogic;
+    noc_clk                    : in  std_ulogic;
     tile_clk                   : in  std_ulogic;
-    acc_clk                    : in  std_ulogic;
     -- tile->NoC1
     coherence_req_wrreq        : in  std_ulogic;
     coherence_req_data_in      : in  coh_noc_flit_type;
@@ -214,7 +214,7 @@ architecture rtl of acc_tile_q is
 
 begin  -- rtl
 
-  clk      <= tile_clk;
+  clk      <= noc_clk;
   fifo_rst <= rst;                  --FIFO rst active low
 
   -- From tile to noc1: coherence requests from CPU to directory (GET/PUT)
@@ -231,7 +231,7 @@ begin  -- rtl
       g_data_width => COH_NOC_FLIT_SIZE)
     port map (
       rst_wr_n_i => fifo_rst,
-      clk_wr_i   => acc_clk,
+      clk_wr_i   => tile_clk,
       we_i       => coherence_req_wrreq,
       d_i        => coherence_req_data_in,
       wr_full_o  => coherence_req_full,
@@ -267,7 +267,7 @@ begin  -- rtl
       d_i        => coherence_fwd_data_in,
       wr_full_o  => coherence_fwd_full,
       rst_rd_n_i => fifo_rst,
-      clk_rd_i   => acc_clk,
+      clk_rd_i   => tile_clk,
       rd_i       => coherence_fwd_rdreq,
       q_o        => coherence_fwd_data_out,
       rd_empty_o => coherence_fwd_empty);
@@ -299,7 +299,7 @@ begin  -- rtl
       d_i        => coherence_rsp_rcv_data_in,
       wr_full_o  => coherence_rsp_rcv_full,
       rst_rd_n_i => fifo_rst,
-      clk_rd_i   => acc_clk,
+      clk_rd_i   => tile_clk,
       rd_i       => coherence_rsp_rcv_rdreq,
       q_o        => coherence_rsp_rcv_data_out,
       rd_empty_o => coherence_rsp_rcv_empty);
@@ -325,7 +325,7 @@ begin  -- rtl
       g_data_width => COH_NOC_FLIT_SIZE)
     port map (
       rst_wr_n_i => fifo_rst,
-      clk_wr_i   => acc_clk,
+      clk_wr_i   => tile_clk,
       we_i       => coherence_rsp_snd_wrreq,
       d_i        => coherence_rsp_snd_data_in,
       wr_full_o  => coherence_rsp_snd_full,
@@ -355,7 +355,7 @@ begin  -- rtl
       g_data_width => COH_NOC_FLIT_SIZE)
     port map (
       rst_wr_n_i => fifo_rst,
-      clk_wr_i   => acc_clk,
+      clk_wr_i   => tile_clk,
       we_i       => coherence_fwd_snd_wrreq,
       d_i        => coherence_fwd_snd_data_in,
       wr_full_o  => coherence_fwd_snd_full,
@@ -392,7 +392,7 @@ begin  -- rtl
       d_i        => dma_rcv_data_in,
       wr_full_o  => dma_rcv_full,
       rst_rd_n_i => fifo_rst,
-      clk_rd_i   => acc_clk,
+      clk_rd_i   => tile_clk,
       rd_i       => dma_rcv_rdreq,
       q_o        => dma_rcv_data_out,
       rd_empty_o => dma_rcv_empty);
@@ -422,7 +422,7 @@ begin  -- rtl
       d_i        => coherent_dma_rcv_data_in,
       wr_full_o  => coherent_dma_rcv_full,
       rst_rd_n_i => fifo_rst,
-      clk_rd_i   => acc_clk,
+      clk_rd_i   => tile_clk,
       rd_i       => coherent_dma_rcv_rdreq,
       q_o        => coherent_dma_rcv_data_out,
       rd_empty_o => coherent_dma_rcv_empty);
@@ -447,7 +447,7 @@ begin  -- rtl
       g_data_width => DMA_NOC_FLIT_SIZE)
     port map (
       rst_wr_n_i => fifo_rst,
-      clk_wr_i   => acc_clk,
+      clk_wr_i   => tile_clk,
       we_i       => dma_snd_wrreq,
       d_i        => dma_snd_data_in,
       wr_full_o  => dma_snd_full,
@@ -477,13 +477,13 @@ begin  -- rtl
       g_data_width => DMA_NOC_FLIT_SIZE)
     port map (
       rst_wr_n_i => fifo_rst,
-      clk_wr_i   => acc_clk,
-      we_i       => coherent_dma_snd_wrreq,
+      clk_wr_i   => tile_clk,
+      we_i       => coherent_dma_snd_wrreq, -- driven by accelerator
       d_i        => coherent_dma_snd_data_in,
       wr_full_o  => coherent_dma_snd_full,
       rst_rd_n_i => fifo_rst,
       clk_rd_i   => clk,
-      rd_i       => coherent_dma_snd_rdreq,
+      rd_i       => coherent_dma_snd_rdreq, -- driven by logic above at NoC clock
       q_o        => coherent_dma_snd_data_out,
       rd_empty_o => coherent_dma_snd_empty);
 
@@ -558,8 +558,8 @@ begin  -- rtl
     port map (
       clk      => clk,
       rst      => fifo_rst,
-      rdreq    => apb_rcv_rdreq,
-      wrreq    => apb_rcv_wrreq,
+      rdreq    => apb_rcv_rdreq, -- from APB proxy
+      wrreq    => apb_rcv_wrreq, -- driven by logic at NoC clock
       data_in  => apb_rcv_data_in,
       empty    => apb_rcv_empty,
       full     => apb_rcv_full,
@@ -574,12 +574,12 @@ begin  -- rtl
     port map (
       rst_wr_n_i => fifo_rst,
       clk_wr_i   => clk,
-      we_i       => interrupt_ack_wrreq,
+      we_i       => interrupt_ack_wrreq, -- driven by logic at NoC clock
       d_i        => interrupt_ack_data_in,
       wr_full_o  => interrupt_ack_full,
       rst_rd_n_i => fifo_rst,
-      clk_rd_i   => acc_clk,
-      rd_i       => interrupt_ack_rdreq,
+      clk_rd_i   => tile_clk,
+      rd_i       => interrupt_ack_rdreq, -- driven by accelerator
       q_o        => interrupt_ack_data_out,
       rd_empty_o => interrupt_ack_empty);
 
@@ -652,8 +652,8 @@ begin  -- rtl
     port map (
       clk      => clk,
       rst      => fifo_rst,
-      rdreq    => apb_snd_rdreq,
-      wrreq    => apb_snd_wrreq,
+      rdreq    => apb_snd_rdreq, -- driven by logic at NoC clock
+      wrreq    => apb_snd_wrreq, -- driven by APB proxy at NoC clock
       data_in  => apb_snd_data_in,
       empty    => apb_snd_empty,
       full     => apb_snd_full,
@@ -666,13 +666,13 @@ begin  -- rtl
       g_data_width => MISC_NOC_FLIT_SIZE)
     port map (
       rst_wr_n_i => fifo_rst,
-      clk_wr_i   => acc_clk,
-      we_i       => interrupt_wrreq,
+      clk_wr_i   => tile_clk,
+      we_i       => interrupt_wrreq, -- driven by accelerator
       d_i        => interrupt_data_in,
       wr_full_o  => interrupt_full,
       rst_rd_n_i => fifo_rst,
       clk_rd_i   => clk,
-      rd_i       => interrupt_rdreq,
+      rd_i       => interrupt_rdreq, -- driven by logic at NoC clock above
       q_o        => interrupt_data_out,
       rd_empty_o => interrupt_empty);
 

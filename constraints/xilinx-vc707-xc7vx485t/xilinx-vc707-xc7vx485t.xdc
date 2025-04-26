@@ -9,6 +9,11 @@ set refclk_elab [get_clocks -of_objects [get_nets chip_refclk]]
 # Declare asynchronous clocks
 set_clock_groups -asynchronous -group [get_clocks ${clkm_elab}] -group [get_clocks ${refclk_elab}]
 
+# set tile clocks as asynchronous
+#   Generates warning because masking timing violations between these groups
+#   Must ensure proper synchronization
+set_clock_groups -asynchronous -group [get_clocks -of_objects [get_nets chip_refclk]] -group [get_clocks -of_objects [get_pins esp_1/tiles_gen[2].accelerator_tile.tile_acc_i/tile_acc_1/dco_gen.plle_drp_inst/u_pll_clkout0_bufg/O]]
+
 
 # --- False paths
 set_false_path -to [get_ports {led[*]}]

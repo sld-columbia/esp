@@ -101,10 +101,12 @@ architecture rtl of tile_acc is
   signal rst          : std_ulogic;
 
   -- DCO
+  signal noc_clk      : std_ulogic;
   signal tile_clk     : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal dco_clk_lock : std_ulogic;
   signal dco_en_int   : std_ulogic;
+  signal dco_cc_int   : std_logic_vector(5 downto 0);
 
   -- BUS
   signal apbi           : apb_slv_in_type;
@@ -156,11 +158,12 @@ architecture rtl of tile_acc is
   signal apb_rcv_empty              : std_ulogic;
 
   -- Tile parameters
-  signal tile_config_apb : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal tile_config_noc : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
   signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal dco_reconfig : std_ulogic;
 
   signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
-  signal tile_id_apb : integer range 0 to CFG_TILES_NUM - 1;
+  signal tile_id_noc : integer range 0 to CFG_TILES_NUM - 1;
 
   signal this_pindex    : integer range 0 to NAPBSLV - 1;
   signal this_paddr     : integer range 0 to 4095;
@@ -173,9 +176,9 @@ architecture rtl of tile_acc is
   signal this_csr_pconfig       : apb_config_type;
 
   signal this_local_y : local_yx;
-  signal this_local_y_apb : local_yx;
+  signal this_local_y_noc : local_yx;
   signal this_local_x : local_yx;
-  signal this_local_x_apb : local_yx;
+  signal this_local_x_noc : local_yx;
 
   signal tp_acc_rst : std_ulogic;
 
@@ -234,10 +237,12 @@ architecture rtl of tile_acc is
 
 begin
 
+  noc_clk <= ext_clk;
+
   -- DCO Reset synchronizer
   rst_gen: if this_has_dco = 1 generate
     tile_rstn_out : rstgen
-      generic map (acthigh => 1, syncin => 0)
+      generic map (acthigh => 0, syncin => 0)
       port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
   end generate rst_gen;
 
@@ -247,8 +252,9 @@ begin
 
   tile_rstn_out <= rst;
 
-  -- DCO
+  -- DCO (make sure source signals are in the tile clock domain and the config register change is reflected in the right clock cycle as dco_reconfig)
   dco_en_int <= dco_en and raw_rstn;
+  dco_cc_int <= tile_config_noc(ESP_CSR_DCO_NOC_CFG_LSB + 5 downto ESP_CSR_DCO_NOC_CFG_LSB);
   dco_gen: if this_has_dco = 1 generate
 
     --dco_i: dco
@@ -272,7 +278,7 @@ begin
 
     plle_drp_inst : plle_drp
       generic map (
-        CLKFBOUT_MULT  => ( 8 ),
+        CLKFBOUT_MULT  => ( 16 ),
         CLKIN1_PERIOD  => ( 20.0 ), -- TODO MG - might just be for simulation
         CLKIN2_PERIOD  => ( 20.0 ), -- TODO MG - might just be for simulation
         CLKOUT0_DIVIDE => ( 8 ),
@@ -286,8 +292,8 @@ begin
       port map (
           -- clock and reset interface
           -- TODO simulate to see that dvfs_clk has a signal
-          clk           => ext_clk,
-          rst           => '0',
+          clk           => noc_clk,
+          rstn          => '1',
 
           -- clock output signals
           -- TODO resolve multiple-driven clk_feedthru
@@ -301,13 +307,13 @@ begin
 
           -- control signals
           clkin_sel     => ( '1' ),
-          dco_reconfig  => ( '0' ), --( dco_reconfig ), -- MG TODO: try hardcoding to "0"
-          dco_hicycles  => ( "000001" ) --( dco_cc_sel ) -- MG TODO: try hardcoding to "000001" -- DCO_CFG(15 downto 10)
+          dco_reconfig  => ( dco_reconfig ), -- MG TODO: try hardcoding to "0"
+          dco_hicycles  => ( dco_cc_int ) --( "000010" ) -- MG TODO: try hardcoding to "000001" -- DCO_CFG(15 downto 10)
       );
 
     --tile_clk <= dco_clk;
-    tile_clk <= ext_clk;
-    clk_div <= dco_clk;
+    tile_clk <= noc_clk;
+    clk_div <= tile_clk;
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco /= 1 generate
@@ -324,7 +330,7 @@ begin
 
   -- APB/
   tile_id          <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB))); -- used to derive these parameter signals
-  tile_id_apb      <= to_integer(unsigned(tile_config_apb(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB))); -- used to derive these parameter signals
+  tile_id_noc      <= to_integer(unsigned(tile_config_noc(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB))); -- used to derive these parameter signals
 
   -- passed to accelerator
   this_pindex      <= tile_apb_idx(tile_id);
@@ -335,14 +341,14 @@ begin
   this_pirq        <= tile_apb_irq(tile_id);
 
   -- passed to CSR file
-  this_csr_pindex  <= tile_csr_pindex(tile_id_apb);
+  this_csr_pindex  <= tile_csr_pindex(tile_id_noc);
   this_csr_pconfig <= fixed_apbo_pconfig(this_csr_pindex);
 
   -- passed to APB-NoC interface
   this_local_y     <= tile_y(tile_id);
-  this_local_y_apb <= tile_y(tile_id_apb);
+  this_local_y_noc <= tile_y(tile_id_noc);
   this_local_x     <= tile_x(tile_id);
-  this_local_x_apb <= tile_x(tile_id_apb);
+  this_local_x_noc <= tile_x(tile_id_noc);
 
   -- passed to accelerator
   coherence        <= to_integer(unsigned(tile_config(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB)));
@@ -352,24 +358,6 @@ begin
 -------------------------------------------------------------------------------
 
   -- <<accelerator-wrappers-gen>>
-
-  -----------------------------------------------------------------------------
-  -- Synchronizing buffers
-  -----------------------------------------------------------------------------
-  --ahb_in_fifo : fifo3
-  --  generic map (
-  --    depth => QUEUE_DEPTH,
-  --    width => word_bitwidth)
-  --  port map (
-  --    clk           => clk,
-  --    rst           => rstn,
-  --    wrreq         => ahb_rcv_wrreq,
-  --    data_in       => ahb_rcv_data_in,
-  --    full          => ahb_rcv_full,
-  --    almost_full   => ahb_rcv_almost_full,
-  --    rdreq         => io_snd_rdreq_out,
-  --    data_out      => io_snd_data_out,
-  --    empty         => io_snd_empty);
 
   -----------------------------------------------------------------------------
   -- Tile queues
@@ -400,18 +388,18 @@ begin
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
-      clk              => tile_clk,
-      local_y          => this_local_y_apb,
-      local_x          => this_local_x_apb,
+      clk              => noc_clk,
+      local_y          => this_local_y_noc,
+      local_x          => this_local_x_noc,
       apbi             => apbi,
       apbo             => apbo,
       pready           => pready_noc,
-      apb_snd_wrreq    => apb_snd_wrreq,
-      apb_snd_data_in  => apb_snd_data_in,
-      apb_snd_full     => apb_snd_full,
-      apb_rcv_rdreq    => apb_rcv_rdreq,
-      apb_rcv_data_out => apb_rcv_data_out,
-      apb_rcv_empty    => apb_rcv_empty
+      apb_snd_wrreq    => apb_snd_wrreq, -- output
+      apb_snd_data_in  => apb_snd_data_in, -- output
+      apb_snd_full     => apb_snd_full, -- input
+      apb_rcv_rdreq    => apb_rcv_rdreq, -- output
+      apb_rcv_data_out => apb_rcv_data_out, -- input
+      apb_rcv_empty    => apb_rcv_empty -- input
     );
 
   --Monitors
@@ -425,6 +413,7 @@ begin
       pindex  => 0)
     port map(
       clk => tile_clk,
+      --rstn => tile_rst, -- MG: changed to tile_rst so persist value in CSR
       rstn => rst,
       pconfig => this_csr_pconfig,
       mon_ddr => monitor_ddr_none,
@@ -434,23 +423,24 @@ begin
       mon_llc => monitor_cache_none,
       mon_acc => mon_acc_int,
       mon_dvfs => mon_dvfs_int,
-      tile_config => tile_config_apb,
+      tile_config => tile_config_noc,
       srst => open,
       tp_acc_rst => tp_acc_rst,
       apbi => apbi,
-      apbo => apbo(0)
+      apbo => apbo(0),
+      dco_reconfig => dco_reconfig
     );
 
-  -- synchronize tile_config with tile_config_apb
+  -- synchronize tile_config_noc with accelerator clock
   sync_tile_config : inferred_async_fifo
     generic map (
       g_data_width => ESP_CSR_WIDTH,
       g_size       => 2)
     port map (
       rst_wr_n_i => rst,
-      clk_wr_i   => tile_clk, -- write from APB clock
+      clk_wr_i   => noc_clk, -- write from NoC clock
       we_i       => '1',
-      d_i        => tile_config_apb,
+      d_i        => tile_config_noc,
       wr_full_o  => open,
       rst_rd_n_i => rst,
       clk_rd_i   => dco_clk, -- read from accelerator clock
@@ -468,8 +458,8 @@ begin
       tech => CFG_FABTECH)
     port map (
       rst                        => rst,
-      tile_clk                   => tile_clk,
-      acc_clk                    => dco_clk,
+      noc_clk                    => noc_clk,
+      tile_clk                   => dco_clk,
       coherence_req_wrreq        => coherence_req_wrreq,
       coherence_req_data_in      => coherence_req_data_in,
       coherence_req_full         => coherence_req_full,

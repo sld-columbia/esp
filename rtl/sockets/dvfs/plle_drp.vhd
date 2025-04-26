@@ -30,7 +30,7 @@ entity plle_drp is
     port (
         -- clock and reset interface
         clk           : in  std_ulogic;
-        rst           : in  std_ulogic;
+        rstn          : in  std_ulogic;
 
         -- clock output signals
         clk_feedthru0 : out std_ulogic;
@@ -143,9 +143,9 @@ begin -- rtl
     end process p_input;
 
     -- propagate next state
-    p_state : process(clk, rst)
+    p_state : process(clk, rstn)
     begin
-        if rst = '1' then
+        if rstn = '0' then
             pll_state    <= idle;
             pll_hicycles <= (others => '0');
             pll_reconfig <= '0';
@@ -315,7 +315,7 @@ begin -- rtl
         -- Control Ports: 1-bit (each) input: PLL control ports
         CLKINSEL => clkin_sel, -- 1-bit input: Clock select, High=CLKIN1 Low=CLKIN2
         PWRDWN => '0',         -- 1-bit input: Power-down
-        RST => pll_rst,       -- 1-bit input: Reset
+        RST => pll_rst,        -- 1-bit input: Reset
 
         -- DRP Ports: 7-bit (each) input: Dynamic reconfiguration ports
         DADDR => pll_daddr,    -- 7-bit input: DRP address
@@ -327,6 +327,6 @@ begin -- rtl
         -- Feedback Clocks: 1-bit (each) input: Clock feedback ports
         CLKFBIN => pll_clkfb_bufgout  -- 1-bit input: Feedback clock
     );
-    pll_rst <= pll_drst or rst;
+    pll_rst <= pll_drst or not rstn;
 
 end rtl;

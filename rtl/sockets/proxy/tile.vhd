@@ -934,7 +934,7 @@ package tile is
       NUM_OUT_CLOCKS : integer range 1 to 6   := 6);
     port (
       clk           : in  std_ulogic;
-      rst           : in  std_ulogic;
+      rstn          : in  std_ulogic;
       clk_feedthru0 : out std_ulogic;
       clk_feedthru1 : out std_ulogic;
       clk_feedthru2 : out std_ulogic;

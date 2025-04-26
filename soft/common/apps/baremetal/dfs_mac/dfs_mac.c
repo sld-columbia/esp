@@ -14,11 +14,13 @@
 #include "dfs_mac.h"
 #include "mac.h"
 
-#define NUM_FREQUENCIES 1
+#define NUM_FREQUENCIES 5
 //#define RUN_LOOP
 
 #define SLD_ACC_TILE_1 0x98
 #define DEV_NAME_MAC "sld,mac_vivado"
+
+#define DCO_CC_REG_ADDR 408
 
 int main(int argc, char * argv[])
 {
@@ -60,12 +62,12 @@ int main(int argc, char * argv[])
     out_offset_mac  = in_len_mac;
     mem_size_mac = (out_offset_mac * sizeof(token_t)) + out_size_mac;
 
-    for(k = 0; k < NUM_FREQUENCIES; k++) {
+    for(k = 0; k < 1; k++) {
         // half of the clock divider value
         //   output clock is high then low for (k+1) cycles of the PLL's reference
         //   divide by (k+1)+(k+1) = 2k+2
         //   fout = fin / (2k+2)
-        high_time = k + 1;
+        high_time = (k+1) << 1;
 
         // MAC accelerator section
         // Probing
@@ -86,9 +88,28 @@ int main(int argc, char * argv[])
 
             dev_tile_1 = &espdevs_tile_1[n];
 
+            for (int z = 0; z < NUM_FREQUENCIES; z++) {
+
+            printf("Writing register\n");
+            //iowrite32(dev_tile_1, CMD_REG, 0);
+            //iowrite32(dev_tile_1, DCO_CC_REG_ADDR, (2 & 0x3f));
+            printf("Done writing register\n");
+            printf("Reading register\n");
+            //int test_val = ioread32(dev_tile_1, PT_NCHUNK_MAX_REG);
+            int test_val = ioread32(dev_tile_1, DCO_CC_REG_ADDR);
+            printf("Read register and got %d\n", test_val);
+            printf("Writing register\n");
+            //iowrite32(dev_tile_1, CMD_REG, 0);
+            //iowrite32(dev_tile_1, DCO_CC_REG_ADDR, (4 & 0x3f));
+            printf("Done writing register\n");
+            printf("Reading register\n");
+            //int test_val = ioread32(dev_tile_1, PT_NCHUNK_MAX_REG);
+            test_val = ioread32(dev_tile_1, DCO_CC_REG_ADDR);
+            printf("Read register and got %d\n", test_val);
+
             // Check DMA capabilities
-            /*printf("Checking DMA\n");
-            if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) == 0) {
+            printf("Checking DMA\n");
+            /*if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) == 0) {
                 printf("  -> scatter-gather DMA is disabled. Abort.\n");
                 return 0;
             }
@@ -100,8 +121,8 @@ int main(int argc, char * argv[])
 
             // Allocate memory
             printf("Allocating memory\n");
-            //mem_gold_mac = aligned_malloc(out_size_mac);
-            //mem_mac = aligned_malloc(mem_size_mac);
+            mem_gold_mac = aligned_malloc(out_size_mac);
+            mem_mac = aligned_malloc(mem_size_mac);
             printf("  memory buffer base-address = %p\n", mem_mac);
 
             // Alocate and populate page table
@@ -121,7 +142,9 @@ int main(int argc, char * argv[])
     #endif
                 printf("  --------------------\n");
                 printf("  Generate input...\n");
-                //init_buf_mac(mem_mac, mem_gold_mac);
+                iowrite32(dev_tile_1, CMD_REG, 0);
+                init_buf_mac(mem_mac, mem_gold_mac);
+                printf("  Done generating input\n");
 
                 // Pass common configuration parameters
 
@@ -142,10 +165,39 @@ int main(int argc, char * argv[])
                 iowrite32(dev_tile_1, DST_OFFSET_REG, 0x0);
                 printf("Done writing basic configuration registers\n");
 
-                // MG configure clock frequency in bits [15:10]
+                // MG configure clock frequency
                 printf("Writing DCO\n");
-                iowrite32(dev_tile_1, 3, (high_time & 0x3f) << 10);
-                printf("Done writing DCO\n");
+                /*
+                 * Address
+                 *   [8:7] = "11"
+                 *   [6:2] = ESP_CSR_DCO_NOC_CFG_ADDR = 6 = "00110"
+                 *   [1:0] = 0 = "00"
+                 *   0b110011000 = 408
+                 *
+                 * Write
+                 * config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB) <=
+                apbi.pwdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0);
+                 *   [34:11] = apb_wdata[23:0]
+                 *
+                 * Data
+                 * dco_cc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
+                 *   [34-12-11:34-12-11-5] = [11:6]
+                 *
+                 * ESP_CSR_DCO_NOC_CFG_MSB = 34
+                 * ESP_CSR_DCO_NOC_CFG_LSB = 16
+                 * DCO_CFG_LPDDR_CTRL_BITS = 12
+                   constant ESP_CSR_DCO_NOC_CFG_ADDR : integer range 0 to 31 := 6;
+  constant ESP_CSR_DCO_NOC_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 16;
+  constant ESP_CSR_DCO_NOC_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 34;
+
+                 */
+                high_time = z+2;
+                test_val = ioread32(dev_tile_1, DCO_CC_REG_ADDR);
+                printf("Read register and got %d\n", test_val);
+                iowrite32(dev_tile_1, DCO_CC_REG_ADDR, (high_time & 0x3f));
+                printf("Done writing DCO (high_time = %u)\n", high_time);
+                test_val = ioread32(dev_tile_1, DCO_CC_REG_ADDR);
+                printf("Read register and got %d\n", test_val);
 
                 // Pass accelerator-specific configuration parameters
                 /* <<--regs-config-->> */
@@ -156,20 +208,28 @@ int main(int argc, char * argv[])
                 printf("Done writing configuration registers\n");
 
                 // Flush (customize coherence model here)
-                esp_flush(coherence);
+                //esp_flush(coherence);
 
                 // Start accelerators
                 printf("  Start...\n");
                 cycles_start = esp_monitor(mon_args, NULL);
-                iowrite32(dev_tile_1, CMD_REG, CMD_MASK_START);
+                //for (int z = 0; z < 1; z++) {
+                    iowrite32(dev_tile_1, CMD_REG, CMD_MASK_START);
 
-                // Wait for completion
-                done = 0;
-                while (!done) {
-                    done = ioread32(dev_tile_1, STATUS_REG);
-                    done &= STATUS_MASK_DONE;
-                }
-                iowrite32(dev_tile_1, CMD_REG, 0x0);
+                    // Wait for completion
+                    done = 0;
+                    int iterations;
+                    for (iterations = 0; iterations < 1000000 && !done; iterations++) {
+                        while (!done) {
+                            done = ioread32(dev_tile_1, STATUS_REG);
+                            done &= STATUS_MASK_DONE;
+                        }
+                    }
+                    iowrite32(dev_tile_1, CMD_REG, 0x0);
+                    if (iterations == 1000000) {
+                        printf("Warning: timed out at 1000000 iterations\n");
+                    }
+                //}
                 cycles_end = esp_monitor(mon_args, NULL);
                 cycles_diff = sub_monitor_vals(cycles_start, cycles_end);
 
@@ -182,11 +242,12 @@ int main(int argc, char * argv[])
                     printf("  ... FAIL\n");
                 else
                     printf("  ... PASS\n");
-                printf("  ... latency of calculation was %u (%u - %u) core cycles\n", cycles_diff, cycles_end, cycles_start);
+                printf("  ... latency of calculation was %u (%u - %u) core cycles for a high_time of %u\n", cycles_diff, cycles_end, cycles_start, high_time);
             }
             aligned_free(ptable_mac);
             aligned_free(mem_mac);
             aligned_free(mem_gold_mac);
+            }
         }
 
     }
