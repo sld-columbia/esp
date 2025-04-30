@@ -9,7 +9,7 @@
 #include <nvhls_int.h>
 #include <nvhls_types.h>
 #include <nvhls_vector.h>
-// #include "macfin2_conf_info.hpp"
+// #include "macfin3_conf_info.hpp"
 #include "esp_dma_info_sysc.hpp"
 #include <ArbitratedScratchpadDP.h>
 

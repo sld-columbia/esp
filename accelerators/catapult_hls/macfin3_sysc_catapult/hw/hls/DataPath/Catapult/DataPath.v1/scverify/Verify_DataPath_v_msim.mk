@@ -17,9 +17,9 @@ all: help
 # ===================================================
 # Directories (at the time this makefile was created)
 #   MGC_HOME      /opt/Catapult_2024.2/Mgc_home
-#   PROJECT_HOME  /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath
-#   SOLUTION_DIR  /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1
-#   WORKING_DIR   /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/.
+#   PROJECT_HOME  /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath
+#   SOLUTION_DIR  /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1
+#   WORKING_DIR   /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/.
 
 # ===================================================
 # VARIABLES

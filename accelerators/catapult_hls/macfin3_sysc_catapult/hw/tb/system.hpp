@@ -6,13 +6,13 @@
 
 #pragma once
 
-#include "macfin2_data_types.h"
-#include "macfin2_specs.h"
-#include "macfin2_conf_info.h"
+#include "macfin3_data_types.h"
+#include "macfin3_specs.h"
+#include "macfin3_conf_info.h"
 #include "esp_dma_info_sysc.hpp"
 #include "esp_dma_controller.hpp"
 #include "testbench.hpp"
-#include "macfin2.h"
+#include "macfin3.h"
 #include <mc_scverify.h>
 
 SC_MODULE(system_t)
@@ -22,7 +22,7 @@ SC_MODULE(system_t)
 
     testbench testbench_inst;
 
-    CCS_DESIGN(macfin2_sysc_catapult) CCS_INIT_S1(acc);
+    CCS_DESIGN(macfin3_sysc_catapult) CCS_INIT_S1(acc);
 
     Connections::Combinational<ac_int<DMA_WIDTH>> CCS_INIT_S1(dma_read_chnl);
     Connections::Combinational<ac_int<DMA_WIDTH>> CCS_INIT_S1(dma_write_chnl);

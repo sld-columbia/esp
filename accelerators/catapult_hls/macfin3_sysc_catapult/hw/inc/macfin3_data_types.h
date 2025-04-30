@@ -6,7 +6,7 @@
 
 #include "ac_int.h"
 #include "ac_fixed.h"
-#include "macfin2_specs.h"
+#include "macfin3_specs.h"
 // #include "auto_gen_port_info.h"
 
 #define FPDATA_WL DATA_WIDTH

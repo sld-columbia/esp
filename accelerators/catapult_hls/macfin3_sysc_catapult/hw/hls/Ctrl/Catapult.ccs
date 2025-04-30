@@ -16,8 +16,8 @@
 //  
 if {[info script] != {} && [file isdirectory [file rootname [info script]]]} {
   project load [file rootname [info script]] 2024.2
-} elseif { [file isdirectory /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/Ctrl/Catapult] } {
-  project load /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/Ctrl/Catapult 2024.2
+} elseif { [file isdirectory /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/Ctrl/Catapult] } {
+  project load /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/Ctrl/Catapult 2024.2
 } else {
   error {unable to locate project directory 'Catapult'}
 }

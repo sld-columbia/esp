@@ -1,9 +1,9 @@
-DataPath.o: ../src/DataPath.cpp ../inc/macfin2.h \
- ../inc/macfin2_data_types.h \
+DataPath.o: ../src/DataPath.cpp ../inc/macfin3.h \
+ ../inc/macfin3_data_types.h \
  ../../../common/matchlib_toolkit/examples/ac_types/include/ac_int.h \
  ../../../common/matchlib_toolkit/examples/ac_types/include/ac_fixed.h \
  ../../../common/matchlib_toolkit/examples/ac_types/include/ac_int.h \
- ../inc/macfin2_specs.h \
+ ../inc/macfin3_specs.h \
  ../../../common/matchlib_toolkit/examples/matchlib_connections/include/mc_connections.h \
  ../../../common/matchlib_toolkit/examples/systemc-2.3.3/include/systemc.h \
  ../../../common/matchlib_toolkit/examples/systemc-2.3.3/include/systemc \
@@ -216,7 +216,7 @@ DataPath.o: ../src/DataPath.cpp ../inc/macfin2.h \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/crossbar.h \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/nvhls_int.h \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/nvhls_types.h \
- ../inc/macfin2_conf_info.h \
+ ../inc/macfin3_conf_info.h \
  ../../../common/matchlib_toolkit/include/auto_gen_port_info.h \
  ../../../common/matchlib_toolkit/include/auto_gen_fields.h \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/UIntOrEmpty.h \

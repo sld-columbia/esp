@@ -44,13 +44,13 @@ solution file add "../../tb/testbench.cpp" -exclude true
 solution file add "../../tb/testbench.hpp" -exclude true
 solution file add "../../tb/sc_main.cpp" -exclude true
 solution file add "../../tb/system.hpp" -exclude true
-solution file add "../../inc/macfin2_data_types.h"
+solution file add "../../inc/macfin3_data_types.h"
 solution file add "../../../../common/inc/esp_dma_info_sysc.hpp"
-solution file add "../../inc/macfin2_conf_info.h"
+solution file add "../../inc/macfin3_conf_info.h"
 solution file add "../../inc/Ctrl.h"
-solution file add "../../inc/macfin2_specs.h"
+solution file add "../../inc/macfin3_specs.h"
 
-solution file set ../../inc/macfin2_specs.h -args -DDMA_WIDTH=$DMA_WIDTH
+solution file set ../../inc/macfin3_specs.h -args -DDMA_WIDTH=$DMA_WIDTH
 
 #
 # Output

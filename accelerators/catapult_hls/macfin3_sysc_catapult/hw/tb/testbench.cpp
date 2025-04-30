@@ -13,7 +13,7 @@ void testbench::proc()
     wait();
 
     CCS_LOG("--------------------------------");
-    CCS_LOG("ESP - macfin2 [Catapult HLS SystemC]");
+    CCS_LOG("ESP - macfin3 [Catapult HLS SystemC]");
     CCS_LOG("--------------------------------");
 
 #if (DMA_WORD_PER_BEAT == 0)

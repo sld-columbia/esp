@@ -23,8 +23,8 @@ options set /Input/SearchPath {../../../common/matchlib_toolkit/examples/boost_h
 options set /Input/SearchPath {../../../common/matchlib_toolkit/examples/matchlib/cmod/include} -append
 
 
-# options set /Input/SearchPath "$sfd/../inc/mem_bank" -append
-# options set /ComponentLibs/SearchPath "$sfd/../inc/mem_bank" -append
+options set /Input/SearchPath "$sfd/../inc/mem_bank" -append
+options set /ComponentLibs/SearchPath "$sfd/../inc/mem_bank" -append
 
 
 flow package require /SCVerify
@@ -39,26 +39,23 @@ solution options set /Input/SearchPath { \
     ../inc/ \
     ../tb/ \
     ../../../common/inc/ \
-    ../../../common/inc/core/systems \ 
-    # ../inc/mem_bank
+    ../../../common/inc/core/systems \
+    ../inc/mem_bank
 } -append
-
-solution options set ComponentLibs/SearchPath ./Ctrl/Catapult -append
-solution options set ComponentLibs/SearchPath ./DataPath/Catapult -append 
 
 solution file add "../tb/testbench.cpp" -exclude true
 solution file add "../tb/testbench.hpp" -exclude true
 solution file add "../tb/sc_main.cpp" -exclude true
 solution file add "../tb/system.hpp" -exclude true
-solution file add "../inc/macfin2_data_types.h"
+solution file add "../inc/macfin3_data_types.h"
 solution file add "../../../common/inc/esp_dma_info_sysc.hpp"
-solution file add "../inc/macfin2_conf_info.h"
-solution file add "../inc/macfin2.h"
+solution file add "../inc/macfin3_conf_info.h"
+solution file add "../inc/macfin3.h"
 solution file add "../inc/DataPath.h"
 solution file add "../inc/Ctrl.h"
-solution file add "../inc/macfin2_specs.h"
+solution file add "../inc/macfin3_specs.h"
 
-solution file set ../inc/macfin2_specs.h -args -DDMA_WIDTH=$DMA_WIDTH
+solution file set ../inc/macfin3_specs.h -args -DDMA_WIDTH=$DMA_WIDTH
 
 #
 # Output
@@ -87,6 +84,9 @@ solution library \
     -family $FPGA_FAMILY \
     -speed $FPGA_SPEED_GRADE \
     -part $FPGA_PART_NUM
+
+solution options set ComponentLibs/SearchPath ./Ctrl/Catapult -append
+solution options set ComponentLibs/SearchPath ./DataPath/Catapult -append
 
 # solution library add DUAL_PORT_RBW
 directive set -CLOCKS {clk {-CLOCK_PERIOD 5.0}}

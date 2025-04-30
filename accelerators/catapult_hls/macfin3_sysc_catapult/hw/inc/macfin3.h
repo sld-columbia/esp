@@ -9,16 +9,16 @@
 #include "./DataPath.h"
 #include "./Ctrl.h"
 
-#include "macfin2_data_types.h"
-#include "macfin2_specs.h"
-#include "macfin2_conf_info.h"
+#include "macfin3_data_types.h"
+#include "macfin3_specs.h"
+#include "macfin3_conf_info.h"
 #include "ac_shared_bank_array.h"
 
 
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 
-SC_MODULE(macfin2_sysc_catapult)
+SC_MODULE(macfin3_sysc_catapult)
 {
   public:
     sc_in<bool> CCS_INIT_S1(clk);
@@ -40,7 +40,7 @@ SC_MODULE(macfin2_sysc_catapult)
     Ctrl CCS_INIT_S1(Controller);
     DataPath CCS_INIT_S1(DataPath_inst);
 
-    SC_CTOR(macfin2_sysc_catapult)
+    SC_CTOR(macfin3_sysc_catapult)
     {
 
         Controller.clk(clk);

@@ -15,7 +15,7 @@ typedef int32_t token_t;
 static unsigned DMA_WORD_PER_BEAT(unsigned _st) { return (sizeof(void *) / _st); }
 
 #define SLD_MACFIN 0x04a
-#define DEV_NAME             "sld,macfin2_sysc_catapult"
+#define DEV_NAME             "sld,macfin3_sysc_catapult"
 
 /* <<--params-->> */
 const int32_t mac_n = 16;
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 
     ndev = probe(&espdevs, VENDOR_SLD, SLD_MACFIN, DEV_NAME);
     if (ndev == 0) {
-        printf("macfin2 not found\n");
+        printf("macfin3 not found\n");
         return 0;
     }
 

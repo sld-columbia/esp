@@ -5,72 +5,72 @@
 # Messages from "go analyze"
 
 # Info: Branching solution 'DataPath.v1' at state 'new' (PRJ-2)
-Creating project directory '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/'. (PRJ-1)
-Moving session transcript to file "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/catapult.log"
+Creating project directory '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/'. (PRJ-1)
+Moving session transcript to file "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/catapult.log"
 solution design set DataPath -top (HC-8)
 # Info: Starting transformation 'analyze' on solution 'DataPath.v1' (SOL-8)
-Front End called with arguments: -I../../../../common/matchlib_toolkit/include -I../../../../common/matchlib_toolkit/examples/boost_home/ -I../../../../common/matchlib_toolkit/examples/matchlib/cmod/include -I./../../inc/mem_bank -I../../inc/ -I../../tb/ -I../../../../common/inc/ -I../../../../common/inc/core/systems -I../../inc/mem_bank -DDMA_WIDTH=64 -- /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_specs.h /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/common/inc/esp_dma_info_sysc.hpp /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_data_types.h (CIN-69)
+Front End called with arguments: -I../../../../common/matchlib_toolkit/include -I../../../../common/matchlib_toolkit/examples/boost_home/ -I../../../../common/matchlib_toolkit/examples/matchlib/cmod/include -I./../../inc/mem_bank -I../../inc/ -I../../tb/ -I../../../../common/inc/ -I../../../../common/inc/core/systems -I../../inc/mem_bank -DDMA_WIDTH=64 -- /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_specs.h /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/common/inc/esp_dma_info_sysc.hpp /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_data_types.h (CIN-69)
 Edison Design Group C++/C Front End - Version 6.6 (CIN-1)
 # Warning: unrecognized GCC pragma (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-1675)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
 # Warning: extra ";" ignored (CRD-381)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-381)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-381)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-1396)
 # Warning: extra ";" ignored (CRD-381)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/DataPath.h" (CRD-381)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/DataPath.h" (CRD-381)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-1675)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-1396)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-1396)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-1396)
 # Warning: extra ";" ignored (CRD-381)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-381)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-381)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-1396)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-1396)
 # Warning: white space between backslash and newline in line splice ignored (CRD-1396)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-1396)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-1396)
 # Warning: extra ";" ignored (CRD-381)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_conf_info.h" (CRD-381)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_conf_info.h" (CRD-381)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_data_types.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_data_types.h" (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_data_types.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_data_types.h" (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_data_types.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_data_types.h" (CRD-1675)
 # Warning: unrecognized GCC pragma (CRD-1675)
-# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/inc/macfin2_data_types.h" (CRD-1675)
+# Warning:           detected during compilation of secondary translation unit "/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/inc/macfin3_data_types.h" (CRD-1675)
 # Info: Running transformation 'analyze' on solution 'DataPath.v1': elapsed time 30.24 seconds, memory usage 2927304kB, peak memory usage 2927304kB (SOL-15)
 Source file analysis completed (CIN-68)
 # Info: Completed transformation 'analyze' on solution 'DataPath.v1': elapsed time 58.12 seconds, memory usage 2861768kB, peak memory usage 2927304kB (SOL-9)
@@ -246,7 +246,7 @@ Creating instance '/in_wr_req.Push():inst' of ModularIO 'Connections::OutBlockin
 Design 'DataPath' was read (SOL-1)
 Makefile for Original Design + Testbench written to file './scverify/Verify_orig_cxx_osci.mk'
 Makefile for Original Design + Testbench written to file './scverify/Verify_orig_cxx_msim.mk'
-# Info: CDesignChecker Shell script written to '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/CDesignChecker/design_checker.sh'
+# Info: CDesignChecker Shell script written to '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/CDesignChecker/design_checker.sh'
 # Info: Completed transformation 'compile' on solution 'DataPath.v1': elapsed time 14.18 seconds, memory usage 2861768kB, peak memory usage 2992840kB (SOL-9)
 # Info: Design complexity at end of 'compile': Total ops = 77, Real ops = 24, Vars = 47 (SOL-21)
 
@@ -357,17 +357,17 @@ Add dependent file: ./DataPath_ccs_ctrl_in_buf_wait_v4.v
 Add dependent file: ./DataPath_ccs_out_buf_wait_v5.v
 Add dependent file: ./DataPath_mgc_mul_pipe_beh.v
 Add dependent file: ./DataPath.v
-Finished writing concatenated file: /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/concat_DataPath.v
+Finished writing concatenated file: /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/concat_DataPath.v
 order file name is: DataPath.v_order_sim.txt
 Add dependent file: ./DataPath_ccs_ctrl_in_buf_wait_v4.v
 Add dependent file: ./DataPath_ccs_out_buf_wait_v5.v
 Add dependent file: ./DataPath_mgc_mul_pipe_beh.v
 Add dependent file: ./DataPath.v
-Finished writing concatenated simulation file: /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/concat_sim_DataPath.v
+Finished writing concatenated simulation file: /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/concat_sim_DataPath.v
 # Warning: flow option /CoverCheck/QHOME '$QHOME', not resolved. Check environment.
 # Warning: Correct the CoverCheck flow settings before running Questa code coverage.
 Generating SCVerify SystemC wrapper
-# Info: Wrote wave database file to /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/scverify/ccs_wave_signals.dat
+# Info: Wrote wave database file to /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/scverify/ccs_wave_signals.dat
 Makefile for DataPath Verilog written to file './scverify/Verify_DataPath_v_msim.mk'
 # Info: Xilinx Vivado synthesis script written to 'vivado_v/DataPath.v.xv'
 # Info: Xilinx Vivado synthesis script written to 'vivado_concat_v/concat_DataPath.v.xv'

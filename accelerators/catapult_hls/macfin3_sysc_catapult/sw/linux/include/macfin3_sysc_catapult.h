@@ -17,7 +17,7 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct macfin2_sysc_catapult_access {
+struct macfin3_sysc_catapult_access {
     struct esp_access esp;
     /* <<--regs-->> */
 	unsigned mac_n;
@@ -27,6 +27,6 @@ struct macfin2_sysc_catapult_access {
     unsigned dst_offset;
 };
 
-#define MACFIN_SYSC_CATAPULT_IOC_ACCESS _IOW('S', 0, struct macfin2_sysc_catapult_access)
+#define MACFIN_SYSC_CATAPULT_IOC_ACCESS _IOW('S', 0, struct macfin3_sysc_catapult_access)
 
 #endif /* _MACFIN_SYSC_CATAPULT_H_ */

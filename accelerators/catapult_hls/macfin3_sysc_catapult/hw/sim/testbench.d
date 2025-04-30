@@ -119,11 +119,11 @@ testbench.o: ../tb/testbench.cpp ../tb/testbench.hpp \
  ../../../common/matchlib_toolkit/examples/systemc-2.3.3/include/sysc/kernel/sc_spawn.h \
  ../../../common/matchlib_toolkit/examples/systemc-2.3.3/include/sysc/kernel/sc_spawn_options.h \
  ../../../common/matchlib_toolkit/examples/systemc-2.3.3/include/sysc/kernel/sc_join.h \
- ../inc/macfin2_conf_info.h \
+ ../inc/macfin3_conf_info.h \
  ../../../common/matchlib_toolkit/examples/ac_types/include/ac_int.h \
  ../../../common/matchlib_toolkit/examples/ac_types/include/ac_fixed.h \
  ../../../common/matchlib_toolkit/examples/ac_types/include/ac_int.h \
- ../inc/macfin2_specs.h \
+ ../inc/macfin3_specs.h \
  ../../../common/matchlib_toolkit/examples/matchlib_connections/include/mc_connections.h \
  ../../../common/matchlib_toolkit/examples/ac_simutils/include/ac_sysc_macros.h \
  ../../../common/matchlib_toolkit/examples/ac_simutils/include/ac_sysc_trace.h \
@@ -216,11 +216,11 @@ testbench.o: ../tb/testbench.cpp ../tb/testbench.hpp \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/crossbar.h \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/nvhls_int.h \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/nvhls_types.h \
- ../inc/macfin2_data_types.h \
+ ../inc/macfin3_data_types.h \
  ../../../common/matchlib_toolkit/include/auto_gen_port_info.h \
  ../../../common/matchlib_toolkit/include/auto_gen_fields.h \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/UIntOrEmpty.h \
- ../inc/macfin2_specs.h ../inc/macfin2_data_types.h \
+ ../inc/macfin3_specs.h ../inc/macfin3_data_types.h \
  ../../../common/inc/core/systems/esp_dma_controller.hpp \
  ../../../common/inc/core/systems/esp_dma_controller.i.hpp \
  ../../../common/matchlib_toolkit/examples/ac_math/include/ac_math/ac_random.h \

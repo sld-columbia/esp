@@ -9,9 +9,9 @@
 // #include "./DataPath.hpp"
 // #include "./Ctrl.hpp"
 
-#include "macfin2_data_types.h"
-#include "macfin2_specs.h"
-#include "macfin2_conf_info.h"
+#include "macfin3_data_types.h"
+#include "macfin3_specs.h"
+#include "macfin3_conf_info.h"
 #include "ac_shared_bank_array.h"
 
 

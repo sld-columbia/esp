@@ -15,10 +15,10 @@ Design Input Files Specified
   $PROJECT_HOME/../../tb/testbench.hpp
   $PROJECT_HOME/../../tb/sc_main.cpp
   $PROJECT_HOME/../../tb/system.hpp
-  $PROJECT_HOME/../../inc/macfin2_data_types.h
+  $PROJECT_HOME/../../inc/macfin3_data_types.h
     $MGC_HOME/shared/include/ac_int.h
     $MGC_HOME/shared/include/ac_fixed.h
-    $PROJECT_HOME/../../inc/macfin2_specs.h
+    $PROJECT_HOME/../../inc/macfin3_specs.h
       $MGC_HOME/shared/include/mc_connections.h
         $MGC_HOME/shared/include/systemc.h
           $MGC_HOME/shared/include/systemc
@@ -431,10 +431,10 @@ Design Input Files Specified
       $MGC_HOME/shared/include/connections/connections_fifo.h
       $MGC_HOME/shared/include/connections/port_scanner.h
         $MGC_HOME/shared/include/systemc
-  $PROJECT_HOME/../../inc/macfin2_conf_info.h
+  $PROJECT_HOME/../../inc/macfin3_conf_info.h
     $MGC_HOME/shared/include/ac_int.h
     $MGC_HOME/shared/include/ac_fixed.h
-    $PROJECT_HOME/../../inc/macfin2_specs.h
+    $PROJECT_HOME/../../inc/macfin3_specs.h
       $MGC_HOME/shared/include/mc_connections.h
         $MGC_HOME/shared/include/systemc.h
           $MGC_HOME/shared/include/systemc
@@ -656,7 +656,7 @@ Design Input Files Specified
           $PROJECT_HOME/../../../../common/matchlib_toolkit/examples/matchlib/cmod/include/one_hot_to_bin.h
           $PROJECT_HOME/../../../../common/matchlib_toolkit/examples/matchlib/cmod/include/hls_globals.h
         $PROJECT_HOME/../../../../common/matchlib_toolkit/examples/matchlib/cmod/include/crossbar.h
-    $PROJECT_HOME/../../inc/macfin2_data_types.h
+    $PROJECT_HOME/../../inc/macfin3_data_types.h
     $PROJECT_HOME/../../../../common/matchlib_toolkit/include/auto_gen_port_info.h
       $MGC_HOME/shared/include/connections/marshaller.h
         $MGC_HOME/shared/include/mc_typeconv.h
@@ -666,10 +666,10 @@ Design Input Files Specified
         $PROJECT_HOME/../../../../common/matchlib_toolkit/examples/matchlib/cmod/include/UIntOrEmpty.h
           $MGC_HOME/shared/include/systemc
   $PROJECT_HOME/../../inc/Ctrl.h
-    $PROJECT_HOME/../../inc/macfin2_data_types.h
+    $PROJECT_HOME/../../inc/macfin3_data_types.h
       $MGC_HOME/shared/include/ac_int.h
       $MGC_HOME/shared/include/ac_fixed.h
-      $PROJECT_HOME/../../inc/macfin2_specs.h
+      $PROJECT_HOME/../../inc/macfin3_specs.h
         $MGC_HOME/shared/include/mc_connections.h
           $MGC_HOME/shared/include/systemc.h
             $MGC_HOME/shared/include/systemc
@@ -891,7 +891,7 @@ Design Input Files Specified
             $PROJECT_HOME/../../../../common/matchlib_toolkit/examples/matchlib/cmod/include/one_hot_to_bin.h
             $PROJECT_HOME/../../../../common/matchlib_toolkit/examples/matchlib/cmod/include/hls_globals.h
           $PROJECT_HOME/../../../../common/matchlib_toolkit/examples/matchlib/cmod/include/crossbar.h
-    $PROJECT_HOME/../../inc/macfin2_conf_info.h
+    $PROJECT_HOME/../../inc/macfin3_conf_info.h
       $PROJECT_HOME/../../../../common/matchlib_toolkit/include/auto_gen_port_info.h
         $MGC_HOME/shared/include/connections/marshaller.h
           $MGC_HOME/shared/include/mc_typeconv.h
@@ -907,7 +907,7 @@ Design Input Files Specified
       $PROJECT_HOME/../../../../common/matchlib_toolkit/include/ac_max_pow2.h
       $PROJECT_HOME/../../../../common/matchlib_toolkit/include/ac_array_1D.h
         $MGC_HOME/shared/include/ac_assert.h
-  $PROJECT_HOME/../../inc/macfin2_specs.h
+  $PROJECT_HOME/../../inc/macfin3_specs.h
     $MGC_HOME/shared/include/mc_connections.h
       $MGC_HOME/shared/include/systemc.h
         $MGC_HOME/shared/include/systemc

@@ -4,7 +4,7 @@
 #define __ESP_CFG_000_H__
 
 #include "libesp.h"
-#include "macfin2_sysc_catapult.h"
+#include "macfin3_sysc_catapult.h"
 
 typedef int32_t token_t;
 
@@ -20,7 +20,7 @@ const int32_t mac_len = MAC_LEN;
 
 #define NACC 1
 
-struct macfin2_sysc_catapult_access macfin2_cfg_000[] = {{
+struct macfin3_sysc_catapult_access macfin3_cfg_000[] = {{
     /* <<--descriptor-->> */
 		.mac_n = MAC_N,
 		.mac_vec = MAC_VEC,
@@ -35,9 +35,9 @@ struct macfin2_sysc_catapult_access macfin2_cfg_000[] = {{
 
 esp_thread_info_t cfg_000[] = {{
     .run       = true,
-    .devname   = "macfin2_sysc_catapult.0",
+    .devname   = "macfin3_sysc_catapult.0",
     .ioctl_req = MACFIN_SYSC_CATAPULT_IOC_ACCESS,
-    .esp_desc  = &(macfin2_cfg_000[0].esp),
+    .esp_desc  = &(macfin3_cfg_000[0].esp),
 }};
 
 #endif /* __ESP_CFG_000_H__ */

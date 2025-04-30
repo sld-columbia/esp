@@ -14,26 +14,26 @@ puts "-- Requested 4 fractional digits for design 'DataPath' timing"
 puts "-- Requested 4 fractional digits for design 'DataPath' capacitance"
 puts "-- Characterization mode: p2p "
 
-puts "-- Synthesis Timing report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v/timing_summary_synth.rpt' "
-puts "-- Synthesis Utilization report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v/utilization_synth.rpt' "
+puts "-- Synthesis Timing report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v/timing_summary_synth.rpt' "
+puts "-- Synthesis Utilization report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v/utilization_synth.rpt' "
 if { ([info exists env(Xilinx_RUN_PNR)] && $env(Xilinx_RUN_PNR) ) || 
      ([info exists env(Xilinx_BITGEN)] && $env(Xilinx_BITGEN) ) } {
-puts "-- Routed Timing report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v/timing_summary_routed.rpt' "
-puts "-- Routed Utilization report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v/utilization_placed.rpt' "
+puts "-- Routed Timing report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v/timing_summary_routed.rpt' "
+puts "-- Routed Utilization report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v/utilization_placed.rpt' "
 }
 
 # Environment variable settings
 global env
 set CATAPULT_HOME "/opt/Catapult_2024.2/Mgc_home"
 ## Set the variable for file path prefixing 
-set RTL_TOOL_SCRIPT_DIR /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v
+set RTL_TOOL_SCRIPT_DIR /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v
 set RTL_TOOL_SCRIPT_DIR [file dirname [file normalize [info script] ] ]
 puts "-- RTL_TOOL_SCRIPT_DIR is set to '$RTL_TOOL_SCRIPT_DIR' "
 # Vivado Non-Project mode script starts here
 puts "==========================================="
 puts "Catapult driving Vivado in Non-Project mode"
 puts "==========================================="
-set outputDir /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v
+set outputDir /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v
 set outputDir $RTL_TOOL_SCRIPT_DIR
 #file mkdir $outputDir
 #
@@ -53,7 +53,7 @@ set_property part xc7vx485tffg1761-2 [current_project]
 #
 synth_design   -cascade_dsp auto  -top DataPath -part xc7vx485tffg1761-2 -mode out_of_context  -include_dirs "" 
 write_checkpoint -force $outputDir/post_synth
-set viv_report_dir /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v
+set viv_report_dir /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v
 report_utilization -file $viv_report_dir/utilization_synth.rpt
 report_timing_summary -path_type summary -file $viv_report_dir/timing_summary_synth.rpt
 report_timing -nworst 1 -from [all_inputs] -to [all_outputs] -file $viv_report_dir/timing_summary_synth.rpt -append
@@ -66,7 +66,7 @@ if { ([info exists env(Xilinx_RUN_PNR)] && $env(Xilinx_RUN_PNR) ) ||
      ([info exists env(Xilinx_BITGEN)] && $env(Xilinx_BITGEN) ) } {
   opt_design
   place_design
-  read_xdc /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v/DataPath.v.xv.signoff.sdc
+  read_xdc /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v/DataPath.v.xv.signoff.sdc
   phys_opt_design
   write_checkpoint -force $outputDir/post_place
   route_design
@@ -76,7 +76,7 @@ if { ([info exists env(Xilinx_RUN_PNR)] && $env(Xilinx_RUN_PNR) ) ||
   if { [info exists env(Xilinx_BITGEN)] && $env(Xilinx_BITGEN) } {
     write_bitstream -force $outputDir/DataPath.bit
   }
-   set viv_report_dir /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v
+   set viv_report_dir /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_v
    report_design_analysis -congestion -complexity -file $viv_report_dir/design_analysis.rpt
    report_high_fanout_nets -timing -load_types -max_nets 100 -file $viv_report_dir/high_fanouts.rpt
    report_utilization -file $viv_report_dir/utilization_placed.rpt

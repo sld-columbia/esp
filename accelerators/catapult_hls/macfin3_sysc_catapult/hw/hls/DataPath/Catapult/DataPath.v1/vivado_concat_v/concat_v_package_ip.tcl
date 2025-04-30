@@ -2,14 +2,14 @@
 global env
 set CATAPULT_HOME "/opt/Catapult_2024.2/Mgc_home"
 ## Set the variable for file path prefixing 
-set RTL_TOOL_SCRIPT_DIR /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_concat_v
+set RTL_TOOL_SCRIPT_DIR /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_concat_v
 set RTL_TOOL_SCRIPT_DIR [file dirname [file normalize [info script] ] ]
 puts "-- RTL_TOOL_SCRIPT_DIR is set to '$RTL_TOOL_SCRIPT_DIR' "
 # Vivado Non-Project mode script starts here
 puts "==========================================="
 puts "Catapult driving Vivado in Non-Project mode"
 puts "==========================================="
-set outputDir /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin2_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_concat_v
+set outputDir /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/macfin3_sysc_catapult/hw/hls/DataPath/Catapult/DataPath.v1/vivado_concat_v
 set outputDir $RTL_TOOL_SCRIPT_DIR
 create_project -force ip_tcl_concat_v
    read_verilog ../concat_DataPath.v

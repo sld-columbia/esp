@@ -32,11 +32,11 @@ solution file add ../../tb/testbench.cpp -type C++ -exclude true
 solution file add ../../tb/testbench.hpp -type CHEADER -exclude true
 solution file add ../../tb/sc_main.cpp -type C++ -exclude true
 solution file add ../../tb/system.hpp -type CHEADER -exclude true
-solution file add ../../inc/macfin2_data_types.h -type CHEADER
+solution file add ../../inc/macfin3_data_types.h -type CHEADER
 solution file add ../../../../common/inc/esp_dma_info_sysc.hpp -type CHEADER
-solution file add ../../inc/macfin2_conf_info.h -type CHEADER
+solution file add ../../inc/macfin3_conf_info.h -type CHEADER
 solution file add ../../inc/Ctrl.h -type CHEADER
-solution file add ../../inc/macfin2_specs.h -type CHEADER -args -DDMA_WIDTH=64
+solution file add ../../inc/macfin3_specs.h -type CHEADER -args -DDMA_WIDTH=64
 directive set -DESIGN_GOAL area
 directive set -SPECULATE true
 directive set -MERGEABLE true
