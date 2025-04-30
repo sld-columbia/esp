@@ -1,8 +1,8 @@
-Ctrl.o: ../src/Ctrl.cpp ../inc/macfin2.hpp ../inc/macfin2_data_types.hpp \
+Ctrl.o: ../src/Ctrl.cpp ../inc/macfin2.h ../inc/macfin2_data_types.h \
  ../../../common/matchlib_toolkit/examples/ac_types/include/ac_int.h \
  ../../../common/matchlib_toolkit/examples/ac_types/include/ac_fixed.h \
  ../../../common/matchlib_toolkit/examples/ac_types/include/ac_int.h \
- ../inc/macfin2_specs.hpp \
+ ../inc/macfin2_specs.h \
  ../../../common/matchlib_toolkit/examples/matchlib_connections/include/mc_connections.h \
  ../../../common/matchlib_toolkit/examples/systemc-2.3.3/include/systemc.h \
  ../../../common/matchlib_toolkit/examples/systemc-2.3.3/include/systemc \
@@ -215,7 +215,7 @@ Ctrl.o: ../src/Ctrl.cpp ../inc/macfin2.hpp ../inc/macfin2_data_types.hpp \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/crossbar.h \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/nvhls_int.h \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/nvhls_types.h \
- ../inc/macfin2_conf_info.hpp \
+ ../inc/macfin2_conf_info.h \
  ../../../common/matchlib_toolkit/include/auto_gen_port_info.h \
  ../../../common/matchlib_toolkit/include/auto_gen_fields.h \
  ../../../common/matchlib_toolkit/examples/matchlib/cmod/include/UIntOrEmpty.h \

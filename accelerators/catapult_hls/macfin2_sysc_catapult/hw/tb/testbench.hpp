@@ -7,9 +7,9 @@
 #pragma once
 
 #include <systemc.h>
-#include "macfin2_conf_info.hpp"
-#include "macfin2_specs.hpp"
-#include "macfin2_data_types.hpp"
+#include "macfin2_conf_info.h"
+#include "macfin2_specs.h"
+#include "macfin2_data_types.h"
 #include "esp_dma_info_sysc.hpp"
 #include "esp_dma_controller.hpp"
 

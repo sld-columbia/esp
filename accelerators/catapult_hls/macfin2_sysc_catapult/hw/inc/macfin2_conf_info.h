@@ -9,8 +9,8 @@
 #include <sstream>
 #include <ac_int.h>
 #include <ac_fixed.h>
-#include "macfin2_specs.hpp"
-#include "macfin2_data_types.hpp"
+#include "macfin2_specs.h"
+#include "macfin2_data_types.h"
 #include "auto_gen_port_info.h"
 
 //

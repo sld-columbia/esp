@@ -45,15 +45,15 @@ solution file add "../tb/testbench.cpp" -exclude true
 solution file add "../tb/testbench.hpp" -exclude true
 solution file add "../tb/sc_main.cpp" -exclude true
 solution file add "../tb/system.hpp" -exclude true
-solution file add "../inc/macfin2_data_types.hpp"
+solution file add "../inc/macfin2_data_types.h"
 solution file add "../../../common/inc/esp_dma_info_sysc.hpp"
-solution file add "../inc/macfin2_conf_info.hpp"
-solution file add "../inc/macfin2.hpp"
-solution file add "../src/DataPath.cpp"
-solution file add "../src/Control.cpp"
-solution file add "../inc/macfin2_specs.hpp"
+solution file add "../inc/macfin2_conf_info.h"
+solution file add "../inc/macfin2.h"
+solution file add "../inc/DataPath.h"
+solution file add "../inc/Ctrl.h"
+solution file add "../inc/macfin2_specs.h"
 
-solution file set ../inc/macfin2_specs.hpp -args -DDMA_WIDTH=$DMA_WIDTH
+solution file set ../inc/macfin2_specs.h -args -DDMA_WIDTH=$DMA_WIDTH
 
 #
 # Output

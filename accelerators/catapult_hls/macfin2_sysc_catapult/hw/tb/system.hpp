@@ -6,13 +6,13 @@
 
 #pragma once
 
-#include "macfin2_data_types.hpp"
-#include "macfin2_specs.hpp"
-#include "macfin2_conf_info.hpp"
+#include "macfin2_data_types.h"
+#include "macfin2_specs.h"
+#include "macfin2_conf_info.h"
 #include "esp_dma_info_sysc.hpp"
 #include "esp_dma_controller.hpp"
 #include "testbench.hpp"
-#include "macfin2.hpp"
+#include "macfin2.h"
 #include <mc_scverify.h>
 
 SC_MODULE(system_t)
