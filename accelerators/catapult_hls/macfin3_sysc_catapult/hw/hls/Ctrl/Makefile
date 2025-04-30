@@ -2,7 +2,7 @@
 #SPDX-License-Identifier: Apache-2.0
 
 CATAPULT_PRODUCT = ultra
-export DMA_WIDTH = 64
+export DMA_WIDTH = 64 #set to target DMA used when running the top level
 export ACCELERATOR = DUMMY
 export TECH_PATH = DUMMY
 export MEMTECH_PATH = DUMMY
