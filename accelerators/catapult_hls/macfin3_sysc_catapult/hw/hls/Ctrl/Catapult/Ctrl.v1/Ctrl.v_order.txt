@@ -1,0 +1,10 @@
+./Ctrl_ccs_ctrl_in_buf_wait_v4.v
+./Ctrl_ccs_out_buf_wait_v5.v
+./Ctrl_Connections_conn_sync_chan_sync_out_ccs_in_v1.v
+./Ctrl_Connections_conn_sync_chan_sync_out_ccs_sync_out_vld_v1.v
+./Ctrl_Connections_conn_sync_chan_sync_out.v
+./Ctrl_Connections_conn_sync_chan_sync_in_ccs_in_v1.v
+./Ctrl_Connections_conn_sync_chan_sync_in_ccs_sync_out_vld_v1.v
+./Ctrl_Connections_conn_sync_chan_sync_in.v
+../../../../inc/mem_bank/DUAL_PORT_RBW.v
+./Ctrl.v

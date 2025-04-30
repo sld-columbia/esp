@@ -1,0 +1,4 @@
+./DataPath_ccs_ctrl_in_buf_wait_v4.v
+./DataPath_ccs_out_buf_wait_v5.v
+./DataPath_mgc_mul_pipe_beh.v
+./DataPath.v

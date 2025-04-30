@@ -1,0 +1,6 @@
+RADIX hex
+CDEBUG 0
+DEBUGVARS {}
+WAVELIST {{Sync_Signals CTRL clk clk {}} {Sync_Signals CTRL rst rst {}} {DUT {} conf_info_in_val conf_info_in_val {}} {DUT {} conf_info_in_rdy conf_info_in_rdy {}} {DUT {} conf_info_in_msg conf_info_in_msg {}} {DUT {} sync00_val sync00_val {}} {DUT {} sync00_rdy sync00_rdy {}} {DUT {} sync00_msg sync00_msg {}} {DUT {} in_wr_req_val in_wr_req_val {}} {DUT {} in_wr_req_rdy in_wr_req_rdy {}} {DUT {} in_wr_req_msg in_wr_req_msg {}} {DUT {} in_rd_rsp_val in_rd_rsp_val {}} {DUT {} in_rd_rsp_rdy in_rd_rsp_rdy {}} {DUT {} in_rd_rsp_msg in_rd_rsp_msg {}} {Active_Processes compute.wen DataPath_compute_inst DataPath_compute_inst/DataPath_compute_staller_inst/compute_wen {}}}
+DUTINST DataPath
+STALL_CTRLS_ADDED 1

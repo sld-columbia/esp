@@ -1,0 +1,115 @@
+#
+# Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License")
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
+TOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../)
+
+
+
+# Location of submodules
+CONNECTIONS_HOME ?= $(ROOT)/matchlib/connections
+RAPIDJSON_HOME ?= $(ROOT)/matchlib/rapidjson
+MATCHLIB_HOME ?= $(ROOT)/matchlib/cmod
+BOOST_HOME ?= /usr/local/boost/
+
+export ROOT           ?= $(TOT)
+export TOP_NAME       ?= $(shell basename `pwd`)
+# Clock period in ns
+export CLK_PERIOD     ?= 5
+export SRC_PATH       ?= $(ROOT)/cmod/unittests
+
+export SEARCH_PATH    ?= $(MATCHLIB_TOOL)/include $(BOOST_HOME) $(CATAPULT_HOME)/shared/pkgs/matchlib/cmod/include $(TOT)/mem_bank
+
+
+ # $(MATCHLIB_HOME)/include $(CONNECTIONS_HOME)/include $(RAPIDJSON_HOME)/include $(BOOST_HOME)/include
+
+#export SEARCH_PATH    ?= $(MATCHLIB_HOME)/include $(CONNECTIONS_HOME)/include $(RAPIDJSON_HOME)/include $(SM6_HOME)/include
+#export SEARCH_PATH    ?= $(MATCHLIB_HOME)/include $(CONNECTIONS_HOME)/include $(RAPIDJSON_HOME)/include
+export HLS_CATAPULT   ?= 1
+export RUN_SCVERIFY   ?= 0
+export SYSTEMC_DESIGN ?= 1
+
+export RUN_CDESIGN_CHECKER	?= 0
+
+# Default compiler flags set by switches below.
+export COMPILER_FLAGS ?=
+
+# SIM_MODE (SystemC code, RTL is unaffected)
+# 0 = Synthesis view of Connections port and combinational code.
+#   This option can cause failed simulations due to SystemC's timing model.
+# 1 = Cycle-accurate view of Connections port and channel code, CONNECTIONS_ACCURATE_SIM. (default)
+# 2 = Faster TLM view of Connections port and channel code, CONNECTIONS_FAST_SIM.
+SIM_MODE ?= 1
+ifeq ($(SIM_MODE),1)
+	COMPILER_FLAGS += CONNECTIONS_ACCURATE_SIM SC_INCLUDE_DYNAMIC_PROCESSES
+endif
+ifeq ($(SIM_MODE),2)
+	COMPILER_FLAGS += CONNECTIONS_FAST_SIM SC_INCLUDE_DYNAMIC_PROCESSES
+endif
+
+
+# RAND_STALL (SystemC code, RTL is unaffected)
+# 0 = Random stall of ports and channels disabled (default)
+# 1 = Random stall of ports and channels enabled
+#   This feature aids in latency insensitive design verication.
+#   Note: Only valid if SIM_MODE = 1 (accurate) or 2 (fast)
+RAND_STALL ?= 0
+ifeq ($(RAND_STALL),1)
+	COMPILER_FLAGS += CONN_RAND_STALL
+endif
+
+export FSDB_VCS_RD_SC_VALPTR_PROTECT=1
+
+hls: clean
+	export NOVAS_INST_DIR=$(NOVAS_HOME); \
+        export LIBRARY_PATH=$(CRT_LIB_DIR):$LIBRARY_PATH; \
+	catapult -shell -product ultra -file go_hls.tcl
+hls_gui: clean
+	export NOVAS_INST_DIR=$(NOVAS_HOME); \
+        export LIBRARY_PATH=$(CRT_LIB_DIR):$LIBRARY_PATH; \
+	catapult -product ultra -file go_hls.tcl
+
+shell:
+	catapult -shell -product ultra
+
+gui:
+	catapult -product ultra
+
+vcs:
+	export NOVAS_INST_DIR=$(NOVAS_HOME); \
+        export LIBRARY_PATH=$(CRT_LIB_DIR):$LIBRARY_PATH; \
+	catapult -shell -product ultra -file go_vcs.tcl
+
+cdc:
+	env RUN_CDESIGN_CHECKER=1 catapult -shell -product ultra -file go_hls.tcl
+
+.PHONY: clean
+clean:
+	/bin/rm -rf ./catapult_cache
+	/bin/rm -rf ./*~
+	/bin/rm -rf ./*.key
+	/bin/rm -rf ./core*
+	/bin/rm -rf ./Catapult*
+	/bin/rm -rf ./catapult*
+	/bin/rm -rf ./*.log
+	/bin/rm -rf ./design_checker_*.tcl
+	/bin/rm -rf ./*.csv
+	/bin/rm -rf ./DVE*
+	/bin/rm -rf ./verdi*
+	/bin/rm -rf ./slec*	
+	/bin/rm -rf ./novas*	
+	/bin/rm -rf ./*.fsdb
+	/bin/rm -rf ./*.vpd 
