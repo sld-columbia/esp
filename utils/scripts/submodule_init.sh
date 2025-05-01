@@ -16,66 +16,68 @@ noyes () {
     done
 }
 
-INSTALL_ARIANE=0
+# hardcoded flags for regression testing on Arian
+INSTALL_ARIANE=1
 INSTALL_IBEX=0
-INSTALL_ARIANE_LINUX=0
+INSTALL_ARIANE_LINUX=1
 INSTALL_LEON3_LINUX=0
-INSTALL_STRATUS_INC=0
+INSTALL_STRATUS_INC=1
 INSTALL_MATCHLIB=0
 INSTALL_CHISEL=0
-INSTALL_NVDLA=0
+INSTALL_NVDLA=1
 INSTALL_SPANDEX=0
 INSTALL_BASEJUMP=0
 INSTALL_ZYNQ=0
 INSTALL_EIGEN=0
 
-if [ $(noyes "*** QUESTION : Do you want to install the Ariane core?") == "y" ]; then
-    INSTALL_ARIANE=1
-fi
+# disable interactive installation for regression testing on Arian
+# if [ $(noyes "*** QUESTION : Do you want to install the Ariane core?") == "y" ]; then
+#     INSTALL_ARIANE=1
+# fi
 
-if [ $(noyes "*** QUESTION : Do you want to install the Ibex core?") == "y" ]; then
-    INSTALL_IBEX=1
-fi
+# if [ $(noyes "*** QUESTION : Do you want to install the Ibex core?") == "y" ]; then
+#     INSTALL_IBEX=1
+# fi
 
-if [ $(noyes "*** QUESTION : Do you want to install Linux for the Ariane core?") == "y" ]; then
-    INSTALL_ARIANE_LINUX=1
-fi
+# if [ $(noyes "*** QUESTION : Do you want to install Linux for the Ariane core?") == "y" ]; then
+#     INSTALL_ARIANE_LINUX=1
+# fi
 
-if [ $(noyes "*** QUESTION : Do you want to install Linux for the Leon3 core?") == "y" ]; then
-    INSTALL_LEON3_LINUX=1
-fi
+# if [ $(noyes "*** QUESTION : Do you want to install Linux for the Leon3 core?") == "y" ]; then
+#     INSTALL_LEON3_LINUX=1
+# fi
 
-if [ $(noyes "*** QUESTION : Do you want to install support for accelerator design with Stratus HLS?") == "y" ]; then
-    INSTALL_STRATUS_INC=1
-fi
+# if [ $(noyes "*** QUESTION : Do you want to install support for accelerator design with Stratus HLS?") == "y" ]; then
+#     INSTALL_STRATUS_INC=1
+# fi
 
-if [ $(noyes "*** QUESTION : Do you want to install support for accelerator design with Matchlib in Catapult HLS?") == "y" ]; then
-    INSTALL_MATCHLIB=1
-fi
+# if [ $(noyes "*** QUESTION : Do you want to install support for accelerator design with Matchlib in Catapult HLS?") == "y" ]; then
+#     INSTALL_MATCHLIB=1
+# fi
 
-if [ $(noyes "*** QUESTION : Do you want to install support for accelerator design with Chisel?") == "y" ]; then
-    INSTALL_CHISEL=1
-fi
+# if [ $(noyes "*** QUESTION : Do you want to install support for accelerator design with Chisel?") == "y" ]; then
+#     INSTALL_CHISEL=1
+# fi
 
-if [ $(noyes "*** QUESTION : Do you want to install NVDLA?") == "y" ]; then
-    INSTALL_NVDLA=1
-fi
+# if [ $(noyes "*** QUESTION : Do you want to install NVDLA?") == "y" ]; then
+#     INSTALL_NVDLA=1
+# fi
 
-if [ $(noyes "*** QUESTION : Do you want to install Spandex caches?") == "y" ]; then
-    INSTALL_SPANDEX=1
-fi
+# if [ $(noyes "*** QUESTION : Do you want to install Spandex caches?") == "y" ]; then
+#     INSTALL_SPANDEX=1
+# fi
 
-if [ $(noyes "*** QUESTION : Do you want to install Basejump to simulate designs with a DDR controller?") == "y" ]; then
-    INSTALL_BASEJUMP=1
-fi
+# if [ $(noyes "*** QUESTION : Do you want to install Basejump to simulate designs with a DDR controller?") == "y" ]; then
+#     INSTALL_BASEJUMP=1
+# fi
 
-if [ $(noyes "*** QUESTION : Do you want to install support for Zynq boards?") == "y" ]; then
-    INSTALL_ZYNQ=1
-fi
+# if [ $(noyes "*** QUESTION : Do you want to install support for Zynq boards?") == "y" ]; then
+#     INSTALL_ZYNQ=1
+# fi
 
-if [ $(noyes "*** QUESTION : Do you want to install Eigen?") == "y" ]; then
-    INSTALL_EIGEN=1
-fi
+# if [ $(noyes "*** QUESTION : Do you want to install Eigen?") == "y" ]; then
+#     INSTALL_EIGEN=1
+# fi
 
 echo "*** Installing Required and Selected Submodules ***"
 git submodule update --init --recursive rtl/caches/esp-caches
