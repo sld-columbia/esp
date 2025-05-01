@@ -11,10 +11,10 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: regression-testing
+      # - name: Checkout code
+      #   uses: actions/checkout@v4
+      #   with:
+      #     ref: regression-testing
 
       - name: Test workflow with hello
         run: |
