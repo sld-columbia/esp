@@ -17,6 +17,11 @@ $(ESP_CFG_BUILD)/.esp_config:
 	$(QUIET_MKDIR)mkdir -p $(ESP_CFG_BUILD)
 	$(QUIET_CP)cp $(ESP_DEFCONFIG) $@
 
+.PHONY: restore-esp_config-bak
+restore-esp_config-bak:
+	$(QUIET_MKDIR)mkdir -p $(ESP_CFG_BUILD)
+	$(QUIET_CP)cp $(ESP_CFG_BUILD)/.esp_config.bak $(ESP_CFG_BUILD)/.esp_config
+
 esp-defconfig: $(ESP_DEFCONFIG) $(ESP_CFG_BUILD)
 	$(QUIET_CP) \
 	cd $(ESP_CFG_BUILD); \

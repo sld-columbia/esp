@@ -3,7 +3,10 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.math_real.all; -- TODO
+use ieee.numeric_std.all;
+use ieee.math_real.all;
+use work.allclkgen.all;
+use work.gencomp.all;
 
 -- Include PLLE2_ADV component
 library UNISIM;
@@ -16,16 +19,17 @@ use ieee.std_logic_textio.all;
 
 entity plle_drp is
     generic (
-        CLKFBOUT_MULT  : integer range 2 to 64 := 8;
+        CLKFBOUT_MULT  : integer range 2 to 64 := 16;
         CLKIN1_PERIOD  : real := 8.0;
         CLKIN2_PERIOD  : real := 8.0;
-        CLKOUT0_DIVIDE : integer range 1 to 128 := 1;
-        CLKOUT1_DIVIDE : integer range 1 to 128 := 1;
-        CLKOUT2_DIVIDE : integer range 1 to 128 := 1;
-        CLKOUT3_DIVIDE : integer range 1 to 128 := 1;
-        CLKOUT4_DIVIDE : integer range 1 to 128 := 1;
-        CLKOUT5_DIVIDE : integer range 1 to 128 := 1;
-        NUM_OUT_CLOCKS : integer range 1 to 6   := 6
+        CLKOUT0_DIVIDE : integer range 1 to 128 := 19;
+        CLKOUT1_DIVIDE : integer range 1 to 128 := 18;
+        CLKOUT2_DIVIDE : integer range 1 to 128 := 17;
+        CLKOUT3_DIVIDE : integer range 1 to 128 := 15;
+        CLKOUT4_DIVIDE : integer range 1 to 128 := 14;
+        CLKOUT5_DIVIDE : integer range 1 to 128 := 13;
+        NUM_OUT_CLOCKS : integer range 1 to 6   := 1;
+        EN_FREQ_SEL    : integer range 0 to 1   := 0
     );
     port (
         -- clock and reset interface
@@ -41,10 +45,13 @@ entity plle_drp is
         clk_feedthru5 : out std_ulogic;
         locked        : out std_ulogic;
 
-        -- control signals
-        clkin_sel     : in  std_ulogic;
+        -- hi-cycles control signals
         dco_reconfig  : in  std_ulogic;
-        dco_hicycles  : in  std_logic_vector(5 downto 0)
+        dco_hicycles  : in  std_logic_vector(5 downto 0);
+
+        -- frequency selection logic
+        dco_en        : in  std_ulogic;
+        dco_div_sel   : in  std_logic_vector(2 downto 0)
     );
 
 end plle_drp;
@@ -68,11 +75,11 @@ architecture rtl of plle_drp is
     signal pll_clkout5       : std_ulogic;
 
     -- status signals
+    signal pll_locked_int    : std_ulogic;
     signal pll_locked        : std_ulogic;
     signal pll_rst           : std_ulogic;
 
     -- reconfiguration signals
-    --signal pll_do            : std_logic_vector(15 downto 0);
     signal next_pll_reconfig : std_ulogic;
     signal pll_reconfig      : std_ulogic;
     signal next_pll_hicycles : std_logic_vector(5 downto 0);
@@ -84,11 +91,27 @@ architecture rtl of plle_drp is
     signal pll_di            : std_logic_vector(15 downto 0);
     signal pll_dwe           : std_ulogic;
 
+    -- frequency selection masks
+    signal freq_sel0         : std_ulogic;
+    signal freq_sel1         : std_ulogic;
+    signal freq_sel2         : std_ulogic;
+
+    -- clock multiplexing
+    signal clk_sel_01        : std_ulogic;
+    signal clk_sel_23        : std_ulogic;
+    signal clk_sel_45        : std_ulogic;
+    signal clk_sel_67        : std_ulogic;
+    signal clk_sel_0123      : std_ulogic;
+    signal clk_sel_4567      : std_ulogic;
+    signal clk_sel           : std_ulogic;
+
+    signal dco_div_sel_prev  : std_logic_vector(2 downto 0);
+    signal div_sel_lock_cnt  : unsigned(2 downto 0);
 
 begin -- rtl
 
     -- next state process
-    locked <= pll_locked when next_pll_state = idle else '0';
+    locked <= pll_locked;
     p_next_state : process(pll_state, pll_reconfig, pll_drdy, pll_locked)
     begin
         next_pll_state <= pll_state;
@@ -204,11 +227,73 @@ begin -- rtl
        O => pll_clkfb_bufgout,
        I => pll_clkfb_bufgin
     );
-    u_pll_clkout0_bufg : BUFG
-    port map (
-       O => clk_feedthru0,
-       I => pll_clkout0
-    );
+
+    -- multiplex output clocks
+    clk_freq_sel_gen : if EN_FREQ_SEL /= 0 generate
+
+        -- avoid X propagation
+        freq_sel0 <= '1' when dco_div_sel(0) = '1' and dco_en = '1' else '0';
+        freq_sel1 <= '1' when dco_div_sel(1) = '1' and dco_en = '1' else '0';
+        freq_sel2 <= '0' when dco_div_sel(2) = '0' and dco_en = '1' else '1';
+
+        -- first level selection
+        clk_sel_01 <= pll_clkout0;
+        clk_sel_23 <= pll_clkout1 when freq_sel0 = '0' else pll_clkout2;
+        clk_sel_45 <= clkin_bufgout when freq_sel0 = '0' else pll_clkout3;
+        clk_sel_67 <= pll_clkout4 when freq_sel0 = '0' else pll_clkout5;
+
+        -- second level selection
+        clk_sel_0123 <= clk_sel_01 when freq_sel1 = '0' else clk_sel_23;
+        clk_sel_4567 <= clk_sel_45 when freq_sel1 = '0' else clk_sel_67;
+
+        -- final level selection
+        clkmux_vote : clkmux
+            generic map (
+                tech => virtex7
+            )
+            port map (
+                clk_sel_0123, clk_sel_4567, freq_sel2, clk_sel, rstn
+            );
+        --clk_feedthru0 <= clk_sel;
+        u_pll_clkout0_bufg : BUFG
+        port map (
+           O => clk_feedthru0,
+           I => clk_sel
+        );
+
+        -- locked state
+        p_locked_cnt : process(clk_sel, rstn)
+        begin
+            if rstn = '0' then
+                dco_div_sel_prev <= (others => '0');
+                div_sel_lock_cnt <= (others => '0');
+            elsif clk_sel'event and clk_sel = '1' then
+                dco_div_sel_prev <= dco_div_sel;
+                if (dco_div_sel /= dco_div_sel_prev) then
+                    div_sel_lock_cnt <= (others => '0');
+                elsif (div_sel_lock_cnt(2) /= '1') then
+                    div_sel_lock_cnt <= div_sel_lock_cnt + 1;
+                else
+                    div_sel_lock_cnt <= div_sel_lock_cnt;
+                end if;
+            end if;
+        end process p_locked_cnt;
+        pll_locked <= div_sel_lock_cnt(2);
+
+    end generate clk_freq_sel_gen;
+
+    -- buffer all output clocks
+    clk_mult_gen : if EN_FREQ_SEL = 0 generate
+
+        pll_locked <= pll_locked_int;
+
+        u_pll_clkout0_bufg : BUFG
+        port map (
+           O => clk_feedthru0,
+           I => pll_clkout0
+        );
+
+    end generate clk_mult_gen;
 
     clkout1_gen : if NUM_OUT_CLOCKS >= 2 generate
         u_pll_clkout1_bufg : BUFG
@@ -306,14 +391,14 @@ begin -- rtl
 
         -- Feedback Clocks: 1-bit (each) output: Clock feedback ports
         CLKFBOUT => pll_clkfb_bufgin, -- 1-bit output: Feedback clock
-        LOCKED => pll_locked,         -- 1-bit output: LOCK
+        LOCKED => pll_locked_int,     -- 1-bit output: LOCK
 
         -- Clock Inputs: 1-bit (each) input: Clock inputs
         CLKIN1 => clkin_bufgout,   -- 1-bit input: Primary clock
-        CLKIN2 => clkin_bufgout,   -- 1-bit input: Secondary clock
+        CLKIN2 => '0',             -- 1-bit input: Secondary clock
 
         -- Control Ports: 1-bit (each) input: PLL control ports
-        CLKINSEL => clkin_sel, -- 1-bit input: Clock select, High=CLKIN1 Low=CLKIN2
+        CLKINSEL => '1',       -- 1-bit input: Clock select, High=CLKIN1 Low=CLKIN2
         PWRDWN => '0',         -- 1-bit input: Power-down
         RST => pll_rst,        -- 1-bit input: Reset
 

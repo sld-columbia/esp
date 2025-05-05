@@ -267,7 +267,8 @@ package nocpackage is
   component inferred_async_fifo
     generic (
       g_data_width : natural := COH_NOC_FLIT_SIZE;
-      g_size       : natural := 6);
+      g_size       : natural := 6;
+      g_sync_q_o   : integer := 0);
     port (
       rst_wr_n_i : in  std_logic := '1';
       clk_wr_i   : in  std_logic;

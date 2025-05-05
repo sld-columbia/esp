@@ -278,6 +278,7 @@ unsigned ioread32(struct esp_device *dev, unsigned offset)
 {
     const long unsigned addr = dev->addr + offset;
     volatile unsigned *reg   = (unsigned *)addr;
+    //printf("Reading from address %lx\n", addr);
     return *reg;
 }
 
@@ -285,6 +286,7 @@ void iowrite32(struct esp_device *dev, unsigned offset, unsigned payload)
 {
     const long unsigned addr = dev->addr + offset;
     volatile unsigned *reg   = (unsigned *)addr;
+    //printf("Writing to address %lx\n", addr);
     *reg                     = payload;
 }
 

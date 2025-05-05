@@ -2,22 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #TODO: Fix these constraints for all FPGA boards
 
-# UG949 suggests the following structure
-## Timing Assertions Section
-# Primary clocks
-# Virtual clocks
-# Generated clocks
-# Delay for external MMCM/PLL feedback loop
-# Clock Uncertainty and Jitter
-# Input and output delay constraints
-# Clock Groups and Clock False Paths
-## Timing Exceptions Section
-# False Paths
-# Max Delay / Min Delay
-# Multicycle Paths
-# Case Analysis
-# Disable Timing
-
 set clkm_elab [get_clocks -of_objects [get_nets clkm]]
 set refclk_elab [get_clocks -of_objects [get_nets chip_refclk]]
 

@@ -30,6 +30,7 @@ package esp_noc_csr_pkg is
   constant ESP_CSR_LDO_CFG_MSB : integer range 0 to ESP_NOC_CSR_WIDTH - 1 := 43;
 
   constant DCO_CFG_LPDDR_CTRL_BITS : integer := 12;
+  constant DCO_CFG_LPDDR_RES_BITS : integer := 5;
 
   -- Power management
   constant PM_REGNUM_CONFIG : integer range 0 to 31 := 9;

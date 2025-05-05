@@ -698,7 +698,7 @@ begin  -- architecture rtl
     tile_id <= io_tile_id;
   end generate;
   is_not_tile_io_gen: if is_tile_io = false generate
-    tile_id <= to_integer(unsigned(tile_config_int(ESP_CSR_TILE_ID_NOC_MSB downto ESP_CSR_TILE_ID_NOC_LSB)));    
+    tile_id <= to_integer(unsigned(tile_config_int(ESP_CSR_TILE_ID_NOC_MSB downto ESP_CSR_TILE_ID_NOC_LSB)));
   end generate;
 
   pad_cfg <= tile_config_int(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
@@ -716,11 +716,23 @@ begin  -- architecture rtl
   this_local_y <= tile_y(tile_id);
   this_local_x <= tile_x(tile_id);
 
+  -- use addressing as specified in the definition of DEFAULT_DCO_CFG in esp_noc_csr.vhd
+  no_lpddr_csr_gen : if is_asic = false generate
+    dco_freq_sel <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_RES_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_RES_BITS - 0  - 1);
+    dco_div_sel  <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_RES_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_RES_BITS - 2  - 2);
+    dco_fc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_RES_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_RES_BITS - 5  - 5);
+    dco_cc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_RES_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_RES_BITS - 11 - 5);
+   end generate;
+
+  -- avoid address conflict with LPDDR control
+  do_lpddr_csr_gen : if is_asic = true generate
+    dco_freq_sel <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  - 1);
+    dco_div_sel  <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  - 2);
+    dco_fc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
+    dco_cc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
+  end generate;
+
   dco_clk_delay_sel <= tile_config_int(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_MSB - 11);
-  dco_freq_sel <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  - 1);
-  dco_div_sel  <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  - 2);
-  dco_fc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
-  dco_cc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
   dco_clk_sel  <= tile_config_int(ESP_CSR_DCO_CFG_LSB + 1);
   dco_en       <= tile_config_int(ESP_CSR_DCO_CFG_LSB);
 

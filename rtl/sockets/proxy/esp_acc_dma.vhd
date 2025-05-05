@@ -63,8 +63,7 @@ entity esp_acc_dma is
     tlb_entries        : integer                              := 256);
   port (
     rst           : in  std_ulogic;
-    noc_clk       : in  std_ulogic;
-    tile_clk      : in  std_ulogic;
+    clk           : in  std_ulogic;
     local_y       : in  local_yx;
     local_x       : in  local_yx;
     paddr         : in  integer range 0 to 4095;
@@ -135,7 +134,6 @@ end esp_acc_dma;
 
 architecture rtl of esp_acc_dma is
 
-  signal clk : std_ulogic;
 
   signal read_length : std_logic_vector(31 downto 0);
 
@@ -190,7 +188,6 @@ architecture rtl of esp_acc_dma is
   end fix_endian;
 
   -- Register bank
-  signal apbreg    : bank_type(0 to MAXREGNUM - 1);
   signal bankreg   : bank_type(0 to MAXREGNUM - 1);
   signal bankin    : bank_type(0 to MAXREGNUM - 1);
   signal sample    : std_logic_vector(0 to MAXREGNUM - 1);
@@ -376,8 +373,6 @@ architecture rtl of esp_acc_dma is
 
 begin  -- rtl
 
-  clk <= tile_clk;
-
   read_length <= rd_length;
 
   -----------------------------------------------------------------------------
@@ -400,7 +395,7 @@ begin  -- rtl
         scatter_gather => scatter_gather,
         tlb_entries    => tlb_entries)
       port map (
-        clk                  => tile_clk,
+        clk                  => clk,
         rst                  => rst,
         bankreg              => bankreg,
         rd_request           => rd_request,
@@ -621,7 +616,7 @@ begin  -- rtl
   end process make_packet;
 
 
-  process (tile_clk, rst)
+  process (clk, rst)
     variable dma_offset : std_logic_vector(WPF_BITS - 1 downto 0);
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
@@ -640,7 +635,7 @@ begin  -- rtl
       p2p_store <= '0';
       p2p_load <= '0';
       source_r <= 0;
-    elsif tile_clk'event and tile_clk = '1' then  -- rising clock edge
+    elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_r <= header;
         payload_address_r <= payload_address;
@@ -726,18 +721,18 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- DMA
   -----------------------------------------------------------------------------
-  acc_rst_reg : process (tile_clk)
+  acc_rst_reg : process (clk)
   begin
-    if tile_clk'event and tile_clk = '1' then -- rising clock edge
+    if clk'event and clk = '1' then -- rising clock edge
         acc_rst <= acc_rst_next;
     end if;
   end process acc_rst_reg;
 
-  sample_acc_done: process (tile_clk, rst)
+  sample_acc_done: process (clk, rst)
   begin  -- process sample_acc_done
     if rst = '0' then                   -- asynchronous reset (active low)
       pending_acc_done <= '0';
-    elsif tile_clk'event and tile_clk = '1' then  -- rising clock edge
+    elsif clk'event and clk = '1' then  -- rising clock edge
       if acc_done = '1' then
         pending_acc_done <= '1';
       end if;
@@ -920,7 +915,7 @@ begin  -- rtl
         elsif pending_acc_done = '1' then
           if USE_SPANDEX /= 0 and coherence = ACC_COH_FULL then
             flush <= '1';
-            dma_next <= wait_flush_done;
+            dma_next <= wait_flush_done; 
           else
             status <= (others => '0');
             status(STATUS_BIT_DONE) <= '1';
@@ -928,7 +923,7 @@ begin  -- rtl
             if coherence = ACC_COH_FULL then
               flush <= '1';
             end if;
-            dma_next <= wait_for_completion;
+            dma_next <= wait_for_completion; 
           end if;
         elsif rd_request = '1' then
           if scatter_gather = 0 then
@@ -949,7 +944,7 @@ begin  -- rtl
           status <= (others => '0');
           status(STATUS_BIT_DONE) <= '1';
           sample_status <= '1';
-          dma_next <= wait_for_completion;
+          dma_next <= wait_for_completion; 
         end if;
 
       when wait_for_completion =>
@@ -1257,14 +1252,14 @@ begin  -- rtl
   end process irq_send;
 
   -- Update FSM state
-  process (tile_clk, rst)
+  process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
       dma_state <= idle;
       irq_state <= idle;
       skip_wait_p2p_req <= '0';
       rcv_p2p_length <= (others => '0');
-    elsif tile_clk'event and tile_clk = '1' then  -- rising clock edge
+    elsif clk'event and clk = '1' then  -- rising clock edge
       dma_state <= dma_next;
       irq_state <= irq_next;
       skip_wait_p2p_req <= skip_wait_p2p_req_in;
@@ -1272,11 +1267,11 @@ begin  -- rtl
     end if;
   end process;
 
-  process (tile_clk, rst)
+  process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
       count_n_dest <= 0;
-    elsif tile_clk'event and tile_clk = '1' then  -- rising clock edge
+    elsif clk'event and clk = '1' then  -- rising clock edge
       if dma_state = receive_p2p_length then
         if count_n_dest = p2p_mcast_ndests and p2p_req_rcv_empty = '0' then
           count_n_dest <= 0;
@@ -1287,12 +1282,12 @@ begin  -- rtl
     end if;
   end process;
 
-  dest_arr_mod : process (tile_clk, rst, dma_state, p2p_req_rcv_rdreq, p2p_dst_x, p2p_dst_y)
+  dest_arr_mod : process (clk, rst, dma_state, p2p_req_rcv_rdreq, p2p_dst_x, p2p_dst_y)
   begin
   if rst = '0' then                   -- asynchronous reset (active low)
       p2p_dst_arr_x <= (others => (others => '0'));
       p2p_dst_arr_y <= (others => (others => '0'));
-    elsif tile_clk'event and tile_clk = '1' then  -- rising clock edge
+    elsif clk'event and clk = '1' then  -- rising clock edge
       if dma_state = wait_req_p2p and p2p_req_rcv_rdreq = '1' then
         p2p_dst_arr_x(count_n_dest) <= p2p_dst_x;
         p2p_dst_arr_y(count_n_dest) <= p2p_dst_y;
@@ -1301,7 +1296,7 @@ begin  -- rtl
   end process;
 
   -------------------------------------------------------------------------------
-  -- DMA Controller APB Slave (synchronous to noc_clk)
+  -- DMA Controller APB Slave
   -------------------------------------------------------------------------------
 
   -- APB Interface
@@ -1318,23 +1313,23 @@ begin  -- rtl
     bank(i) <= bankreg(i);
   end generate reg_out;
 
-  drive_irq: process (noc_clk, rst)
+  drive_irq: process (clk, rst)
   begin  -- process drive_irq
     if rst = '0' then                   -- asynchronous reset (active low)
       irq <= '0';
       irqset <= '0';
-    elsif noc_clk'event and noc_clk = '1' then  -- rising clock edge
+    elsif clk'event and clk = '1' then  -- rising clock edge
       if irqset = '1' then
         irq <= '0';
-      elsif ((apbreg(STATUS_REG)(STATUS_BIT_DONE) or
-              apbreg(STATUS_REG)(STATUS_BIT_ERR)) = '1' and
+      elsif ((bankreg(STATUS_REG)(STATUS_BIT_DONE) or
+              bankreg(STATUS_REG)(STATUS_BIT_ERR)) = '1' and
              irqset = '0') then
         irq <= '1';
         irqset <=  '1';
       end if;
-      if ((apbreg(STATUS_REG)(STATUS_BIT_RUN) or
-           apbreg(STATUS_REG)(STATUS_BIT_DONE) or
-           apbreg(STATUS_REG)(STATUS_BIT_ERR)) = '0') then
+      if ((bankreg(STATUS_REG)(STATUS_BIT_RUN) or
+           bankreg(STATUS_REG)(STATUS_BIT_DONE) or
+           bankreg(STATUS_REG)(STATUS_BIT_ERR)) = '0') then
         -- Equivalent to clear IRQ
         irqset <= '0';
       end if;
@@ -1342,7 +1337,7 @@ begin  -- rtl
   end process drive_irq;
 
   -- rd/wr registers
-  process(apbi, apbreg)
+  process(apbi, bankreg)
     variable addr : integer range 0 to MAXREGNUM - 1;
   begin
     addr := conv_integer(apbi.paddr(8 downto 2));
@@ -1360,17 +1355,17 @@ begin  -- rtl
       end if;
     -- end if;
     bankin(addr) <= apbi.pwdata;
-    readdata <= apbreg(addr);
+    readdata <= bankreg(addr);
   end process;
 
   -- Status register
-  cmd_status: process (noc_clk, rst)
+  cmd_status: process (clk, rst)
   begin  -- process cmd_status
-    if noc_clk'event and noc_clk = '1' then  -- rising clock edge
+    if clk'event and clk = '1' then  -- rising clock edge
       if rst = '0' then                   -- asynchronous reset (active low)
-        apbreg(STATUS_REG) <= (others => '0');
+        bankreg(STATUS_REG) <= (others => '0');
       elsif sample_status = '1' then
-        apbreg(STATUS_REG) <= status;
+        bankreg(STATUS_REG) <= status;
       end if;
     end if;
   end process cmd_status;
@@ -1378,62 +1373,39 @@ begin  -- rtl
   -- Other registers
   registers: for i in 0 to MAXREGNUM - 1 generate
     written_from_noc: if i /= STATUS_REG and available_reg_mask(i) = '1' generate
-      process (noc_clk)
+      process (clk)
       begin  -- process
-        if noc_clk'event and noc_clk = '1' then  -- rising clock edge
+        if clk'event and clk = '1' then  -- rising clock edge
           if rst = '0' then                   -- synchronous reset (active low)
-            apbreg(i) <= bankdef(i);
+            bankreg(i) <= bankdef(i);
           elsif i = YX_REG then
-            apbreg(i)(2 * YX_WIDTH - 1 downto 0) <= local_y & local_x;
+            bankreg(i)(2 * YX_WIDTH - 1 downto 0) <= local_y & local_x;
             if sample(i) = '1' then
-              apbreg(i)(31 downto 2  * YX_WIDTH) <= bankin(i)(31 downto 2 * YX_WIDTH);
+              bankreg(i)(31 downto 2  * YX_WIDTH) <= bankin(i)(31 downto 2 * YX_WIDTH);
             end if;
           elsif sample(i) = '1' and rdonly_reg_mask(i) = '0' then
-            apbreg(i) <= bankin(i);
+            bankreg(i) <= bankin(i);
           end if;
         end if;
       end process;
     end generate written_from_noc;
   end generate registers;
 
-  -- unused registers
   unused_registers: for i in 0 to MAXREGNUM - 1 generate
     not_available: if available_reg_mask(i) = '0' generate
-      apbreg(i) <= (others => '0');
+      bankreg(i) <= (others => '0');
     end generate not_available;
   end generate unused_registers;
 
-  -- synchronize APB interface with accelerator
-  sync_registers: for i in 0 to MAXREGNUM - 1 generate
-    oen_reg_fifo : inferred_async_fifo
-      generic map (
-        g_data_width => 32,
-        g_size       => 2)
-      port map (
-        rst_wr_n_i => rst,
-        clk_wr_i   => noc_clk, -- write from NoC clock
-        we_i       => '1',
-        d_i        => apbreg(i),
-        wr_full_o  => open,
-        rst_rd_n_i => rst,
-        clk_rd_i   => tile_clk, -- read from accelerator clock
-        rd_i       => '1',
-        q_o        => bankreg(i),
-        rd_empty_o => open);
-  end generate sync_registers;
-
-  mon_dvfs.tile_clk <= tile_clk;
+  mon_dvfs.clk <= clk;
   mon_dvfs.vf <= "1000";
   mon_dvfs.transient <= '0';
 
   noc_delay <= dma_snd_delay or dma_rcv_delay;
   acc_idle <= '1' when dma_state = idle and bankreg(CMD_REG)(CMD_BIT_START) = '0' else '0';
-  --mon_dvfs.acc_idle <= acc_idle;
-  mon_dvfs.acc_idle <= '0';
-  --mon_dvfs.traffic <= noc_delay;
-  mon_dvfs.traffic <= '0';
-  --mon_dvfs.burst <= burst;
-  mon_dvfs.burst <= '0';
+  mon_dvfs.acc_idle <= acc_idle;
+  mon_dvfs.traffic <= noc_delay;
+  mon_dvfs.burst <= burst;
 
   -----------------------------------------------------------------------------
   -- Direct acc access

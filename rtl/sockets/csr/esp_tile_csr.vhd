@@ -36,8 +36,7 @@ entity esp_tile_csr is
     tp_acc_rst  : out std_ulogic;
     apbi        : in  apb_slv_in_type;
     apbo        : out apb_slv_out_type;
-    prc_interrupt : in std_ulogic;
-    dco_reconfig : out std_ulogic
+    prc_interrupt : in std_ulogic
     );
 end esp_tile_csr;
 
@@ -255,10 +254,8 @@ begin
       burst <= (others => '0');
       config_r     <= DEFAULT_CONFIG;
       srst         <= '0';
-      tp_acc_rst   <= '0';
-      dco_reconfig <= '0';
+      tp_acc_rst    <= '0';
     elsif clk'event and clk = '1' then
-      dco_reconfig <= '0';
       -- Monitors
       if burst_sample = '1' then
         burst <= wdata;
@@ -286,7 +283,6 @@ begin
           when ESP_CSR_DCO_NOC_CFG_ADDR =>
             config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB) <=
               apbi.pwdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0);
-            dco_reconfig <= '1';
           when ESP_CSR_MDC_SCALER_CFG_ADDR =>
             config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB) <=
               apbi.pwdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);

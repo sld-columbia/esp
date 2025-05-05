@@ -128,6 +128,8 @@ sim: sim-compile
 	$(QUIET_RUN)cd modelsim; \
 	if test -e $(DESIGN_PATH)/vsim.tcl; then \
 		$(VSIM) -c -do "do $(DESIGN_PATH)/vsim.tcl"; \
+	elif test -e $(DESIGN_PATH)/vsim.do; then \
+	    $(VSIM) -c -do "$(DESIGN_PATH)/vsim.do"; \
 	else \
 		$(VSIM) -c; \
 	fi;
@@ -136,8 +138,23 @@ sim-gui: sim-compile
 	$(QUIET_RUN)cd modelsim; \
 	if test -e $(DESIGN_PATH)/vsim.tcl; then \
 		$(VSIM) -do "do $(DESIGN_PATH)/vsim.tcl"; \
+	elif test -e $(DESIGN_PATH)/vsim.do; then \
+	    $(VSIM) -do "$(DESIGN_PATH)/vsim.do"; \
 	else \
 		$(VSIM); \
+	fi;
+
+.PHONY: sim-view
+sim-view:
+	$(QUIET_RUN)cd modelsim; \
+	if test -e $(DESIGN_PATH)/modelsim/vsim.wlf; then \
+		if test -e $(DESIGN_PATH)/wave.do; then \
+			vsim -view $(DESIGN_PATH)/modelsim/vsim.wlf -do $(DESIGN_PATH)/wave.do; \
+		else \
+			vsim -view $(DESIGN_PATH)/modelsim/vsim.wlf; \
+		fi; \
+	else \
+		echo "vsim.wlf not found"; \
 	fi;
 
 sim-clean:

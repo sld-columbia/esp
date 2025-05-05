@@ -19,8 +19,9 @@ entity acc_tile_q is
   generic (
     tech        : integer := virtex7);
   port (
-    rst                        : in  std_ulogic;
+    noc_rst                    : in  std_ulogic;
     noc_clk                    : in  std_ulogic;
+    tile_rst                   : in  std_ulogic;
     tile_clk                   : in  std_ulogic;
     -- tile->NoC1
     coherence_req_wrreq        : in  std_ulogic;
@@ -122,8 +123,9 @@ end acc_tile_q;
 
 architecture rtl of acc_tile_q is
 
-  signal clk      : std_ulogic;
-  signal fifo_rst : std_ulogic;
+  -- 1-bit CDC path on a non-FD primitive (unsafe)
+  --   From tile_clk to noc_clk: from tiles_gen to noc_router_gen (fifo_7, fifo_1, fifo_4, fifo_13c)
+  --   From noc_clk to tile_clk: from FIFOs to accelerator (fifo_10, fifo_14)
 
   -- tile->NoC1
   signal coherence_req_rdreq                 : std_ulogic;
@@ -214,9 +216,6 @@ architecture rtl of acc_tile_q is
 
 begin  -- rtl
 
-  clk      <= noc_clk;
-  fifo_rst <= rst;                  --FIFO rst active low
-
   -- From tile to noc1: coherence requests from CPU to directory (GET/PUT)
   noc1_out_stop <= '0';
   noc1_dummy_out_data <= noc1_out_data;
@@ -227,28 +226,21 @@ begin  -- rtl
   -- write from accelerator
   fifo_1: inferred_async_fifo
     generic map (
-      g_size => 6,                       --Header, address, [cache line]
-      g_data_width => COH_NOC_FLIT_SIZE)
+      --g_size => 6,                       --Header, address, [cache line]
+      g_size => 8,                       --Header, address, [cache line]
+      g_data_width => COH_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      rst_wr_n_i => fifo_rst,
+      rst_wr_n_i => tile_rst,
       clk_wr_i   => tile_clk,
       we_i       => coherence_req_wrreq,
       d_i        => coherence_req_data_in,
       wr_full_o  => coherence_req_full,
-      rst_rd_n_i => fifo_rst,
-      clk_rd_i   => clk,
+      rst_rd_n_i => noc_rst,
+      clk_rd_i   => noc_clk,
       rd_i       => coherence_req_rdreq,
       q_o        => coherence_req_data_out,
       rd_empty_o => coherence_req_empty);
-
-      --clk      => clk,
-      --rst      => fifo_rst,
-      --rdreq    => coherence_req_rdreq,
-      --wrreq    => coherence_req_wrreq,
-      --data_in  => coherence_req_data_in,
-      --empty    => coherence_req_empty,
-      --full     => coherence_req_full,
-      --data_out => coherence_req_data_out);
 
 
   -- From noc2 to tile: coherence forwarded messages to CPU (INV, GETS/M)
@@ -259,27 +251,19 @@ begin  -- rtl
   fifo_2: inferred_async_fifo
     generic map (
       g_size => 4,                       --Header, address (x2)
-      g_data_width => COH_NOC_FLIT_SIZE)
+      g_data_width => COH_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      rst_wr_n_i => fifo_rst,
-      clk_wr_i   => clk,
+      rst_wr_n_i => noc_rst,
+      clk_wr_i   => noc_clk,
       we_i       => coherence_fwd_wrreq,
       d_i        => coherence_fwd_data_in,
       wr_full_o  => coherence_fwd_full,
-      rst_rd_n_i => fifo_rst,
+      rst_rd_n_i => tile_rst,
       clk_rd_i   => tile_clk,
       rd_i       => coherence_fwd_rdreq,
       q_o        => coherence_fwd_data_out,
       rd_empty_o => coherence_fwd_empty);
-
-      --clk      => clk,
-      --rst      => fifo_rst,
-      --rdreq    => coherence_fwd_rdreq,
-      --wrreq    => coherence_fwd_wrreq,
-      --data_in  => coherence_fwd_data_in,
-      --empty    => coherence_fwd_empty,
-      --full     => coherence_fwd_full,
-      --data_out => coherence_fwd_data_out);
 
 
   -- From noc3 to tile: coherence response messages to CPU (DATA, INVACK, PUTACK)
@@ -289,29 +273,22 @@ begin  -- rtl
   -- read from accelerator
   fifo_3: inferred_async_fifo
     generic map (
-      g_size => 5,                      --Header (use RESERVED field to
+      --g_size => 5,                      --Header (use RESERVED field to
+      g_size => 8,                      --Header (use RESERVED field to
                                         --determine  ACK number), cache line
-      g_data_width => COH_NOC_FLIT_SIZE)
+      g_data_width => COH_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      rst_wr_n_i => fifo_rst,
-      clk_wr_i   => clk,
+      rst_wr_n_i => noc_rst,
+      clk_wr_i   => noc_clk,
       we_i       => coherence_rsp_rcv_wrreq,
       d_i        => coherence_rsp_rcv_data_in,
       wr_full_o  => coherence_rsp_rcv_full,
-      rst_rd_n_i => fifo_rst,
+      rst_rd_n_i => tile_rst,
       clk_rd_i   => tile_clk,
       rd_i       => coherence_rsp_rcv_rdreq,
       q_o        => coherence_rsp_rcv_data_out,
       rd_empty_o => coherence_rsp_rcv_empty);
-
-      --clk      => clk,
-      --rst      => fifo_rst,
-      --rdreq    => coherence_rsp_rcv_rdreq,
-      --wrreq    => coherence_rsp_rcv_wrreq,
-      --data_in  => coherence_rsp_rcv_data_in,
-      --empty    => coherence_rsp_rcv_empty,
-      --full     => coherence_rsp_rcv_full,
-      --data_out => coherence_rsp_rcv_data_out);
 
 
   -- From tile to noc3: coherence response messages from CPU (DATA, EDATA, INVACK)
@@ -321,28 +298,21 @@ begin  -- rtl
   -- write from accelerator
   fifo_4: inferred_async_fifo
     generic map (
-      g_size => 5,                       --Header
-      g_data_width => COH_NOC_FLIT_SIZE)
+      --g_size => 5,                       --Header
+      g_size => 8,                       --Header
+      g_data_width => COH_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      rst_wr_n_i => fifo_rst,
+      rst_wr_n_i => tile_rst,
       clk_wr_i   => tile_clk,
       we_i       => coherence_rsp_snd_wrreq,
       d_i        => coherence_rsp_snd_data_in,
       wr_full_o  => coherence_rsp_snd_full,
-      rst_rd_n_i => fifo_rst,
-      clk_rd_i   => clk,
+      rst_rd_n_i => noc_rst,
+      clk_rd_i   => noc_clk,
       rd_i       => coherence_rsp_snd_rdreq,
       q_o        => coherence_rsp_snd_data_out,
       rd_empty_o => coherence_rsp_snd_empty);
-
-      --clk      => clk,
-      --rst      => fifo_rst,
-      --rdreq    => coherence_rsp_snd_rdreq,
-      --wrreq    => coherence_rsp_snd_wrreq,
-      --data_in  => coherence_rsp_snd_data_in,
-      --empty    => coherence_rsp_snd_empty,
-      --full     => coherence_rsp_snd_full,
-      --data_out => coherence_rsp_snd_data_out);
 
   -- From tile to noc2: dcs l2_fwd_out
   noc2_in_data          <= coherence_fwd_snd_data_out;
@@ -351,29 +321,21 @@ begin  -- rtl
   -- write from accelerator
   fifo_5: inferred_async_fifo
     generic map (
-      g_size => 5,                       --Header
-      g_data_width => COH_NOC_FLIT_SIZE)
+      --g_size => 5,                       --Header
+      g_size => 8,                       --Header
+      g_data_width => COH_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      rst_wr_n_i => fifo_rst,
+      rst_wr_n_i => tile_rst,
       clk_wr_i   => tile_clk,
       we_i       => coherence_fwd_snd_wrreq,
       d_i        => coherence_fwd_snd_data_in,
       wr_full_o  => coherence_fwd_snd_full,
-      rst_rd_n_i => fifo_rst,
-      clk_rd_i   => clk,
+      rst_rd_n_i => noc_rst,
+      clk_rd_i   => noc_clk,
       rd_i       => coherence_fwd_snd_rdreq,
       q_o        => coherence_fwd_snd_data_out,
       rd_empty_o => coherence_fwd_snd_empty);
-
-      --clk      => clk,
-      --rst      => fifo_rst,
-      --rdreq    => coherence_fwd_snd_rdreq,
-      --wrreq    => coherence_fwd_snd_wrreq,
-      --data_in  => coherence_fwd_snd_data_in,
-      --empty    => coherence_fwd_snd_empty,
-      --full     => coherence_fwd_snd_full,
-      --data_out => coherence_fwd_snd_data_out);
-
 
 
   -- From noc4 to tile: DMA response to accelerators
@@ -383,28 +345,21 @@ begin  -- rtl
   -- read from accelerator
   fifo_14: inferred_async_fifo
     generic map (
-      g_size => 18,                      --Header, [data]
-      g_data_width => DMA_NOC_FLIT_SIZE)
+      --g_size => 18,                      --Header, [data]
+      g_size => 32,                      --Header, [data]
+      g_data_width => DMA_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      rst_wr_n_i => fifo_rst,
-      clk_wr_i   => clk,
+      rst_wr_n_i => noc_rst,
+      clk_wr_i   => noc_clk,
       we_i       => dma_rcv_wrreq,
       d_i        => dma_rcv_data_in,
       wr_full_o  => dma_rcv_full,
-      rst_rd_n_i => fifo_rst,
+      rst_rd_n_i => tile_rst,
       clk_rd_i   => tile_clk,
       rd_i       => dma_rcv_rdreq,
       q_o        => dma_rcv_data_out,
       rd_empty_o => dma_rcv_empty);
-
-      --clk      => clk,
-      --rst      => fifo_rst,
-      --rdreq    => dma_rcv_rdreq,
-      --wrreq    => dma_rcv_wrreq,
-      --data_in  => dma_rcv_data_in,
-      --empty    => dma_rcv_empty,
-      --full     => dma_rcv_full,
-      --data_out => dma_rcv_data_out);
 
   -- From noc6 to tile: Coherent DMA response to accelerators
   noc6_out_stop   <= coherent_dma_rcv_full and (not noc6_out_void);
@@ -413,28 +368,21 @@ begin  -- rtl
   -- read from accelerator
   fifo_14c: inferred_async_fifo
     generic map (
-      g_size => 18,                      --Header, [data]
-      g_data_width => DMA_NOC_FLIT_SIZE)
+      --g_size => 18,                      --Header, [data]
+      g_size => 32,                      --Header, [data]
+      g_data_width => DMA_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      rst_wr_n_i => fifo_rst,
-      clk_wr_i   => clk,
+      rst_wr_n_i => noc_rst,
+      clk_wr_i   => noc_clk,
       we_i       => coherent_dma_rcv_wrreq,
       d_i        => coherent_dma_rcv_data_in,
       wr_full_o  => coherent_dma_rcv_full,
-      rst_rd_n_i => fifo_rst,
+      rst_rd_n_i => tile_rst,
       clk_rd_i   => tile_clk,
       rd_i       => coherent_dma_rcv_rdreq,
       q_o        => coherent_dma_rcv_data_out,
       rd_empty_o => coherent_dma_rcv_empty);
-
-      --clk      => clk,
-      --rst      => fifo_rst,
-      --rdreq    => coherent_dma_rcv_rdreq,
-      --wrreq    => coherent_dma_rcv_wrreq,
-      --data_in  => coherent_dma_rcv_data_in,
-      --empty    => coherent_dma_rcv_empty,
-      --full     => coherent_dma_rcv_full,
-      --data_out => coherent_dma_rcv_data_out);
 
   -- From tile to noc6: DMA requests from accelerators
   noc6_in_data <= dma_snd_data_out;
@@ -443,28 +391,21 @@ begin  -- rtl
   -- write from accelerator
   fifo_13: inferred_async_fifo
     generic map (
-      g_size => 18,                      --Header, address, length or data
-      g_data_width => DMA_NOC_FLIT_SIZE)
+      --g_size => 18,                      --Header, address, length or data
+      g_size => 32,                      --Header, address, length or data
+      g_data_width => DMA_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      rst_wr_n_i => fifo_rst,
+      rst_wr_n_i => tile_rst,
       clk_wr_i   => tile_clk,
       we_i       => dma_snd_wrreq,
       d_i        => dma_snd_data_in,
       wr_full_o  => dma_snd_full,
-      rst_rd_n_i => fifo_rst,
-      clk_rd_i   => clk,
+      rst_rd_n_i => noc_rst,
+      clk_rd_i   => noc_clk,
       rd_i       => dma_snd_rdreq,
       q_o        => dma_snd_data_out,
       rd_empty_o => dma_snd_empty);
-
-      --clk      => clk,
-      --rst      => fifo_rst,
-      --rdreq    => dma_snd_rdreq,
-      --wrreq    => dma_snd_wrreq,
-      --data_in  => dma_snd_data_in,
-      --empty    => dma_snd_empty,
-      --full     => dma_snd_full,
-      --data_out => dma_snd_data_out);
 
   -- From tile to noc4: Coherent DMA requests from accelerators
   noc4_in_data <= coherent_dma_snd_data_out;
@@ -473,37 +414,30 @@ begin  -- rtl
   -- write from accelerator
   fifo_13c: inferred_async_fifo
     generic map (
-      g_size => 18,                      --Header, address, length or data
-      g_data_width => DMA_NOC_FLIT_SIZE)
+      --g_size => 18,                      --Header, address, length or data
+      g_size => 32,                      --Header, address, length or data
+      g_data_width => DMA_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      rst_wr_n_i => fifo_rst,
+      rst_wr_n_i => tile_rst,
       clk_wr_i   => tile_clk,
       we_i       => coherent_dma_snd_wrreq, -- driven by accelerator
       d_i        => coherent_dma_snd_data_in,
       wr_full_o  => coherent_dma_snd_full,
-      rst_rd_n_i => fifo_rst,
-      clk_rd_i   => clk,
+      rst_rd_n_i => noc_rst,
+      clk_rd_i   => noc_clk,
       rd_i       => coherent_dma_snd_rdreq, -- driven by logic above at NoC clock
       q_o        => coherent_dma_snd_data_out,
       rd_empty_o => coherent_dma_snd_empty);
 
-      --clk      => clk,
-      --rst      => fifo_rst,
-      --rdreq    => coherent_dma_snd_rdreq,
-      --wrreq    => coherent_dma_snd_wrreq,
-      --data_in  => coherent_dma_snd_data_in,
-      --empty    => coherent_dma_snd_empty,
-      --full     => coherent_dma_snd_full,
-      --data_out => coherent_dma_snd_data_out);
-
   -- From noc5 to tile: APB requests from cores
   noc5_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & noc5_out_data);
   noc5_preamble <= get_preamble(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & noc5_out_data);
-  process (clk, rst)
+  process (noc_clk, noc_rst)
   begin  -- process
-    if rst = '0' then                   -- asynchronous reset (active low)
+    if noc_rst = '0' then                       -- asynchronous reset (active low)
       noc5_fifos_current <= none;
-    elsif clk'event and clk = '1' then  -- rising clock edge
+    elsif noc_clk'event and noc_clk = '1' then  -- rising clock edge
       noc5_fifos_current <= noc5_fifos_next;
     end if;
   end process;
@@ -551,54 +485,49 @@ begin  -- rtl
 
   apb_rcv_data_in <= noc5_out_data;
   -- read from APB proxy
-  fifo_10 : fifo0
+  fifo_10 : inferred_async_fifo
     generic map (
-      depth => 3,                       --Header, address, data
-      width => MISC_NOC_FLIT_SIZE)
+      g_size => 2,                       --Header, address, data
+      g_data_width => MISC_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      clk      => clk,
-      rst      => fifo_rst,
-      rdreq    => apb_rcv_rdreq, -- from APB proxy
-      wrreq    => apb_rcv_wrreq, -- driven by logic at NoC clock
-      data_in  => apb_rcv_data_in,
-      empty    => apb_rcv_empty,
-      full     => apb_rcv_full,
-      data_out => apb_rcv_data_out);
+      rst_wr_n_i => noc_rst,
+      clk_wr_i   => noc_clk,
+      we_i       => apb_rcv_wrreq, -- driven by logic at NoC clock
+      d_i        => apb_rcv_data_in,
+      wr_full_o  => apb_rcv_full,
+      rst_rd_n_i => tile_rst,
+      clk_rd_i   => tile_clk,
+      rd_i       => apb_rcv_rdreq, -- driven by accelerator
+      q_o        => apb_rcv_data_out,
+      rd_empty_o => apb_rcv_empty);
 
   interrupt_ack_data_in <= noc5_out_data;
   -- read from accelerator
   fifo_16 : inferred_async_fifo
     generic map (
       g_size => 2,                       --Header x # accelerators
-      g_data_width => MISC_NOC_FLIT_SIZE)
+      g_data_width => MISC_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      rst_wr_n_i => fifo_rst,
-      clk_wr_i   => clk,
+      rst_wr_n_i => noc_rst,
+      clk_wr_i   => noc_clk,
       we_i       => interrupt_ack_wrreq, -- driven by logic at NoC clock
       d_i        => interrupt_ack_data_in,
       wr_full_o  => interrupt_ack_full,
-      rst_rd_n_i => fifo_rst,
+      rst_rd_n_i => tile_rst,
       clk_rd_i   => tile_clk,
       rd_i       => interrupt_ack_rdreq, -- driven by accelerator
       q_o        => interrupt_ack_data_out,
       rd_empty_o => interrupt_ack_empty);
 
-      --clk      => clk,
-      --rst      => fifo_rst,
-      --rdreq    => interrupt_ack_rdreq,
-      --wrreq    => interrupt_ack_wrreq,
-      --data_in  => interrupt_ack_data_in,
-      --empty    => interrupt_ack_empty,
-      --full     => interrupt_ack_full,
-      --data_out => interrupt_ack_data_out);
-
   -- From tile to noc5: APB response from accelerators
   -- From tile to noc5: interrupts from accelerators
-  process (clk, rst)
+  process (noc_clk, noc_rst)
   begin  -- process
-    if rst = '0' then                   -- asynchronous reset (active low)
+    if noc_rst = '0' then                       -- asynchronous reset (active low)
       to_noc5_fifos_current <= none;
-    elsif clk'event and clk = '1' then  -- rising clock edge
+    elsif noc_clk'event and noc_clk = '1' then  -- rising clock edge
       to_noc5_fifos_current <= to_noc5_fifos_next;
     end if;
   end process;
@@ -645,44 +574,39 @@ begin  -- rtl
   end process noc5_fifos_put_packet;
 
   -- write from APB proxy
-  fifo_7: fifo0
+  fifo_7: inferred_async_fifo
     generic map (
-      depth => 2,                       --Header, data (1 Word)
-      width => MISC_NOC_FLIT_SIZE)
+      g_size => 2,                      --Header, data (1 Word)
+      g_data_width => MISC_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      clk      => clk,
-      rst      => fifo_rst,
-      rdreq    => apb_snd_rdreq, -- driven by logic at NoC clock
-      wrreq    => apb_snd_wrreq, -- driven by APB proxy at NoC clock
-      data_in  => apb_snd_data_in,
-      empty    => apb_snd_empty,
-      full     => apb_snd_full,
-      data_out => apb_snd_data_out);
+      rst_wr_n_i => tile_rst,
+      clk_wr_i   => tile_clk,
+      we_i       => apb_snd_wrreq, -- driven by accelerator
+      d_i        => apb_snd_data_in,
+      wr_full_o  => apb_snd_full,
+      rst_rd_n_i => noc_rst,
+      clk_rd_i   => noc_clk,
+      rd_i       => apb_snd_rdreq, -- driven by logic at NoC clock above
+      q_o        => apb_snd_data_out,
+      rd_empty_o => apb_snd_empty);
 
   -- write from accelerator
   fifo_15: inferred_async_fifo
     generic map (
       g_size => 2,                       --Header only x possible sharers
-      g_data_width => MISC_NOC_FLIT_SIZE)
+      g_data_width => MISC_NOC_FLIT_SIZE,
+      g_sync_q_o => 1)
     port map (
-      rst_wr_n_i => fifo_rst,
+      rst_wr_n_i => tile_rst,
       clk_wr_i   => tile_clk,
       we_i       => interrupt_wrreq, -- driven by accelerator
       d_i        => interrupt_data_in,
       wr_full_o  => interrupt_full,
-      rst_rd_n_i => fifo_rst,
-      clk_rd_i   => clk,
+      rst_rd_n_i => noc_rst,
+      clk_rd_i   => noc_clk,
       rd_i       => interrupt_rdreq, -- driven by logic at NoC clock above
       q_o        => interrupt_data_out,
       rd_empty_o => interrupt_empty);
-
-      --clk      => clk,
-      --rst      => fifo_rst,
-      --rdreq    => interrupt_rdreq,
-      --wrreq    => interrupt_wrreq,
-      --data_in  => interrupt_data_in,
-      --empty    => interrupt_empty,
-      --full     => interrupt_full,
-      --data_out => interrupt_data_out);
 
 end rtl;

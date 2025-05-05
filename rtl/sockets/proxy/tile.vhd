@@ -394,9 +394,10 @@ package tile is
     generic (
       tech : integer);
     port (
-      rst                        : in  std_ulogic;
+      noc_rst                    : in  std_ulogic;
+      noc_clk                    : in  std_ulogic;
+      tile_rst                   : in  std_ulogic;
       tile_clk                   : in  std_ulogic;
-      acc_clk                    : in  std_ulogic;
       coherence_req_wrreq        : in  std_ulogic;
       coherence_req_data_in      : in  coh_noc_flit_type;
       coherence_req_full         : out std_ulogic;
@@ -753,8 +754,7 @@ package tile is
       tlb_entries        : integer);
     port (
       rst                           : in  std_ulogic;
-      tile_clk                      : in  std_ulogic;
-      acc_clk                       : in  std_ulogic;
+      clk                           : in  std_ulogic;
       local_y                       : in  local_yx;
       local_x                       : in  local_yx;
       paddr                         : in  integer;
@@ -925,13 +925,14 @@ package tile is
       CLKFBOUT_MULT  : integer range 2 to 64 := 8;
       CLKIN1_PERIOD  : real := 8.0;
       CLKIN2_PERIOD  : real := 8.0;
-      CLKOUT0_DIVIDE : integer range 1 to 128 := 1;
-      CLKOUT1_DIVIDE : integer range 1 to 128 := 1;
-      CLKOUT2_DIVIDE : integer range 1 to 128 := 1;
-      CLKOUT3_DIVIDE : integer range 1 to 128 := 1;
-      CLKOUT4_DIVIDE : integer range 1 to 128 := 1;
-      CLKOUT5_DIVIDE : integer range 1 to 128 := 1;
-      NUM_OUT_CLOCKS : integer range 1 to 6   := 6);
+      CLKOUT0_DIVIDE : integer range 1 to 128 := 19;
+      CLKOUT1_DIVIDE : integer range 1 to 128 := 18;
+      CLKOUT2_DIVIDE : integer range 1 to 128 := 17;
+      CLKOUT3_DIVIDE : integer range 1 to 128 := 15;
+      CLKOUT4_DIVIDE : integer range 1 to 128 := 14;
+      CLKOUT5_DIVIDE : integer range 1 to 128 := 13;
+      NUM_OUT_CLOCKS : integer range 1 to 6   := 6;
+      EN_FREQ_SEL    : integer range 0 to 1   := 0);
     port (
       clk           : in  std_ulogic;
       rstn          : in  std_ulogic;
@@ -942,9 +943,10 @@ package tile is
       clk_feedthru4 : out std_ulogic;
       clk_feedthru5 : out std_ulogic;
       locked        : out std_ulogic;
-      clkin_sel     : in  std_ulogic;
       dco_reconfig  : in  std_ulogic;
-      dco_hicycles  : in  std_logic_vector(5 downto 0)
+      dco_hicycles  : in  std_logic_vector(5 downto 0);
+      dco_en        : in  std_ulogic;
+      dco_div_sel   : in  std_logic_vector(2 downto 0)
       );
   end component plle_drp;
 
