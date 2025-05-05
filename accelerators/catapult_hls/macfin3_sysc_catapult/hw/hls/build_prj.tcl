@@ -43,6 +43,9 @@ solution options set /Input/SearchPath { \
     ../inc/mem_bank
 } -append
 
+
+solution new -state new -solution solution.v1 ${ACCELERATOR}
+
 solution file add "../tb/testbench.cpp" -exclude true
 solution file add "../tb/testbench.hpp" -exclude true
 solution file add "../tb/sc_main.cpp" -exclude true
@@ -91,53 +94,9 @@ solution options set ComponentLibs/SearchPath ./DataPath/Catapult -append
 # solution library add DUAL_PORT_RBW
 directive set -CLOCKS {clk {-CLOCK_PERIOD 5.0}}
 
-# solution design set $ACCELERATOR -top
-################
-# # Read Design
-# solution file add ${sfd}/src/testbench.cpp -type C++
-# go analyze
-
-# # Synthesize 'transpose' block
-# solution design set transpose -top
-# go extract
-
-# # Synthesize 'mac' block
-# go analyze
-# solution design set mac -top
-# go extract
-
-# # Synthesize 'top' block with pre-synthesized blocks
-# go analyze
-# solution design set matrixMultiply -top
-# solution library add {[Block] mac.v1}
-# solution library add {[Block] transpose.v1}
-# go libraries
-###################
-
-# solution new -state new -solution solution.v1 Ctrl
-# solution design set Ctrl -top
-
-# go compile
-# go libraries
-# go assembly
-# go architect
-# go allocate
-# go extract
-
-# solution new -state new -solution solution.v1 DataPath
-# solution design set DataPath -top
-
-# go compile
-# go libraries
-# go assembly
-# go architect
-# go allocate
-# go extract
-# solution library add DUAL_PORT_RBW
 solution library add {[Block] Ctrl.v1}
 solution library add {[Block] DataPath.v1}
 
-solution new -state new -solution solution.v1 ${ACCELERATOR}
 solution design set $ACCELERATOR -top
 
 go analyze

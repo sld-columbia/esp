@@ -6,9 +6,6 @@
 
 #pragma once
 
-// #include "./DataPath.hpp"
-// #include "./Ctrl.hpp"
-
 #include "macfin3_data_types.h"
 #include "macfin3_specs.h"
 #include "macfin3_conf_info.h"
@@ -28,17 +25,8 @@ SC_MODULE(DataPath)
     Connections::In<conf_info_t> CCS_INIT_S1(conf_info_in);
     Connections::In<bool> CCS_INIT_S1(sync00);
 
-    // Connections::In<ac_int<DMA_WIDTH>> CCS_INIT_S1(dma_read_chnl);
-    // Connections::Out<ac_int<DMA_WIDTH>> CCS_INIT_S1(dma_write_chnl);
-    // Connections::Out<dma_info_t> CCS_INIT_S1(dma_read_ctrl);
-    // Connections::Out<dma_info_t> CCS_INIT_S1(dma_write_ctrl);
-
     Connections::Out<FPDATA_WORD> CCS_INIT_S1(in_wr_req);
     Connections::In<read_data> CCS_INIT_S1(in_rd_rsp);
-    // Connections::Out<FPDATA_WORD> CCS_INIT_S1(out_wr_req);
-
-    // Connections::Out<FPDATA_WORD> CCS_INIT_S1(out_ping_rd_rsp);
-    // Connections::Out<FPDATA_WORD> CCS_INIT_S1(out_pong_rd_rsp);
 
     SC_CTOR(DataPath)
     {
@@ -79,8 +67,6 @@ SC_MODULE(DataPath)
 			    for (int in_rem = in_length; in_rem > 0; in_rem -= PLM_IN_WORD) {
 
 				    uint32_t in_len = in_rem > PLM_IN_WORD ? PLM_IN_WORD : in_rem;
-
-// Compute Kernel
 
 				    FPDATA acc_fx=0;
 				    uint32_t vec_indx=0;

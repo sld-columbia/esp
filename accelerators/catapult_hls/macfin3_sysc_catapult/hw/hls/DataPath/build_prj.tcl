@@ -13,6 +13,8 @@ set CSIM_RESULTS "./tb_data/catapult_csim_results.log"
 set RTL_COSIM_RESULTS "./tb_data/catapult_rtl_cosim_results.log"
 set sfd [file dir [info script]]
 
+solution new -state new -solution solution.v1 DataPath
+
 solution options defaults
 
 options set /Input/CppStandard c++11
@@ -84,7 +86,6 @@ solution library add DUAL_PORT_RBW
 directive set -CLOCKS {clk {-CLOCK_PERIOD 5.0}}
 
 
-solution new -state new -solution solution.v1 DataPath
 solution design set DataPath -top
 
 go analyze

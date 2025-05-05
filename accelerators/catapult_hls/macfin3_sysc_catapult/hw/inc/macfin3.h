@@ -35,7 +35,7 @@ SC_MODULE(macfin3_sysc_catapult)
     Connections::Combinational<bool> CCS_INIT_S1(sync00);
     Connections::Combinational<FPDATA_WORD> CCS_INIT_S1(in_wr_req);
     Connections::Combinational<read_data> CCS_INIT_S1(in_rd_rsp);
-    // Connections::Combinational<FPDATA_WORD> CCS_INIT_S1(out_wr_req);
+
 
     Ctrl CCS_INIT_S1(Controller);
     DataPath CCS_INIT_S1(DataPath_inst);
