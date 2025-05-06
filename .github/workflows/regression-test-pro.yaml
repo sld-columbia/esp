@@ -27,8 +27,7 @@ jobs:
         working-directory: ./soft
 
       - name: Install submodule
-        run: ./submodule_init.sh
-        working-directory: ./utils/scripts
+        run: ./utils/scripts/submodule_init.sh
       
       # - name: Grant permissions to actions-pipeline
       #   run: chmod 700 *.sh
