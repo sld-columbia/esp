@@ -29,14 +29,14 @@ jobs:
       - name: Install submodule
         run: ./utils/scripts/submodule_init.sh
       
-      # - name: Grant permissions to actions-pipeline
-      #   run: chmod 700 *.sh
-      #   working-directory: ./utils/scripts/actions-pipeline
+      - name: Grant permissions to actions-pipeline
+        run: chmod 700 *.sh
+        working-directory: ./utils/scripts/actions-pipeline
       
-      # - name: Grant permissions to helper
-      #   run: chmod 700 *.sh
-      #   working-directory: ./utils/scripts/actions-pipeline/helper
+      - name: Grant permissions to helper
+        run: chmod 700 *.sh
+        working-directory: ./utils/scripts/actions-pipeline/helper
       
-      # - name: Run SoC flow script
-      #   run: ./run_esp-soft.sh
-      #   working-directory: ./utils/scripts/actions-pipeline
+      - name: Run SoC flow script
+        run: ./run_esp-soft.sh
+        working-directory: ./utils/scripts/actions-pipeline
