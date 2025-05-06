@@ -19,12 +19,12 @@ jobs:
       - name: Test workflow with hello
         run: echo "hello"
       
-      - name: Set toolchain
-        run: |
-          cp /opt/sysroot.tgz ./sysroot.tgz
-          tar -xzf ./sysroot.tgz -C ./ariane
-          rm -f ./sysroot.tgz
-        working-directory: ./soft
+      # - name: Set toolchain
+      #   run: |
+      #     cp /opt/sysroot.tgz ./sysroot.tgz
+      #     tar -xzf ./sysroot.tgz -C ./ariane
+      #     rm -f ./sysroot.tgz
+      #   working-directory: ./soft
 
       # - name: Submodule installation
       #   run: ./submodule_init.sh
