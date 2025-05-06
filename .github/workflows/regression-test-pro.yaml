@@ -19,16 +19,16 @@ jobs:
       - name: Test workflow with hello
         run: echo "hello"
       
-      # - name: Set toolchain
-      #   run: |
-      #     cp /opt/sysroot.tgz ./sysroot.tgz
-      #     tar -xzf ./sysroot.tgz -C ./ariane
-      #     rm -f ./sysroot.tgz
-      #   working-directory: ./soft
+      - name: Set sysroot
+        run: |
+          cp /opt/sysroot.tgz ./sysroot.tgz
+          tar -xzf ./sysroot.tgz -C ./ariane
+          rm -f ./sysroot.tgz
+        working-directory: ./soft
 
-      # - name: Submodule installation
-      #   run: ./submodule_init.sh
-      #   working-directory: ./utils/scripts
+      - name: Install submodule
+        run: ./submodule_init.sh
+        working-directory: ./utils/scripts
       
       # - name: Grant permissions to actions-pipeline
       #   run: chmod 700 *.sh
