@@ -11,26 +11,32 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      # - name: Checkout code
-      #   uses: actions/checkout@v4
-      #   with:
-      #     ref: regression-testing
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: regression-testing
       
       - name: Test workflow with hello
         run: echo "hello"
+      
+      - name: Set toolchain
+        cp /opt/sysroot.tgz ./sysroot.tgz
+        tar -xzf ./sysroot.tgz -C ./ariane
+        rm ./sysroot.tgz
+        working-directory: ./soft
 
       # - name: Submodule installation
       #   run: ./submodule_init.sh
       #   working-directory: ./utils/scripts
       
-      - name: Grant permissions to actions-pipeline
-        run: chmod 700 *.sh
-        working-directory: ./utils/scripts/actions-pipeline
+      # - name: Grant permissions to actions-pipeline
+      #   run: chmod 700 *.sh
+      #   working-directory: ./utils/scripts/actions-pipeline
       
-      - name: Grant permissions to helper
-        run: chmod 700 *.sh
-        working-directory: ./utils/scripts/actions-pipeline/helper
+      # - name: Grant permissions to helper
+      #   run: chmod 700 *.sh
+      #   working-directory: ./utils/scripts/actions-pipeline/helper
       
-      - name: Run SoC flow script
-        run: ./run_esp-soft.sh
-        working-directory: ./utils/scripts/actions-pipeline
+      # - name: Run SoC flow script
+      #   run: ./run_esp-soft.sh
+      #   working-directory: ./utils/scripts/actions-pipeline
