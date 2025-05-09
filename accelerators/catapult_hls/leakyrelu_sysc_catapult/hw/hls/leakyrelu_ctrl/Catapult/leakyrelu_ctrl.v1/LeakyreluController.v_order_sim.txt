@@ -1,0 +1,4 @@
+./LeakyreluController_ccs_ctrl_in_buf_wait_v4.v
+./LeakyreluController_ccs_out_buf_wait_v5.v
+/opt/Catapult_2025/Mgc_home/pkgs/ccs_xilinx/hdl/BLOCK_1R1W_RBW.v
+./LeakyreluController.v

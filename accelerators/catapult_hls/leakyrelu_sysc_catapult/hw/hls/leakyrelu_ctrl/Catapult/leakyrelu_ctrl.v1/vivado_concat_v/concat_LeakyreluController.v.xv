@@ -1,0 +1,87 @@
+## HLS SP synthesis script
+## Generated for stage extract
+## Vivado mode is Non-project
+
+# Version check
+set vv [version -short]
+if { [regexp {(\d+)\.(\d+).*} $vv all major minor] } {
+  if { ($major < 2023) || ($major == 2023 && $minor < 2) } {
+    puts "Vivado version (v${vv}) is not compatible with version used for the Catapult library (v2023.2)."
+  }
+}
+# Reporting settings
+puts "-- Requested 4 fractional digits for design 'LeakyreluController' timing"
+puts "-- Requested 4 fractional digits for design 'LeakyreluController' capacitance"
+puts "-- Characterization mode: p2p "
+
+puts "-- Synthesis Timing report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/leakyrelu_sysc_catapult/hw/hls/leakyrelu_ctrl/Catapult/leakyrelu_ctrl.v1/vivado_concat_v/timing_summary_synth.rpt' "
+puts "-- Synthesis Utilization report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/leakyrelu_sysc_catapult/hw/hls/leakyrelu_ctrl/Catapult/leakyrelu_ctrl.v1/vivado_concat_v/utilization_synth.rpt' "
+if { ([info exists env(Xilinx_RUN_PNR)] && $env(Xilinx_RUN_PNR) ) || 
+     ([info exists env(Xilinx_BITGEN)] && $env(Xilinx_BITGEN) ) } {
+puts "-- Routed Timing report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/leakyrelu_sysc_catapult/hw/hls/leakyrelu_ctrl/Catapult/leakyrelu_ctrl.v1/vivado_concat_v/timing_summary_routed.rpt' "
+puts "-- Routed Utilization report: '/home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/leakyrelu_sysc_catapult/hw/hls/leakyrelu_ctrl/Catapult/leakyrelu_ctrl.v1/vivado_concat_v/utilization_placed.rpt' "
+}
+
+# Environment variable settings
+global env
+set CATAPULT_HOME "/opt/Catapult_2025/Mgc_home"
+## Set the variable for file path prefixing 
+set RTL_TOOL_SCRIPT_DIR /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/leakyrelu_sysc_catapult/hw/hls/leakyrelu_ctrl/Catapult/leakyrelu_ctrl.v1/vivado_concat_v
+set RTL_TOOL_SCRIPT_DIR [file dirname [file normalize [info script] ] ]
+puts "-- RTL_TOOL_SCRIPT_DIR is set to '$RTL_TOOL_SCRIPT_DIR' "
+# Vivado Non-Project mode script starts here
+puts "==========================================="
+puts "Catapult driving Vivado in Non-Project mode"
+puts "==========================================="
+set outputDir /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/leakyrelu_sysc_catapult/hw/hls/leakyrelu_ctrl/Catapult/leakyrelu_ctrl.v1/vivado_concat_v
+set outputDir $RTL_TOOL_SCRIPT_DIR
+#file mkdir $outputDir
+#
+# STEP#1: setup design sources and constraints
+#
+create_project -force tcl_concat_v
+   read_verilog ../concat_LeakyreluController.v
+# set up XPM libraries for XPM-related IP like the Catapult Xilinx_FIFO
+set_property XPM_LIBRARIES {XPM_CDC XPM_MEMORY XPM_FIFO} [current_project]
+read_xdc $outputDir/concat_LeakyreluController.v.xv.sdc
+set_property part xc7vx485tffg1761-2 [current_project]
+#
+# STEP#2: run synthesis, report utilization and timing estimates, write checkpoint design
+#
+synth_design   -cascade_dsp auto  -top LeakyreluController -part xc7vx485tffg1761-2 -mode out_of_context  -include_dirs "" 
+write_checkpoint -force $outputDir/post_synth
+set viv_report_dir /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/leakyrelu_sysc_catapult/hw/hls/leakyrelu_ctrl/Catapult/leakyrelu_ctrl.v1/vivado_concat_v
+report_utilization -file $viv_report_dir/utilization_synth.rpt
+report_timing_summary -path_type summary -file $viv_report_dir/timing_summary_synth.rpt
+report_timing -nworst 1 -from [all_inputs] -to [all_outputs] -file $viv_report_dir/timing_summary_synth.rpt -append
+if { [llength [all_clocks] ] > 0 } {
+   report_timing -nworst 1 -from [all_inputs] -to [all_clocks] -file $viv_report_dir/timing_summary_synth.rpt -append
+   report_timing -nworst 1 -from [all_clocks] -to [all_clocks] -file $viv_report_dir/timing_summary_synth.rpt -append
+   report_timing -nworst 1 -from [all_clocks] -to [all_outputs] -file $viv_report_dir/timing_summary_synth.rpt -append
+}
+if { ([info exists env(Xilinx_RUN_PNR)] && $env(Xilinx_RUN_PNR) ) || 
+     ([info exists env(Xilinx_BITGEN)] && $env(Xilinx_BITGEN) ) } {
+  opt_design
+  place_design
+  read_xdc /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/leakyrelu_sysc_catapult/hw/hls/leakyrelu_ctrl/Catapult/leakyrelu_ctrl.v1/vivado_concat_v/concat_LeakyreluController.v.xv.signoff.sdc
+  phys_opt_design
+  write_checkpoint -force $outputDir/post_place
+  route_design
+  write_checkpoint -force $outputDir/post_route
+  write_verilog -force $outputDir/LeakyreluController_impl_netlist.v -sdf_anno false
+  write_xdc -no_fixed_only -force $outputDir/LeakyreluController_impl.xdc
+  if { [info exists env(Xilinx_BITGEN)] && $env(Xilinx_BITGEN) } {
+    write_bitstream -force $outputDir/LeakyreluController.bit
+  }
+   set viv_report_dir /home/gtombesi/catapult_update_april24/esp/accelerators/catapult_hls/leakyrelu_sysc_catapult/hw/hls/leakyrelu_ctrl/Catapult/leakyrelu_ctrl.v1/vivado_concat_v
+   report_design_analysis -congestion -complexity -file $viv_report_dir/design_analysis.rpt
+   report_high_fanout_nets -timing -load_types -max_nets 100 -file $viv_report_dir/high_fanouts.rpt
+   report_utilization -file $viv_report_dir/utilization_placed.rpt
+   report_timing_summary -path_type summary -file $viv_report_dir/timing_summary_routed.rpt
+   report_timing -nworst 1 -from [all_inputs] -to [all_outputs] -file $viv_report_dir/timing_summary_routed.rpt -append
+   if { [llength [all_clocks] ] > 0 } {
+      report_timing -nworst 1 -from [all_inputs] -to [all_clocks] -file $viv_report_dir/timing_summary_routed.rpt -append
+      report_timing -nworst 1 -from [all_clocks] -to [all_clocks] -file $viv_report_dir/timing_summary_routed.rpt -append
+      report_timing -nworst 1 -from [all_clocks] -to [all_outputs] -file $viv_report_dir/timing_summary_routed.rpt -append
+   }
+}
