@@ -141,12 +141,12 @@ package tile is
       dma_snd_full                 : out std_ulogic;
       dma_snd_atleast_4slots       : out std_ulogic;
       dma_snd_exactly_3slots       : out std_ulogic;
-      prc_dma_rcv_rdreq               : in  std_ulogic;
-      prc_dma_rcv_data_out            : out noc_flit_type;
-      prc_dma_rcv_empty               : out std_ulogic;
-      prc_dma_snd_wrreq               : in  std_ulogic;
-      prc_dma_snd_data_in             : in  noc_flit_type;
-      prc_dma_snd_full                : out std_ulogic;
+      prc_dma_rcv_rdreq            : in  std_ulogic;
+      prc_dma_rcv_data_out         : out dma_noc_flit_type;
+      prc_dma_rcv_empty            : out std_ulogic;
+      prc_dma_snd_wrreq            : in  std_ulogic;
+      prc_dma_snd_data_in          : in  dma_noc_flit_type;
+      prc_dma_snd_full             : out std_ulogic;
       coherent_dma_rcv_rdreq       : in  std_ulogic;
       coherent_dma_rcv_data_out    : out dma_noc_flit_type;
       coherent_dma_rcv_empty       : out std_ulogic;
@@ -791,7 +791,6 @@ package tile is
       flush                         : out std_ulogic;
       acc_flush_done                : in  std_ulogic;
       mon_dvfs                      : out monitor_dvfs_type;
-      dvfs_transient_in            : in std_ulogic;
       llc_coherent_dma_rcv_rdreq    : out std_ulogic;
       llc_coherent_dma_rcv_data_out : in  dma_noc_flit_type;
       llc_coherent_dma_rcv_empty    : in  std_ulogic;
@@ -1280,33 +1279,33 @@ package tile is
 
   component apb2axil is
   port (
-   clk              : in std_ulogic;
-   rstn             : in std_ulogic;
-   paddr            : in std_logic_vector(31 downto 0);
-   penable          : in std_ulogic;
-   psel             : in std_ulogic;
-   pwdata           : in std_logic_vector(31 downto 0);
-   pwrite           : in std_ulogic;
-   prdata           : out std_logic_vector(31 downto 0);
-   pready           : out std_ulogic;
-   pslverr          : out std_ulogic;
-   s_axil_awvalid   : out std_ulogic;
-   s_axil_awready   : in std_ulogic;
-   s_axil_awaddr    : out std_logic_vector(31 downto 0);
-   s_axil_wvalid    : out std_ulogic;
-   s_axil_wready    : in std_ulogic;
-   s_axil_wdata     : out std_logic_vector(31 downto 0);
-   s_axil_wstrb     : out std_logic_vector(3 downto 0);
-   s_axil_arvalid   : out std_ulogic;
-   s_axil_arready   : in std_ulogic;
-   s_axil_araddr    : out std_logic_vector(31 downto 0);
-   s_axil_rvalid    : in std_ulogic;
-   s_axil_rready    : out std_ulogic;
-   s_axil_rdata     : in std_logic_vector(31 downto 0);
-   s_axil_rresp     : in std_logic_vector(1 downto 0);
-   s_axil_bvalid    : in std_ulogic;
-   s_axil_bready    : out std_ulogic;
-   s_axil_bresp     : in std_logic_vector(1 downto 0)
+    clk              : in std_ulogic;
+    rstn             : in std_ulogic;
+    paddr            : in std_logic_vector(31 downto 0);
+    penable          : in std_ulogic;
+    psel             : in std_ulogic;
+    pwdata           : in std_logic_vector(31 downto 0);
+    pwrite           : in std_ulogic;
+    prdata           : out std_logic_vector(31 downto 0);
+    pready           : out std_ulogic;
+    pslverr          : out std_ulogic;
+    s_axil_awvalid   : out std_ulogic;
+    s_axil_awready   : in std_ulogic;
+    s_axil_awaddr    : out std_logic_vector(31 downto 0);
+    s_axil_wvalid    : out std_ulogic;
+    s_axil_wready    : in std_ulogic;
+    s_axil_wdata     : out std_logic_vector(31 downto 0);
+    s_axil_wstrb     : out std_logic_vector(3 downto 0);
+    s_axil_arvalid   : out std_ulogic;
+    s_axil_arready   : in std_ulogic;
+    s_axil_araddr    : out std_logic_vector(31 downto 0);
+    s_axil_rvalid    : in std_ulogic;
+    s_axil_rready    : out std_ulogic;
+    s_axil_rdata     : in std_logic_vector(31 downto 0);
+    s_axil_rresp     : in std_logic_vector(1 downto 0);
+    s_axil_bvalid    : in std_ulogic;
+    s_axil_bready    : out std_ulogic;
+    s_axil_bresp     : in std_logic_vector(1 downto 0)
   );
   end component apb2axil;
 

@@ -39,7 +39,7 @@ typedef enum action {
     DO_GET_WORD,
     DO_LOAD_BOOTROM,
     DO_LOAD_DRAM,
-  	DO_LOAD_PBS,
+    DO_LOAD_PBS,
     DO_RESET
 } action_t;
 

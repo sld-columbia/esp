@@ -173,45 +173,45 @@ cache-distclean:
 .PHONY: xilinx_lib-clean cache-distclean
 
 
-clean: 		soft-clean		\
-		linux-clean		\
+clean: 	soft-clean		    \
+		linux-clean		    \
 		xilinx_lib-clean 	\
-		sim-clean		\
-		qsim-clean		\
+		sim-clean		    \
+		qsim-clean		    \
 		ncsim-clean 		\
 		xmsim-clean 		\
 		esp-config-clean	\
 		grlib-config-clean	\
 		vivado-clean		\
-		zynq-clean		\
-		genus-clean		\
+		zynq-clean		    \
+		genus-clean		    \
 		socketgen-clean		\
 		espmon-clean		\
-		mmi64-clean		\
-		soft-build-clean \
+		mmi64-clean		    \
+		soft-build-clean    \
 		jtag-clean
 
 distclean:	check_srcs-distclean     	\
-		xilinx_lib-clean 		\
-		profpga-distclean		\
-		soft-distclean 			\
-		linux-distclean			\
-		baremetal-distclean		\
-		examples-clean			\
-		sim-distclean			\
-		qsim-distclean			\
-		ncsim-distclean			\
-		xmsim-distclean			\
-		config-distclean		\
-		vivado-distclean		\
-		vivado-dpr-clean    \
-		zynq-distclean			\
-		genus-distclean			\
-		socketgen-distclean		\
-		espmon-distclean		\
-		mmi64-distclean			\
-		soft-build-distclean	\
-		jtag-distclean
+		    xilinx_lib-clean 		    \
+		    profpga-distclean		    \
+		    soft-distclean 			    \
+		    linux-distclean			    \
+		    baremetal-distclean		    \
+		    examples-clean			    \
+		    sim-distclean			    \
+		    qsim-distclean			    \
+		    ncsim-distclean			    \
+		    xmsim-distclean			    \
+		    config-distclean		    \
+		    vivado-distclean		    \
+		    vivado-dpr-clean            \
+		    zynq-distclean			    \
+		    genus-distclean			    \
+		    socketgen-distclean		    \
+		    espmon-distclean		    \
+		    mmi64-distclean			    \
+		    soft-build-distclean	    \
+		    jtag-distclean
 	$(QUIET_CLEAN)$(RM) $(LOGS)
 
 

@@ -1,0 +1,1 @@
+../ariane/ariane/src/register_interface/src/reg_intf.sv

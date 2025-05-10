@@ -37,4 +37,4 @@ TILE_0_1 = 1 cpu cpu
 TILE_1_0 = 2 empty empty
 TILE_1_1 = 3 misc IO
 #CONFIG_HAS_DVFS is not set
-#CONFIG_PRC is not set
+#CONFIG_PRC_EN is not set
