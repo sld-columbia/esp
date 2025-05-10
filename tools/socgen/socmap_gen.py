@@ -96,7 +96,7 @@ DDR_HADDR["ibex"] = 0x800
 
 PBS_HADDR = dict()
 PBS_HADDR["leon3"] = 0x500
-PBS_HADDR["ariane"] = 0xA00
+PBS_HADDR["ariane"] = 0xB00
 
 # SLM base address
 SLM_HADDR = 0x040
