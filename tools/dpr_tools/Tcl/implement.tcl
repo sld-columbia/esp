@@ -3,24 +3,26 @@
 ###########################
 proc implement {impl} {
    global tclParams 
+   global board
    global part
    global dcpLevel
    global verbose
    global implDir
    global xdcDir
    global dcpDir
-   global ooc_implementations 
+   global RFH
 
    set top                 [get_attribute impl $impl top]
+   set name                [get_attribute impl $impl name]
    set implXDC             [get_attribute impl $impl implXDC]
-   set linkXDC             [get_attribute impl $impl linkXDC]
+   set cellXDC             [get_attribute impl $impl cellXDC]
    set cores               [get_attribute impl $impl cores]
    set ip                  [get_attribute impl $impl ip]
    set ipRepo              [get_attribute impl $impl ipRepo]
    set hd                  [get_attribute impl $impl hd.impl]
-   set td                  [get_attribute impl $impl td.impl]
-   set pr                  [get_attribute impl $impl pr.impl]
-   set ic                  [get_attribute impl $impl ic.impl]
+   set dfx                 [get_attribute impl $impl dfx.impl]
+   set hd.budget           [get_attribute impl $impl hd.budget]
+   set budgetExclude       [get_attribute impl $impl hd.budget_exclude]
    set partitions          [get_attribute impl $impl partitions]
    set link                [get_attribute impl $impl link]
    set opt                 [get_attribute impl $impl opt]
@@ -39,18 +41,22 @@ proc implement {impl} {
    set route.pre           [get_attribute impl $impl route.pre]
    set route_options       [get_attribute impl $impl route_options]
    set route_directive     [get_attribute impl $impl route_directive]
+   set post_phys           [get_attribute impl $impl post_phys]
+   set post_phys.pre       [get_attribute impl $impl post_phys.pre]
+   set post_phys_options   [get_attribute impl $impl post_phys_options]
+   set post_phys_directive [get_attribute impl $impl post_phys_directive]
    set bitstream           [get_attribute impl $impl bitstream]
    set bitstream.pre       [get_attribute impl $impl bitstream.pre]
    set bitstream_options   [get_attribute impl $impl bitstream_options]
    set bitstream_settings  [get_attribute impl $impl bitstream_settings]
    set drc.quiet           [get_attribute impl $impl drc.quiet]
 
-   if {($hd && $td) || ($hd && $ic) || ($td && $ic) || ($pr && $hd) || ($pr && $ic) || ($pr && $td)} {
-      set errMsg "\nERROR: Implementation $impl has more than one of the following flow variables set to 1"
-      append errMsg "\n\thd.impl($hd)\n\ttd.impl($td)\n\tic.impl($ic)\n\tpr.impl($pr)\n"
-      append errMsg "Only one of these variables can be set true at one time. To run multiple flows, create separate implementation runs."
-      error $errMsg
-   }
+#   if {($hd && $dfx)} {
+#      set errMsg "\nERROR: Implementation $impl has more than one of the following flow variables set to 1"
+#      append errMsg "\n\thd.impl($hd)\n\tdfx.impl($dfx)\n"
+#      append errMsg "Only one of these variables can be set true at one time. To run multiple flows, create separate implementation runs."
+#      error $errMsg
+#   }
 
    set resultDir "$implDir/$impl"
    set reportDir "$resultDir/reports"
@@ -66,9 +72,19 @@ proc implement {impl} {
    set cfh [open "$resultDir/command.log" w]
    set wfh [open "$resultDir/critical.log" w]
 
+   set vivadoVer [version]
+   puts $rfh "Info: Running Vivado version $vivadoVer"
+   puts $RFH "Info: Running Vivado version $vivadoVer"
+
    command "puts \"#HD: Running implementation $impl\""
    puts "\tWriting results to: $resultDir"
    puts "\tWriting reports to: $reportDir"
+   puts $rfh "\n#HD: Running implementation $impl"
+   puts $rfh "Writing results to: $resultDir"
+   puts $rfh "Writing reports to: $reportDir"
+   puts $RFH "\n#HD: Running implementation $impl"
+   puts $RFH "Writing results to: $resultDir"
+   puts $RFH "Writing reports to: $reportDir"
    set impl_start [clock seconds]
 
    #### Set Tcl Params
@@ -78,12 +94,15 @@ proc implement {impl} {
 
    #### Create in-memory project
    command "create_project -in_memory -part $part" "$resultDir/create_project.log"
-   
+   if {[info exists board] && [llength $board]} {
+      command "set_property board_part $board \[current_project\]"
+   }   
+
    #### Setup any IP Repositories 
    if {$ipRepo != ""} {
       puts "\tLoading IP Repositories:\n\t+ [join $ipRepo "\n\t+ "]"
       command "set_property IP_REPO_PATHS \{$ipRepo\} \[current_fileset\]" "$resultDir/temp.log"
-      command "update_ip_catalog" "$resultsDir/temp.log"
+      command "update_ip_catalog" "$resultDir/temp.log"
    }
 
    ###########################################
@@ -93,7 +112,7 @@ proc implement {impl} {
       #Determine state of Top (import or implement). 
       set topState "implement"
       foreach partition $partitions {
-         lassign $partition module cell state level dcp
+         lassign $partition module cell state name type level dcp
          if {[string match $cell $top]} {
             set topState $state 
             if {[llength $dcp]} {
@@ -104,11 +123,16 @@ proc implement {impl} {
 
       #If DCP for top is not defined in Partition settings, try and find it.
       if {![info exist topFile] || ![llength $topFile]} {
-         set module [get_modules top_level]
+         foreach module [get_modules] {
+            set moduleName [get_attribute module $module moduleName]
+            if {[string match $top $moduleName]} {
+               break
+            }
+         }
          if {[string match $topState "implement"]} {
             set topFile [get_module_file $module]
          } elseif {[string match $topState "import"]} {
-            if {$pr} {
+            if {$dfx} {
                set topFile "$dcpDir/${top}_static.dcp"
             } else {
                set topFile "$dcpDir/${top}_routed.dcp"
@@ -119,15 +143,18 @@ proc implement {impl} {
          }
       }
 
-      puts "\t#HD: Adding file $topFile for $top"
-      if {[info exists topFile]} {
+      #Add file if it exists, or if $verbose=0 for testing
+      if {[file exists $topFile] || !$verbose} {
+         set type [lindex [split $topFile .] end]
+         puts "\t#HD: Adding \'$type\' file $topFile for $top"
          command "add_files $topFile"
       } else {
-         set errMsg "\nERROR: Specified file $topFile cannot be found on disk. Verify path is correct." 
+         set errMsg "\nERROR: Specified file $topFile cannot be found on disk. Verify path is correct, and that all dependencies have been run." 
          error $errMsg
       }
    
-      ####Read in top-level cores, ip,  and XDC on if Top is being implemented
+      ####Read in top-level cores/ip/XDC if Top is being implemented
+      ####All Partition core/ip/XDC should be defined as Module attributes
       if {[string match $topState "implement"]} { 
          # Read in IP Netlists 
          if {[llength $cores] > 0} {
@@ -135,349 +162,446 @@ proc implement {impl} {
          }
          # Read IP XCI files
          if {[llength $ip] > 0} {
-            set start_time [clock seconds]
             add_ip $ip
-            set end_time [clock seconds]
-            log_time add_ip $start_time $end_time 0 "Add XCI files and generate/synthesize IP"
          }
+
          # Read in XDC files
-         if {[llength $implXDC] > 0 && [string match $topState "implement"]} {
-            add_xdc $implXDC
-         } else {
+         if {[llength $implXDC] > 0} {
             if {[string match $topState "implement"]} {
-               puts "\tINFO: Skipping top-level XDC files because $top is set to $topState"
+               add_xdc $implXDC
             } else {
-               puts "\tINFO: No pre-link_design XDC file specified for $impl"
+               puts "\tInfo: Skipping top-level XDC files because $top is set to $topState."
             }
+         } else {
+            puts "\tWarning: No top-level XDC files were specified."
          }
       }
-   
-      ###########################################################
-      # Link the top-level design with black boxes for Partitions 
-      ###########################################################
-      set start_time [clock seconds]
-      puts "\t#HD: Running link_design for $top \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
-      command "link_design -mode default -part $part -top $top" "$resultDir/${top}_link_design.log"
-      set end_time [clock seconds]
-      log_time link_design $start_time $end_time 1 "link_design -part $part -top $top"
-   
-      ##############################################
-      # Resolve Partitions 
-      ##############################################
+
+      ####Always read in RP/RM specific XDC files
+      if {[llength $cellXDC] > 0} {
+         foreach data $cellXDC {
+            lassign $data cell xdc 
+            puts "\tAdding scoped XDC files for $cell"
+            add_xdc $xdc 0 $cell
+         }
+      }
+
+      ####Read in Partition netlist, cores, ip, and XDC if module is being implemented
       foreach partition $partitions {
-         lassign $partition module cell state level dcp
+         lassign $partition module cell state name type level dcp
+         if {![llength $name]} {
+            set name [lindex [split $cell "/"] end]
+         }
 
-         #Process each partition that is not Top
-         set moduleName [get_attribute module $module moduleName]
-         set name [lindex [split $cell "/"] end]
-         if {![string match $moduleName $top]} {
-            #Set appropriate HD.* property if Top/Static is being implemented
-            if {[string match $topState "implement"]} {
-               if {$pr} {
-                  command "set_property HD.RECONFIGURABLE 1 \[get_cells $cell]"
-               } else {
-                  command "set_property HD.PARTITION 1 \[get_cells $cell]"
-               }
-            }
+         if {![string match "greybox" $state]} {
+            set moduleName [get_attribute module $module moduleName]
+         } else {
+            set moduleName $module
+         }
 
+         #Process each partition that is not Top. Ignore greybox Partitions
+         if {![string match $moduleName $top] && ![string match "greybox" $state]} {
             #Find correct file to be used for Partition
             if {[llength $dcp] && ![string match $state "greybox"]} {
                set partitionFile $dcp
             } else {
+               #if partition has state=implement, load synth netlist
                if {[string match $state "implement"]} {
                   set partitionFile [get_module_file $module]
                } elseif {[string match $state "import"]} {
-                  set pblockName [get_pblocks -of [get_cells $cell]]
-                  set partitionFile "$dcpDir/${module}_${pblockName}_route_design.dcp"
-               } elseif {[string match $state "greybox"]} {
-                  puts "\tInfo: Cell $cell will be implemented as a grey box."
+                  #TODO: Name used to be based on Pblock to uniquify. Now no open design with new link_design flow,
+                  #      so no way to query Pblock name. This code will not work if RPs have same name at the end of hierarchy.
+                  #      Project flow names these cell DCPs based of full hierachy name, which can have issues of its own
+                  #      if the hierarchy name is very long.  Need to revisit to develop a solution.
+                  set partitionFile "$dcpDir/${name}_${module}_route_design.dcp"
                } else {
                   set errMsg "\nERROR: Invalid state \"$state\" in settings for $name\($impl)."
                   append errMsg"Valid states are \"implement\", \"import\", or \"greybox\".\n" 
                   error $errMsg
                }
-            }
 
-            #Resolve blackbox for partition
-            if {[string match $state "greybox"]} {
-               set start_time [clock seconds]
-               puts "\tInserting LUT1 buffers on interface of $name \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
-               command "update_design -cells $cell -buffer_ports" "$resultDir/update_design_$name.log"
-               log_time buffer_port $start_time $end_time 0 "Buffer blackbox RM $name"
-            } else {
-               set fileSplit [split $partitionFile "."]
-               set type [lindex $fileSplit end]
-               if {[string match $type "dcp"]} {
-                  set start_time [clock seconds]
-                  puts "\tReading in checkpoint $partitionFile for $cell ($module) \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
-                  command "read_checkpoint -cell $cell $partitionFile -strict" "$resultDir/read_checkpoint_${module}_${name}.log"
-                  set end_time [clock seconds]
-                  log_time read_checkpoint $start_time $end_time 0 "Resolve blackbox for $name"
-               } elseif {[string match $type "edf"] || [string match $type "edn"]} {
-                  set start_time [clock seconds]
-                  puts "\tUpdating design with $partitionFile for $cell ($module) \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
-                  command "update_design -cells $cell -from_file $partitionFile" "$resultDir/update_design_$name.log"
-                  set end_time [clock seconds]
-                  log_time update_design $start_time $end_time 0 "Resolve blackbox for $name"
-               } else {
-                  set errMsg "\nERROR: Invalid file type \"$type\" for $partitionFile.\n"
-                  error $errMsg
-               }
             }
-   
-            #Read in Module XDC if module is not imported
-            if {![string match $state "import"]} { 
-               ## Read in module Impl XDC files 
-               set implXDC [get_attribute module $module implXDC]
-               if {[llength $implXDC] > 0} {
-                  set start_time [clock seconds]
-                  readXDC $implXDC
-                  set end_time [clock seconds]
-                  log_time read_xdc $start_time $end_time 0 "Cell level XDCs for $name"
-               } else {
-                  puts "\tINFO: No cell XDC file specified for $cell"
-               }
-            }
-   
-            #Lock imported Partitions
-            if {[string match $state "import"]} {
-               if {![llength $level]} {
-                  set level "routing"
-               }
-               set start_time [clock seconds]
-               puts "\tLocking $cell \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
-               command "lock_design -level $level $cell" "$resultDir/lock_design_$name.log"
-               set end_time [clock seconds]
-               log_time lock_design $start_time $end_time 0 "Locking cell $cell at level routing"
-            }
-   
-            #Do up front check for PR for Pblocks on Partitions
-            if {$verbose && $pr} {
-               set rpPblock [get_pblocks -quiet -of [get_cells $cell]]
-               if {![llength $rpPblock]} {
-                  set errMsg "ERROR: No pblock found for PR cell $cell."
-                  #error $errMsg
-               }
-            }
-   
-            #If verbose it turned up, write out intermediate link_design DCP files
-            if {$dcpLevel > 1} {
-               set start_time [clock seconds]
-               command "write_checkpoint -force $resultDir/${top}_link_design_intermediate.dcp" "$resultDir/temp.log"
-               set end_time [clock seconds]
-               log_time write_checkpoint $start_time $end_time 0 "Intermediate link_design checkpoint for debug"
-            }
-         }
-         #End: Process each partition that is not Top
-      }
-
-      ##############################################
-      # Bring in OOC module check points  
-      ##############################################
-      if {[llength $ooc_implementations] > 0 && [string match $topState "implement"]} {
-         get_ooc_results $ooc_implementations
-      } 
-
-      ##############################################
-      # Special processing for TopDown implementation
-      ##############################################
-      if {$td && $verbose > 0} {
-         #Turn off phys_opt_design and route_design for TD run
-         set phys  [set_attribute impl $impl phys  0]
-         set route [set_attribute impl $impl route 0]
-         #Turn on param to generate PP_RANGE if one does not exist
-         set_parameters {hd.partPinRangesForPblock 1} 
-
-         puts "\t#HD: Creating OOC constraints"
-         set start_time [clock seconds]
-         foreach ooc $ooc_implementations {
-            #Set HD.PARTITION and create set_logic_* constraints
-            set module [get_attribute ooc $ooc module]
-            set instName [get_attribute ooc $ooc inst]
-            set hierInst [get_attribute ooc $ooc hierInst]
-            set oocFile [get_module_file $module]
-            set fileSplit [split $oocFile "."]
-            set type [lindex $fileSplit end]
-            set start_time [clock seconds]
-            puts "\tResolving $hierInst ($module) with $oocFile \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
-            if {[string match $type "dcp"]} {
-               command "read_checkpoint -cell $hierInst $oocFile -strict" "$resultDir/read_checkpoint_$instName.log"
-               set end_time [clock seconds]
-               log_time read_checkpoint $start_time $end_time 0 "Resolve blackbox for $instName"
-            } elseif {[string match $type "edf"] || [string match $type "edn"]} {
-               command "update_design -cells $hierInst -from_file $oocFile" "$resultDir/update_design_$instName.log"
-               set end_time [clock seconds]
-               log_time update_design $start_time $end_time 0 "Resolve blackbox for $instName"
-            } else {
-               set errMsg "\nERROR: Invalid file type \"$type\" for $oocFile.\n"
+            #Add the partition source file to the in-memory project
+            if {![file exists $partitionFile] && $verbose} {
+               set errMsg "ERROR: Partition \'$cell\' with state \'$state\' is set to use the file:\n$partitionFile\n\nThis file does not exist."
                error $errMsg
             }
-            command "set_property HD.PARTITION 1 \[get_cells $hierInst\]"
-            create_set_logic $instName $hierInst $xdcDir
-            create_ooc_clocks $instName $hierInst $xdcDir
-         }
-         set end_time [clock seconds]
-         log_time "create_ooc" $start_time $end_time 0 "Create necessary OOC constraints"
-      }
+            set fileSplit [split $partitionFile "."]
+            set fileType [lindex $fileSplit end]
+            set start_time [clock seconds]
+            puts "\tAdding file $partitionFile for $cell ($module) \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
+            command "add_file $partitionFile"
+            #Check if file is an XCI. SCOPED_TO_CELLS not supported for XCI
+            if {![string match [lindex [split $partitionFile .] end] "xci"]} {
+               #Check if this file is already scoped to another partition
+               if {[llength [get_property SCOPED_TO_CELLS [get_files $partitionFile]]]} {
+                  set cells [get_property SCOPED_TO_CELLS [get_files $partitionFile]]
+                  lappend cells $cell
+                  command "set_property SCOPED_TO_CELLS \{$cells\} \[get_files $partitionFile\]"
+               } else {
+                  command "set_property SCOPED_TO_CELLS \{$cell\} \[get_files $partitionFile\]"
+               }
+            }
 
-      ##############################################
-      # Read in any linkXDC files 
-      ##############################################
-      if {[llength $linkXDC] > 0 && [string match $topState "implement"]} {
-         set start_time [clock seconds]
-         readXDC $linkXDC
-         set end_time [clock seconds]
-         log_time read_xdc $start_time $end_time 0 "Post link_design XDC files"
+            #Add Module specific implementation sources   
+            if {[string match $state "implement"]} { 
+               #Read in Module IP if module is not imported or greybox
+               set moduleIP [get_attribute module $module ip]
+               if {[llength $moduleIP] > 0} {
+                  puts "\tAdding module ip files for $cell ($module)"
+                  add_ip $moduleIP
+               }
+
+               #Read in Module cores if module is not imported or greybox
+               set moduleCores [get_attribute module $module cores]
+               if {[llength $moduleCores] > 0} {
+                  puts "\tAdding module core files for $cell ($module)"
+                  add_cores $moduleCores
+               }
+            }
+
+               #Read in scoped module impl XDC even if module is imported since routed cell DCPs won't have timing constraints
+               set implXDC [get_attribute module $module implXDC]
+               if {[llength $implXDC] > 0} {
+                  puts "\tAdding scoped XDC files for $cell"
+                  add_xdc $implXDC 0 $cell
+               } else {
+                  puts "\tInfo: No scoped XDC files specified for $cell"
+               }
+         }; #End: Process each partition that is not Top and not greybox
+      }; #End: Foreach partition
+   
+      ###########################################################
+      # Link the top-level design with no black boxes (unless greybox) 
+      ###########################################################
+      set start_time [clock seconds]
+      puts "\t#HD: Running link_design for $top \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
+      set partitionCells ""
+      foreach partition $partitions {
+         lassign $partition module cell state name type level dcp
+         if {![string match $cell $top]} {
+            lappend partitionCells $cell
+         }
+      }
+      if {$dfx} {
+         set linkCommand "link_design -mode default -reconfig_partitions \{$partitionCells\} -part $part -top $top"
+         command $linkCommand "$resultDir/${top}_link_design.log"
+      } elseif {$hd} {
+         set linkCommand "link_design -mode default -partitions \{$partitionCells\} -part $part -top $top"
+         command $linkCommand "$resultDir/${top}_link_design.log"
       } else {
-         if {[string match $topState "implement"]} {
-            puts "\tINFO: Skipping top-level XDC files because $top is set to $topState"
-         } else {
-            puts "\tINFO: No post-link_design XDC file specified for $impl"
+         set linkCommand "link_design -mode default -part $part -top $top"
+         command $linkCommand "$resultDir/${top}_link_design.log"
+      }
+      set end_time [clock seconds]
+      log_time link_design $start_time $end_time 1 $linkCommand
+      
+      ##############################################
+      # Process Grey Box Partitions 
+      ##############################################
+      foreach partition $partitions {
+         lassign $partition module cell state name type level dcp
+         if {![llength $name]} {
+            set name [lindex [split $cell "/"] end]
          }
-      }
 
-      if {$dcpLevel > 0} {
-         set start_time [clock seconds]
-         command "write_checkpoint -force $resultDir/${top}_link_design.dcp" "$resultDir/temp.log"
-         set end_time [clock seconds]
-         log_time write_checkpoint $start_time $end_time 0 "Post link_design checkpoint"
-      }
+         if {![string match "greybox" $state]} {
+            set moduleName [get_attribute module $module moduleName]
+         } else {
+            set moduleName $module
+         }
+         if {![string match $moduleName $top]} {
+            if {[string match "greybox" $state]} {
+               #If any greybox partition exist, need to run post-route DRC check in quiet mode
+               set drc.quiet 1
 
+               #Process greybox partitions. Name can be random, so just grab name from partition def.
+               puts "\tInfo: Cell $cell will be implemented as a grey box."
+               set partitionFile "NA"
+   
+               #Insert LUT1 for greybox partition
+               if {$verbose && ![get_property IS_BLACKBOX [get_cells $cell]]} {
+                  set start_time [clock seconds]
+                  puts "\tCritical Warning: Partition cell \'$cell\' is not a blackbox. This likely occurred because OOC synthesis was not used. This can cause illegal optimization. Please verify it is intentional that this cell is not a blackbox at this stage in the flow.\nResolution: Caving out cell to make required blackbox. \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
+                  command "update_design -cells $cell -black_box" "$resultDir/update_design_blackbox_$name.log"
+                  set end_time [clock seconds]
+                  log_time update_design $start_time $end_time 0 "Create blackbox for $name"
+               }
+               command "set_msg_config -quiet -id \"Constraints 18-514\" -suppress"
+               command "set_msg_config -quiet -id \"Constraints 18-515\" -suppress"
+               command "set_msg_config -quiet -id \"Constraints 18-402\" -suppress"
+               set start_time [clock seconds]
+               puts "\t#HD: Inserting LUT1 buffers on interface of $name \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
+               command "update_design -cells $cell -buffer_ports" "$resultDir/update_design_bufferport_$name.log"
+               set end_time [clock seconds]
+               log_time update_design $start_time $end_time 0 "Convert blackbox partition $name to greybox"
+               set budgetXDC $xdcDir/${module}_budget.xdc
+               if {![file exists $budgetXDC] || ${hd.budget}} {
+                  set start_time [clock seconds]
+                  puts "\t#HD: Creating budget constraints for greybox $name \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
+                  create_partition_budget -cell $cell -file $budgetXDC -exclude $budgetExclude
+                  set end_time [clock seconds]
+                  log_time create_budget $start_time $end_time 0 "Create budget constraints for $name"
+               }
+               set start_time [clock seconds]
+               readXDC $budgetXDC
+               set end_time [clock seconds]
+               log_time read_xdc $start_time $end_time 0 "Read in budget constraints for $name"
+            }; #End: Process greybox partitions
+         }; #End: Process each partition that is not Top
+      }; #End: Foreach partition
+   
+      ##############################################
+      # Lock imported Partitions 
+      ##############################################
+      foreach partition $partitions {
+         lassign $partition module cell state name type level dcp
+         if {![string match "greybox" $state]} {
+            set moduleName [get_attribute module $module moduleName]
+         } else {
+            set moduleName $module
+         }
+         if {![string match $moduleName $top] && [string match $state "import"]} {
+            if {![llength $level]} {
+               set level "routing"
+            }
+            set start_time [clock seconds]
+            puts "\tLocking $cell \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
+            command "lock_design -level $level $cell" "$resultDir/lock_design_$name.log"
+            set end_time [clock seconds]
+            log_time lock_design $start_time $end_time 0 "Locking cell $cell at level routing"
+         }; #End: Process each partition that is not Top
+      }; #End: Foreach partition
+      puts "\t#HD: Completed link_design"
+      puts "\t##########################"
 
       ##############################################
       # Write out final link_design DCP 
       ##############################################
+      if {$dcpLevel > 0} {
+         set start_time [clock seconds]
+         puts "\tWriting post-link_design checkpoint: $resultDir/${top}_link_design.dcp \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]\n"
+         command "write_checkpoint -force $resultDir/${top}_link_design.dcp" "$resultDir/write_checkpoint.log"
+         set end_time [clock seconds]
+         log_time write_checkpoint $start_time $end_time 0 "Post link_design checkpoint"
+      }
+
       if {$verbose > 1} {
          set start_time [clock seconds]
+         puts "\tRunning report_utilization \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
          command "report_utilization -file $reportDir/${top}_utilization_link_design.rpt" "$resultDir/temp.log"
          set end_time [clock seconds]
          log_time report_utilization $start_time $end_time
       } 
-      puts "\t#HD: Completed link_design"
-      puts "\t##########################\n"
 
       ##############################################
       # Run Methodology DRCs checks 
       ##############################################
       #Run methodology DRCs and catch any Critical Warnings or Error (module ruledeck quiet)
-      set start_time [clock seconds]
-      check_drc $top methodology_checks 1
-      set end_time [clock seconds]
-      log_time report_drc $start_time $end_time 0 "methodology checks"
-      #Run timing DRCs and catch any Critical Warnings or Error (module ruledeck quiet)
-      set start_time [clock seconds]
-      check_drc $top timing_checks 1
-      set end_time [clock seconds]
-      log_time report_drc $start_time $end_time 0 "timing_checks"
-   }
-   
+      if {$verbose > 1} {
+         set start_time [clock seconds]
+         check_drc $top methodology_checks 1
+         set end_time [clock seconds]
+         log_time report_drc $start_time $end_time 0 "methodology checks"
+         #Run timing DRCs and catch any Critical Warnings or Error (module ruledeck quiet)
+         set start_time [clock seconds]
+         check_drc $top timing_checks 1
+         set end_time [clock seconds]
+         log_time report_drc $start_time $end_time 0 "timing_checks"
+      }
+   }; #END: if $link
+
    ############################################################################################
    # Implementation steps: opt_design, place_design, phys_opt_design, route_design
    ############################################################################################
-   if {$opt} {
+   #Determine if all partitions (including top) are being imported
+   set allImport 1
+   foreach partition $partitions {
+      lassign $partition module cell state name type level dcp
+      if {![string match "import" $state]} { 
+         set allImport 0
+         break
+      }
+   }
+   if {$allImport} {
+      if {$hd} {
+         set skipOpt 1
+         set skipPlace 1
+         set skipPhysOpt 1
+         set skipRoute 0
+      } elseif {$dfx} {
+         set skipOpt 1
+         set skipPlace 1
+         set skipPhysOpt 1
+         set skipRoute 1
+      } else {
+         set errMsg "\nERROR: Implementation has all partitions set to import, but supported partition flow not detected."
+         lappend errMsg "\nVerify the either HD or DFX attribute is set to \'1\'."
+         error $errMsg
+      }
+   } else {
+      set skipOpt 0
+      set skipPlace 0
+      set skipPhysOpt 0
+      set skipRoute 0
+   }
+   
+   if {$opt && !$skipOpt} {
       impl_step opt_design $top $opt_options $opt_directive ${opt.pre}
    }
 
-   if {$place} {
+   if {$place && !$skipPlace} {
       impl_step place_design $top $place_options $place_directive ${place.pre}
-
-      #### If Top-Down, write out XDCs 
-      if {$td && $verbose > 0} {
-         puts "\n\tWriting instance level XDC files."
-         foreach ooc $ooc_implementations {
-            set instName [get_attribute ooc $ooc inst]
-            set hierInst [get_attribute ooc $ooc hierInst]
-            write_hd_xdc $instName $hierInst $xdcDir
-         }
-      }
    }
 
-   if {$phys} {
+   if {$phys && !$skipPhysOpt} {
       impl_step phys_opt_design $top $phys_options $phys_directive ${phys.pre}
    }
 
-   if {$route} {
+   if {$route && !$skipRoute} {
       impl_step route_design $top $route_options $route_directive ${route.pre}
  
+      if {$post_phys} {
+         impl_step post_phys_opt $top $post_phys_options $post_phys_directive ${post_phys.pre}
+      }
+
       #Run report_timing_summary on final design
       set start_time [clock seconds]
-      command "report_timing_summary -file $reportDir/${top}_timing_summary.rpt" "$resultDir/temp.log"
+      puts "\tRunning report_timing_summary: $reportDir/${top}_timing_summary.rpt \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
+      command "report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 10 -input_pins -file $reportDir/${top}_timing_summary.rpt" "$resultDir/temp.log"
       set end_time [clock seconds]
       log_time report_timing $start_time $end_time 0 "Timing Summary"
-   
-      #Run a final DRC that catches any Critical Warnings (module ruledeck quiet)
+
+      #Report DFX specific statitics for debug and analysis
+      if {$dfx} {
+         set start_time
+         puts "\tRunning report_design_stauts: $reportDir/${top}_design_status.rpt \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
+         command "debug::report_design_status" "$reportDir/${top}_design_status.rpt"
+      }
+
+      if {$verbose} {
+         getTimingInfo
+      }
+      set impl_end [clock seconds]
+      log_time final $impl_start $impl_end 
+   }
+
+   #For DFX, don't write out bitstreams until after PR_VERIFY has run. See run.tcl
+   #For HD, run write_bitstream prior to creating blackbox or DRC errors will occur.
+   if {$bitstream && !$dfx} {
+      impl_step write_bitstream $top $bitstream_options none ${bitstream.pre} $bitstream_settings
+   } else {
+      #If skipping write_bitstream, run a final DRC that catches any Critical Warnings (module ruledeck quiet)
       set start_time [clock seconds]
       check_drc $top bitstream_checks ${drc.quiet}
       set end_time [clock seconds]
-      log_time report_drc $start_time $end_time 0 "bistream_checks"
-   
-      #Report PR specific statitics for debug and analysis
-      if {$pr} {
-         command "debug::report_design_status" "$reportDir/${top}_design_status.rpt"
-      }
+      log_time report_drc $start_time $end_time 0 "bitstream_checks"
    }
    
+   set extras_start [clock seconds]
    if {![file exists $dcpDir]} {
       command "file mkdir $dcpDir"
    }   
 
-   #Write out cell checkpoints for all Partitions 
-   if {$ic || $pr} {
+   if {$hd || $dfx} {
+      #Write out cell checkpoints for all Partitions and create black_box 
+      puts $rfh "\n#HD: Running implementation $impl"
+      puts $RFH "\n#HD: Running implementation $impl"
+      #Generate a new header for a table the first time through
+      set header 1
       foreach partition $partitions {
-         lassign $partition module cell state level dcp
-         set moduleName [get_attribute module $module moduleName]
-         set pblockName [get_pblocks -of [get_cells $cell]]
-         set name [lindex [split $cell "/"] end]
-         if {![string match $moduleName $top] && ([string match $state "implement"] || [string match $topState "implement"])} {
-            set start_time [clock seconds]
-            set dcp "$resultDir/${module}_${pblockName}_route_design.dcp"
-            command "write_checkpoint -force -cell $cell $dcp" "$resultDir/temp.log"
-            set end_time [clock seconds]
-            log_time write_checkpoint $start_time $end_time 0 "Write cell checkpoint for $cell"
-            command "file copy -force $dcp $dcpDir"
+         lassign $partition module cell state name type level dcp
+         #Don't try to get moduleName for greybox Partitions as the name can be random
+         if {![string match "greybox" $state]} { 
+            set moduleName [get_attribute module $module moduleName]
+         } else {
+            set moduleName $module
+         }
+  
+         if {![string match $moduleName $top]} {
+            #Only write out cell DCPs for implemented cells
+            if {([string match $state "implement"])} {
+               if {![llength $name]} {
+                  set name [lindex [split $cell "/"] end]
+               }
+               set start_time [clock seconds]
+               set dcp "$resultDir/${name}_${module}_route_design.dcp"
+               #Lock the netlist of the cell to prevent MLO optimizations when cell DCP is reused.
+               #Cannot lock placement/routing at this stage, or the carver will not be able to remove the cell.
+               command "lock_design -level logical -cell $cell" "$resultDir/lock_$name.log"
+               command "write_checkpoint -force -cell $cell $dcp" "$resultDir/write_checkpoint.log"
+               set end_time [clock seconds]
+               log_time write_checkpoint $start_time $end_time $header "Write cell checkpoint for $cell"
+               set header 0
+
+               #BEGIN - TEST HD PARTITION IMPORT USING DFX 
+               if {$hd && $dfx} {
+                  #Post Process partition DCP to get rid of clock routes and PartPin info. 
+                  puts "\tProcessing routed DCP for $cell to remove PhysDB for external clocks"
+                  command "open_checkpoint $dcp" "$resultDir/open_checkpoint.log"
+                  set clockNets [get_nets -filter TYPE==LOCAL_CLOCK]
+                  foreach net $clockNets {
+                     command "reset_property HD.PARTPIN_LOCS \[get_ports -of \[get_nets $net\]\]"
+                  }
+                  command "route_design -unroute -nets \[get_nets \{$clockNets\}\]" "$resultDir/${name}_unroute.log"
+                  command "write_checkpoint -force $dcp" "$resultDir/write_checkpoint.log"
+                  command "close_design"
+               }
+               #END - TEST HD PARTITION IMPORT USING DFX
+               command "file copy -force $dcp $dcpDir"
+            }
+
+            #Carve out all implemented partitions if Top/Static was implemented
             if {[string match $topState "implement"]} {
                set start_time [clock seconds]
                puts "\tCarving out $cell to be a black box \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
+               #unlock cells before carving them if they were imported
+               if {[string match $state "import"]} {
+                  command "lock_design -unlock -level placement $cell" "$reportDir/unlock_$name.log"
+               }
                command "update_design -cell $cell -black_box" "$resultDir/carve_$name.log"
                set end_time [clock seconds]
-               log_time update_design $start_time $end_time 0 "Carve out (blackbox) $cell"
+               log_time update_design $start_time $end_time $header "Carve out (blackbox) $cell"
+               set header 0
             }
          }
       }
    }
 
-   #Write out implemented version of Top for import
-   foreach partition $partitions {
-      lassign $partition module cell state level dcp
-      set moduleName [get_attribute module $module moduleName]
-      set name [lindex [split $cell "/"] end]
-      if {[string match $moduleName $top] && [string match $state "implement"]} {
-         set start_time [clock seconds]
-         puts "\tLocking $top and exporting results \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
-         command "lock_design -level routing" "$resultDir/lock_design_$top.log"
-         set end_time [clock seconds]
-         log_time lock_design $start_time $end_time 0 "Lock placement and routing of $top"
-         if {$pr} {
-            set topDCP "$resultDir/${top}_static.dcp"
-         } else {
-            set topDCP "$resultDir/${top}_routed.dcp"
+   #Write out implemented version of Top for import in subsequent runs
+   if {$dfx || $hd} {
+      foreach partition $partitions {
+         lassign $partition module cell state name type level dcp
+         #Skip this step for greybox partitions to avoid errors in getting moduleName property
+         if {[string match "greybox" $state]} { 
+            continue
          }
-         command "write_checkpoint -force $topDCP" "$resultDir/temp.log"
-         command "file copy -force $topDCP $dcpDir"
+         set moduleName [get_attribute module $module moduleName]
+         if {[string match $moduleName $top] && [string match $state "implement"]} {
+            set start_time [clock seconds]
+            puts "\t#HD: Locking $top and exporting results \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
+            command "lock_design -level routing" "$resultDir/lock_design_$top.log"
+            set end_time [clock seconds]
+            log_time lock_design $start_time $end_time 0 "Lock placement and routing of $top"
+            if {$hd} {
+               set topDCP "$resultDir/${top}_routed.dcp"
+            }
+            if {$dfx} {
+               set topDCP "$resultDir/${top}_static.dcp"
+            } 
+            set start_time [clock seconds]
+            command "write_checkpoint -force $topDCP" "$resultDir/write_checkpoint.log"
+            command "file copy -force $topDCP $dcpDir"
+            set end_time [clock seconds]
+            log_time write_checkpoint $start_time $end_time 0 "Write out locked Static checkpoint"
+         }
       }
    }
 
-   #For PR, don't write out bitstreams until after PR_VERIFY is ran. See run.tcl
-   if {$bitstream && !$pr} {
-      impl_step write_bitstream $top $bitstream_options none ${bitstream.pre} $bitstream_settings
-   }
-   
-   set impl_end [clock seconds]
-   log_time final $impl_start $impl_end 
-   log_data $impl $top
-
-   command "close_project"
+   set extras_end [clock seconds]
+   log_time final $extras_start $extras_end 
    command "puts \"#HD: Implementation $impl complete\\n\""
+   command "close_project"
    close $rfh
    close $cfh
    close $wfh

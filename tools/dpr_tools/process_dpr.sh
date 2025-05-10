@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 #variables related to srcs of accelerators
@@ -28,6 +28,8 @@ declare -A res_consumption
 declare -A bitstream_descr
 
 PBS_DDR_OFFSET=0x3000;
+
+acc_include_dirs="$1/rtl/cores/ariane/ariane/src/common_cells/include $1/rtl/caches/esp-caches/common/defs $1/socs/$2/socgen/esp"
 
 #function to extract the number and types of accelerator tiles from current esp_config
 function extract_acc() {
@@ -281,7 +283,6 @@ done
 
 #generate the tcl script to synthesise and implement the design
 function gen_synth_script() {
-
 syn_include_file="$1/socs/$2/vivado/setup.tcl";
 syn_include="$tcl_dir/synth_include.tcl";
 rm -rf $syn_include;
@@ -307,9 +308,11 @@ echo "source \$tclDir/design_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/synth_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/impl_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/pr_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/hd_floorplan_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/dfx_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/hd_utils.tcl" >> $dpr_syn_tcl;
+#echo "source \$tclDir/pr_utils.tcl" >> $dpr_syn_tcl;
+#echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
+#echo "source \$tclDir/hd_floorplan_utils.tcl" >> $dpr_syn_tcl;
 
 echo " " >> $dpr_syn_tcl;
 
@@ -317,11 +320,13 @@ echo "####### FPGA type #######" >> $dpr_syn_tcl;
 echo "set part $device" >> $dpr_syn_tcl;
 echo "check_part \$part" >> $dpr_syn_tcl;
 
-echo "set run.topSynth  0" >> $dpr_syn_tcl;
-echo "set run.rmSynth   1" >> $dpr_syn_tcl;
-echo "set run.prImpl    1" >> $dpr_syn_tcl;
-echo "set run.prVerify  1" >> $dpr_syn_tcl;
-echo "set run.writeBitstream 1" >> $dpr_syn_tcl;
+echo "set run.topSynth  	0" >> $dpr_syn_tcl;
+echo "set run.rmSynth   	1" >> $dpr_syn_tcl;
+#echo "set run.prImpl    	1" >> $dpr_syn_tcl;
+echo "set run.dfxImpl    	1" >> $dpr_syn_tcl;
+echo "set run.greyboxImpl  	1" >> $dpr_syn_tcl;
+echo "set run.prVerify  	1" >> $dpr_syn_tcl;
+echo "set run.writeBitstream 0" >> $dpr_syn_tcl;
 
 echo "####Report and DCP controls - values: 0-required min; 1-few extra; 2-all" >> $dpr_syn_tcl;
 echo "set verbose      1" >> $dpr_syn_tcl;
@@ -373,6 +378,7 @@ if [[ "$4" == "DPR" ]]; then
         echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_top" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
+        echo "set_attribute module ${new_accelerators[$i,1]} includes \"$acc_include_dirs\"" >> $dpr_syn_tcl;
     done
 elif [[ "$4" == "ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
     for ((i=0, j=0; i<$num_acc_tiles; i++))
@@ -386,6 +392,7 @@ elif [[ "$4" == "ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
             echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
             ((j++));
         fi;
+        echo "set_attribute module ${new_accelerators[$i,1]} includes \"$acc_include_dirs\"" >> $dpr_syn_tcl;
     done
 fi;
 
@@ -421,9 +428,10 @@ echo "source \$tclDir/design_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/synth_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/impl_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/pr_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
-echo "source \$tclDir/hd_floorplan_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/dfx_utils.tcl" >> $dpr_syn_tcl;
+#echo "source \$tclDir/pr_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/hd_utils.tcl" >> $dpr_syn_tcl;
+#echo "source \$tclDir/hd_floorplan_utils.tcl" >> $dpr_syn_tcl;
 
 echo " " >> $dpr_syn_tcl;
 
@@ -431,11 +439,13 @@ echo "####### FPGA type #######" >> $dpr_syn_tcl;
 echo "set part $device" >> $dpr_syn_tcl;
 echo "check_part \$part" >> $dpr_syn_tcl;
 
-echo "set run.topSynth  0" >> $dpr_syn_tcl;
-echo "set run.rmSynth   0" >> $dpr_syn_tcl;
-echo "set run.prImpl    1" >> $dpr_syn_tcl;
-echo "set run.prVerify  1" >> $dpr_syn_tcl;
-echo "set run.writeBitstream 1" >> $dpr_syn_tcl;
+echo "set run.topSynth  	0" >> $dpr_syn_tcl;
+echo "set run.rmSynth   	0" >> $dpr_syn_tcl;
+#echo "set run.prImpl    	1" >> $dpr_syn_tcl;
+echo "set run.dfxImpl    	1" >> $dpr_syn_tcl;
+echo "set run.greyboxImpl	1" >> $dpr_syn_tcl;
+echo "set run.prVerify  	1" >> $dpr_syn_tcl;
+echo "set run.writeBitstream 0" >> $dpr_syn_tcl;
 
 echo "####Report and DCP controls - values: 0-required min; 1-few extra; 2-all" >> $dpr_syn_tcl;
 echo "set verbose      1" >> $dpr_syn_tcl;
@@ -510,13 +520,15 @@ echo "#################################################################### " >> 
 
 echo "add_implementation top_dpr " >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr top        \$top" >> $dpr_syn_tcl;
-echo "set_attribute impl top_dpr pr.impl      1" >> $dpr_syn_tcl;
+#echo "set_attribute impl top_dpr pr.impl      1" >> $dpr_syn_tcl;
+echo "set_attribute impl top_dpr dfx.impl      1" >> $dpr_syn_tcl;
 if [[ "$2" == "xilinx-vcu118-xcvu9p" ]]; then
     echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/par/mig.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
 elif [[ $2 == "xilinx-vcu128-xcvu37p" ]]; then
 echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
 else    
-    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/mig/user_design/constraints/mig.xdc ]]" >> $dpr_syn_tcl;
+    #echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/mig/user_design/constraints/mig.xdc ]]" >> $dpr_syn_tcl;
+    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc ]]" >> $dpr_syn_tcl;
 fi;
 
 #if [[ "$2" == "xilinx-vcu118-xcvu9p" ]]; then
@@ -560,7 +572,8 @@ else
 echo -e "\t DPR: No accelerator tile was modified ";
     exit;
 fi;
-echo "set_attribute impl top_dpr impl       \${run.prImpl}" >> $dpr_syn_tcl;
+#echo "set_attribute impl top_dpr impl       \${run.prImpl}" >> $dpr_syn_tcl;
+echo "set_attribute impl top_dpr impl       \${run.dfxImpl}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr verify     \${run.prVerify}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr bitstream  \${run.writeBitstream}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr cfgmem.icap     1 " >> $dpr_syn_tcl;
@@ -576,13 +589,16 @@ bs_gen_script=$1/socs/$2/vivado_dpr/bs.tcl;
     
     echo "open_checkpoint Implement/top_dpr/top_route_design.dcp" >> $bs_gen_script;
     echo "write_bitstream -force -bin_file Bitstreams/acc_bs" >> $bs_gen_script;
-    echo "source [get_property REPOSITORY [get_ipdefs *prc:1.3]]/xilinx/prc_v1_3/tcl/api.tcl" >> $bs_gen_script;
+    echo "source [get_property REPOSITORY [get_ipdefs *dfx_controller:1.0]]/xilinx/dfx_controller_v1_0/tcl/api.tcl" >> $bs_gen_script;
+    #echo "source [get_property REPOSITORY [get_ipdefs *prc:1.3]]/xilinx/prc_v1_3/tcl/api.tcl" >> $bs_gen_script;
     
     for((i=0; i<$num_acc_tiles; i++)) do
         if [[ $arch == "leon3" ]]; then
-            echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin" >> $bs_gen_script;
+            #echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin" >> $bs_gen_script;
+            echo "dfx_v1_0::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin" >> $bs_gen_script;
         else
-            echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin -bs 1" >> $bs_gen_script;
+            #echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin -bs 1" >> $bs_gen_script;
+            echo "dfx_controller_v1_0::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin -bs 1" >> $bs_gen_script;
         fi
     done
 }

@@ -1,6 +1,7 @@
 proc impl_step {phase instance {options none} {directive none} {pre none} {settings none} } {
    global dcpLevel
    global verbose
+   upvar  impl impl 
    upvar  resultDir resultDir
    upvar  reportDir reportDir
 
@@ -14,8 +15,11 @@ proc impl_step {phase instance {options none} {directive none} {pre none} {setti
    } elseif {[string match $phase "route_design"]} {
       set checkpoint1 "$resultDir/${instance}_phys_opt_design.dcp"
       set checkpoint2 "$resultDir/${instance}_place_design.dcp"
-   } elseif {[string match $phase "write_bitstream"]} {
+   } elseif {[string match $phase "post_phys_opt"]} {
       set checkpoint1 "$resultDir/${instance}_route_design.dcp"
+   } elseif {[string match $phase "write_bitstream"]} {
+      set checkpoint1 "$resultDir/${instance}_post_phys_opt.dcp"
+      set checkpoint2 "$resultDir/${instance}_route_design.dcp"
    } else {
       set errMsg "\nERROR: Value $phase is not a recognized step of implementation. Valid values are \"opt_design\", \"place_design\", \"phys_opt_design\", or \"route_design\"."
       error $errMsg
@@ -62,6 +66,8 @@ proc impl_step {phase instance {options none} {directive none} {pre none} {setti
    #Append options or directives to command
    if {[string match $phase "write_bitstream"]} {
       set impl_step "$phase -force -file $resultDir/$instance"
+   } elseif {[string match $phase "post_phys_opt"]} {
+      set impl_step "phys_opt_design"
    } else {
       set impl_step $phase
    }
@@ -80,7 +86,7 @@ proc impl_step {phase instance {options none} {directive none} {pre none} {setti
    }
 
    #Run the specified Implementation phase
-   puts "\n\t#HD: Running $impl_step for $instance"
+   puts "\n\t#HD: Running $impl_step for $impl"
 
    set log "$resultDir/${instance}_$phase.log"
    puts "\tWriting Results to $log"
@@ -91,22 +97,25 @@ proc impl_step {phase instance {options none} {directive none} {pre none} {setti
    set end_time [clock seconds]
    log_time $phase $start_time $end_time 0 "$impl_step" 
    command "puts \"\t#HD: Completed: $phase\""
-   puts "\t################################\n"
+   puts "\t################################"
       
    #Write out checkpoint for successfully completed phase
    if {($dcpLevel > 0 || [string match $phase "route_design"]) && ![string match $phase "write_bitstream"]} {
       set start_time [clock seconds]
-      command "write_checkpoint -force $resultDir/${instance}_$phase.dcp" "$resultDir/temp.log"
+      puts "\tWriting post-$phase checkpoint: $resultDir/${instance}_$phase.dcp \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]\n"
+      command "write_checkpoint -force $resultDir/${instance}_$phase.dcp" "$resultDir/write_checkpoint.log"
       set end_time [clock seconds]
-      log_time write_checkpoint $start_time $end_time 0 "Post $phase checkpoint"
+      log_time write_checkpoint $start_time $end_time 0 "Post-$phase checkpoint"
    }
 
    #Write out additional reports controled by verbose level
    if {$verbose > 1 || [string match $phase "route_design"]} {
       set start_time [clock seconds]
       command "report_utilization -file $reportDir/${instance}_utilization_${phase}.rpt" "$resultDir/temp.log"
+      set end_time [clock seconds]
       log_time report_utilization $start_time $end_time
    }
+
    if {[string match $phase "route_design"]} {
       set start_time [clock seconds]
       command "report_route_status -file $reportDir/${instance}_route_status.rpt" "$resultDir/temp.log"

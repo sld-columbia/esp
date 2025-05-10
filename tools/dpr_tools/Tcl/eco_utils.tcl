@@ -43,50 +43,28 @@ proc insert_clock_buffer { type nets } {
 #==============================================================
 proc remove_buffer { buffers } {
    reset_property -quiet LOC [get_cells -quiet -hier -filter {(LOC!="") && (PRIMITIVE_LEVEL==LEAF)}]
-   place_design -unplace
+   #place_design -unplace
    foreach buf $buffers {
       set inputNet [get_nets -of [get_pins $buf/I]]
       set outputNet [get_nets -of [get_pins $buf/O]]
       set loads [get_pins -of [get_nets $outputNet] -filter NAME!=$buf/O]
+      set port  [get_ports -of [get_nets $outputNet]]
+      puts "Buffer: $buffers"
+      puts "Output net: $outputNet"
+      puts "Ports: $port"
+      puts "Loads: $loads"
       remove_cell $buf
       remove_net $outputNet
-      connect_net -net $inputNet -objects [get_pins $loads]
-   }
-}
-
-#==============================================================
-# TCL proc to replace IBUF/OBUF on PS7 ports from ISE/EDK with 
-# BIBUF for Vivado (ie PSCLK, PSSRSTB, PSPORB, DDRWEB)
-#==============================================================
-proc replace_iobuf_bibuf { pins } {
-   set core [get_cells -hier -filter REF_NAME==PS7]
-   set site [get_sites -of [get_cells $core]]
-   if {[get_property IS_FIXED [get_cells $core]]} {
-      unplace_cell [get_cells $core]
-   }
-   foreach pin $pins { 
-      puts "Fixing pin $pin on PS7 instance $core"
-      set buf [get_cells -of [get_pins -leaf -of [get_nets -of [get_pins $core/$pin]]] -filter REF_NAME=~*BUF*]
-      set port [get_ports -of [get_nets -of [get_cells $buf]]]
-      set cell "${port}_BIBUF_inserted"
-      set net1 [get_nets -of [get_pins $buf/O]]
-      set net2 [get_nets -of [get_pins $buf/I]]
-      set type [get_property REF_NAME [get_cells $buf]]
-      if {[string match $type IBUF]} {
-         remove_cell $buf
-         create_cell -reference BIBUF $cell
-         connect_net -net $net1 -objects $cell/IO
-         connect_net -net $net2 -objects $cell/PAD
-      } elseif  {[string match $type OBUF]} {
-         remove_cell $buf
-         create_cell -reference BIBUF $cell
-         connect_net -net $net1 -objects $cell/PAD
-         connect_net -net $net2 -objects $cell/IO
+      #Check if no net was not connect to any pins.  May be a port instead.
+      if {[llength $loads]} {
+         connect_net -net $inputNet -objects [get_pins $loads]
+      } 
+      if {[llength $port]} {
+         connect_net -net $inputNet -objects [get_ports $port]
       }
-   }
-   if {![get_property IS_FIXED [get_cells $core]] && [llength $site]} {
-      puts "Placing PS7 instance $core at site $site"
-      place_cell [get_cells $core] $site
+      if {![llength $port] && ![llength $loads]} {
+         puts "Critical Warning: No pin or port connections found on output of buffer $buf. Buffer was removed, but input net $inputNet was not connected to any loads."
+      }
    }
 }
 
@@ -129,3 +107,74 @@ proc insert_flop { net clock } {
       puts "ERROR: Could not find leaf level driver for net $net. Make sure the specified net is at the same level of hierarchy as the leaf level driver."
    }
 }
+
+
+#================================================================
+# Tcl proc to replicate BUFG_GT to separate out GT and fabric 
+# loads from TX/RXUSRCLK2. This makes delay matching between
+# TX/RXUSRCLK and TX/RXUSRCLK2 unnecessary since both only have
+# a single GT load.
+#================================================================
+proc split_BUFG_GT_load {BUFG_GT_cells} {
+   foreach BUFG_GT [get_cells $BUFG_GT_cells -filter LIB_CELL=~BUFG*] {
+      puts "re-wiring BUFG_GT connections for $BUFG_GT"
+		set clk_src_net [get_nets -of [get_pins -of $BUFG_GT -filter REF_PIN_NAME==I]]
+		
+		create_cell -reference [get_lib_cells -of $BUFG_GT] [get_property NAME $BUFG_GT]_GT
+		set BUFG_GT_GT [get_cells [get_property NAME $BUFG_GT]_GT]
+		
+		#connect all pins of original BUFG_GT to copy
+		foreach pin [get_pins -of $BUFG_GT -filter DIRECTION==IN] {
+			set source_net [get_nets -of $pin]
+			connect_net -net $source_net -obj [get_pins -of $BUFG_GT_GT -filter REF_PIN_NAME==[get_property REF_PIN_NAME $pin]]
+		}
+		
+		set BUFG_GT_net [get_nets -of [get_pins -of $BUFG_GT -filter DIRECTION==OUT]]
+		set BUFG_GT_GT_net [get_property NAME $BUFG_GT_net]_GT
+		create_net $BUFG_GT_GT_net
+		connect_net -net  $BUFG_GT_GT_net -objects [get_pins -of $BUFG_GT_GT -filter DIRECTION==OUT]
+		
+		set BUFG_GT_fo [get_property FLAT_PIN_COUNT $BUFG_GT_net] 
+		
+		# For PRIMITIVE Cells
+		set dtc [get_cells -hier -filter {DONT_TOUCH==1 && IS_DEBUG_CORE!=1}]
+		set check [llength $dtc]
+
+		if {$check > 0} {set_property DONT_TOUCH 0 $dtc}
+		
+		set total_pins [get_pins -leaf -of $BUFG_GT_net -filter DIRECTION==IN]
+		set GT_pins [get_pins -leaf -of $BUFG_GT_net -filter REF_NAME=~GT*CHANNEL&&DIRECTION==IN]
+		set user_pins [get_pins -leaf -of $BUFG_GT_net -filter REF_NAME!~GT*CHANNEL&&DIRECTION==IN]
+		
+		puts "total loads: [llength $total_pins]\nGT_CHANNEL loads: [llength $GT_pins]\nUser Logic loads: [llength $user_pins]\n"
+
+		set legalIpins ""
+		array set netToDisconnect [list]
+		# Replacing internal pins with macro pins + consolidating pairs of net-pins to disconnect to save runtime
+		foreach ipin $GT_pins {
+		  if {[get_property PRIMITIVE_LEVEL [get_cells -of $ipin]] == "INTERNAL"} {
+			set tmp [get_pins -filter "REF_NAME == [get_property REF_NAME [get_property PARENT [get_cells -of $ipin]]]" -of [get_nets -of $ipin]]
+		  } else {
+			set tmp $ipin
+		  }
+		  lappend legalIpins $tmp
+		  lappend netToDisconnect([get_nets -of $tmp]) $tmp
+		}
+		
+		# Disconnecting leaf pins from original BUFGCE fanout
+		foreach {net pins} [array get netToDisconnect] {
+		  disconnect_net -net $net -objects [lsort -unique $pins]
+		}
+		
+		# Connecting leaf pins to new BUFGCE fanout
+		connect_net -net $BUFG_GT_GT_net -objects [lsort -unique $legalIpins] -hier
+		puts "total loads: [llength $total_pins]\nGT_CHANNEL loads: [expr [get_property FLAT_PIN_COUNT [get_nets $BUFG_GT_GT_net]] - 1]\nUser Logic loads: [expr [get_property FLAT_PIN_COUNT [get_nets $BUFG_GT_net]] - 1]\n"
+		
+		
+		if {$check > 0} {set_property DONT_TOUCH 1 $dtc}
+		set dtc [get_cells -hier -filter {DONT_TOUCH==1 && IS_DEBUG_CORE!=1}]
+		set check [llength $dtc]
+	}
+
+}
+

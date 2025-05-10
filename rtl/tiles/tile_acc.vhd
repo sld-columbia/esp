@@ -188,7 +188,7 @@ architecture rtl of tile_acc is
   -- Tile parameters
   signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
 
-  signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
+  signal tile_id : integer;
 
   signal this_pindex    : integer range 0 to NAPBSLV - 1;
   signal this_paddr     : integer range 0 to 4095;
@@ -255,6 +255,8 @@ architecture rtl of tile_acc is
   attribute keep of apb_rcv_rdreq              : signal is "true";
   attribute keep of apb_rcv_data_out           : signal is "true";
   attribute keep of apb_rcv_empty              : signal is "true";
+  attribute keep of tile_config                : signal is "true";
+  attribute keep of tile_id	                   : signal is "true";
 
   attribute mark_debug : string;
   --attribute keep       : string;
@@ -479,7 +481,7 @@ begin
   -- decouple signals if decouple_acc is asserted
   decoupler_gen: process (decouple_acc, coherence_req_wrreq_acc, coherence_fwd_rdreq_acc,
                           coherence_fwd_snd_wrreq_acc, coherent_dma_rcv_rdreq_acc,
-	  		  coherent_dma_snd_wrreq_acc, coherence_rsp_rcv_rdreq_acc,
+			  coherent_dma_snd_wrreq_acc, coherence_rsp_rcv_rdreq_acc,
                           coherence_rsp_snd_wrreq_acc, dma_rcv_rdreq_acc, dma_snd_wrreq_acc,
                           interrupt_wrreq_acc, interrupt_ack_rdreq_acc) is
   begin  -- process decoupler_gen

@@ -1,5 +1,4 @@
 set modules             [list ]
-set ooc_implementations [list ]
 set implementations     [list ]
 
 set opt_directives   [list Explore                \
@@ -7,9 +6,12 @@ set opt_directives   [list Explore                \
                            AddRemap               \
                            ExploreSequentialArea  \
                            RuntimeOptimized       \
+                           NoBramPowerOpt         \
+                           Default                \
                      ]
 set place_directives [list Explore                \
                            WLDrivenBlockPlacement \
+                           AltWLDrivenPlacement   \
                            LateBlockPlacement     \
                            ExtraNetDelay_high     \
                            ExtraNetDelay_medium   \
@@ -22,7 +24,7 @@ set place_directives [list Explore                \
                            SSI_SpreadSLLs         \
                            SSI_BalanceSLLs        \
                            SSI_BalanceSLRs        \
-                           SSI_HighSLRs           \
+                           SSI_HighUtilSLRs       \
                            RuntimeOptimized       \
                            Quick                  \
                            Default                \
@@ -34,6 +36,7 @@ set phys_directives  [list Explore                \
                            AggressiveFanoutOpt    \
                            AlternateDelayModeling \
                            AddRetime              \
+                           AlternateFlowWithRetiming \
                            Default                \
                      ]
 set route_directives [list Explore                \
@@ -69,88 +72,62 @@ array set module_attributes [list "moduleName"           [list string   null]  \
                                   "synthCheckpoint"      [list string   null]  \
                             ]
 
-array set impl_attributes   [list "top"                  [list string   null]  \
-                                  "implXDC"              [list string   null]  \
-                                  "linkXDC"              [list string   null]  \
-                                  "cores"                [list string   null]  \
-                                  "ip"                   [list string   null]  \
-                                  "ipRepo"               [list string   null]  \
-                                  "impl"                 [list boolean {0 1}]  \
-                                  "hd.impl"              [list boolean {0 1}]  \
-                                  "td.impl"              [list boolean {0 1}]  \
-                                  "pr.impl"              [list boolean {0 1}]  \
-                                  "ic.impl"              [list boolean {0 1}]  \
-                                  "partitions"           [list string  null  \
-                                                               string  null  \
-                                                               enum   {implement import greybox}  \
-                                                               enum   {logical placement routing} \
-                                                               string  null  \
-                                                         ] \
-                                  "link"                 [list boolean {0 1}]  \
-                                  "opt"                  [list boolean {0 1}]  \
-                                  "opt.pre"              [list string   null]  \
-                                  "opt_options"          [list string   null]  \
-                                  "opt_directive"        [list enum     $opt_directives]   \
-                                  "place"                [list boolean {0 1}]  \
-                                  "place.pre"            [list string   null]  \
-                                  "place_options"        [list string   null]  \
-                                  "place_directive"      [list enum     $place_directives] \
-                                  "phys"                 [list boolean {0 1}]  \
-                                  "phys.pre"             [list string   null]  \
-                                  "phys_options"         [list string   null]  \
-                                  "phys_directive"       [list enum     $phys_directives]  \
-                                  "route"                [list boolean {0 1}]  \
-                                  "route.pre"            [list string   null]  \
-                                  "route_options"        [list string   null]  \
-                                  "route_directive"      [list enum     $route_directives] \
-                                  "verify"               [list boolean {0 1}]  \
-                                  "bitstream"            [list boolean {0 1}]  \
-                                  "bitstream.pre"        [list string   null]  \
-                                  "bitstream_options"    [list string   null]  \
-                                  "bitstream_settings"   [list string   null]  \
-                                  "cfgmem.icap"          [list boolean {0 1}]  \
-                                  "cfgmem.pcap"          [list boolean {0 1}]  \
-                                  "cfgmem.offset"        [list string   null]  \
-                                  "cfgmem.size"          [list enum    {1 2 4 8 16 32 64 128 256 512}] \
-                                  "cfgmem.interface"     [list enum    {SMAPx8 SMAPx16 SMAPx32}] \
-                                  "drc.quiet"            [list boolean {0 1}]  \
+array set impl_attributes   [list "top"                        [list string   null]  \
+                                  "name"                       [list string   null]  \
+                                  "implXDC"                    [list string   null]  \
+                                  "cellXDC"                    [list string   null]  \
+                                  "cores"                      [list string   null]  \
+                                  "ip"                         [list string   null]  \
+                                  "ipRepo"                     [list string   null]  \
+                                  "impl"                       [list boolean {0 1}]  \
+                                  "hd.impl"                    [list boolean {0 1}]  \
+                                  "dfx.impl"                   [list boolean {0 1}]  \
+                                  "ic.impl"                    [list boolean {0 1}]  \
+                                  "hd.budget"                  [list boolean {0 1}]  \
+                                  "hd.budget_exclude"          [list string   null]  \
+                                  "partitions"                 [list string   null   \
+                                                                  string   null   \
+                                                                  enum    {implement import greybox}  \
+                                                                  string   null   \
+                                                                  enum    {default ooc iso}           \
+                                                                  enum    {logical placement routing} \
+                                                                  string   null   \
+                                                               ] \
+                                  "link"                       [list boolean {0 1}]  \
+                                  "opt"                        [list boolean {0 1}]  \
+                                  "opt.pre"                    [list string   null]  \
+                                  "opt_options"                [list string   null]  \
+                                  "opt_directive"              [list enum     $opt_directives]   \
+                                  "place"                      [list boolean {0 1}]  \
+                                  "place.pre"                  [list string   null]  \
+                                  "place_options"              [list string   null]  \
+                                  "place_directive"            [list enum     $place_directives] \
+                                  "phys"                       [list boolean {0 1}]  \
+                                  "phys.pre"                   [list string   null]  \
+                                  "phys_options"               [list string   null]  \
+                                  "phys_directive"             [list enum     $phys_directives]  \
+                                  "route"                      [list boolean {0 1}]  \
+                                  "route.pre"                  [list string   null]  \
+                                  "route_options"              [list string   null]  \
+                                  "route_directive"            [list enum     $route_directives] \
+                                  "post_phys"                  [list boolean {0 1}]  \
+                                  "post_phys.pre"              [list string   null]  \
+                                  "post_phys_options"          [list string   null]  \
+                                  "post_phys_directive"        [list enum     $phys_directives]  \
+                                  "verify"                     [list boolean {0 1}]  \
+                                  "bitstream"                  [list boolean {0 1}]  \
+                                  "bitstream.pre"              [list string   null]  \
+                                  "bitstream_options"          [list string   null]  \
+                                  "bitstream_settings"         [list string   null]  \
+                                  "partial_bitstream_options"  [list string   null]  \
+                                  "partial_bitstream_settings" [list string   null]  \
+                                  "cfgmem.icap"                [list boolean {0 1}]  \
+                                  "cfgmem.pcap"                [list boolean {0 1}]  \
+                                  "cfgmem.offset"              [list string   null]  \
+                                  "cfgmem.size"                [list enum    {1 2 4 8 16 32 64 128 256 512}] \
+                                  "cfgmem.interface"           [list enum    {SMAPx8 SMAPx16 SMAPx32}] \
+                                  "drc.quiet"                  [list boolean {0 1}]  \
                             ]
-
-array set ooc_attributes    [list "module"               [list string   null]  \
-                                  "inst"                 [list string   null]  \
-                                  "hierInst"             [list string   null]  \
-                                  "implXDC"              [list string   null]  \
-                                  "cores"                [list string   null]  \
-                                  "impl"                 [list boolean {0 1}]  \
-                                  "hd.isolated"          [list boolean {0 1}]  \
-                                  "budget.create"        [list boolean {0 1}]  \
-                                  "budget.percent"       [list integer  null]  \
-                                  "link"                 [list boolean {0 1}]  \
-                                  "opt"                  [list boolean {0 1}]  \
-                                  "opt.pre"              [list string   null]  \
-                                  "opt_options"          [list string   null]  \
-                                  "opt_directive"        [list enum     $opt_directives]   \
-                                  "place"                [list boolean {0 1}]  \
-                                  "place.pre"            [list string   null]  \
-                                  "place_options"        [list string   null]  \
-                                  "place_directive"      [list enum     $place_directives] \
-                                  "phys"                 [list boolean {0 1}]  \
-                                  "phys.pre"             [list string   null]  \
-                                  "phys_options"         [list string   null]  \
-                                  "phys_directive"       [list enum     $phys_directives]  \
-                                  "route"                [list boolean {0 1}]  \
-                                  "route.pre"            [list string   null]  \
-                                  "route_options"        [list string   null]  \
-                                  "route_directive"      [list enum     $route_directives] \
-                                  "bitstream"            [list boolean {0 1}]  \
-                                  "bitstream.pre"        [list string   null]  \
-                                  "bitstream_options"    [list string   null]  \
-                                  "bitstream_settings"   [list string   null]  \
-                                  "implCheckpoint"       [list string   null]  \
-                                  "preservation"         [list enum    {logical placement routing}] \
-                                  "drc.quiet"            [list boolean {0 1}]  \
-                             ]
-   
 
 ###############################################################
 ### Define a top-level implementation
@@ -165,98 +142,56 @@ proc add_implementation { name } {
    }
 
    lappend implementations $name
-   set_attribute impl $name "top"                 ""
-   set_attribute impl $name "implXDC"             "" 
-   set_attribute impl $name "linkXDC"             "" 
-   set_attribute impl $name "cores"               ""
-   set_attribute impl $name "ip"                  ""
-   set_attribute impl $name "ipRepo"              ""
-   set_attribute impl $name "impl"                0
-   set_attribute impl $name "hd.impl"             0
-   set_attribute impl $name "td.impl"             0
-   set_attribute impl $name "pr.impl"             0
-   set_attribute impl $name "ic.impl"             0
-   set_attribute impl $name "partitions"          [list ]
-   set_attribute impl $name "link"                1
-   set_attribute impl $name "opt"                 1
-   set_attribute impl $name "opt.pre"             ""
-   set_attribute impl $name "opt_options"         ""
-   set_attribute impl $name "opt_directive"       ""
-   set_attribute impl $name "place"               1
-   set_attribute impl $name "place.pre"           ""
-   set_attribute impl $name "place_options"       ""
-   set_attribute impl $name "place_directive"     ""
-   set_attribute impl $name "phys"                1
-   set_attribute impl $name "phys.pre"            ""
-   set_attribute impl $name "phys_options"        ""
-   set_attribute impl $name "phys_directive"      ""
-   set_attribute impl $name "route"               1
-   set_attribute impl $name "route.pre"           ""
-   set_attribute impl $name "route_options"       ""
-   set_attribute impl $name "route_directive"     ""
-   set_attribute impl $name "verify"              0
-   set_attribute impl $name "bitstream"           0
-   set_attribute impl $name "bitstream.pre"       ""
-   set_attribute impl $name "bitstream_options"   ""
-   set_attribute impl $name "bitstream_settings"  ""
-   set_attribute impl $name "cfgmem.icap"         0
-   set_attribute impl $name "cfgmem.pcap"         0
-   set_attribute impl $name "cfgmem.offset"       "up 0x0"
-   set_attribute impl $name "cfgmem.size"         "1"
-   set_attribute impl $name "cfgmem.interface"    "SMAPx32"
-   set_attribute impl $name "drc.quiet"           0
+   set_attribute impl $name "top"                         ""
+   set_attribute impl $name "name"                        $name
+   set_attribute impl $name "implXDC"                     "" 
+   set_attribute impl $name "cellXDC"                     "" 
+   set_attribute impl $name "cores"                       ""
+   set_attribute impl $name "ip"                          ""
+   set_attribute impl $name "ipRepo"                      ""
+   set_attribute impl $name "impl"                        0
+   set_attribute impl $name "hd.impl"                     0
+   set_attribute impl $name "dfx.impl"                    0
+   set_attribute impl $name "ic.impl"                     0
+   set_attribute impl $name "hd.budget"                   1
+   set_attribute impl $name "hd.budget_exclude"           ""
+   set_attribute impl $name "link"                        1
+   set_attribute impl $name "partitions"                  ""
+   set_attribute impl $name "opt"                         1
+   set_attribute impl $name "opt.pre"                     ""
+   set_attribute impl $name "opt_options"                 ""
+   set_attribute impl $name "opt_directive"               ""
+   set_attribute impl $name "place"                       1
+   set_attribute impl $name "place.pre"                   ""
+   set_attribute impl $name "place_options"               ""
+   set_attribute impl $name "place_directive"             ""
+   set_attribute impl $name "phys"                        1
+   set_attribute impl $name "phys.pre"                    ""
+   set_attribute impl $name "phys_options"                ""
+   set_attribute impl $name "phys_directive"              ""
+   set_attribute impl $name "route"                       1
+   set_attribute impl $name "route.pre"                   ""
+   set_attribute impl $name "route_options"               ""
+   set_attribute impl $name "route_directive"             ""
+   set_attribute impl $name "post_phys"                   0
+   set_attribute impl $name "post_phys.pre"               ""
+   set_attribute impl $name "post_phys_options"           ""
+   set_attribute impl $name "post_phys_directive"         ""
+   set_attribute impl $name "verify"                      0
+   set_attribute impl $name "bitstream"                   0
+   set_attribute impl $name "bitstream.pre"               ""
+   set_attribute impl $name "bitstream_options"           ""
+   set_attribute impl $name "bitstream_settings"          ""
+   set_attribute impl $name "partial_bitstream_options"   ""
+   set_attribute impl $name "partial_bitstream_settings"  ""
+   set_attribute impl $name "cfgmem.icap"                 0
+   set_attribute impl $name "cfgmem.pcap"                 0
+   set_attribute impl $name "cfgmem.offset"               "up 0x0"
+   set_attribute impl $name "cfgmem.size"                 "1"
+   set_attribute impl $name "cfgmem.interface"            "SMAPx32"
+   set_attribute impl $name "drc.quiet"                   0
 }
 
-###############################################################
-### Define an OOC implementation
-###############################################################
-proc add_ooc_implementation { name } {
-   global ooc_implementations
-   global dcpDir
-
-   set procname [lindex [info level 0] 0]
-   
-   if {[lsearch -exact $ooc_implementations $name] >= 0} {
-      set errMsg "\nERROR: OOC implementation $name is already defined"
-      error $errMsg
-   }
-
-   lappend ooc_implementations $name
-   set_attribute ooc $name "module"              ""
-   set_attribute ooc $name "inst"                "$name"
-   set_attribute ooc $name "hierInst"            ""
-   set_attribute ooc $name "implXDC"             "" 
-   set_attribute ooc $name "cores"               ""
-   set_attribute ooc $name "impl"                0
-   set_attribute ooc $name "hd.isolated"         0
-   set_attribute ooc $name "budget.create"       0
-   set_attribute ooc $name "budget.percent"      50
-   set_attribute ooc $name "link"                1
-   set_attribute ooc $name "opt"                 1
-   set_attribute ooc $name "opt.pre"             ""
-   set_attribute ooc $name "opt_options"         ""
-   set_attribute ooc $name "opt_directive"       ""
-   set_attribute ooc $name "place"               1
-   set_attribute ooc $name "place.pre"           ""
-   set_attribute ooc $name "place_options"       ""
-   set_attribute ooc $name "place_directive"     ""
-   set_attribute ooc $name "phys"                1
-   set_attribute ooc $name "phys.pre"            ""
-   set_attribute ooc $name "phys_options"        ""
-   set_attribute ooc $name "phys_directive"      ""
-   set_attribute ooc $name "route"               1
-   set_attribute ooc $name "route.pre"           ""
-   set_attribute ooc $name "route_options"       ""
-   set_attribute ooc $name "route_directive"     ""
-   set_attribute ooc $name "bitstream"           0
-   set_attribute ooc $name "bitstream.pre"       ""
-   set_attribute ooc $name "bitstream_options"   ""
-   set_attribute ooc $name "bitstream_settings"  ""
-   set_attribute ooc $name "implCheckpoint"      "$dcpDir/${name}_route_design.dcp"
-   set_attribute ooc $name "preservation"        "routing"
-   set_attribute ooc $name "drc.quiet"           0
-}
-   
 ###############################################################
 ### Add a module
 ###############################################################
@@ -300,7 +235,6 @@ proc set_attribute { type name attribute {values null} } {
 
    switch -exact -- $type {
       module  {set list_type "modules"}
-      ooc     {set list_type "ooc_implementations"}
       impl    {set list_type "implementations"}
       default {error "\nERROR: Invalid type \'$type\' specified"}
    }
@@ -327,7 +261,6 @@ proc get_attribute { type name attribute } {
 
    switch -exact -- $type {
       module  {set list_type "modules"}
-      ooc     {set list_type "ooc_implementations"}
       impl    {set list_type "implementations"}
       default {error "\nERROR: Invalid type \'$type\' specified"}
    }
@@ -404,6 +337,9 @@ proc set_directives {$type $name} {
    set_attribute $type $name route_directive $Directives(route)
 }
 
+###############################################################
+### List All modules and Runs being synthesized/implemented 
+###############################################################
 proc list_runs { } {
    #### Print list of Modules
    if {[llength [get_modules synth]]} {
@@ -429,10 +365,10 @@ proc list_runs { } {
    }
 
    #### Print list of Configurations
-   if {[llength [get_implementations "pr.impl impl" &&]]} {
-      set configs [sort_configurations [get_implementations "pr.impl impl" &&]]
+   if {[llength [get_implementations "dfx.impl impl" &&]]} {
+      set configs [sort_configurations [get_implementations "dfx.impl impl" &&]]
       set table "-title {#HD: List of Configurations to be implemented}"
-      append table " -row {Configuration \"Reconfig Modules\" \"Static State\" pr_verify write_bistream}"
+      append table " -row {Configuration \"Reconfig Modules\" \"Static State\" pr_verify write_bitstream}"
       #Sort list of configurations. Insert "initial" config at beginning of list.
       foreach configuration $configs { 
          set partitions [get_attribute impl $configuration partitions]
@@ -442,9 +378,13 @@ proc list_runs { } {
          set RMs ""
          set staticState ""
          foreach partition $partitions {
-            lassign $partition name cell state level dcp
+            lassign $partition module cell state name type level dcp
             if {![string match $cell $top]} {
-               lappend RMs "$name\($state\) "
+               if {[string match $state "greybox"]} {
+                  lappend RMs "$state"
+               } else {
+                  lappend RMs "$module\($state\)"
+               }
             } else {
                set staticState $state
             }
@@ -462,55 +402,74 @@ proc list_runs { } {
    } else {
       puts "#HD: No Configurations set to be implemented"
    }
-   if {[llength [get_implementations "pr.impl !impl" &&]]} {
+   if {[llength [get_implementations "dfx.impl !impl" &&]]} {
       puts "#HD: Defined Configurations not being implemented:"
       set count 1
-      foreach config [get_implementations "pr.impl !impl" &&] {
+      foreach config [get_implementations "dfx.impl !impl" &&] {
          puts "\t$count. $config"
          incr count
       }
    }
 
    #### Print list of Implementations
-   if {[llength [get_implementations "!pr.impl impl" &&]]} {
+   if {[llength [get_implementations "!dfx.impl impl" &&]]} {
       set table "-title {#HD: List of Implementations to be implemented}"
-      append table " -row {Implementation Top Partitions Assembly TopDown In-Context write_bistream}"
-      foreach impl [get_implementations "!pr.impl impl" &&] {
+      append table " -row {Implementation Top Partitions \"Flow Type\" write_bitstream}"
+      foreach impl [get_implementations "!dfx.impl impl" &&] {
          set partitions [get_attribute impl $impl partitions]
          set top        [get_attribute impl $impl top]
          set hd         [get_attribute impl $impl hd.impl]
-         set td         [get_attribute impl $impl td.impl]
          set ic         [get_attribute impl $impl ic.impl]
          set bitstream  [get_attribute impl $impl bitstream]
-         set hdCells ""
+
+         if {$hd} {
+            set runType "Hierarchical"
+         } elseif {$ic} {
+            set runType "In-Context"
+         } else {
+            set runType "Flat"
+         }
+
+         set hdCells "" 
+         set state ""
+         set topState "implement"
          foreach partition $partitions {
-            lassign $partition name cell state level dcp
+            lassign $partition module cell state name type level dcp
             if {![string match $cell $top]} {
+               if {![llength $name]} {
+                  set name [lindex [split $cell "/"] end]
+               }
                lappend hdCells "$name\($state\)"
             } else {
                set topState $state
             }
          }
-         set hdCount [llength $hdCells]
-         for {set i 0} {$i < $hdCount} {incr i} {
-            if {$i==0} {
-               append table " -row {$impl $top\($state\) [lindex $hdCells $i] $hd $td $ic $bitstream}"
-            } else {
-               append table " -row {\"\" \"\"  [lindex $hdCells $i] \"\" \"\" \"\" \"\"}"
-            } 
+
+         if {[llength $hdCells]} {
+            for {set i 0} {$i < [llength $hdCells]} {incr i} {
+               if {$i==0} {
+                  append table " -row {$impl $top\($topState\) [lindex $hdCells $i] $runType $bitstream}"
+               } else {
+                  append table " -row {\"\" \"\"  [lindex $hdCells $i] \"\" \"\"}"
+               } 
+            }
+         } else {
+            append table " -row {$impl $top\($topState\) \"\" $runType $bitstream}"
          }
       }
       print_table $table 
    }
-   if {[llength [get_implementations "!pr.impl !impl" &&]]} {
+   if {[llength [get_implementations "!dfx.impl !impl" &&]]} {
       puts "#HD: Defined Implementations not being implemented:"
       set count 1
-      foreach impl [get_implementations "!pr.impl !impl" &&] {
+      foreach impl [get_implementations "!dfx.impl !impl" &&] {
          puts "\t$count. $impl"
          incr count
       }
    }
+   puts "\n"
 }
+
 ###############################################################
 ### Sorts the list of configurations to put any configuration
 ### that implements Static at the beginning of the list. This
@@ -518,24 +477,47 @@ proc list_runs { } {
 ### are defined in design.tcl, or allows them to easily be changed.
 ###############################################################
 proc sort_configurations { configurations } {
-   set configs "" 
-   #Sort list of configurations. Insert "initial" config at beginning of list.
+   array set Configs [] 
+   ####Sort list of configurations. Insert "initial" config at beginning of list.
    foreach configuration $configurations {
       set partitions [get_attribute impl $configuration partitions]
       set top        [get_attribute impl $configuration top]
+      set importPartitions 0
+      set importStatic 0
+      #Score each configuration based on import values. Static import weights the most (MSB)
       foreach partition $partitions {
-         lassign $partition name cell state level dcp
+         lassign $partition module cell state name type level dcp
          if {[string match $cell $top]} {
-            if {[string match -nocase $state "implement"]} {
-               set configs [linsert $configs 0 $configuration]
-            } else {
-               lappend configs $configuration
+            if {[string match -nocase $state "import"]} {
+               #Give weighted value to Static. May need to increase for designs with more than 9 RMs
+               set importStatic 1000
+            }
+         } else {
+            if {[string match -nocase $state "import"]} {
+               incr importPartitions
             }
          }
       }
+      #Create array entry for configuraiton with score value
+      set Configs($configuration) [expr $importStatic + $importPartitions]
    }
-
-   #Make sure no configurations get lost in the sort
+   
+   ####Sort array "Configs" based on score (value)
+   set sort_configs {}
+   #Turn array into list
+   foreach {config score} [array get Configs] {
+      lappend sort_configs [list $config $score]
+   }
+   #Sort list based on score
+   set sortedConfigs [lsort -integer -index 1 $sort_configs]
+   #Create final list with only config names (no score values)
+   set configs {}
+   foreach config $sortedConfigs {
+      #puts "\tDEBUG: $config"
+      lappend configs [lindex $config 0]
+   }
+   
+   ####Make sure no configurations get lost in the sort
    if {[llength $configs] == [llength $configurations]} {
       return $configs
    } else {
@@ -568,7 +550,6 @@ proc report_attributes { type name } {
 
    switch -exact -- $type {
       module  {set list_type "modules"}
-      ooc     {set list_type "ooc_implementations"}
       impl    {set list_type "implementations"}
       default {error "\nERROR: Invalid type \'$type\' specified"}
    }
@@ -586,11 +567,19 @@ proc report_attributes { type name } {
 }
 
 ###############################################################
-### Get a list of all implementations that have pr.impl set to 1 
+### Get a list of all implementations that have dfx.impl set to 1 
 ###############################################################
 proc get_configurations { } {
-   set configurations [get_implementations pr.impl]
+   set configurations [get_implementations dfx.impl]
    return $configurations
+}
+
+###############################################################
+### Get a list of all implementations that have hd.impl set to 1 
+###############################################################
+proc get_hd_implementations { } {
+   set implementations [get_implementations hd.impl]
+   return $implementations
 }
 
 ###############################################################
