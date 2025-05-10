@@ -195,9 +195,8 @@ proc add_implementation { name } {
 ###############################################################
 ### Add a module
 ###############################################################
-set all_include_dirs {/home/esp2025/mag2346/src/esp-tile_dpr/rtl/cores/ariane/ariane/src/common_cells/include /home/esp2025/mag2346/src/esp-tile_dpr/socs/xilinx-vc707-xc7vx485t /home/esp2025/mag2346/src/esp-tile_dpr/socs/xilinx-vc707-xc7vx485t/socgen/grlib /home/esp2025/mag2346/src/esp-tile_dpr/socs/xilinx-vc707-xc7vx485t/socgen/esp   /home/esp2025/mag2346/src/esp-tile_dpr/rtl/caches/esp-caches/common/defs}
 proc add_module { name } {
-   global modules synthDir all_include_dirs
+   global modules synthDir
 
    if {[lsearch -exact $modules $name] >= 0} {
       set errMsg "\nERROR: Module $name is already defined"
@@ -208,7 +207,7 @@ proc add_module { name } {
    set_attribute module $name "moduleName"       $name
    set_attribute module $name "top_level"        0
    set_attribute module $name "prj"              ""
-   set_attribute module $name "includes"         "$all_include_dirs"
+   set_attribute module $name "includes"         ""
    set_attribute module $name "generics"         ""
    set_attribute module $name "vlog_headers"     [list ]
    set_attribute module $name "vlog_defines"     ""
@@ -339,7 +338,7 @@ proc set_directives {$type $name} {
 }
 
 ###############################################################
-### List All modules and Runs being synthesized/implemented
+### List All modules and runs being synthesized/implemented
 ###############################################################
 proc list_runs { } {
    #### Print list of Modules
@@ -592,7 +591,6 @@ proc get_modules { {filters ""} {function &&} } {
    if {[llength $filters]} {
       set filtered_modules ""
       foreach module $modules {
-         puts "#MG Current module is $module with filters $filters"
          foreach filter $filters {
             #Check if value is "not", and remove ! from name
             if {[regexp {!(.*)} $filter old filter]} {
@@ -600,7 +598,6 @@ proc get_modules { {filters ""} {function &&} } {
             } else {
                set value 1
             }
-            puts "#MG $filter attribute of $module is [get_attribute module $module $filter], matching to $value"
             if {[get_attribute module $module $filter] == $value} {
                set match 1
                if {[string match $function "||"]} {
