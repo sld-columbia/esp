@@ -38,3 +38,4 @@ noc/router/lookahead_routing_multicast.sv
 noc/router/lookahead_router.sv
 noc/router/lookahead_router_multicast.sv
 noc/router/lookahead_router_wrapper.sv
+techmap/maps/clkdiv1234.v

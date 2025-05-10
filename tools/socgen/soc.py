@@ -336,7 +336,7 @@ class SoC_Config():
         line = fp.readline()
         # PRC configuration
         line = fp.readline()
-        if line.find("CONFIG_PRC = y") != -1:
+        if line and line.find("CONFIG_PRC_EN = y") != -1:
             self.prc.set(1)
         else:
             self.prc.set(0)
@@ -499,9 +499,9 @@ class SoC_Config():
 
         #write prc config
         if self.prc.get() == 1:
-            fp.write("CONFIG_PRC = y")
+            fp.write("CONFIG_PRC_EN = y")
         else:
-            fp.write("#CONFIG_PRC is not set")
+            fp.write("#CONFIG_PRC_EN is not set")
 
     def check_cfg(self, line, token, end):
         line = line[line.find(token) + len(token):]

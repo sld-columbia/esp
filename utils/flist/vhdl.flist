@@ -59,6 +59,7 @@ misc/unread.vhd
 misc/ahbslm.vhd
 misc/esp_init.vhd
 misc/ahbram_dp.vhd
+misc/rstgen.vhd
 misc/prc.vhd
 noc/routing_engine.vhd
 noc/bypassable_queue.vhd
@@ -147,3 +148,4 @@ tiles/fpga/fpga_tile_empty.vhd
 tiles/fpga/fpga_tile_io.vhd
 tiles/fpga/fpga_tile_mem.vhd
 tiles/fpga/fpga_tile_slm.vhd
+tiles/esp.vhd

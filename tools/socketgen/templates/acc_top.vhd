@@ -5,30 +5,30 @@
 -- new top for accelerator
 -------------------------------------------------------------------------
 
-library ieee;                                                                                                                                              
-use ieee.std_logic_1164.all;                                                                                                                               
-use ieee.numeric_std.all;                                                                                                                                  
-use work.esp_global.all;                                                                                                                                   
-use work.amba.all;                                                                                                                                         
-use work.stdlib.all;                                                                                                                                       
-use work.sld_devices.all;                                                                                                                                  
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use work.esp_global.all;
+use work.amba.all;
+use work.stdlib.all;
+use work.sld_devices.all;
 use work.devices.all;
 use work.gencomp.all;
-use work.monitor_pkg.all;                                                                                                                                  
+use work.monitor_pkg.all;
 use work.esp_csr_pkg.all;
-use work.jtag_pkg.all;                                                                                                                                     
-use work.sldacc.all;                                                                                                                                       
-use work.nocpackage.all;                                                                                                                                   
+use work.jtag_pkg.all;
+use work.sldacc.all;
+use work.nocpackage.all;
 use work.cachepackage.all;
 use work.tile.all;
-use work.coretypes.all;                                                                                                                                    
-use work.esp_acc_regmap.all;                                                                                                                               
+use work.coretypes.all;
+use work.esp_acc_regmap.all;
 use work.socmap.all;
 use work.grlib_config.all;
 use work.genacc.all;
 use work.allcaches.all;
 
-entity acc_top is 
+entity acc_top is
 
   generic (
     hls_conf       : hlscfg_t;
@@ -70,37 +70,37 @@ entity acc_top is
 
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
-    coherence_req_data_in      : out noc_flit_type;
+    coherence_req_data_in      : out coh_noc_flit_type;
     coherence_req_full         : in  std_ulogic;
     -- NoC plane coherence forward
     coherence_fwd_rdreq        : out std_ulogic;
-    coherence_fwd_data_out     : in  noc_flit_type;
+    coherence_fwd_data_out     : in  coh_noc_flit_type;
     coherence_fwd_empty        : in  std_ulogic;
     -- Noc plane coherence response
     coherence_rsp_rcv_rdreq    : out std_ulogic;
-    coherence_rsp_rcv_data_out : in  noc_flit_type;
+    coherence_rsp_rcv_data_out : in  coh_noc_flit_type;
     coherence_rsp_rcv_empty    : in  std_ulogic;
     coherence_rsp_snd_wrreq    : out std_ulogic;
-    coherence_rsp_snd_data_in  : out noc_flit_type;
+    coherence_rsp_snd_data_in  : out coh_noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
-    coherence_fwd_snd_wrreq    : out std_ulogic; 
-    coherence_fwd_snd_data_in  : out noc_flit_type;
+    coherence_fwd_snd_wrreq    : out std_ulogic;
+    coherence_fwd_snd_data_in  : out coh_noc_flit_type;
     coherence_fwd_snd_full     : in  std_ulogic;
     -- NoC plane MEM2DEV
     dma_rcv_rdreq     : out std_ulogic;
-    dma_rcv_data_out  : in  noc_flit_type;
+    dma_rcv_data_out  : in  dma_noc_flit_type;
     dma_rcv_empty     : in  std_ulogic;
     -- NoC plane DEV2MEM
     dma_snd_wrreq     : out std_ulogic;
-    dma_snd_data_in   : out noc_flit_type;
+    dma_snd_data_in   : out dma_noc_flit_type;
     dma_snd_full      : in  std_ulogic;
     -- NoC plane LLC-coherent MEM2DEV
     coherent_dma_rcv_rdreq     : out std_ulogic;
-    coherent_dma_rcv_data_out  : in  noc_flit_type;
+    coherent_dma_rcv_data_out  : in  dma_noc_flit_type;
     coherent_dma_rcv_empty     : in  std_ulogic;
     -- NoC plane LLC-coherent DEV2MEM
     coherent_dma_snd_wrreq     : out std_ulogic;
-    coherent_dma_snd_data_in   : out noc_flit_type;
+    coherent_dma_snd_data_in   : out dma_noc_flit_type;
     coherent_dma_snd_full      : in  std_ulogic;
     -- Noc plane miscellaneous (tile -> NoC)
     interrupt_wrreq   : out std_ulogic;
@@ -111,7 +111,6 @@ entity acc_top is
     interrupt_ack_data_out : in  misc_noc_flit_type;
     interrupt_ack_empty    : in  std_ulogic;
     mon_dvfs_in            : in  monitor_dvfs_type;
-    dvfs_transient_in      : in std_ulogic;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
@@ -123,38 +122,38 @@ end;
 
 architecture rtl of acc_top is
 
-  attribute keep : string; 
-  
-  attribute keep of coherence_req_wrreq        : signal is "true";                                                                     
-  attribute keep of coherence_req_data_in      : signal is "true";                                                                     
-  attribute keep of coherence_req_full         : signal is "true";                                                                     
-  attribute keep of coherence_fwd_rdreq        : signal is "true";                                                                     
-  attribute keep of coherence_fwd_data_out     : signal is "true";                                                                     
-  attribute keep of coherence_fwd_empty        : signal is "true";                                                                     
-  attribute keep of coherence_rsp_rcv_rdreq    : signal is "true";                                                                     
-  attribute keep of coherence_rsp_rcv_data_out : signal is "true";                                                                     
-  attribute keep of coherence_rsp_rcv_empty    : signal is "true";                                                                     
-  attribute keep of coherence_rsp_snd_wrreq    : signal is "true";                                                                     
-  attribute keep of coherence_rsp_snd_data_in  : signal is "true";                                                                     
-  attribute keep of coherence_rsp_snd_full     : signal is "true";                                                                     
-  attribute keep of dma_rcv_rdreq              : signal is "true";                                                                     
-  attribute keep of dma_rcv_data_out           : signal is "true";                                                                     
-  attribute keep of dma_rcv_empty              : signal is "true";                                                                     
-  attribute keep of dma_snd_wrreq              : signal is "true";                                                                     
-  attribute keep of dma_snd_data_in            : signal is "true";                                                                     
-  attribute keep of dma_snd_full               : signal is "true";                                                                     
-  attribute keep of coherent_dma_rcv_rdreq     : signal is "true";                                                                     
-  attribute keep of coherent_dma_rcv_data_out  : signal is "true";                                                                     
-  attribute keep of coherent_dma_rcv_empty     : signal is "true";                                                                     
-  attribute keep of coherent_dma_snd_wrreq     : signal is "true";                                                                     
-  attribute keep of coherent_dma_snd_data_in   : signal is "true";                                                                     
-  attribute keep of coherent_dma_snd_full      : signal is "true";                                                                     
-  attribute keep of interrupt_wrreq            : signal is "true";                                                                     
-  attribute keep of interrupt_data_in          : signal is "true";                                                                     
-  attribute keep of interrupt_full             : signal is "true";                                                                     
-  attribute keep of interrupt_ack_rdreq        : signal is "true";                                                                     
-  attribute keep of interrupt_ack_data_out     : signal is "true";                                                                     
-  attribute keep of interrupt_ack_empty        : signal is "true"; 
+  attribute keep : string;
+
+  attribute keep of coherence_req_wrreq        : signal is "true";
+  attribute keep of coherence_req_data_in      : signal is "true";
+  attribute keep of coherence_req_full         : signal is "true";
+  attribute keep of coherence_fwd_rdreq        : signal is "true";
+  attribute keep of coherence_fwd_data_out     : signal is "true";
+  attribute keep of coherence_fwd_empty        : signal is "true";
+  attribute keep of coherence_rsp_rcv_rdreq    : signal is "true";
+  attribute keep of coherence_rsp_rcv_data_out : signal is "true";
+  attribute keep of coherence_rsp_rcv_empty    : signal is "true";
+  attribute keep of coherence_rsp_snd_wrreq    : signal is "true";
+  attribute keep of coherence_rsp_snd_data_in  : signal is "true";
+  attribute keep of coherence_rsp_snd_full     : signal is "true";
+  attribute keep of dma_rcv_rdreq              : signal is "true";
+  attribute keep of dma_rcv_data_out           : signal is "true";
+  attribute keep of dma_rcv_empty              : signal is "true";
+  attribute keep of dma_snd_wrreq              : signal is "true";
+  attribute keep of dma_snd_data_in            : signal is "true";
+  attribute keep of dma_snd_full               : signal is "true";
+  attribute keep of coherent_dma_rcv_rdreq     : signal is "true";
+  attribute keep of coherent_dma_rcv_data_out  : signal is "true";
+  attribute keep of coherent_dma_rcv_empty     : signal is "true";
+  attribute keep of coherent_dma_snd_wrreq     : signal is "true";
+  attribute keep of coherent_dma_snd_data_in   : signal is "true";
+  attribute keep of coherent_dma_snd_full      : signal is "true";
+  attribute keep of interrupt_wrreq            : signal is "true";
+  attribute keep of interrupt_data_in          : signal is "true";
+  attribute keep of interrupt_full             : signal is "true";
+  attribute keep of interrupt_ack_rdreq        : signal is "true";
+  attribute keep of interrupt_ack_data_out     : signal is "true";
+  attribute keep of interrupt_ack_empty        : signal is "true";
 
 begin
 

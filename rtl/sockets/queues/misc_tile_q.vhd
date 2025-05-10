@@ -296,9 +296,6 @@ architecture rtl of misc_tile_q is
   signal noc3_dummy_in_stop  : std_ulogic;
   signal noc3_dummy_out_data : coh_noc_flit_type;
   signal noc3_dummy_out_void : std_ulogic;
-  signal noc4_dummy_out_data : dma_noc_flit_type;
-  signal noc4_dummy_out_void : std_ulogic;
-  signal noc6_dummy_in_stop  : std_ulogic;
 
   -- attribute mark_debug : string;
 
@@ -321,10 +318,6 @@ begin  -- rtl
 
   -- From noc6: DMA requests from accelerators to frame buffer
   -- From noc6: coherent DMA responses from LLC to Ethernet
-  --noc6_in_data       <= (others => '0');
-  --noc6_in_void       <= '1';
-  noc6_dummy_in_stop <= noc6_in_stop;
-
   noc6_msg_type <= get_msg_type(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & noc6_out_data);
   noc6_preamble <= get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & noc6_out_data);
   process (clk, rst)

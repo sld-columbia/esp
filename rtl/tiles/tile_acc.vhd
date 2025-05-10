@@ -40,63 +40,60 @@ entity tile_acc is
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
-    refclk             : in  std_ulogic;
-    pllbypass          : in  std_ulogic;
-    pllclk             : out std_ulogic;
-    dco_clk            : out std_ulogic;
-    dco_rstn           : out std_ulogic;
-    -- Pads configuration
-    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
+    ext_clk            : in  std_ulogic;
+    clk_div            : out std_ulogic;
+    tile_clk_out       : out std_ulogic;
+    tile_rstn_out      : out std_ulogic;
+    -- DCO config
+    dco_freq_sel       : in std_logic_vector(1 downto 0);
+    dco_div_sel        : in std_logic_vector(2 downto 0);
+    dco_fc_sel         : in std_logic_vector(5 downto 0);
+    dco_cc_sel         : in std_logic_vector(5 downto 0);
+    dco_clk_sel        : in std_ulogic;
+    dco_en             : in std_ulogic;
     -- NOC
-    local_x             : out local_yx;
-    local_y             : out local_yx;
-    noc1_mon_noc_vec    : in monitor_noc_type;
-    noc2_mon_noc_vec    : in monitor_noc_type;
-    noc3_mon_noc_vec    : in monitor_noc_type;
-    noc4_mon_noc_vec    : in monitor_noc_type;
-    noc5_mon_noc_vec    : in monitor_noc_type;
-    noc6_mon_noc_vec    : in monitor_noc_type;
-    test1_output_port   : in noc_flit_type;
+    test1_output_port   : in coh_noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
-    test2_output_port   : in noc_flit_type;
+    test2_output_port   : in coh_noc_flit_type;
     test2_data_void_out : in std_ulogic;
     test2_stop_in       : in std_ulogic;
-    test3_output_port   : in noc_flit_type;
+    test3_output_port   : in coh_noc_flit_type;
     test3_data_void_out : in std_ulogic;
     test3_stop_in       : in std_ulogic;
-    test4_output_port   : in noc_flit_type;
+    test4_output_port   : in dma_noc_flit_type;
     test4_data_void_out : in std_ulogic;
     test4_stop_in       : in std_ulogic;
     test5_output_port   : in misc_noc_flit_type;
     test5_data_void_out : in std_ulogic;
     test5_stop_in       : in std_ulogic;
-    test6_output_port   : in noc_flit_type;
+    test6_output_port   : in dma_noc_flit_type;
     test6_data_void_out : in std_ulogic;
     test6_stop_in       : in std_ulogic;
-    test1_input_port    : out noc_flit_type;
+    test1_input_port    : out coh_noc_flit_type;
     test1_data_void_in  : out std_ulogic;
     test1_stop_out      : out std_ulogic;
-    test2_input_port    : out noc_flit_type;
+    test2_input_port    : out coh_noc_flit_type;
     test2_data_void_in  : out std_ulogic;
     test2_stop_out      : out std_ulogic;
-    test3_input_port    : out noc_flit_type;
+    test3_input_port    : out coh_noc_flit_type;
     test3_data_void_in  : out std_ulogic;
     test3_stop_out      : out std_ulogic;
-    test4_input_port    : out noc_flit_type;
+    test4_input_port    : out dma_noc_flit_type;
     test4_data_void_in  : out std_ulogic;
     test4_stop_out      : out std_ulogic;
     test5_input_port    : out misc_noc_flit_type;
     test5_data_void_in  : out std_ulogic;
     test5_stop_out      : out std_ulogic;
-    test6_input_port    : out noc_flit_type;
+    test6_input_port    : out dma_noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
-    mon_dvfs_in         : in  monitor_dvfs_type;
     --Monitor signals
+    mon_noc             : in  monitor_noc_vector(1 to 6);
     mon_acc             : out monitor_acc_type;
     mon_cache           : out monitor_cache_type;
-    mon_dvfs            : out monitor_dvfs_type
+    mon_dvfs            : out monitor_dvfs_type;
+	acc_activity		: out std_ulogic
     );
 
 end;
