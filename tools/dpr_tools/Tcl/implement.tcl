@@ -459,13 +459,8 @@ proc implement {impl} {
    }
 
    if {$route && !$skipRoute} {
-      set reset_pins [get_pins esp_1/tiles_gen*.accelerator_tile.tile_acc_i/tile_acc_1/acc_tile_csr/tile_config*]
-      puts "MG: Resetting PARTPIN_RANGE property to default for $reset_pins"
       # TODO unsuppress errors related to PARTPIN constraint
-      command "set_msg_config -quiet -id \"Constraints 18-4430\" -suppress"
-      reset_property HD.PARTPIN_RANGE [get_pins {esp_1/tiles_gen[2].accelerator_tile.tile_acc_i/tile_acc_1/acc_tile_csr/tile_config[1]}]
-      reset_property HD.PARTPIN_LOCS  [get_pins {esp_1/tiles_gen[2].accelerator_tile.tile_acc_i/tile_acc_1/acc_tile_csr/tile_config[1]}]
-
+      #command "set_msg_config -quiet -id \"Constraints 18-4430\" -suppress"
       impl_step route_design $top $route_options $route_directive ${route.pre}
 
       if {$post_phys} {

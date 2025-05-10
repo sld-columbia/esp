@@ -191,6 +191,7 @@ architecture rtl of tile_acc is
   signal coherence_fwd_snd_wrreq    : std_ulogic;
   signal coherence_fwd_snd_data_in  : noc_flit_type;
   signal coherence_fwd_snd_full     : std_ulogic;
+  signal coherence_fwd_snd_wrreq_acc : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
   signal dma_rcv_rdreq_acc          : std_ulogic;
   signal dma_rcv_data_out           : noc_flit_type;
@@ -225,7 +226,7 @@ architecture rtl of tile_acc is
   -- Tile parameters
   signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
 
-  signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
+  signal tile_id : integer;
 
   signal this_pindex    : integer range 0 to NAPBSLV - 1;
   signal this_paddr     : integer range 0 to 4095;
@@ -354,6 +355,8 @@ architecture rtl of tile_acc is
   attribute keep of apb_rcv_rdreq              : signal is "true";
   attribute keep of apb_rcv_data_out           : signal is "true";
   attribute keep of apb_rcv_empty              : signal is "true";
+  attribute keep of tile_config                : signal is "true";
+  attribute keep of tile_id	                   : signal is "true";
 
   attribute keep of noc1_acc_stop_in       : signal is "true";
   attribute keep of noc1_acc_stop_out      : signal is "true";
@@ -655,7 +658,7 @@ begin
       coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq_acc,
       coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
       coherence_rsp_snd_full     => coherence_rsp_snd_full,
-      coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+      coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq_acc,
       coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
       coherence_fwd_snd_full     => coherence_fwd_snd_full,
       dma_rcv_rdreq     => dma_rcv_rdreq_acc,
@@ -684,7 +687,8 @@ begin
 
   -- decouple signals if decouple_acc is asserted
   decoupler_gen: process (decouple_acc, coherence_req_wrreq_acc, coherence_fwd_rdreq_acc,
-                          coherent_dma_snd_wrreq_acc, coherence_rsp_rcv_rdreq_acc,
+                          coherence_fwd_snd_wrreq_acc, coherent_dma_rcv_rdreq_acc,
+			              coherent_dma_snd_wrreq_acc, coherence_rsp_rcv_rdreq_acc,
                           coherence_rsp_snd_wrreq_acc, dma_rcv_rdreq_acc, dma_snd_wrreq_acc,
                           interrupt_wrreq_acc, interrupt_ack_rdreq_acc) is
   begin  -- process decoupler_gen
@@ -703,7 +707,7 @@ begin
     else
       coherence_req_wrreq        <= coherence_req_wrreq_acc;
       coherence_fwd_rdreq        <= coherence_fwd_rdreq_acc;
-      coherence_fwd_snd_wrreq    <= coherence_fwd_snd_wrreq;
+      coherence_fwd_snd_wrreq    <= coherence_fwd_snd_wrreq_acc;
       coherent_dma_snd_wrreq     <= coherent_dma_snd_wrreq_acc;
       coherent_dma_rcv_rdreq     <= coherent_dma_rcv_rdreq_acc;
       coherence_rsp_rcv_rdreq    <= coherence_rsp_rcv_rdreq_acc;
@@ -716,8 +720,8 @@ begin
   end process decoupler_gen;
 
   -- CSR map for decoupler
-  --decouple_acc <= tile_config(ESP_CSR_ACC_DECOUPLER_MSB downto ESP_CSR_ACC_DECOUPLER_LSB);
-  decouple_acc <= tile_config(98);
+  decouple_acc <= tile_config(ESP_CSR_ACC_DECOUPLER_MSB);
+  --decouple_acc <= tile_config(98);
 
   -- Using only one apbo signal
   no_apb : for i in 0 to NAPBSLV - 1 generate

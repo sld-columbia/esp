@@ -2,19 +2,18 @@
 ####Synthesize Modules (Bottom-Up)####
 ######################################
 proc synthesize { module } {
-   global tclParams 
-   global part 
-   global board 
+   global tclParams
+   global part
+   global board
    global synthDir
    global srcDir
    global verbose
    global RFH
-   
+
    set moduleName  [get_attribute module $module moduleName]
    set topLevel    [get_attribute module $module top_level]
    set prj         [get_attribute module $module prj]
    set includes    [get_attribute module $module includes]
-   puts "#MG for $module, includes are $includes"
    set generics    [get_attribute module $module generics]
    set vlogHeaders [get_attribute module $module vlog_headers]
    set vlogDefines [get_attribute module $module vlog_defines]
@@ -35,12 +34,12 @@ proc synthesize { module } {
    command "file mkdir $synthDir"
    command "file delete -force $resultDir"
    command "file mkdir $resultDir"
-   
+
    #Open local log files
    set rfh [open "$resultDir/run.log" w]
    set cfh [open "$resultDir/command.log" w]
    set wfh [open "$resultDir/critical.log" w]
-   
+
    set vivadoVer [version]
    puts $rfh "Info: Running Vivado version $vivadoVer"
    puts $RFH "Info: Running Vivado version $vivadoVer"
@@ -64,13 +63,13 @@ proc synthesize { module } {
       command "set_property board_part $board \[current_project\]"
    }
 
-   #### Setup any IP Repositories 
+   #### Setup any IP Repositories
    if {$ipRepo != ""} {
       puts "\tLoading IP Repositories:\n\t+ [join $ipRepo "\n\t+ "]"
       command "set_property IP_REPO_PATHS \{$ipRepo\} \[current_fileset\]" "$resultDir/temp.log"
       command "update_ip_catalog" "$resultDir/temp.log"
    }
-   
+
    set start_time [clock seconds]
    if {[llength $prj] > 0} {
       add_prj $prj
@@ -81,12 +80,12 @@ proc synthesize { module } {
       if {[llength $sysvlog] > 0} {
          add_sysvlog $sysvlog
       }
-   
+
       #### Read in Verilog
       if {[llength $vlog] > 0} {
          add_vlog $vlog
       }
-   
+
       #### Read in VHDL
       if {[llength $vhdl] > 0} {
          add_vhdl $vhdl
@@ -94,7 +93,7 @@ proc synthesize { module } {
       set end_time [clock seconds]
       log_time add_files $start_time $end_time 1 "Add source files"
    }
-      
+
    #### Read IP from Catalog
    if {[llength $ip] > 0} {
       set start_time [clock seconds]
@@ -102,7 +101,7 @@ proc synthesize { module } {
       set end_time [clock seconds]
       log_time add_ip $start_time $end_time 0 "Add XCI files and generate/synthesize IP"
    }
-      
+
    #### Read IPI systems
    if {[llength $bd] > 0} {
       set start_time [clock seconds]
@@ -110,15 +109,15 @@ proc synthesize { module } {
       set end_time [clock seconds]
       log_time add_bd $start_time $end_time 0 "Add/generate IPI block design"
    }
-   
-   #### Read in IP Netlists 
+
+   #### Read in IP Netlists
    if {[llength $cores] > 0} {
       set start_time [clock seconds]
       add_cores $cores
       set end_time [clock seconds]
       log_time add_cores $start_time $end_time 0 "Add synthesized IP (DCP, NGC, EDIF)"
    }
-   
+
    #### Read in synthXDC files
    if {[llength $synthXDC] > 0} {
       set start_time [clock seconds]
@@ -130,7 +129,7 @@ proc synthesize { module } {
    #### Read in XDC file
    if {[llength $xdc] > 0} {
       set start_time [clock seconds]
-      add_xdc $xdc 1 
+      add_xdc $xdc 1
       set end_time [clock seconds]
       log_time add_xdc $start_time $end_time 0 "Add XDC files"
    }
@@ -139,28 +138,28 @@ proc synthesize { module } {
       puts "\tInfo: No XDC file specified for $module"
    }
 
-   #### Set Verilog Headers 
+   #### Set Verilog Headers
    if {[llength $vlogHeaders] > 0} {
       foreach file $vlogHeaders {
          command "set_property file_type {Verilog Header} \[get_files $file\]"
       }
    }
-   
+
    #### Set Verilog Defines
    if {$vlogDefines != ""} {
       command "set_property verilog_define \{$vlogDefines\} \[current_fileset\]"
    }
-   
+
    #### Set Include Directories
    if {$includes != ""} {
-      command "set_property include_dirs \{$includes\} \[current_fileset\]"
+	    command "set_property include_dirs \{$includes\} \[current_fileset\]"
    }
-   
+
    #### Set Generics
    if {$generics != ""} {
       command "set_property generic $generics \[current_fileset\]"
    }
-   
+
    #### synthesis
    puts "\tRunning synth_design"
    set start_time [clock seconds]
@@ -171,12 +170,12 @@ proc synthesize { module } {
    }
    set end_time [clock seconds]
    log_time synth_design $start_time $end_time 0 "$moduleName $options"
-   
+
    set start_time [clock seconds]
    command "write_checkpoint -force $resultDir/${moduleName}_synth.dcp" "$resultDir/write_checkpoint.log"
    set end_time [clock seconds]
    log_time write_checkpiont $start_time $end_time 0 "Write out synthesis DCP"
-   
+
    if {$verbose >= 1} {
       set start_time [clock seconds]
       command "report_utilization -file $resultDir/${moduleName}_utilization_synth.rpt" "$resultDir/temp.log"

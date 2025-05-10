@@ -373,13 +373,13 @@ vivado-syn: vivado-setup
         $(RM) static_config.tcl; \
         echo "set part $(DEVICE) " >> static_config.tcl; \
         echo "set board $(BOARD) " >> static_config.tcl; \
-	echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
-	if [ "$(BOARD)" = xilinx-vc707-xc7vx485t ]; then \
-		echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_v7/prc_ctrlr_v7.xci" >> static_config.tcl; \
+		echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
+		if [ "$(BOARD)" = xilinx-vc707-xc7vx485t ]; then \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_v7/prc_ctrlr_v7.xci" >> static_config.tcl; \
         else \
-		echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_us/prc_ctrlr_us.xci" >> static_config.tcl; \
-	fi;\
-	if [ "$(BOARD)" = xilinx-vcu128-xcvu37p ]; then \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_us/prc_ctrlr_us.xci" >> static_config.tcl; \
+		fi;\
+		if [ "$(BOARD)" = xilinx-vcu128-xcvu37p ]; then \
             echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig_clamshell/mig_clamshell.xci" >> static_config.tcl; \
             echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii_vcu128/sgmii_vcu128.xci" >> static_config.tcl; \
         else \
