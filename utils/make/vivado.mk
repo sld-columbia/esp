@@ -46,6 +46,9 @@ $(VIVADO_LOGS):
 
 vivado: $(VIVADO_LOGS)
 	$(QUIET_MKDIR)mkdir -p vivado
+	@if [ "$(DPR_ENABLED)" = "y" ]; then \
+		$(QUIET_MKDIR)mkdir -p vivado_dpr; \
+	fi;
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 
@@ -75,10 +78,9 @@ endif
 		echo "add_files $$dat" >> $@; \
 	done;
 ### Replace tile with a blackbox if a DPR implementation is chosen
-	@echo $(SPACES)"DPR generating bbox sources";
 	@if [ "$(DPR_ENABLED)" = "y" ]; then \
-	    	echo $(SPACES)"DPR generating bbox sources"; \
-        	/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) BBOX; \
+		echo $(SPACES)"DPR generating bbox sources"; \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) BBOX; \
 	fi;
 
 
@@ -142,6 +144,7 @@ ifeq ($(CONFIG_PRC_EN),y)
 		cp $(ESP_ROOT)/constraints/$(BOARD)/prc.tcl ./vivado/prc; \
 		echo "set_property target_language verilog [current_project]" >> $@; \
 		echo "source ./prc/prc.tcl" >> $@; \
+		echo "generate_target  all [get_ips prc] -force " >> $@; \
 	fi;
 endif
 ifeq ($(CONFIG_ETH_EN),y)
@@ -163,14 +166,6 @@ ifeq ($(CONFIG_ETH_EN),y)
 		echo $(SPACES)"WARNING: no SGMII IP was found"; \
 	fi;
 endif
-	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/prc.tcl; then \
-		echo $(SPACES)"INFO including PRC"; \
-		mkdir -p vivado/prc; \
-		cp $(ESP_ROOT)/constraints/$(BOARD)/prc.tcl ./vivado/prc; \
-		echo "set_property target_language verilog [current_project]" >> $@; \
-		echo "source ./prc/prc.tcl" >> $@; \
-		echo "generate_target  all [get_ips prc] -force " >> $@; \
-	fi;
 	@if test -r $(UTILS_GRLIB)/netlists/$(TECHLIB); then \
 		echo "import_files $(UTILS_GRLIB)/netlists/$(TECHLIB)" >> $@; \
 	fi;
@@ -406,12 +401,12 @@ vivado-syn: vivado-setup
         cp ./socgen/esp/.esp_config vivado_dpr/; \
         cp $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
         echo $(SPACES)"DPR : launching setup script for Vivado DPR flow";  \
-		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) DPR $(PROCESS_DPR_ARG);  \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) DPR $(PROCESS_DPR_ARG);  \
 		cd vivado_dpr; \
 		vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
         cd ../; \
 		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) IMPL_DPR $(PROCESS_DPR_ARG);  \
-        cd vivado_dpr; \
+		cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_syn_dpr.log; \
 		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_BS $(PROCESS_DPR_ARG);  \
         cd vivado_dpr; \
@@ -431,7 +426,6 @@ vivado-syn-dpr-bbox: vivado-syn
 
 SYN_ARG ?= ACC
 vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl
-	$(QUIET_INFO)echo "launching setup script for Vivado DPR flow"
 	@if ! test -d vivado_dpr; then \
         echo $(SPACES)"DPR: vivado_dpr directory not found"; \
         echo $(SPACES)"DPR: you should run vivado-syn-dpr first"; \

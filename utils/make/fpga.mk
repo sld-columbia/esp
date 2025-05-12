@@ -1,6 +1,9 @@
 # Copyright (c) 2011-2024 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
+BOARD_SUFFIX ?=
+BOARD_DIR = $(BOARD)$(BOARD_SUFFIX)
+
 ifneq ($(findstring profpga, $(BOARD)),)
 fpga-program: profpga-prog-fpga
 	$(QUIET_INFO) echo "Waiting for DDR calibration..."
@@ -23,7 +26,7 @@ fpga-run-linux-dpr: fpga-run-linux
 
 fpga-load-pbs: DPR_ENABLED = y
 fpga-load-pbs: esplink
-	@$(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) LOAD_BS;
+	@$(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) LOAD_BS;
 
 fpga-run: esplink soft
 	@./$(ESP_CFG_BUILD)/esplink --reset

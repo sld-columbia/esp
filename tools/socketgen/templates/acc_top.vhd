@@ -32,7 +32,7 @@ entity acc_top is
 
   generic (
     hls_conf       : hlscfg_t;
-    this_device    : devid_t  := 0;  -- new parameter
+    this_device    : devid_t := 0;
     tech           : integer;
     mem_num        : integer;
     cacheable_mem_num : integer;
@@ -48,10 +48,7 @@ entity acc_top is
     cache_tile_id  : cache_attribute_array;
     cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-    has_l2         : integer := 1;
-    has_dvfs       : integer := 1;
-    has_pll        : integer;
-    extra_clk_buf  : integer);
+    has_l2         : integer := 1);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
@@ -64,10 +61,10 @@ entity acc_top is
     pmask_ext : in  integer range 0 to 4095;
     pirq      : in  integer range 0 to NAHBIRQ - 1;
     -- APB
-    apbi      : in apb_slv_in_type;
-    apbo      : out apb_slv_out_type;
-    pready    : out std_ulogic;
-
+    apbi         : in apb_slv_in_type;
+    apbo         : out apb_slv_out_type;
+    pready       : out std_ulogic;
+	acc_activity : out std_ulogic;
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
     coherence_req_data_in      : out coh_noc_flit_type;
@@ -110,12 +107,12 @@ entity acc_top is
     interrupt_ack_rdreq    : out std_ulogic;
     interrupt_ack_data_out : in  misc_noc_flit_type;
     interrupt_ack_empty    : in  std_ulogic;
-    mon_dvfs_in            : in  monitor_dvfs_type;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
     mon_dvfs          : out monitor_dvfs_type;
-    coherence         : in  integer range 0 to 3
+    coherence         : in  integer range 0 to 3;
+    tp_acc_rst        : in  std_ulogic
     );
 
 end;

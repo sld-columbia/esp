@@ -29,12 +29,12 @@ foreach impl [get_implementations "impl !dfx.impl" &&]  {
 }
 
 set configurations [get_implementations "dfx.impl verify" &&]
-#### Run PR verify 
+#### Run PR verify
 if {[llength  $configurations] > 1} {
    verify_configs $configurations
 }
 
-#### Generate DFX bitstreams 
+#### Generate DFX bitstreams
 set configurations [get_implementations "dfx.impl bitstream" &&]
 if {[llength  $configurations] > 0} {   #### Set Tcl Params
    if {[info exists tclParams] && [llength $tclParams] > 0} {
@@ -43,6 +43,12 @@ if {[llength  $configurations] > 0} {   #### Set Tcl Params
    generate_dfx_bitstreams $configurations
 }
 
-close $RFH
-close $CFH
-close $WFH
+if {[info exists RFH]} {
+   close $RFH
+}
+if {[info exists CFH]} {
+   close $CFH
+}
+if {[info exists WFH]} {
+   close $WFH
+}

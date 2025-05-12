@@ -153,12 +153,6 @@ package tile is
       coherent_dma_snd_wrreq       : in  std_ulogic;
       coherent_dma_snd_data_in     : in  dma_noc_flit_type;
       coherent_dma_snd_full        : out std_ulogic;
-      prc_dma_rcv_rdreq            : in  std_ulogic;
-      prc_dma_rcv_data_out         : out dma_noc_flit_type;
-      prc_dma_rcv_empty            : out std_ulogic;
-      prc_dma_snd_wrreq            : in  std_ulogic;
-      prc_dma_snd_data_in          : in  dma_noc_flit_type;
-      prc_dma_snd_full             : out std_ulogic;
       apb_rcv_rdreq                : in  std_ulogic;
       apb_rcv_data_out             : out misc_noc_flit_type;
       apb_rcv_empty                : out std_ulogic;
@@ -614,15 +608,16 @@ package tile is
 
   component axislv2noc is
     generic (
-      tech         : integer;
-      nmst         : integer;
-      split_transaction : integer range 0 to 1 := 0;
-      retarget_for_dma : integer range 0 to 1;
-      mem_axi_port : integer range -1 to NAHBSLV - 1;
-      mem_num      : integer;
-      mem_info     : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
-      slv_y        : local_yx;
-      slv_x        : local_yx);
+      tech                  : integer;
+      nmst                  : integer;
+      split_transaction   : integer range 0 to 1 := 0; -- '1' for 32-bit masters on 64-bit bus
+      retarget_for_dma      : integer range 0 to 1;
+      mem_axi_port          : integer range -1 to NAHBSLV - 1;
+      mem_num               : integer;
+      mem_info              : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
+      this_noc_flit_size    : integer;
+      slv_y                 : local_yx;
+      slv_x                 : local_yx);
     port (
       rst                        : in  std_ulogic;
       clk                        : in  std_ulogic;
@@ -1079,7 +1074,7 @@ package tile is
       dco_clk_sel        : out  std_ulogic;
       dco_en             : out  std_ulogic;
       dco_clk_delay_sel  : out std_logic_vector(11 downto 0);
-      acc_activity	 : in std_ulogic;
+      acc_activity	     : in  std_ulogic;
       -- pad config
       pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NoC
@@ -1198,10 +1193,9 @@ package tile is
       noc6_stop_out_tile     : out std_ulogic);
   end component noc_domain_socket;
 
-  component acc_top is
+  component acc_top
   generic (
     hls_conf       : hlscfg_t;
-    this_device    : devid_t;
     tech           : integer;
     mem_num        : integer;
     cacheable_mem_num : integer;
@@ -1217,10 +1211,7 @@ package tile is
     cache_tile_id  : cache_attribute_array;
     cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-    has_l2         : integer := 1;
-    has_dvfs       : integer := 1;
-    has_pll        : integer;
-    extra_clk_buf  : integer);
+    has_l2         : integer := 1);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
@@ -1232,48 +1223,59 @@ package tile is
     paddr_ext : in  integer range 0 to 4095;
     pmask_ext : in  integer range 0 to 4095;
     pirq      : in  integer range 0 to NAHBIRQ - 1;
+    -- APB
     apbi      : in apb_slv_in_type;
     apbo      : out apb_slv_out_type;
     pready    : out std_ulogic;
+	acc_activity : out std_ulogic;
+    -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
-    coherence_req_data_in      : out misc_noc_flit_type;
+    coherence_req_data_in      : out coh_noc_flit_type;
     coherence_req_full         : in  std_ulogic;
+    -- NoC plane coherence forward
     coherence_fwd_rdreq        : out std_ulogic;
-    coherence_fwd_data_out     : in  misc_noc_flit_type;
+    coherence_fwd_data_out     : in  coh_noc_flit_type;
     coherence_fwd_empty        : in  std_ulogic;
+    -- Noc plane coherence response
     coherence_rsp_rcv_rdreq    : out std_ulogic;
-    coherence_rsp_rcv_data_out : in  misc_noc_flit_type;
+    coherence_rsp_rcv_data_out : in  coh_noc_flit_type;
     coherence_rsp_rcv_empty    : in  std_ulogic;
     coherence_rsp_snd_wrreq    : out std_ulogic;
-    coherence_rsp_snd_data_in  : out misc_noc_flit_type;
+    coherence_rsp_snd_data_in  : out coh_noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
-    coherence_fwd_snd_wrreq    : out  std_ulogic;
-    coherence_fwd_snd_data_in  : out  noc_flit_type;
-    coherence_fwd_snd_full : in  std_ulogic;
+    coherence_fwd_snd_wrreq    : out std_ulogic;
+    coherence_fwd_snd_data_in  : out coh_noc_flit_type;
+    coherence_fwd_snd_full     : in  std_ulogic;
+    -- NoC plane MEM2DEV
     dma_rcv_rdreq     : out std_ulogic;
-    dma_rcv_data_out  : in  misc_noc_flit_type;
+    dma_rcv_data_out  : in  dma_noc_flit_type;
     dma_rcv_empty     : in  std_ulogic;
+    -- NoC plane DEV2MEM
     dma_snd_wrreq     : out std_ulogic;
-    dma_snd_data_in   : out misc_noc_flit_type;
+    dma_snd_data_in   : out dma_noc_flit_type;
     dma_snd_full      : in  std_ulogic;
+    -- NoC plane LLC-coherent MEM2DEV
     coherent_dma_rcv_rdreq     : out std_ulogic;
-    coherent_dma_rcv_data_out  : in  misc_noc_flit_type;
+    coherent_dma_rcv_data_out  : in  dma_noc_flit_type;
     coherent_dma_rcv_empty     : in  std_ulogic;
+    -- NoC plane LLC-coherent DEV2MEM
     coherent_dma_snd_wrreq     : out std_ulogic;
-    coherent_dma_snd_data_in   : out misc_noc_flit_type;
+    coherent_dma_snd_data_in   : out dma_noc_flit_type;
     coherent_dma_snd_full      : in  std_ulogic;
+    -- Noc plane miscellaneous (tile -> NoC)
     interrupt_wrreq   : out std_ulogic;
     interrupt_data_in : out misc_noc_flit_type;
     interrupt_full    : in  std_ulogic;
+    -- Noc plane miscellaneous (NoC -> tile)
     interrupt_ack_rdreq    : out std_ulogic;
     interrupt_ack_data_out : in  misc_noc_flit_type;
     interrupt_ack_empty    : in  std_ulogic;
-    mon_dvfs_in       : in  monitor_dvfs_type;
-    dvfs_transient_in    : in std_ulogic;
+    --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
     mon_dvfs          : out monitor_dvfs_type;
-    coherence         : in  integer range 0 to 3
+    coherence         : in  integer range 0 to 3;
+    tp_acc_rst        : in  std_ulogic
     );
   end component acc_top;
 
