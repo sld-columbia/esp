@@ -1,6 +1,0 @@
-RADIX hex
-CDEBUG 0
-DEBUGVARS {}
-WAVELIST {{Sync_Signals CTRL clk clk {}} {Sync_Signals CTRL rst rst {}} {DUT {} vec_in_a_val vec_in_a_val {}} {DUT {} vec_in_a_rdy vec_in_a_rdy {}} {DUT {} vec_in_a_msg vec_in_a_msg {}} {DUT {} vec_in_b_val vec_in_b_val {}} {DUT {} vec_in_b_rdy vec_in_b_rdy {}} {DUT {} vec_in_b_msg vec_in_b_msg {}} {DUT {} vec_out_val vec_out_val {}} {DUT {} vec_out_rdy vec_out_rdy {}} {DUT {} vec_out_msg vec_out_msg {}} {Active_Processes Compute.wen LeakyreluEngine_Compute_inst LeakyreluEngine_Compute_inst/LeakyreluEngine_Compute_staller_inst/Compute_wen {}}}
-DUTINST LeakyreluEngine
-STALL_CTRLS_ADDED 1

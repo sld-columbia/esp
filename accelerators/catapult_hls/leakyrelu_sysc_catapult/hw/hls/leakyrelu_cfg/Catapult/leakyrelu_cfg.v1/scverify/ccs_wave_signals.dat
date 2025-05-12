@@ -1,6 +1,0 @@
-RADIX hex
-CDEBUG 0
-DEBUGVARS {}
-WAVELIST {{Sync_Signals CTRL clk clk {}} {Sync_Signals CTRL rst rst {}} {DUT {} conf_info_val conf_info_val {}} {DUT {} conf_info_rdy conf_info_rdy {}} {DUT {} conf_info_msg conf_info_msg {}} {DUT {} conf_info_ctrl_dma2acc_val conf_info_ctrl_dma2acc_val {}} {DUT {} conf_info_ctrl_dma2acc_rdy conf_info_ctrl_dma2acc_rdy {}} {DUT {} conf_info_ctrl_dma2acc_msg conf_info_ctrl_dma2acc_msg {}} {DUT {} conf_info_ctrl_plm2vec_val conf_info_ctrl_plm2vec_val {}} {DUT {} conf_info_ctrl_plm2vec_rdy conf_info_ctrl_plm2vec_rdy {}} {DUT {} conf_info_ctrl_plm2vec_msg conf_info_ctrl_plm2vec_msg {}} {DUT {} conf_info_ctrl_acc2dma_val conf_info_ctrl_acc2dma_val {}} {DUT {} conf_info_ctrl_acc2dma_rdy conf_info_ctrl_acc2dma_rdy {}} {DUT {} conf_info_ctrl_acc2dma_msg conf_info_ctrl_acc2dma_msg {}} {Active_Processes ConfigRead.wen LeakyreluConfig_ConfigRead_inst LeakyreluConfig_ConfigRead_inst/LeakyreluConfig_ConfigRead_staller_inst/ConfigRead_wen {}}}
-DUTINST LeakyreluConfig
-STALL_CTRLS_ADDED 1
