@@ -16,6 +16,9 @@
 #define NUM_ACC_INVOC_ITER 1
 #define RUN_LOOP
 
+//#define RUN_ADDER 0
+#define RUN_MAC 0
+
 #define SLD_ACC_TILE_ADDER 0x98
 #define SLD_ACC_TILE_MAC 0x98
 #define DEV_NAME_ADDER "sld,adder_vivado"
@@ -23,7 +26,7 @@
 
 int main(int argc, char * argv[])
 {
-	int i;
+	int i, k;
 	int n;
 	int ndev;
 	unsigned done;
@@ -55,6 +58,8 @@ int main(int argc, char * argv[])
 #ifdef RUN_LOOP
     for(k = 0; k < NUM_ACC_INVOC_ITER; k++) {
 #endif
+
+#ifdef RUN_ADDER
     //Adder acceleraotr section
     // Probing ADDER
     printf("  Probing... ADDER\n");
@@ -70,7 +75,7 @@ int main(int argc, char * argv[])
     dev_tile_1 = &espdevs_tile_1[0];
 
     printf("  ****  Loading Adder accelerator onto FPGA  **** \n");
-    reconfigure_FPGA(dev_tile_1, 0);
+    reconfigure_FPGA(dev_tile_1, RUN_ADDER);
     // Check DMA capabilities
     if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) == 0) {
         printf("  -> scatter-gather DMA is disabled. Abort.\n");
@@ -146,10 +151,12 @@ int main(int argc, char * argv[])
     printf("\n  Test FAILED. Number of errors: %d\n", errors);
     }
 
+#endif // RUN_ADDER
 
+#ifdef RUN_MAC
     //reconfigure the accelerator tile :- load the mac accelerator
     printf("   **** Loading MAC accelerator onto FPGA ****\n");
-    reconfigure_FPGA(dev_tile_1, 1);
+    reconfigure_FPGA(dev_tile_1, RUN_MAC);
 
 
     //MAC acceleraotr section
@@ -256,6 +263,7 @@ int main(int argc, char * argv[])
         aligned_free(ptable_mac);
         aligned_free(mem_mac);
         aligned_free(mem_gold_mac);
+#endif // RUN_MAC
     }
 
     //reconfigure_FPGA(dev_tile_1, 0);

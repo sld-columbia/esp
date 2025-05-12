@@ -158,11 +158,8 @@ do
             echo "  cache_tile_id      : cache_attribute_array := cache_tile_id;">> $acc_dir/acc_$i.vhd;
             echo "  cache_y            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_y;">> $acc_dir/acc_$i.vhd;
             echo "  cache_x            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_x;">> $acc_dir/acc_$i.vhd;
-            echo "  has_l2             : integer range 0 to 1 := tile_has_l2(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd;
-            echo "  has_dvfs           : integer range 0 to 1 := tile_has_dvfs(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd;
-            echo "  has_pll            : integer range 0 to 1 := tile_has_pll(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd;
-            echo "  extra_clk_buf      : integer range 0 to 1 := extra_clk_buf(${new_accelerators[$i,0]}));">> $acc_dir/acc_$i.vhd;
-            skip_params=20;
+            echo "  has_l2             : integer range 0 to 1 := tile_has_l2(${new_accelerators[$i,0]}));">> $acc_dir/acc_$i.vhd;
+            skip_params=17;
         elif [[ $skip_params -ne 0 ]]; then
             skip_params=$((skip_params-1));
         else
@@ -330,7 +327,7 @@ echo "set tclHome \"$tcl_dir\" " >> $dpr_syn_tcl; #\"$1/socs/common/Tcl\" " >> $
 echo "set tclDir \$tclHome " >> $dpr_syn_tcl;
 echo "set projDir \"$1/socs/$2/vivado_dpr\" " >> $dpr_syn_tcl;
 echo "source \$tclDir/design_utils.tcl" >> $dpr_syn_tcl;
-#echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/synth_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/impl_utils.tcl" >> $dpr_syn_tcl;
 echo "source \$tclDir/dfx_utils.tcl" >> $dpr_syn_tcl;
@@ -464,12 +461,13 @@ echo "####### FPGA type #######" >> $dpr_syn_tcl;
 echo "set part $device" >> $dpr_syn_tcl;
 echo "check_part \$part" >> $dpr_syn_tcl;
 
-echo "set run.topSynth  0" >> $dpr_syn_tcl;
-echo "set run.rmSynth   0" >> $dpr_syn_tcl;
-#echo "set run.prImpl    1" >> $dpr_syn_tcl;
-echo "set run.dfxImpl    1" >> $dpr_syn_tcl;
-echo "set run.prVerify  1" >> $dpr_syn_tcl;
-echo "set run.writeBitstream 1" >> $dpr_syn_tcl;
+echo "set run.topSynth         0" >> $dpr_syn_tcl;
+echo "set run.rmSynth          0" >> $dpr_syn_tcl;
+#echo "set run.prImpl           1" >> $dpr_syn_tcl;
+echo "set run.dfxImpl          1" >> $dpr_syn_tcl;
+echo "set run.greyboxImpl      1" >> $dpr_syn_tcl;
+echo "set run.prVerify         1" >> $dpr_syn_tcl;
+echo "set run.writeBitstream   0" >> $dpr_syn_tcl;
 
 echo "####Report and DCP controls - values: 0-required min; 1-few extra; 2-all" >> $dpr_syn_tcl;
 echo "set verbose      1" >> $dpr_syn_tcl;
@@ -679,7 +677,7 @@ do
                pbs_base_addr=0x50000000;
             else
                #pbs_base_addr=0x04000000
-               pbs_base_addr=0xA0000000;
+               pbs_base_addr=0xB0000000;
             fi
         fi
     done
@@ -708,7 +706,8 @@ bram_keyword=Block;
 dsp_keyword=""DSPs;
 
 # MG - increased tolerance to account for lack of PARTPINS in pblock
-LUT_TOLERANCE=4000;
+#LUT_TOLERANCE=4000;
+LUT_TOLERANCE=1000;
 BRAM_TOLERANCE=40;
 DSP_TOLERANCE=40;
 
@@ -818,6 +817,9 @@ regenerate_fplan=0;
     done
 
 }
+
+# create directory before generating code
+mkdir -p $1/socs/$2/vivado_dpr
 
 if [ "$4" == "BBOX" ]; then
     extract_acc $1 $2 $3

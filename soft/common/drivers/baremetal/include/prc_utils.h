@@ -6,10 +6,12 @@
 
 #define LEN_DEVNAME_MAX 32
 
-#define DECOUPLER_REG  0x30
-#define PRC_INTERRUPT_REG 0x34
+//#define DECOUPLER_REG     0x030 // addr[:2] = 0b01100 = 12
+#define DECOUPLER_REG     0x040 // addr[:2] = 0b10000 = 16
+//#define PRC_INTERRUPT_REG 0x034 // addr[:2] = 0b01101 = 13
+#define PRC_INTERRUPT_REG 0x104 // addr[:2] = 0b10001 = 17
 typedef struct pbs_map {
-    char name [LEN_DEVNAME_MAX];    
+    char name [LEN_DEVNAME_MAX];
     unsigned pbs_size;
     unsigned long long pbs_addr;
     unsigned pbs_tile_id;
