@@ -39,7 +39,7 @@ use work.ibex_esp_pkg.all;
 entity tile_io is
   generic (
     SIMULATION : boolean := false;
-    this_has_dco : integer range 0 to 1 := 0);
+    this_has_dco : integer range 0 to 2 := 0);
   port (
     raw_rstn           : in  std_ulogic;  -- active low raw reset (connect to DCO if present)
     tile_rst           : in  std_ulogic;  -- active low tile reset synch on clk
@@ -377,7 +377,7 @@ architecture rtl of tile_io is
 
   -- Interrupt ack to NoC
   type intr_ack_fsm is (idle, send_packet);
-  signal intr_ack_state, intr_ack_state_next : intr_ack_fsm := idle;
+  signal intr_ack_state, intr_ack_state_next : intr_ack_fsm;
   signal header, header_next : std_logic_vector(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
   -- Tile parameters
@@ -395,9 +395,9 @@ architecture rtl of tile_io is
     2      => '1',                                  -- irq3mp / plic
     3      => '1',                                  -- gptimer
     4      => '1',                                  -- esplink
-    13     => to_std_logic(CFG_SVGA_ENABLE),        -- svga
-    14     => to_std_logic(CFG_GRETH),              -- eth mac
-    15     => to_std_logic(CFG_SGMII * CFG_GRETH),  -- eth phy
+    5      => to_std_logic(CFG_SVGA_ENABLE),        -- svga
+    6      => to_std_logic(CFG_GRETH),              -- eth mac
+    7      => to_std_logic(CFG_SGMII * CFG_GRETH),  -- eth phy
     127    => to_std_logic(CFG_PRC),                -- prc
     others => '0');
 
@@ -405,7 +405,7 @@ architecture rtl of tile_io is
     0      => '1',                            -- bootrom
     1      => '1',                            -- ahb2apb
     2      => to_std_logic(GLOB_CPU_RISCV * GLOB_CPU_AXI),  -- risc-v clint
-    12     => to_std_logic(CFG_SVGA_ENABLE),  -- frame buffer
+    3      => to_std_logic(CFG_SVGA_ENABLE),  -- frame buffer
     others => '0');
 
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask_misc;
@@ -673,7 +673,7 @@ begin
   ahb0 : ahbctrl                        -- AHB arbiter/multiplexer
     generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
                  rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                 nahbm   => CFG_GRETH + CFG_DSU_ETH + 2, nahbs => maxahbs,
+                 nahbm   => CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN + 2, nahbs => maxahbs,
                  cfgmask => 0)
     port map (rst, tile_clk, ahbmi, ahbmo, ahbsi, ctrl_ahbso);
 
@@ -694,7 +694,7 @@ begin
   -- Drive unused bus ports
   -----------------------------------------------------------------------------
 
-  nam0 : for i in (CFG_GRETH + CFG_DSU_ETH + 2) to NAHBMST-1 generate
+  nam0 : for i in (CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN + 2) to NAHBMST-1 generate
     ahbmo(i) <= ahbm_none;
   end generate;
 
@@ -711,7 +711,7 @@ begin
   -----------------------------------------------------------------------------
   esp_init_1 : esp_init
     generic map (
-      hindex => CFG_GRETH + CFG_DSU_ETH + 1,
+      hindex => CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN + 1,
       sequence => esp_init_sequence,
       srst_sequence => esp_srst_sequence)
     port map (
@@ -799,7 +799,7 @@ begin
   -----------------------------------------------------------------------------
 
 -- pragma translate_off
-  bootram_model_gen: if SIMULATION = true generate
+  bootram_model_gen: if SIMULATION = true and CFG_IOLINK_EN = 0 generate
     ahbram_1 : ahbram_sim
       generic map (
         hindex   => ahbrom_hindex,
@@ -820,7 +820,7 @@ begin
   end generate bootram_model_gen;
 -- pragma translate_on
 
-  bootram_gen: if SIMULATION = false generate
+  bootram_gen: if SIMULATION = false or CFG_IOLINK_EN = 1 generate
     ahbram_2: ahbram
       generic map (
         hindex   => ahbrom_hindex,
@@ -989,8 +989,8 @@ begin
               noc_apbi_wirq.pwrite = '1' and noc_apbi_wirq.paddr(11 downto 0) = x"004" and
               noc_apbi_wirq.paddr(31 downto 16) = x"0c20" and irq_pwdata_hit = '1') then
 
-            header_reg := create_header(MISC_NOC_FLIT_SIZE, this_local_y, this_local_x, dest_y, dest_x,
-                                        INTERRUPT, X"00");
+            header_reg := create_header_misc(MISC_NOC_FLIT_SIZE, this_local_y, this_local_x, dest_y, dest_x,
+                                        INTERRUPT, (others => '0'));
             header_reg(MISC_NOC_FLIT_SIZE - 1 downto
                        MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
 
@@ -1319,8 +1319,10 @@ begin
   -- socmap, which is based on the ESP configuration file.
   override_cpu_loc <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB);
   cpu_loc_ovr_gen: for i in 0 to CFG_NCPU_TILE - 1 generate
-    cpu_loc_x(i) <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0 + GLOB_YX_WIDTH-1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0);
-    cpu_loc_y(i) <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3 + GLOB_YX_WIDTH-1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3);
+    --cpu_loc_x(i) <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0 + GLOB_YX_WIDTH-1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0);
+    --cpu_loc_y(i) <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3 + GLOB_YX_WIDTH-1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3);
+    cpu_loc_x(i) <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0 + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0);
+    cpu_loc_y(i) <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH);
   end generate cpu_loc_ovr_gen;
 
   intreq2noc_1 : intreq2noc
@@ -1362,7 +1364,7 @@ begin
   -- Requestes may be directed to the frame buffer or the boot ROM
   noc2ahbmst_1 : noc2ahbmst
     generic map (
-       tech                  => CFG_FABTECH,
+      tech                  => CFG_FABTECH,
       hindex                => CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN,
       axitran               => GLOB_CPU_AXI,
       little_end            => GLOB_CPU_RISCV,
@@ -1377,7 +1379,7 @@ begin
       local_y                   => this_local_y,
       local_x                   => this_local_x,
       ahbmi                     => ahbmi,
-      ahbmo                     => ahbmo(CFG_GRETH + CFG_DSU_ETH),
+      ahbmo                     => ahbmo(CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN),
       coherence_req_rdreq       => ahbm_rcv_rdreq,
       coherence_req_data_out    => ahbm_rcv_data_out,
       coherence_req_empty       => ahbm_rcv_empty,

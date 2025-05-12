@@ -241,6 +241,8 @@ architecture rtl of tile_acc is
   attribute keep of apb_rcv_rdreq              : signal is "true";
   attribute keep of apb_rcv_data_out           : signal is "true";
   attribute keep of apb_rcv_empty              : signal is "true";
+  attribute keep of tile_config                : signal is "true";
+  attribute keep of tile_id                    : signal is "true";
 
 begin
 
