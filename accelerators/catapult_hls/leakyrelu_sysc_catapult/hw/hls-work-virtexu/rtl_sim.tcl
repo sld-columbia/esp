@@ -1,0 +1,1 @@
+../hls/rtl_sim.tcl
