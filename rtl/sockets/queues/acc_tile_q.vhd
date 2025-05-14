@@ -123,10 +123,6 @@ end acc_tile_q;
 
 architecture rtl of acc_tile_q is
 
-  -- 1-bit CDC path on a non-FD primitive (unsafe)
-  --   From tile_clk to noc_clk: from tiles_gen to noc_router_gen (fifo_7, fifo_1, fifo_4, fifo_13c)
-  --   From noc_clk to tile_clk: from FIFOs to accelerator (fifo_10, fifo_14)
-
   -- tile->NoC1
   signal coherence_req_rdreq                 : std_ulogic;
   signal coherence_req_data_out              : coh_noc_flit_type;
@@ -450,7 +446,8 @@ begin  -- rtl
     interrupt_ack_wrreq <= '0';
 
     noc5_fifos_next <= noc5_fifos_current;
-    noc5_out_stop   <= '0';
+    --noc5_out_stop   <= '0';
+    noc5_out_stop   <= not tile_rst;
 
     case noc5_fifos_current is
       when none =>
@@ -465,13 +462,15 @@ begin  -- rtl
             end if;
           elsif (noc5_msg_type = INTERRUPT and noc5_preamble = PREAMBLE_1FLIT) then
             interrupt_ack_wrreq <= not interrupt_ack_full;
-            noc5_out_stop <= interrupt_ack_full;
+            --noc5_out_stop <= interrupt_ack_full;
+            noc5_out_stop <= interrupt_ack_full and not tile_rst;
           end if;
         end if;
 
       when packet_apb_rcv =>
         apb_rcv_wrreq <= not noc5_out_void and (not apb_rcv_full);
-        noc5_out_stop <= apb_rcv_full and (not noc5_out_void);
+        --noc5_out_stop <= apb_rcv_full and (not noc5_out_void);
+        noc5_out_stop <= apb_rcv_full and (not noc5_out_void) and not tile_rst;
         if (noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
             apb_rcv_full = '0') then
           noc5_fifos_next <= none;
@@ -487,7 +486,7 @@ begin  -- rtl
   -- read from APB proxy
   fifo_10 : inferred_async_fifo
     generic map (
-      g_size => 2,                       --Header, address, data
+      g_size => 4,                       --Header, address, data
       g_data_width => MISC_NOC_FLIT_SIZE,
       g_sync_q_o => 1)
     port map (

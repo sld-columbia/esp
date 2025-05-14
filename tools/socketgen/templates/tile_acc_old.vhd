@@ -440,13 +440,14 @@ begin
       apbo => apbo(0)
     );
 
+  -- all resets are asynchronous with inferred_async_fifo blocks!
   acc_tile_q_1 : acc_tile_q
     generic map (
       tech => CFG_FABTECH)
     port map (
       noc_rst                    => tile_rst, -- reset synchronous with noc clock
       noc_clk                    => noc_clk,
-      tile_rst                   => rst, -- reset synchronous with local clock
+      tile_rst                   => tile_rst, -- reset synchronous with local clock
       tile_clk                   => tile_clk,
       coherence_req_wrreq        => coherence_req_wrreq,
       coherence_req_data_in      => coherence_req_data_in,

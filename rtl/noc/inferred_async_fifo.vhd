@@ -59,59 +59,6 @@ entity inferred_async_fifo is
 
 end inferred_async_fifo;
 
---architecture syn_virtex7 of inferred_async_fifo is
---begin -- syn_virtex7
---
---
---
----- <-----Cut code below this line and paste into the architecture body---->
---
---   -- FIFO18E1: 18Kb FIFO (First-In-First-Out) Block RAM Memory
---   --           Virtex-7
---   -- Xilinx HDL Language Template, version 2023.2
---
---   FIFO18E1_inst : FIFO18E1
---   generic map (
---      ALMOST_EMPTY_OFFSET => X"0080",   -- Sets the almost empty threshold
---      ALMOST_FULL_OFFSET => X"0080",    -- Sets almost full threshold
---      DATA_WIDTH => 4,                  -- Sets data width to 4-36
---      DO_REG => 1,                      -- Enable output register (1-0) Must be 1 if EN_SYN = FALSE
---      EN_SYN => FALSE,                  -- Specifies FIFO as dual-clock (FALSE) or Synchronous (TRUE)
---      FIFO_MODE => "FIFO18",            -- Sets mode to FIFO18 or FIFO18_36
---      FIRST_WORD_FALL_THROUGH => FALSE, -- Sets the FIFO FWFT to FALSE, TRUE
---      INIT => X"000000000",             -- Initial values on output port
---      SIM_DEVICE => "7SERIES",          -- Must be set to "7SERIES" for simulation behavior
---      SRVAL => X"000000000"             -- Set/Reset value for output port
---   )
---   port map (
---      -- Read Data: 32-bit (each) output: Read output data
---      DO => DO,                   -- 32-bit output: Data output
---      DOP => DOP,                 -- 4-bit output: Parity data output
---      -- Status: 1-bit (each) output: Flags and other FIFO status outputs
---      ALMOSTEMPTY => ALMOSTEMPTY, -- 1-bit output: Almost empty flag
---      ALMOSTFULL => ALMOSTFULL,   -- 1-bit output: Almost full flag
---      EMPTY => EMPTY,             -- 1-bit output: Empty flag
---      FULL => FULL,               -- 1-bit output: Full flag
---      RDCOUNT => RDCOUNT,         -- 12-bit output: Read count
---      RDERR => RDERR,             -- 1-bit output: Read error
---      WRCOUNT => WRCOUNT,         -- 12-bit output: Write count
---      WRERR => WRERR,             -- 1-bit output: Write error
---      -- Read Control Signals: 1-bit (each) input: Read clock, enable and reset input signals
---      RDCLK => RDCLK,             -- 1-bit input: Read clock
---      RDEN => RDEN,               -- 1-bit input: Read enable
---      REGCE => REGCE,             -- 1-bit input: Clock enable
---      RST => RST,                 -- 1-bit input: Asynchronous Reset
---      RSTREG => RSTREG,           -- 1-bit input: Output register set/reset
---      -- Write Control Signals: 1-bit (each) input: Write clock and enable input signals
---      WRCLK => WRCLK,             -- 1-bit input: Write clock
---      WREN => WREN,               -- 1-bit input: Write enable
---      -- Write Data: 32-bit (each) input: Write input data
---      DI => DI,                   -- 32-bit input: Data input
---      DIP => DIP                  -- 4-bit input: Parity input
---   );
---
---end syn_virtex7;
-
 architecture syn of inferred_async_fifo is
 
   function f_bin2gray(bin : unsigned) return unsigned is
@@ -177,7 +124,7 @@ begin  -- syn
   end generate continuous_q_o_gen;
 
   sync_q_o_gen: if g_sync_q_o /= 0 generate
-    p_mem_read : process(clk_rd_i)
+    p_mem_read : process(rst_rd_n_i, clk_rd_i)
     begin
       if rst_rd_n_i = '0' then
         q_o <= (others => '0');
@@ -203,6 +150,7 @@ begin  -- syn
     end if;
   end process;
 
+  -- make next location visible immediately to read from memory
   rcb_incr      <= 1 when rd_int = '1' else 0;
   rcb.bin_next  <= rcb.bin + rcb_incr;
   rcb.gray_next <= f_bin2gray(rcb.bin_next);

@@ -75,7 +75,6 @@ architecture rtl of plle_drp is
     signal pll_clkout5       : std_ulogic;
 
     -- status signals
-    signal pll_locked_int    : std_ulogic;
     signal pll_locked        : std_ulogic;
     signal pll_rst           : std_ulogic;
 
@@ -105,8 +104,10 @@ architecture rtl of plle_drp is
     signal clk_sel_4567      : std_ulogic;
     signal clk_sel           : std_ulogic;
 
+    -- clock multiplexing tracking
+    constant LOCK_CNT_WIDTH  : integer := 6;
     signal dco_div_sel_prev  : std_logic_vector(2 downto 0);
-    signal div_sel_lock_cnt  : unsigned(2 downto 0);
+    signal div_sel_lock_cnt  : unsigned(LOCK_CNT_WIDTH downto 0);
 
 begin -- rtl
 
@@ -228,6 +229,12 @@ begin -- rtl
        I => pll_clkfb_bufgin
     );
 
+    no_freq_sel_gen : if EN_FREQ_SEL = 0 generate
+
+        pll_rst <= pll_drst or not rstn;
+
+    end generate no_freq_sel_gen;
+
     -- multiplex output clocks
     clk_freq_sel_gen : if EN_FREQ_SEL /= 0 generate
 
@@ -262,30 +269,28 @@ begin -- rtl
         );
 
         -- locked state
-        p_locked_cnt : process(clk_sel, rstn)
+        p_locked_cnt : process(clkin_bufgout, rstn)
         begin
             if rstn = '0' then
                 dco_div_sel_prev <= (others => '0');
                 div_sel_lock_cnt <= (others => '0');
-            elsif clk_sel'event and clk_sel = '1' then
+            elsif clkin_bufgout'event and clkin_bufgout = '1' then
                 dco_div_sel_prev <= dco_div_sel;
                 if (dco_div_sel /= dco_div_sel_prev) then
                     div_sel_lock_cnt <= (others => '0');
-                elsif (div_sel_lock_cnt(2) /= '1') then
+                elsif (div_sel_lock_cnt(LOCK_CNT_WIDTH) /= '1') then
                     div_sel_lock_cnt <= div_sel_lock_cnt + 1;
                 else
                     div_sel_lock_cnt <= div_sel_lock_cnt;
                 end if;
             end if;
         end process p_locked_cnt;
-        pll_locked <= div_sel_lock_cnt(2);
+        pll_rst <= pll_drst or not div_sel_lock_cnt(LOCK_CNT_WIDTH) or not rstn;
 
     end generate clk_freq_sel_gen;
 
     -- buffer all output clocks
     clk_mult_gen : if EN_FREQ_SEL = 0 generate
-
-        pll_locked <= pll_locked_int;
 
         u_pll_clkout0_bufg : BUFG
         port map (
@@ -391,7 +396,7 @@ begin -- rtl
 
         -- Feedback Clocks: 1-bit (each) output: Clock feedback ports
         CLKFBOUT => pll_clkfb_bufgin, -- 1-bit output: Feedback clock
-        LOCKED => pll_locked_int,     -- 1-bit output: LOCK
+        LOCKED => pll_locked,         -- 1-bit output: LOCK
 
         -- Clock Inputs: 1-bit (each) input: Clock inputs
         CLKIN1 => clkin_bufgout,   -- 1-bit input: Primary clock
@@ -412,6 +417,5 @@ begin -- rtl
         -- Feedback Clocks: 1-bit (each) input: Clock feedback ports
         CLKFBIN => pll_clkfb_bufgout  -- 1-bit input: Feedback clock
     );
-    pll_rst <= pll_drst or not rstn;
 
 end rtl;

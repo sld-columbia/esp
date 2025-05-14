@@ -117,7 +117,8 @@ begin  -- rtl
   apb_roundtrip: process (apb_state, apbo, apb_rcv_empty, apb_rcv_data_out,
                           apb_snd_full, request_y, request_x, request_msg_type,
                           header, psel_reg, tail_reg, waddr_reg, prdata_reg,
-                          apbi_reg, pready, psel_sig)
+                          apbi_reg, pready, psel_sig,
+                          rst)
     variable msg_type_v : noc_msg_type;
     variable addr_v : std_logic_vector(31 downto 0);
     variable data_v : std_logic_vector(31 downto 0);
@@ -178,7 +179,7 @@ begin  -- rtl
     tail <= tail_v;
 
     case apb_state is
-      when rcv_header => if apb_rcv_empty = '0' then
+      when rcv_header => if apb_rcv_empty = '0' and rst = '1' then
                            -- Pop from queue
                            apb_rcv_rdreq <= '1';
                            -- Remember request and prepare header for reply
