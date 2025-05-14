@@ -77,6 +77,7 @@ if [ -s "top.bit" ]; then
     fi
 
     # open minicom session
+    killall -9 -u $(whoami) minicom     # make sure no running minicom
     echo -e "${BOLD}..... Try to open minicom${NC}"
     echo "..... Try to open minicom" >> "$workflow_result"
     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
@@ -108,6 +109,7 @@ else
     echo -e "${BOLD}[FAIL] Bitstream generation failed${NC}"
     echo "[FAIL] Bitstream generation failed" >> "$workflow_result"
 fi
+killall -9 -u $(whoami) minicom     # make sure no running minicom
 
 ## Linux ---------------------------------------
 # ## setup
@@ -127,6 +129,7 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     echo "[PASS] 'make linux' pass" >> "$workflow_result"
 
     # open minicom session
+    killall -9 -u $(whoami) minicom     # make sure no running minicom
     echo -e "${BOLD}..... Try to open minicom${NC}"
     echo "..... Try to open minicom" >> "$workflow_result"
     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
@@ -175,4 +178,14 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
 else
     echo -e "${BOLD}[FAIL] 'make linux' fail${NC}"
     echo "[FAIL] 'make linux' fail" >> "$workflow_result"
+fi
+killall -9 -u $(whoami) minicom     # make sure no running minicom
+
+## redirect workflow result. print to standard output.
+if [ -r "$workflow_result" ]; then
+  echo "--- Content of $workflow_result ---"
+  echo "$(<"$workflow_result")"
+  echo "--- End of content ---"
+else
+  echo "Error: File '$workflow_result' not found or not readable."
 fi
