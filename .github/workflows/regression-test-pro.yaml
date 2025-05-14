@@ -36,6 +36,5 @@ jobs:
       
       - name: Run full workflow script
         run: |
-          source /opt/cad/scripts/tools_env.sh
           ./run_workflow.sh
         working-directory: ./utils/scripts/actions-pipeline

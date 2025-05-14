@@ -47,28 +47,35 @@ rm -rf top.bit
 make clean >/dev/null 2>&1
 
 ## prep files
-echo -e "Config ESP" >> "$workflow_result"
+echo -e "${BOLD}Configure ESP${NC}"
+echo -e "Configure ESP" >> "$workflow_result"
 cp "$testing_config" "$esp_config"
 make esp-config > "$logs/esp/esp_config.log" 2>&1
 
+echo -e "${BOLD}Execute HLS${NC}"
 echo -e "Execute HLS" >> "$workflow_result"
 make vivado-syn > "$logs/esp/vivado_syn.log" 2>&1
 
 ## run on fpga
 if [ -s "top.bit" ]; then
+    echo -e "${BOLD}[PASS] Bitstream is found${NC}"
     echo "[PASS] Bitstream is found" >> "$workflow_result"
 
     # make fpga-program
     cd "$ESP_ROOT/$soc_target"
+    echo -e "${BOLD}..... Try to program FPGA${NC}"
     echo "..... Try to program FPGA" >> "$workflow_result"
 	make fpga-program > "$fpga_program_log" 2>&1
     if grep -q ERROR "$fpga_program_log"; then
+        echo -e "${BOLD}[FAIL] 'make fpga-program' failed${NC}"
         echo "[FAIL] 'make fpga-program' failed" >> "$workflow_result"
     else
+        echo -e "${BOLD}[PASS] 'make fpga-program' pass${NC}"
         echo "[PASS] 'make fpga-program' pass" >> "$workflow_result"
     fi
 
     # open minicom session
+    echo -e "${BOLD}..... Try to open minicom${NC}"
     echo "..... Try to open minicom" >> "$workflow_result"
     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
     socat_pid=$!
@@ -76,6 +83,7 @@ if [ -s "top.bit" ]; then
     VIRTUAL_DEVICE=$(readlink ttyV0)
 
     # make fpga-run in background
+    echo -e "${BOLD}... Writing baremetal to minicom${NC}"
     echo -e "... Writing baremetal to minicom" >> "$workflow_result"
     cd "$ESP_ROOT/$soc_target"
     $fpga_run > "$fpga_run_log" 2>&1 &
@@ -85,14 +93,17 @@ if [ -s "top.bit" ]; then
     # minicom will be killed when make fpga-run is done
     # check "hello" message
     if grep -q "Hello from ESP!" "$minicom_log"; then
+        echo -e "${BOLD}[PASS] Baremetal hello message found"
         echo "[PASS] Baremetal hello message found" >> "$workflow_result"
     else
+        echo -e "${BOLD}[FAIL] Baremetal hello message not found${NC}"
         echo "[FAIL] Baremetal hello message not found" >> "$workflow_result"
     fi
 
     # clean up
     kill -9 "$socat_pid"
 else
+    echo -e "${BOLD}[FAIL] Bitstream generation failed${NC}"
     echo "[FAIL] Bitstream generation failed" >> "$workflow_result"
 fi
 
@@ -110,9 +121,11 @@ make linux
 cd "$ESP_ROOT/$soc_target"
 ## run on fpga
 if [ -s "./soft-build/ariane/linux.bin" ]; then
+    echo -e "${BOLD}[PASS] 'make linux' pass${NC}"
     echo "[PASS] 'make linux' pass" >> "$workflow_result"
 
     # open minicom session
+    echo -e "${BOLD}..... Try to open minicom${NC}"
     echo "..... Try to open minicom" >> "$workflow_result"
     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
     socat_pid=$!
@@ -120,6 +133,7 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     VIRTUAL_DEVICE=$(readlink ttyV0)
 
     # make fpga-run-linux in background
+    echo -e "${BOLD}..... Try to boot linux${NC}"
     echo "..... Try to boot linux" >> "$workflow_result"
     cd "$ESP_ROOT/$soc_target"
     $fpga_run_linux > "$fpga_run_linux_log" 2>&1 &
@@ -136,22 +150,27 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     wait $monitor_pid
     EXIT_CODE=$?
     if [ $EXIT_CODE -eq 0 ]; then
+        echo -e "${BOLD}[PASS] Linux boot pass${NC}"
         echo "[PASS] Linux boot pass" >> "$workflow_result"
 
         ## Application ---------------------------------------
         # execute ssh and fft
         cd "$ESP_ROOT/utils/scripts/actions-pipeline/helper"
+        echo -e "${BOLD}..... Try ssh and run fft${NC}"
         echo "..... Try ssh and run fft" >> "$workflow_result"
         $exe_ssh_fft > "$ssh_fft_log" 2>&1
+        echo -e "${BOLD}..... End of ssh and run fft${NC}"
         echo "..... End of ssh and run fft" >> "$workflow_result"
 
         # redirect overall fft result into main workflow result file
         grep "FFT OVERALL TEST RESULT" "$ssh_fft_log" >> "$workflow_result"
     else
+        echo -e "${BOLD}[FAIL] Linux boot fail${NC}"
         echo "[FAIL] Linux boot fail" >> "$workflow_result"
         killall -u $(whoami) minicom
     fi
 
 else
+    echo -e "${BOLD}[FAIL] 'make linux' fail${NC}"
     echo "[FAIL] 'make linux' fail" >> "$workflow_result"
 fi
