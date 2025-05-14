@@ -7,7 +7,7 @@ EMOJI_CHECK="\xE2\x9C\x94"
 
 ## Env setup
 source /opt/cad/scripts/tools_env.sh
-# make fft_stratus-hls
+
 ESP_ROOT=$(realpath ../../../)
 fpga_run="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_program.sh"
 fpga_run_linux="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_linux.sh"
@@ -84,10 +84,11 @@ fi
 ## Software Flow ##
 ## suppose targets are prepared
 ## fft workflow
-make linux-distclean
-make linux
-make examples
-make linux
+# make fft_stratus-hls
+# make linux-distclean
+# make linux
+# make examples
+# make linux
 
 ## Run Software
 if [ -s "./soft-build/ariane/linux.bin" ]; then

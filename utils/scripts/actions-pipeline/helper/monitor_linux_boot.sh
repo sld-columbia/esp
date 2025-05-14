@@ -4,8 +4,9 @@
 
 # Env setup
 ESP_ROOT=$(realpath ../../)
-logs="$ESP_ROOT/utils/scripts/actions-pipeline/logs"
-minicom="$logs/minicom/linux_boot.log"
+soc_name="xilinx-vc707-xc7vx485t"
+logs="$ESP_ROOT/utils/scripts/actions-pipeline/${soc_name}_logs"
+minicom="$logs/fpga/minicom_boot_linux.log"
 
 # Target
 SUCCESS_PATTERN="Welcome to ESP"

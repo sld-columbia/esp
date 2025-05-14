@@ -16,9 +16,6 @@ jobs:
         with:
           ref: regression-testing
       
-      - name: Test workflow with hello
-        run: echo "hello"
-      
       - name: Set sysroot
         run: |
           cp /opt/sysroot.tgz ./sysroot.tgz
@@ -40,5 +37,5 @@ jobs:
       - name: Run full workflow script
         run: |
           source /opt/cad/scripts/tools_env.sh
-          ./run_ssh_fft.sh
+          ./run_workflow.sh
         working-directory: ./utils/scripts/actions-pipeline
