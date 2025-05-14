@@ -111,14 +111,14 @@ fi
 
 ## Linux ---------------------------------------
 # ## setup
-make fft_stratus-hls
-cd "$ESP_ROOT/$soc_target"
-make linux-distclean
-## prep files
-make soft
-make linux
-make examples
-make linux
+# make fft_stratus-hls
+# cd "$ESP_ROOT/$soc_target"
+# make linux-distclean
+# ## prep files
+# make soft
+# make linux
+# make examples
+# make linux
 
 cd "$ESP_ROOT/$soc_target"
 ## run on fpga
