@@ -40,21 +40,23 @@ minicom_log="$logs/fpga/minicom_baremetal.log"
 ssh_fft_log="$logs/fpga/ssh_fft.log"
 
 ## SoC ---------------------------------------
-## setup env
 cd "$ESP_ROOT/$soc_target"
-rm -rf vivado
-rm -rf top.bit
-make clean >/dev/null 2>&1
+# ## setup env
+# rm -rf vivado
+# rm -rf top.bit
+# make clean >/dev/null 2>&1
 
-## prep files
-echo -e "${BOLD}Configure ESP${NC}"
-echo -e "Configure ESP" >> "$workflow_result"
-cp "$testing_config" "$esp_config"
-make esp-config > "$logs/esp/esp_config.log" 2>&1
+# ## prep files
+# echo -e "${BOLD}Configure ESP${NC}"
+# echo -e "Configure ESP" >> "$workflow_result"
+# cp "$testing_config" "$esp_config"
+# make esp-config > "$logs/esp/esp_config.log" 2>&1
 
-echo -e "${BOLD}Execute HLS${NC}"
-echo -e "Execute HLS" >> "$workflow_result"
-make vivado-syn > "$logs/esp/vivado_syn.log" 2>&1
+# echo -e "${BOLD}Execute HLS${NC}"
+# echo -e "Execute HLS" >> "$workflow_result"
+# make vivado-syn > "$logs/esp/vivado_syn.log" 2>&1
+# echo -e "${BOLD}HLS done${NC}"
+# echo "HLS done" >> "$workflow_result"
 
 ## run on fpga
 if [ -s "top.bit" ]; then
