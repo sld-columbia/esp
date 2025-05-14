@@ -84,10 +84,10 @@ fi
 ## Software Flow ##
 ## suppose targets are prepared
 ## fft workflow
-# make linux-distclean
-# make linux
-# make examples
-# make linux
+make linux-distclean
+make linux
+make examples
+make linux
 
 ## Run Software
 if [ -s "./soft-build/ariane/linux.bin" ]; then

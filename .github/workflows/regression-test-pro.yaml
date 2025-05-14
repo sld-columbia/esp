@@ -30,13 +30,15 @@ jobs:
         run: ./utils/scripts/submodule_init.sh
       
       - name: Grant permissions to actions-pipeline
-        run: chmod 700 *.sh
+        run: chmod +x *.sh
         working-directory: ./utils/scripts/actions-pipeline
       
       - name: Grant permissions to helper
-        run: chmod 700 *.sh
+        run: chmod +x *.sh
         working-directory: ./utils/scripts/actions-pipeline/helper
       
-      - name: Run SoC flow script
-        run: ./run_esp-soft.sh
+      - name: Run full workflow script
+        run: |
+          source /opt/cad/scripts/tools_env.sh
+          ./run_ssh_fft.sh
         working-directory: ./utils/scripts/actions-pipeline
