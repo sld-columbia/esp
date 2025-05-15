@@ -1058,6 +1058,7 @@ begin
       clk => tile_clk,
       rstn => rst,
       pconfig => this_csr_pconfig,
+      rst_tile_id => (others => '0'),
       mon_ddr => monitor_ddr_none,
       mon_mem => monitor_mem_none,
       mon_noc => mon_noc,

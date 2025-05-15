@@ -50,7 +50,7 @@ entity tile_mem is
     dco_fc_sel         : in std_logic_vector(5 downto 0);
     dco_cc_sel         : in std_logic_vector(5 downto 0);
     dco_clk_sel        : in std_ulogic;
-    dco_en             : in std_ulogic;  
+    dco_en             : in std_ulogic;
     dco_clk_delay_sel  : in std_logic_vector(11 downto 0);
     dco_clk_div2       : out std_ulogic;
     dco_clk_div2_90    : out std_ulogic;
@@ -462,6 +462,7 @@ begin
       clk => tile_clk,
       rstn => rst,
       pconfig => this_csr_pconfig,
+      rst_tile_id => (others => '0'),
       mon_ddr => mon_ddr,
       mon_mem => mon_mem_int,
       mon_noc => mon_noc,

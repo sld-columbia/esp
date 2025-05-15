@@ -43,7 +43,8 @@ end noc2apb;
 
 architecture rtl of noc2apb is
 
-  type apb_fsm is (rcv_header, rcv_address, apb_write_strobe,
+  type apb_fsm is (rcv_reset,
+                   rcv_header, rcv_address, apb_write_strobe,
                    rcv_data, snd_data, snd_data_delay);
   signal apb_state, apb_next : apb_fsm;
 
@@ -117,8 +118,7 @@ begin  -- rtl
   apb_roundtrip: process (apb_state, apbo, apb_rcv_empty, apb_rcv_data_out,
                           apb_snd_full, request_y, request_x, request_msg_type,
                           header, psel_reg, tail_reg, waddr_reg, prdata_reg,
-                          apbi_reg, pready, psel_sig,
-                          rst)
+                          apbi_reg, pready, psel_sig)
     variable msg_type_v : noc_msg_type;
     variable addr_v : std_logic_vector(31 downto 0);
     variable data_v : std_logic_vector(31 downto 0);
@@ -179,7 +179,9 @@ begin  -- rtl
     tail <= tail_v;
 
     case apb_state is
-      when rcv_header => if apb_rcv_empty = '0' and rst = '1' then
+      when rcv_reset => apb_next <= rcv_header;
+
+      when rcv_header => if apb_rcv_empty = '0' then
                            -- Pop from queue
                            apb_rcv_rdreq <= '1';
                            -- Remember request and prepare header for reply
@@ -270,7 +272,7 @@ begin  -- rtl
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
-      apb_state <= rcv_header;
+      apb_state <= rcv_reset;
     elsif clk'event and clk = '1' then  -- rising clock edge
       apb_state <= apb_next;
     end if;

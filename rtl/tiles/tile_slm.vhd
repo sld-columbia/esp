@@ -51,7 +51,7 @@ entity tile_slm is
     dco_fc_sel         : in std_logic_vector(5 downto 0);
     dco_cc_sel         : in std_logic_vector(5 downto 0);
     dco_clk_sel        : in std_ulogic;
-    dco_en             : in std_ulogic;  
+    dco_en             : in std_ulogic;
     dco_clk_delay_sel  : in std_logic_vector(11 downto 0);
     -- DDR controller ports (this_has_ddr -> 1)
     dco_clk_div2       : out std_ulogic;
@@ -229,7 +229,7 @@ begin
         port map (tile_rst, dco_clk_div2_int, dco_clk_lock, phy_rstn, open);
     end generate rst_ddr;
 
-    rst_slm: if this_has_ddr = 0 generate 
+    rst_slm: if this_has_ddr = 0 generate
       tile_rstn_out : rstgen
         generic map (acthigh => 1, syncin => 0)
         port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
@@ -434,7 +434,7 @@ begin
   mon_mem_int.dma_rsp          <= dma_snd_wrreq or cpu_dma_snd_wrreq or coherent_dma_snd_wrreq;
   mon_mem_int.coherent_dma_req <= '0';
   mon_mem_int.coherent_dma_rsp <= '0';
-  
+
   mon_mem <= mon_mem_int;
 
   -- Memory mapped registers
@@ -445,6 +445,7 @@ begin
       clk => tile_clk,
       rstn => rst,
       pconfig => this_csr_pconfig,
+      rst_tile_id => (others => '0'),
       mon_ddr => monitor_ddr_none,
       mon_mem => mon_mem_int,
       mon_noc => mon_noc,

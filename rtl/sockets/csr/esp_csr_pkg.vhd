@@ -82,6 +82,7 @@ package esp_csr_pkg is
       clk         : in std_logic;
       rstn        : in std_logic;
       pconfig     : in apb_config_type;
+      rst_tile_id : in  std_logic_vector(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
       mon_ddr     : in monitor_ddr_type;
       mon_mem     : in monitor_mem_type;
       mon_noc     : in monitor_noc_vector(1 to 6);

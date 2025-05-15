@@ -24,6 +24,7 @@ entity esp_tile_csr is
     clk         : in  std_logic;
     rstn        : in  std_logic;
     pconfig     : in  apb_config_type;
+    rst_tile_id : in  std_logic_vector(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
     mon_ddr     : in  monitor_ddr_type;
     mon_mem     : in  monitor_mem_type;
     mon_noc     : in  monitor_noc_vector(1 to 6);
@@ -141,8 +142,7 @@ architecture rtl of esp_tile_csr is
   ---   DEFAULT_ACC_COH & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID & DEFAULT_TILE_ID & "0";
   constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
     DEFAULT_PRC_INTR_CFG & DEFAULT_DECOUP_CFG &
-    DEFAULT_CPU_LOC_OVR &
-    DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_MDC_SCALER_CFG &
+    DEFAULT_CPU_LOC_OVR & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_MDC_SCALER_CFG &
     DEFAULT_DCO_NOC_CFG & DEFAULT_ACC_COH & DEFAULT_ARIANE_HARTID & DEFAULT_TILE_ID & "0";
 
   signal csr_addr : integer range 0 to 31;
@@ -252,7 +252,11 @@ begin
   begin
     if rstn = '0' then
       burst <= (others => '0');
-      config_r     <= DEFAULT_CONFIG;
+      --config_r     <= DEFAULT_CONFIG;
+      -- hard reset for all registers but the tile ID
+      config_r(ESP_CSR_WIDTH-1 downto ESP_CSR_TILE_ID_MSB+1) <= DEFAULT_CONFIG(ESP_CSR_WIDTH-1 downto ESP_CSR_TILE_ID_MSB+1);
+      config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= rst_tile_id;
+      config_r(ESP_CSR_TILE_ID_LSB-1 downto 0) <= DEFAULT_CONFIG(ESP_CSR_TILE_ID_LSB-1 downto 0);
       srst         <= '0';
       tp_acc_rst    <= '0';
     elsif clk'event and clk = '1' then

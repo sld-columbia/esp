@@ -18,12 +18,47 @@
 #define DEV_NAME_MAC "sld,mac_vivado"
 #define DEV_TILE_ID_MAC 2
 
-//unsigned div_sel[7] = { 0b100, 0b101, 0b011, 0b110, 0b010, 0b111, 0b001 };
-unsigned div_sel[7] = { 0b100, 0b100, 0b100, 0b100, 0b100, 0b101, 0b100 };
+#define NUM_SERVERS 1
+#define NUM_FREQUENCIES 7
 
-//#define MG_DEBUG
+// profiling for a server
+typedef struct {
+  float duration[NUM_FREQUENCIES];
+  float power[NUM_FREQUENCIES];
+  float reconf_time;
+  unsigned reconf_cycles;
+} server_profile_t;
 
-// Find tile 2 router address relative to tile 2 device
+// current configuration
+typedef struct {
+  struct esp_device *dev_tile;
+  unsigned tile_id;
+  unsigned div_sel_idx;
+} server_runtime_t;
+
+// selection values for the clock multiplexor
+unsigned div_sel[NUM_FREQUENCIES] = { 0b001, 0b010, 0b011, 0b100, 0b101, 0b110, 0b111 };
+
+// cycle monitor
+unsigned int sched_cycles_start = 0, sched_cycles_new, sched_cycles_diff;
+unsigned int total_cycles = 0, total_time = 0;
+float sched_power_start;
+esp_monitor_args_t mon_args = {ESP_MON_READ_SINGLE, 0xffff, 1, 0, MON_DVFS_BASE_INDEX + 3, 0};
+
+// power profiles under each frequency
+server_profile_t profiles[NUM_SERVERS] = {
+  {
+    { 0.489, 0.440, 0.398, 0.363, 0.328, 0.299, 0.273 },
+    { 22, 24, 25, 27, 29, 30, 32 },
+    20.0, // XXX
+    20 // XXX
+  }
+};
+
+// runtime configuration
+server_runtime_t servers[NUM_SERVERS];
+
+// Find tile router address relative to tile device
 int get_dco_reg_addr(struct esp_device *dev_tile_1, int tile_id) {
   return (0x60090000
         + 0x200 * tile_id)  // router base address
@@ -46,9 +81,55 @@ void write_and_read_div_sel(struct esp_device *dev_tile_1, int tile_id, int div_
     tile_id = get_dco_reg_addr(dev_tile_1, tile_id);
     iowrite32(dev_tile_1, tile_id, encode_dco_ctrl(0, div_sel, 0, 0, 0, en));
     printf("Done writing register with div_sel = %d, en = %d, now reading\n", div_sel, en);
-    int z = 1000000; while (z--);
+    //int z = 1000000; while (z--);
     tile_id = ioread32(dev_tile_1, tile_id);
     printf("Read register and got %d\n", tile_id);
+}
+
+// initialize server state
+void init_server(unsigned server_idx, struct esp_device *dev, unsigned tile_id, unsigned div_sel_idx) {
+  servers[server_idx].dev_tile = dev;
+  servers[server_idx].tile_id = tile_id;
+  servers[server_idx].div_sel_idx = div_sel_idx;
+}
+
+// print out power consumption statistics
+void log_power(float power_new, int event_id) {
+    // calculate duration since last log
+    sched_cycles_new = esp_monitor(mon_args, NULL);
+
+    // previous cycle count, new cycle count, previous power, new power, message
+    printf("CSV:%d,%d,%f,%f,%d\n", sched_cycles_start, sched_cycles_new, sched_power_start, power_new, event_id);
+
+    // save values for this period
+    sched_power_start = power_new;
+    sched_cycles_start = sched_cycles_new;
+}
+
+#define EVENT_IDLE 0
+#define EVENT_DPR_START 1
+#define EVENT_DFS_START 2
+#define EVENT_WRK_START 3
+void spawn_hw_thread(int server_idx, int pbs_id, int new_div_sel_idx) {
+    server_runtime_t *server = &servers[server_idx];
+    server_profile_t *profile = &profiles[server_idx];
+
+    log_power(profile->power[server->div_sel_idx], EVENT_DPR_START);
+
+    // load PBs
+#ifdef DO_DPR
+    reconfigure_FPGA(dev_tile_1, pbs_id);
+#else
+    // wait for profiled reconfiguration time
+#endif
+
+    log_power(profile->power[server->div_sel_idx], EVENT_DFS_START);
+
+    // schedule new frequency based on budget
+    write_and_read_div_sel(server->dev_tile, server->tile_id, div_sel[new_div_sel_idx], 1);
+    server->div_sel_idx = new_div_sel_idx;
+
+    log_power(profile->power[server->div_sel_idx], EVENT_WRK_START);
 }
 
 int main(int argc, char * argv[])
@@ -64,13 +145,6 @@ int main(int argc, char * argv[])
 	  struct esp_device *dev_tile_1;
 	  unsigned **ptable_mac;
     token_t *mem_mac, *mem_gold_mac;
-
-    printf("Hello from dfs_mac\n");
-    #ifdef MG_DEBUG
-    printf("MG_DEBUG defined\n");
-    #else
-    printf("MG_DEBUG not defined\n");
-    #endif
 
     // cycle monitor
     esp_monitor_args_t mon_args;
@@ -112,28 +186,11 @@ int main(int argc, char * argv[])
         printf("**************** %s.%d ****************\n", DEV_NAME, n);
 
         dev_tile_1 = &espdevs_tile_1[0];
+        init_server(0, dev_tile_1, 2, 3);
 
         //write_and_read_div_sel(dev_tile_1, DEV_TILE_ID_MAC, 0b100, 0);
-        write_and_read_div_sel(dev_tile_1, DEV_TILE_ID_MAC, div_sel[k], 1);
-
-        /*#ifdef MG_DEBUG
-        int z = 0;
-
-        for (z = 0; z < 1000000; z++);
-        printf("z is %d\n", z);
-        write_and_read_div_sel(dev_tile_1, DEV_TILE_ID_MAC, 0b101, 1);
-
-        for (z = 0; z < 1000000; z++);
-        printf("z is %d\n", z);
-        write_and_read_div_sel(dev_tile_1, DEV_TILE_ID_MAC, 0b100, 0);
-        return 0;
-        printf("Writing specific configuration registers\n");
-        iowrite32(dev_tile_1, MAC_MAC_N_REG, mac_n);
-        iowrite32(dev_tile_1, MAC_MAC_VEC_REG, mac_vec);
-        iowrite32(dev_tile_1, MAC_MAC_LEN_REG, mac_len);
-        printf("Done writing configuration registers\n");
-        printf("Read status 0: %d\n", ioread32(dev_tile_1, STATUS_REG));
-        #endif*/
+        //write_and_read_div_sel(dev_tile_1, DEV_TILE_ID_MAC, div_sel[k], 1);
+        spawn_hw_thread(0, 0, k);
 
         // Check DMA capabilities
         printf("Checking DMA\n");
@@ -161,37 +218,14 @@ int main(int argc, char * argv[])
         printf("  ptable = %p\n", ptable_mac);
         printf("  nchunk = %lu\n", NCHUNK(mem_size_mac));
 
-        /*#ifdef MG_DEBUG
-        iowrite32(dev_tile_1, PT_ADDRESS_REG, (unsigned) ptable_mac);
-        iowrite32(dev_tile_1, PT_NCHUNK_REG, NCHUNK(mem_size_mac));
-        iowrite32(dev_tile_1, PT_SHIFT_REG, CHUNK_SHIFT_MAC);
-
-        printf("Writing start command\n");
-        //iowrite32(dev_tile_1, CMD_REG, CMD_MASK_START);
-        printf("Done writing start\n");
-        printf("Read status 1: %d\n", ioread32(dev_tile_1, STATUS_REG));
-        //iowrite32(dev_tile_1, CMD_REG, 0x0);
-        printf("Done writing end\n");
-
-        write_and_read_div_sel(dev_tile_1, DEV_TILE_ID_MAC, 0b110, 1);
-
-        return 0;
-        #endif*/
-
-        // Configure clock frequency
-        //printf("Writing DCO\n");
-        //write_and_read_div_sel(dev_tile_1, DEV_TILE_ID_MAC, k, 1);
-        //write_and_read_div_sel(dev_tile_1, DEV_TILE_ID_MAC, 0b100, 0);
-
         printf("  --------------------\n");
         printf("  Generate input...\n");
         iowrite32(dev_tile_1, CMD_REG, 0);
-        init_buf_mac(mem_mac, mem_gold_mac);
+        //init_buf_mac(mem_mac, mem_gold_mac);
         printf("  Done generating input\n");
 
         // Pass common configuration parameters
 
-        //iowrite32(dev_tile_1, SELECT_REG, ioread32(dev_tile_1, DEVID_REG));
         printf("Writing basic configuration registers\n");
         iowrite32(dev_tile_1, COHERENCE_REG, ACC_COH_NONE);
 
@@ -209,9 +243,11 @@ int main(int argc, char * argv[])
         printf("Done writing basic configuration registers\n");
 
         // Pass accelerator-specific configuration parameters
+        printf("Writing specific configuration registers\n");
         iowrite32(dev_tile_1, MAC_MAC_N_REG, mac_n);
         iowrite32(dev_tile_1, MAC_MAC_VEC_REG, mac_vec);
         iowrite32(dev_tile_1, MAC_MAC_LEN_REG, mac_len);
+        printf("Done writing specific configuration registers\n");
 
         // Flush (customize coherence model here)
         esp_flush(coherence);
@@ -219,23 +255,15 @@ int main(int argc, char * argv[])
         // Start accelerators
         printf("  Start...\n");
         cycles_start = esp_monitor(mon_args, NULL);
-
-        //for (int z = 0; z < 100; z++) {
         iowrite32(dev_tile_1, CMD_REG, CMD_MASK_START);
 
         // Wait for completion
         done = 0;
-        int iterations;
-        for (iterations = 0; iterations < 1000000 && !done; iterations++) {
-            while (!done) {
-                done = ioread32(dev_tile_1, STATUS_REG);
-                done &= STATUS_MASK_DONE;
-            }
+        while (!done) {
+            done = ioread32(dev_tile_1, STATUS_REG);
+            done &= STATUS_MASK_DONE;
         }
         iowrite32(dev_tile_1, CMD_REG, 0x0);
-        if (iterations == 1000000) {
-            printf("Warning: timed out at 1000000 iterations\n");
-        }
 
         cycles_end = esp_monitor(mon_args, NULL);
         cycles_diff = sub_monitor_vals(cycles_start, cycles_end);

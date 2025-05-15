@@ -566,6 +566,13 @@ architecture rtl of tile_io is
   attribute keep of header : signal is "true";
   attribute keep of header_next : signal is "true";
 
+  attribute mark_debug of remote_apb_rcv_rdreq      : signal is "true";
+  attribute mark_debug of remote_apb_rcv_data_out   : signal is "true";
+  attribute mark_debug of remote_apb_rcv_empty      : signal is "true";
+  attribute mark_debug of remote_apb_snd_wrreq      : signal is "true";
+  attribute mark_debug of remote_apb_snd_data_in    : signal is "true";
+  attribute mark_debug of remote_apb_snd_full       : signal is "true";
+
 begin
 
   -- DCO Reset synchronizer
@@ -1433,6 +1440,7 @@ begin
       clk => tile_clk,
       rstn => rst,
       pconfig => this_csr_pconfig,
+      rst_tile_id => (others => '0'),
       mon_ddr => monitor_ddr_none,
       mon_mem => monitor_mem_none,
       mon_noc => mon_noc,

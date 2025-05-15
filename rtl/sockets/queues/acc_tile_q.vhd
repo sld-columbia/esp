@@ -446,8 +446,7 @@ begin  -- rtl
     interrupt_ack_wrreq <= '0';
 
     noc5_fifos_next <= noc5_fifos_current;
-    --noc5_out_stop   <= '0';
-    noc5_out_stop   <= not tile_rst;
+    noc5_out_stop   <= '0';
 
     case noc5_fifos_current is
       when none =>
@@ -462,15 +461,13 @@ begin  -- rtl
             end if;
           elsif (noc5_msg_type = INTERRUPT and noc5_preamble = PREAMBLE_1FLIT) then
             interrupt_ack_wrreq <= not interrupt_ack_full;
-            --noc5_out_stop <= interrupt_ack_full;
-            noc5_out_stop <= interrupt_ack_full and not tile_rst;
+            noc5_out_stop <= interrupt_ack_full;
           end if;
         end if;
 
       when packet_apb_rcv =>
         apb_rcv_wrreq <= not noc5_out_void and (not apb_rcv_full);
-        --noc5_out_stop <= apb_rcv_full and (not noc5_out_void);
-        noc5_out_stop <= apb_rcv_full and (not noc5_out_void) and not tile_rst;
+        noc5_out_stop <= apb_rcv_full and (not noc5_out_void);
         if (noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
             apb_rcv_full = '0') then
           noc5_fifos_next <= none;

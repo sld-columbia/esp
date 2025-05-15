@@ -176,6 +176,8 @@ architecture rtl of tile_acc is
   signal this_csr_pindex        : integer range 0 to NAPBSLV - 1;
   signal this_csr_pconfig       : apb_config_type;
 
+  signal rst_tile_id : std_logic_vector(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
+
   signal this_local_y : local_yx;
   signal this_local_x : local_yx;
 
@@ -339,6 +341,23 @@ begin
   tile_config_id   <= tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
   tile_id          <= to_integer(unsigned(tile_config_id(1 downto 0))); -- used to derive these parameter signals
 
+  -- persist tile ID on internal (soft) reset, allow for hard reset
+  rst_tile_id_gen: process(tile_clk, tile_rst) is
+  begin  -- process dco_clk_lock_sync_gen
+    if tile_rst = '0' then
+      -- hard reset
+      rst_tile_id <= (others => '0');
+    elsif tile_clk'event and tile_clk = '1' then
+      if rst = '1' then
+        -- update soft reset value
+        rst_tile_id <= tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
+      else
+        -- soft reset value
+        rst_tile_id <= rst_tile_id;
+      end if;
+    end if;
+  end process rst_tile_id_gen;
+
   -- passed to accelerator
   this_pindex      <= tile_apb_idx(tile_id);
   this_paddr       <= tile_apb_paddr(tile_id);
@@ -422,9 +441,9 @@ begin
       pindex  => 0)
     port map(
       clk => tile_clk,
-      --rstn => tile_rst, -- MG: changed to tile_rst so persist value in CSR
       rstn => rst,
       pconfig => this_csr_pconfig,
+      rst_tile_id => rst_tile_id,
       mon_ddr => monitor_ddr_none,
       mon_mem => monitor_mem_none,
       --mon_noc => mon_noc,

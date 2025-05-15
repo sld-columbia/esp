@@ -138,8 +138,8 @@ sim-gui: sim-compile
 	$(QUIET_RUN)cd modelsim; \
 	if test -e $(DESIGN_PATH)/vsim.tcl; then \
 		$(VSIM) -do "do $(DESIGN_PATH)/vsim.tcl"; \
-	elif test -e $(DESIGN_PATH)/vsim.do; then \
-	    $(VSIM) -do "$(DESIGN_PATH)/vsim.do"; \
+	elif test -e $(DESIGN_PATH)/vsim-gui.do; then \
+	    $(VSIM) -do "$(DESIGN_PATH)/vsim-gui.do"; \
 	else \
 		$(VSIM); \
 	fi;
