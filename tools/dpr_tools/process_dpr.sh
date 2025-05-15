@@ -818,8 +818,48 @@ regenerate_fplan=0;
 
 }
 
+function gen_report_script() {
+base_clock="20.0"
+clock_multiplier="16.0"
+clock_dividers=("19.0" "18.0" "17.0" "16.0" "15.0" "14.0" "13.0")
+dpr_report_tcl="vivado_dpr/report.tcl"
+echo "Writing to $dpr_report_tcl"
+echo "set tclParams [list hd.visual 1]" > $dpr_report_tcl;
+echo "set tclHome \"$tcl_dir\" ">> $dpr_report_tcl;
+echo "set tclDir \$tclHome " >> $dpr_report_tcl;
+echo "set projDir \"$1/socs/$2/vivado_dpr\" " >> $dpr_report_tcl;
+echo "source \$tclDir/report_utils.tcl" >> $dpr_report_tcl;
+
+echo "set base_clock $base_clock" >> $dpr_report_tcl;
+echo "set clock_periods [list \\" >> $dpr_report_tcl;
+for divider in "${clock_dividers[@]}"; do
+    echo "  [expr \$base_clock * $clock_multiplier / $divider] \\" >> $dpr_report_tcl;
+done
+echo "]" >> $dpr_report_tcl;
+echo "" >> $dpr_report_tcl;
+
+for ((i=0; i<$num_acc_tiles; i++))
+do
+    dcp="$1/socs/$2/vivado_dpr/Checkpoint/acc_top_inst_${new_accelerators[$i,1]}_route_design.dcp"
+    acc_base_name=${new_accelerators[$i,1]}
+    acc_base_name=${acc_base_name%%_${new_accelerators[$i,0]}}
+
+    if [ -f "$dcp" ]; then
+        echo "open_checkpoint $dcp" >> $dpr_report_tcl;
+
+        if [ "$5" == "BBOX" ]; then
+            echo "update_design -cells [get_cells ${acc_base_name}_gen.noc_${acc_base_name}_i] -black_box" >> $dpr_report_tcl;
+        fi
+
+        echo "do_report tile_blanked_${new_accelerators[$i,0]} \$clock_periods" >> $dpr_report_tcl;
+        echo "close_design" >> $dpr_report_tcl;
+    fi
+done
+}
+
 # create directory before generating code
 mkdir -p $1/socs/$2/vivado_dpr
+mkdir -p $1/socs/$2/vivado_dpr/Reports
 
 if [ "$4" == "BBOX" ]; then
     extract_acc $1 $2 $3
@@ -889,6 +929,10 @@ elif [ "$4" == "GEN_HDR" ]; then
 
 elif [ "$4" == "LOAD_BS" ]; then
     load_bs $1 $2 $3 $4
+
+elif [ "$4" == "REPORT" ]; then
+    extract_acc $1 $2 $3
+    gen_report_script $1 $2 $3 $4 $5
 
 elif [ "$4" == "test" ]; then
     extract_acc $1 $2 $3

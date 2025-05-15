@@ -140,8 +140,8 @@ architecture rtl of esp_tile_csr is
   --- constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
   ---   DEFAULT_ACC_COH & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID & DEFAULT_TILE_ID & "0";
   constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
-    DEFAULT_CPU_LOC_OVR &
     DEFAULT_PRC_INTR_CFG & DEFAULT_DECOUP_CFG &
+    DEFAULT_CPU_LOC_OVR &
     DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_MDC_SCALER_CFG &
     DEFAULT_DCO_NOC_CFG & DEFAULT_ACC_COH & DEFAULT_ARIANE_HARTID & DEFAULT_TILE_ID & "0";
 
@@ -177,7 +177,7 @@ begin
       case csr_addr is
         when ESP_CSR_VALID_ADDR =>
           readdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0) <=
-            (0 =>  prc_interrupt, others => '0'); --config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB);
+            config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB);
         when ESP_CSR_TILE_ID_ADDR =>
           readdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0) <=
             config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
