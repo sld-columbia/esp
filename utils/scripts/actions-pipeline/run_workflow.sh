@@ -75,14 +75,26 @@ if [ -s "top.bit" ]; then
         echo -e "${BOLD}[PASS] 'make fpga-program' pass${NC}"
         echo "[PASS] 'make fpga-program' pass" >> "$workflow_result"
     fi
+    # trying to clean up port
+    KNOWN_PORT=3122 # replace with actual port number
+    echo "Attempting to free TCP port $KNOWN_PORT..."
+    fuser -k -n tcp "$KNOWN_PORT"
+    sleep 2 # Give a moment for resources to free up
 
     # open minicom session
-    killall -9 -u $(whoami) minicom     # make sure no running minicom
+    killall -9 -u "$(whoami)" minicom 2>/dev/null # Ensure no old minicom
     echo -e "${BOLD}..... Try to open minicom${NC}"
     echo "..... Try to open minicom" >> "$workflow_result"
     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
     socat_pid=$!
-    sleep 2
+    # sleep 2
+    # wait for minicom
+    if ! timeout 5s sh -c 'until [ -e ttyV0 ]; do sleep 0.1; done'; then
+        echo -e "${BOLD}[FAIL] ttyV0 did not appear in time.${NC}"
+        kill -9 "$socat_pid" 2>/dev/null
+        # Add to workflow_result and exit or handle error
+        exit 1
+    fi
     VIRTUAL_DEVICE=$(readlink ttyV0)
 
     # make fpga-run in background
@@ -109,7 +121,7 @@ else
     echo -e "${BOLD}[FAIL] Bitstream generation failed${NC}"
     echo "[FAIL] Bitstream generation failed" >> "$workflow_result"
 fi
-killall -9 -u $(whoami) minicom     # make sure no running minicom
+killall -9 -u "$(whoami)" minicom 2>/dev/null # Ensure no old minicom
 
 ## Linux ---------------------------------------
 # ## setup
@@ -129,7 +141,7 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     echo "[PASS] 'make linux' pass" >> "$workflow_result"
 
     # open minicom session
-    killall -9 -u $(whoami) minicom     # make sure no running minicom
+    killall -9 -u "$(whoami)" minicom 2>/dev/null # Ensure no old minicom
     echo -e "${BOLD}..... Try to open minicom${NC}"
     echo "..... Try to open minicom" >> "$workflow_result"
     socat pty,link=ttyV0,waitslave,mode=777 tcp:espdev.cs.columbia.edu:4322 &
@@ -179,7 +191,7 @@ else
     echo -e "${BOLD}[FAIL] 'make linux' fail${NC}"
     echo "[FAIL] 'make linux' fail" >> "$workflow_result"
 fi
-killall -9 -u $(whoami) minicom     # make sure no running minicom
+killall -9 -u "$(whoami)" minicom 2>/dev/null # Ensure no old minicom
 
 ## redirect workflow result. print to standard output.
 if [ -r "$workflow_result" ]; then
