@@ -34,7 +34,7 @@ mkdir -p "$logs/fpga"   # results happened on fpga
 workflow_result="$logs/workflow_result.log"
 fpga_program_log="$logs/esp/fpga_program.log"
 fpga_run_log="$logs/esp/fpga_run.log"
-fpga_run_linux_log="$logs/fpga/fpga_run_linux.log"
+fpga_run_linux_log="$logs/esp/fpga_run_linux.log"
 boot_linux_log="$logs/fpga/boot_linux.log"
 minicom_log="$logs/fpga/minicom_baremetal.log"
 ssh_fft_log="$logs/fpga/ssh_fft.log"
@@ -96,7 +96,7 @@ if [ -s "top.bit" ]; then
     cd "$ESP_ROOT/$soc_target"
     $fpga_run > "$fpga_run_log" 2>&1 &
 
-    # open minicom in foreground
+    # open minicom in background
     minicom -p "$VIRTUAL_DEVICE" -C "$minicom_log" 2>&1
     # minicom will be killed when make fpga-run is done
     # check "hello" message
@@ -109,7 +109,9 @@ if [ -s "top.bit" ]; then
     fi
 
     # clean up
+    rm -rf ttyV0 
     kill -9 "$socat_pid"
+    killall -9 -u $(whoami) minicom
 else
     echo -e "${BOLD}[FAIL] Bitstream generation failed${NC}"
     echo "[FAIL] Bitstream generation failed" >> "$workflow_result"
