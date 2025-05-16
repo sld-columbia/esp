@@ -11,20 +11,20 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: regression-testing
+      # - name: Checkout code
+      #   uses: actions/checkout@v4
+      #   with:
+      #     ref: regression-testing
       
-      - name: Set sysroot
-        run: |
-          cp /opt/sysroot.tgz ./sysroot.tgz
-          tar -xzf ./sysroot.tgz -C ./ariane
-          rm -f ./sysroot.tgz
-        working-directory: ./soft
+      # - name: Set sysroot
+      #   run: |
+      #     cp /opt/sysroot.tgz ./sysroot.tgz
+      #     tar -xzf ./sysroot.tgz -C ./ariane
+      #     rm -f ./sysroot.tgz
+      #   working-directory: ./soft
 
-      - name: Install submodule
-        run: ./utils/scripts/submodule_init.sh
+      # - name: Install submodule
+      #   run: ./utils/scripts/submodule_init.sh
       
       - name: Grant permissions to actions-pipeline
         run: chmod +x *.sh
@@ -34,7 +34,7 @@ jobs:
         run: chmod +x *.sh
         working-directory: ./utils/scripts/actions-pipeline/helper
       
-      # - name: Run workflow script
-      #   run: |
-      #     ./run_workflow.sh
-      #   working-directory: ./utils/scripts/actions-pipeline
+      - name: Run workflow script
+        run: |
+          ./run_workflow.sh
+        working-directory: ./utils/scripts/actions-pipeline
