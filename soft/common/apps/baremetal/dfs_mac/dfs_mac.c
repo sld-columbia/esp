@@ -23,10 +23,10 @@
 
 // profiling for a server
 typedef struct {
-  float duration[NUM_FREQUENCIES];
-  float power[NUM_FREQUENCIES];
-  float reconf_time;
-  unsigned reconf_cycles;
+  unsigned duration[NUM_FREQUENCIES]; // microseconds
+  unsigned power[NUM_FREQUENCIES];    // milliwatts
+  unsigned reconf_time;               // microseconds
+  unsigned reconf_cycles;             // cycles
 } server_profile_t;
 
 // current configuration
@@ -42,16 +42,16 @@ unsigned div_sel[NUM_FREQUENCIES] = { 0b001, 0b010, 0b011, 0b100, 0b101, 0b110, 
 // cycle monitor
 unsigned int sched_cycles_start = 0, sched_cycles_new, sched_cycles_diff;
 unsigned int total_cycles = 0, total_time = 0;
-float sched_power_start;
+unsigned sched_power_start;
 esp_monitor_args_t mon_args = {ESP_MON_READ_SINGLE, 0xffff, 1, 0, MON_DVFS_BASE_INDEX + 3, 0};
 
 // power profiles under each frequency
 server_profile_t profiles[NUM_SERVERS] = {
   {
-    { 0.489, 0.440, 0.398, 0.363, 0.328, 0.299, 0.273 },
+    { 489, 440, 398, 363, 328, 299, 273 },
     { 22, 24, 25, 27, 29, 30, 32 },
-    20.0, // XXX
-    20 // XXX
+    618738,
+    12374756
   }
 };
 
@@ -80,7 +80,7 @@ int encode_dco_ctrl(int freq_sel, int div_sel, int fc_sel, int cc_sel, int clk_s
 void write_and_read_div_sel(struct esp_device *dev_tile_1, int tile_id, int div_sel, int en) {
     tile_id = get_dco_reg_addr(dev_tile_1, tile_id);
     iowrite32(dev_tile_1, tile_id, encode_dco_ctrl(0, div_sel, 0, 0, 0, en));
-    printf("Done writing register with div_sel = %d, en = %d, now reading\n", div_sel, en);
+    printf("Done writing register at tile %d with div_sel = %d, now reading\n", tile_id, div_sel);
     //int z = 1000000; while (z--);
     tile_id = ioread32(dev_tile_1, tile_id);
     printf("Read register and got %d\n", tile_id);
@@ -94,12 +94,12 @@ void init_server(unsigned server_idx, struct esp_device *dev, unsigned tile_id, 
 }
 
 // print out power consumption statistics
-void log_power(float power_new, int event_id) {
+void log_power(unsigned power_new, int event_id) {
     // calculate duration since last log
     sched_cycles_new = esp_monitor(mon_args, NULL);
 
     // previous cycle count, new cycle count, previous power, new power, message
-    printf("CSV:%d,%d,%f,%f,%d\n", sched_cycles_start, sched_cycles_new, sched_power_start, power_new, event_id);
+    printf("CSV:%d,%d,%d,%d,%d\n", sched_cycles_start, sched_cycles_new, sched_power_start, power_new, event_id);
 
     // save values for this period
     sched_power_start = power_new;
@@ -110,6 +110,9 @@ void log_power(float power_new, int event_id) {
 #define EVENT_DPR_START 1
 #define EVENT_DFS_START 2
 #define EVENT_WRK_START 3
+#ifndef DO_DPR
+unsigned int dpr_wait_cycles_start = 0, dpr_wait_cycles_new, dpr_wait_cycles_diff;;
+#endif
 void spawn_hw_thread(int server_idx, int pbs_id, int new_div_sel_idx) {
     server_runtime_t *server = &servers[server_idx];
     server_profile_t *profile = &profiles[server_idx];
@@ -121,6 +124,11 @@ void spawn_hw_thread(int server_idx, int pbs_id, int new_div_sel_idx) {
     reconfigure_FPGA(dev_tile_1, pbs_id);
 #else
     // wait for profiled reconfiguration time
+    dpr_wait_cycles_start = esp_monitor(mon_args, NULL);
+    do {
+      dpr_wait_cycles_new = esp_monitor(mon_args, NULL);
+      dpr_wait_cycles_diff = sub_monitor_vals(dpr_wait_cycles_start, dpr_wait_cycles_new);
+    } while (dpr_wait_cycles_diff < profile->reconf_cycles);
 #endif
 
     log_power(profile->power[server->div_sel_idx], EVENT_DFS_START);
