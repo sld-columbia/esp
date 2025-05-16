@@ -131,7 +131,7 @@ if [ -s "top.bit" ]; then
     $fpga_run > "$fpga_run_log" 2>&1 &
     fpgarun_pid=$!
 
-    # open minicom in background
+    # open minicom in foreground
     minicom -p "$VIRTUAL_DEVICE" -C "$minicom_log" 2>&1
     # make fpga-run script will kill minicom
 
@@ -200,7 +200,7 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     cd "$ESP_ROOT/socs/$fpga_name"
     $fpga_run_linux > "$fpga_run_linux_log" 2>&1 &
 
-    # call helper to monitor linux boot progress.
+    # call helper to monitor linux boot progress
     $monitor > "$boot_linux_log" 2>&1 &
     monitor_pid=$!
 
