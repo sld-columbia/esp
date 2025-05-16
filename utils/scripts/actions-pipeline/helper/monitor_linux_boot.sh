@@ -2,25 +2,19 @@
 
 # helper script to monitor linux boot progress
 
-# Env setup
-ESP_ROOT=$(realpath ../../)
-soc_name="xilinx-vc707-xc7vx485t"
-logs="$ESP_ROOT/utils/scripts/actions-pipeline/${soc_name}_logs"
-minicom="$logs/fpga/minicom_boot_linux.log"
-
 # Target
 SUCCESS_PATTERN="Welcome to ESP"
 
 # Ensure log file exist
-if [ ! -f "$minicom" ]; then
-  echo "Log file $minicom does not exist yet. Waiting..."
+if [ ! -f "$1" ]; then
+  echo "Log file $1 does not exist yet. Waiting..."
   sleep 10
   continue
 fi
 
 # Monitor the log file for success pattern
 while true; do
-  if grep -q "$SUCCESS_PATTERN" "$minicom"; then
+  if grep -q "$SUCCESS_PATTERN" "$1"; then
     echo "Boot completed successfully!"
     killall -u $(whoami) minicom
     sleep 3
@@ -28,8 +22,10 @@ while true; do
   fi
   
   # Check for common failure patterns
-  if grep -q "Kernel panic" "$minicom"; then
+  if grep -q "Kernel panic" "$1"; then
     echo "Boot failed: Kernel panic detected"
+    killall -u $(whoami) minicom
+    sleep 3
     exit 1
   fi
   

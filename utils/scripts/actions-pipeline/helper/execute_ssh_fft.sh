@@ -1,5 +1,6 @@
 #!/bin/bash
 
-sleep 5
+# helper script to call expect to ssh to fpga
 
-./ssh_fft.exp 5502 root espgate.cs.columbia.edu openesp
+sleep 10
+./ssh_fft.exp $1 $2 $3 $4
