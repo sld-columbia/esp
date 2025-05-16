@@ -161,6 +161,7 @@ if [ -s "top.bit" ]; then
 else
     echo -e "${BOLD}[FAIL] Bitstream not found${NC}"
     echo "[FAIL] Bitstream not found" >> "$workflow_result"
+    exit 1
 fi
 # clean minicom
 rm -rf ttyV0 
