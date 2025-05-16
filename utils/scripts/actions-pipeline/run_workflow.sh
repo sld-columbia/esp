@@ -39,13 +39,13 @@ echo "SSH Port: $ssh_port"
 
 ## Env setup ---------------------------------------
 source /opt/cad/scripts/tools_env.sh    # for unit testing script
+## set paths
+ESP_ROOT=$(realpath ../../../)
 ## set helper scripts
 fpga_run="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_run.sh"
 fpga_run_linux="$ESP_ROOT/utils/scripts/actions-pipeline/helper/run_fpga_linux.sh"
 monitor="$ESP_ROOT/utils/scripts/actions-pipeline/helper/monitor_linux_boot.sh"
 exe_ssh_fft="$ESP_ROOT/utils/scripts/actions-pipeline/helper/execute_ssh_fft.sh"
-## set paths
-ESP_ROOT=$(realpath ../../../)
 ## set soc and esp config file
 soc_target="socs/$fpga_name"
 testing_config="$ESP_ROOT/$config_path"
