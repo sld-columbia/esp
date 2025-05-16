@@ -44,12 +44,22 @@ ESP_ROOT=$(realpath ../../../)
 
 ## set log files
 logs="$ESP_ROOT/$result_logs_path"
-if [ -d "$logs" ]; then
-    rm -rf "$logs"
-else
+if [ ! -d "$logs" ]; then
     mkdir -p "$logs"
+else
+    # optional to remove existing log folder
+    # rm -rf "$logs"
+    echo "Directory $logs already exists."
 fi
-mkdir -p "$logs/esp"
+
+if [ ! -d "$logs/esp" ]; then
+    mkdir -p "$logs/esp"
+else
+    # optional to remove existing log folder
+    # rm -rf "$logs/esp"
+    echo "Directory $logs/esp already exists."
+fi
+
 mkdir -p "$logs/fpga"   # results happened on fpga
 workflow_result="$logs/workflow_result.log"
 fpga_program_log="$logs/esp/fpga_program.log"
@@ -75,7 +85,7 @@ cp "$testing_config" "$logs/esp"    # copy a testing config into log folder for 
 ## SoC ---------------------------------------
 cd "$ESP_ROOT/socs/$fpga_name"
 
-# ## config and HLS
+# ## config and HLS. (optional to run together with this workflow)
 # $gen_bit
 # gen_bit_pid=$!
 # wait $gen_bit
@@ -123,7 +133,7 @@ if [ -s "top.bit" ]; then
 
     # open minicom in background
     minicom -p "$VIRTUAL_DEVICE" -C "$minicom_log" 2>&1
-    # minicom will be killed when make fpga-run is done
+    # make fpga-run script will kill minicom
 
     # check "hello" message
     wait $fpgarun_pid
@@ -158,7 +168,7 @@ kill -9 "$socat_pid"
 killall -9 -u $(whoami) minicom
 
 ## Linux ---------------------------------------
-# ## Generate Linux Image
+# ## Generate Linux Image. (optional to run together with this workflow)
 # $gen_linux
 # gen_linux_pid=$!
 # wait $gen_linux
@@ -190,12 +200,13 @@ if [ -s "./soft-build/ariane/linux.bin" ]; then
     cd "$ESP_ROOT/socs/$fpga_name"
     $fpga_run_linux > "$fpga_run_linux_log" 2>&1 &
 
-    # call helper to monitor linux boot progress. monitor kills minicom if boot successfully.
+    # call helper to monitor linux boot progress.
     $monitor > "$boot_linux_log" 2>&1 &
     monitor_pid=$!
 
     # open minicom in foreground
     minicom -p "$VIRTUAL_DEVICE" -C "$minicom_boot_linux_log" 2>&1
+    # monitor kills minicom if boot successfully
 
     # print monitor status
     wait $monitor_pid

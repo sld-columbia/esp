@@ -6,7 +6,7 @@ BOLD='\033[1m'
 EMOJI_CHECK="\xE2\x9C\x94"
 
 ## set JSON file. a JSON file with config information
-json_file="esp_configs.json"
+json_file="../esp_configs.json"
 if [ ! -f "$json_file" ]; then
     echo "Error: JSON file '$json_file' not found!"
     exit 1
@@ -30,10 +30,14 @@ echo "Config Path: $config_path"
 echo "Result Logs Path: $result_logs_path"
 
 ## Env setup ---------------------------------------
+source /opt/cad/scripts/tools_env.sh
 ## set paths
-ESP_ROOT=$(realpath ../../../)
+ESP_ROOT=$(realpath ../../../../)
 ## set log files
 logs="$ESP_ROOT/$result_logs_path"
+if [ ! -d "$logs" ]; then
+    mkdir -p "$logs"
+fi
 workflow_result="$logs/workflow_result.log"
 
 ## Linux ---------------------------------------
@@ -41,6 +45,8 @@ workflow_result="$logs/workflow_result.log"
 cd "$ESP_ROOT/socs/$fpga_name"
 make fft_stratus-hls
 make linux-distclean
+sleep 5
+
 ## prep files
 make soft
 make linux
