@@ -106,6 +106,13 @@ if [ -s "top.bit" ]; then
     else
         echo -e "${BOLD}[FAIL] Baremetal hello message not found${NC}"
         echo "[FAIL] Baremetal hello message not found" >> "$workflow_result"
+
+        # clean up
+        rm -rf ttyV0 
+        kill -9 "$socat_pid"
+        killall -9 -u $(whoami) minicom
+        # early terminate the script
+        exit 1
     fi
 
     # clean up
