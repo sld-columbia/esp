@@ -104,10 +104,15 @@ architecture rtl of tile_acc is
   signal decouple_acc : std_ulogic;
 
   -- DCO
-  signal tile_clk     : std_ulogic;
-  signal dco_clk      : std_ulogic;
-  signal dco_clk_lock : std_ulogic;
-  signal dco_en_int   : std_ulogic;
+  signal noc_clk         : std_ulogic;
+  signal tile_clk        : std_ulogic;
+  signal dco_clk         : std_ulogic;
+  signal dco_clk_lock    : std_ulogic;
+  signal dco_clk_lock_1  : std_ulogic;
+  signal dco_clk_lock_2  : std_ulogic;
+  signal dco_en_int      : std_ulogic;
+  signal dco_cc_sel_prev : std_logic_vector(5 downto 0);
+  signal dco_reconfig    : std_ulogic;
 
   -- BUS
   signal apbi           : apb_slv_in_type;
@@ -171,6 +176,7 @@ architecture rtl of tile_acc is
 
   -- Tile parameters
   signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal rst_tile_id : std_logic_vector(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
 
   signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
 
@@ -246,10 +252,12 @@ architecture rtl of tile_acc is
 
 begin
 
+  noc_clk <= ext_clk;
+
   -- DCO Reset synchronizer
   rst_gen: if this_has_dco = 1 generate
-    tile_rstn : rstgen
-      generic map (acthigh => 1, syncin => 0)
+    tile_rstn_out : rstgen
+      generic map (acthigh => 0, syncin => 0)
       port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
   end generate rst_gen;
 
@@ -259,39 +267,84 @@ begin
 
   tile_rstn_out <= rst;
 
-  -- DCO
-  dco_en_int <= dco_en and raw_rstn;
+  -- clock modifier
   dco_gen: if this_has_dco = 1 generate
 
-    dco_i: dco
+    -- generate reconfigure bit (at noc_clk)
+    dco_en_int <= dco_en and tile_rst;
+    --dco_reconfig <= dco_clk_lock_2 when dco_cc_sel /= dco_cc_sel_prev else '0';
+    dco_reconfig <= '0';
+    dco_cc_sel_prev_gen: process (noc_clk, tile_rst) is
+    begin  -- process dco_cc_sel_prev_gen
+      if tile_rst = '0' then
+        dco_cc_sel_prev <= (others => '0');
+      elsif noc_clk'event and noc_clk = '1' then
+        dco_cc_sel_prev <= dco_cc_sel;
+      end if;
+    end process dco_cc_sel_prev_gen;
+
+    -- synchronize dco_clk_lock with tile_clk
+    dco_clk_lock_sync_gen: process(tile_clk, tile_rst) is
+    begin  -- process dco_clk_lock_sync_gen
+      if tile_rst = '0' then
+        dco_clk_lock   <= '0';
+        dco_clk_lock_1 <= '0';
+      elsif tile_clk'event and tile_clk = '1' then
+        dco_clk_lock   <= dco_clk_lock_1;
+        dco_clk_lock_1 <= dco_clk_lock_2;
+      end if;
+    end process dco_clk_lock_sync_gen;
+
+    -- PLL instantiation
+    plle_drp_inst : plle_drp
       generic map (
-        tech => CFG_FABTECH,
-        enable_div2 => 0,
-        dlog => 9)                      -- come out of reset after NoC, but
-                                        -- before tile_io.
+        CLKFBOUT_MULT  => ( 16 ),
+        CLKIN1_PERIOD  => ( 20.0 ), -- TODO MG - for simulation and synthesis reporting
+        CLKIN2_PERIOD  => ( 20.0 ), -- TODO MG - for simulation and synthesis reporting
+        CLKOUT0_DIVIDE => ( 19 ),
+        CLKOUT1_DIVIDE => ( 18 ),
+        CLKOUT2_DIVIDE => ( 17 ),
+        CLKOUT3_DIVIDE => ( 15 ),
+        CLKOUT4_DIVIDE => ( 14 ),
+        CLKOUT5_DIVIDE => ( 13 ),
+        EN_FREQ_SEL    => ( 1 )
+      )
       port map (
-        rstn     => raw_rstn,
-        ext_clk  => ext_clk,
-        en       => dco_en_int,
-        clk_sel  => dco_clk_sel,
-        cc_sel   => dco_cc_sel,
-        fc_sel   => dco_fc_sel,
-        div_sel  => dco_div_sel,
-        freq_sel => dco_freq_sel,
-        clk      => dco_clk,
-        clk_div  => clk_div,
-        lock     => dco_clk_lock);
+          -- clock and reset interface
+          -- TODO simulate to see that dvfs_clk has a signal
+          clk           => noc_clk,
+          rstn          => tile_rst,
+
+          -- clock output signals
+          clk_feedthru0 => dco_clk,
+          clk_feedthru1 => open,
+          clk_feedthru2 => open,
+          clk_feedthru3 => open,
+          clk_feedthru4 => open,
+          clk_feedthru5 => open,
+          locked        => dco_clk_lock_2,
+
+          -- hicycles control signals
+          dco_reconfig  => ( dco_reconfig ),
+          dco_hicycles  => ( dco_cc_sel ),
+
+          -- frequency selection control signals
+          dco_en        => ( dco_en ),
+          dco_div_sel   => ( dco_div_sel )
+      );
 
     tile_clk <= dco_clk;
+    clk_div <= tile_clk;
+    tile_clk_out <= ext_clk;
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco /= 1 generate
+    dco_en_int   <= '0';
     tile_clk     <= ext_clk;
     dco_clk_lock <= '1';
-    clk_div <= tile_clk;
+    clk_div      <= tile_clk;
+    tile_clk_out <= tile_clk;
   end generate no_dco_gen;
-
-  tile_clk_out <= tile_clk;
 
   -----------------------------------------------------------------------------
   -- Tile parameters
@@ -479,6 +532,23 @@ begin
   mon_cache <= mon_cache_int;
   mon_acc   <= mon_acc_int;
 
+  -- persist tile ID on internal (soft) reset, allow for hard reset
+  rst_tile_id_gen: process(tile_clk, tile_rst) is
+  begin  -- process dco_clk_lock_sync_gen
+    if tile_rst = '0' then
+      -- hard reset
+      rst_tile_id <= (others => '0');
+    elsif tile_clk'event and tile_clk = '1' then
+      if rst = '1' then
+        -- update soft reset value
+        rst_tile_id <= tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
+      else
+        -- soft reset value
+        rst_tile_id <= rst_tile_id;
+      end if;
+    end if;
+  end process rst_tile_id_gen;
+
   -- Memory mapped registers
   acc_tile_csr : esp_tile_csr
     generic map(
@@ -487,6 +557,7 @@ begin
       clk => tile_clk,
       rstn => rst,
       pconfig => this_csr_pconfig,
+      rst_tile_id => rst_tile_id,
       mon_ddr => monitor_ddr_none,
       mon_mem => monitor_mem_none,
       mon_noc => mon_noc,
@@ -506,8 +577,10 @@ begin
     generic map (
       tech => CFG_FABTECH)
     port map (
-      rst                        => rst,
-      clk                        => tile_clk,
+      noc_rst                    => tile_rst, -- reset synchronous with noc clock
+      noc_clk                    => noc_clk,
+      tile_rst                   => tile_rst, -- reset synchronous with local clock
+      tile_clk                   => tile_clk,
       coherence_req_wrreq        => coherence_req_wrreq,
       coherence_req_data_in      => coherence_req_data_in,
       coherence_req_full         => coherence_req_full,

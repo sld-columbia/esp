@@ -5,6 +5,7 @@
 
 from collections import defaultdict
 import math
+import os
 from thirdparty import *
 
 # Maximum number of AHB and APB slaves can also be increased, but Leon3 utility
@@ -2341,7 +2342,12 @@ def print_soc_defines(fp, esp_config, soc):
     fp.write("#endif /* __SOC_DEFS_H__ */\n")
 
 
+def print_default_pbs_map(fp):
+    fp.write("pbs_map bs_descriptor [0] = {};\n")
+
+
 def print_soc_locations(fp, esp_config, soc):
+    fp.write("#include <monitors.h>\n\n")
     fp.write("soc_loc_t cpu_locs[" + str(esp_config.ncpu) + "] = {")
     for i in range(0, esp_config.ntiles):
         t = esp_config.tiles[i]
@@ -3729,6 +3735,16 @@ def create_socmap(esp_config, soc):
     fp.close()
 
     print("Created io_tile locations into 'prc_aux.h'")
+
+    # placeholder for pbs_map
+    if not os.path.exists('pbs_map.h'):
+        fp = open('pbs_map.h', 'w')
+
+        print_default_pbs_map(fp)
+
+        fp.close()
+
+        print("Created placeholder PBS list into 'pbs_map.h'")
 
     # soc tile locations
     fp = open('soc_locs.h', 'w')
