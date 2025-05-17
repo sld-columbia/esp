@@ -275,12 +275,12 @@ int main(int argc, char **argv)
 
     if (errors > TESTING_COUNT_TH) {
         // printf("  + TEST FAIL: exceeding error count threshold of %d\n", TESTING_COUNT_TH);
-        printf("  + OVERALL TEST RESULT: Fully-coherent DMA: FAIL (%d/%d)\n", errors, 2 * len);
+        printf("  + OVERALL TEST RESULT: Point-to-point: FAIL (%d/%d)\n", errors, 2 * len);
         strcat(fail_log, "Point-to-point Test, ");
     }
     else {
         // printf("  + TEST PASS: not exceeding error count threshold of %d\n", TESTING_COUNT_TH);
-        printf("  + OVERALL TEST RESULT: Fully-coherent DMA: PASS (%d/%d)\n", errors, 2 * len);
+        printf("  + OVERALL TEST RESULT: Point-to-point: PASS (%d/%d)\n", errors, 2 * len);
         pass_test_count += 1;
         strcat(pass_log, "Point-to-point Test, ");
     }
