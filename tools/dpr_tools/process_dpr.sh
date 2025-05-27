@@ -35,23 +35,19 @@ acc_include_dirs="$1/rtl/cores/ariane/ariane/src/common_cells/include $1/rtl/cac
 function extract_acc() {
 while read line
 do
-    for word in $line
-    do
-        if [[ $word == *"TILE_"* ]]; then
-            _line=( $line )
-            tile_token=${_line[0]}
-            tile_index=${_line[2]}
-            tile_type=${_line[3]}
-            acc_name=${_line[4]}
-            acc_name+="_$tile_index"
-            if [[ $tile_type == "acc" ]]; then
-                new_accelerators["$num_acc_tiles,0"]=$tile_index;
-                new_accelerators["$num_acc_tiles,1"]=$(echo ${acc_name} | awk '{print tolower($0)}');
-                ((num_acc_tiles++));
-            fi
-#            echo "$tile_token $tile_index $tile_type $acc_name $1 $2 $3 ";
+    # parse "TILE_<Y>_<X> = <ID> acc <NAME>_<FLOW> <CFG> 0 0 <VENDOR>"
+    if [[ $line == "TILE_"* ]]; then
+        _line=( $line )
+        tile_index=${_line[2]}
+        tile_type=${_line[3]}
+        acc_name=${_line[4]}
+        acc_name+="_$tile_index"
+        if [[ $tile_type == "acc" ]]; then
+            new_accelerators["$num_acc_tiles,0"]=$tile_index;
+            new_accelerators["$num_acc_tiles,1"]=$(echo ${acc_name} | awk '{print tolower($0)}');
+            ((num_acc_tiles++));
         fi
-    done
+    fi
 done < $esp_config
 
 #for ((i=0; i<num_acc_tiles; i++))
@@ -65,48 +61,38 @@ done < $esp_config
 function extract_acc_old() {
 while read line
 do
-    for word in $line
-    do
-        if [[ $word == *"TILE"* ]]; then
-            _line=( $line )
-            tile_token=${_line[0]}
-            tile_index=${_line[2]}
-            tile_type=${_line[3]}
-            acc_name=${_line[4]}
-            acc_name+="_$tile_index"
-            if [[ $tile_type == "acc" ]]; then
-                old_accelerators["$num_old_acc_tiles,0"]=$tile_index;
-                old_accelerators["$num_old_acc_tiles,1"]=$(echo ${acc_name} | awk '{print tolower($0)}');
-                ((num_old_acc_tiles++));
-            fi
- #           echo $tile_token $tile_index $tile_type $acc_name $1 $2 $3;
+    if [[ $line == "TILE_"* ]]; then
+        _line=( $line )
+        tile_index=${_line[2]}
+        tile_type=${_line[3]}
+        acc_name=${_line[4]}
+        acc_name+="_$tile_index"
+        if [[ $tile_type == "acc" ]]; then
+            old_accelerators["$num_old_acc_tiles,0"]=$tile_index;
+            old_accelerators["$num_old_acc_tiles,1"]=$(echo ${acc_name} | awk '{print tolower($0)}');
+            ((num_old_acc_tiles++));
         fi
-    done
+    fi
 done < $esp_config_old
 }
 
 function set_acc_name_gbox() {
-    num_acc_tiles=0
-    while read line
-    do
-        for word in $line
-        do
-            if [[ $word == *"TILE_"* ]]; then
-                _line=( $line )
-                tile_token=${_line[0]}
-                tile_index=${_line[2]}
-                tile_type=${_line[3]}
-                acc_name=${_line[4]}
-                acc_name+="_$tile_index"
-                if [[ $tile_type == "acc" ]]; then
-                    new_accelerators["$num_acc_tiles,0"]=$tile_index;
-                    new_accelerators["$num_acc_tiles,1"]="tile_blanked_${tile_index}";
-                    ((num_acc_tiles++));
-                fi
-    #            echo "$tile_token $tile_index $tile_type $acc_name $1 $2 $3 ";
-            fi
-        done
-    done < $esp_config
+num_acc_tiles=0
+while read line
+do
+    if [[ $line == "TILE_"* ]]; then
+        _line=( $line )
+        tile_index=${_line[2]}
+        tile_type=${_line[3]}
+        acc_name=${_line[4]}
+        acc_name+="_$tile_index"
+        if [[ $tile_type == "acc" ]]; then
+            new_accelerators["$num_acc_tiles,0"]=$tile_index;
+            new_accelerators["$num_acc_tiles,1"]="tile_blanked_${tile_index}";
+            ((num_acc_tiles++));
+        fi
+    fi
+done < $esp_config
 }
 
 #function to figure out which acc_tile is changed in the new .esp_config
@@ -653,7 +639,8 @@ array=$(ls -ls $1/socs/$2/partial_bitstreams)
     for FILE in $pbs_path/*; do
         pbs_name=$(basename $FILE | awk -F'[.]' '{print($1)}');
         pbs_size=$(echo `ls -ls $FILE` | awk '{print($6)}');
-        pbs_tile_id=$(echo $pbs_name | awk -F'[_]' '{print($3)}');
+        #pbs_tile_id=$(echo $pbs_name | awk -F'[_]' '{print($3)}');
+        pbs_tile_id=${pbs_name##*_}
         echo "{\"$pbs_name\", $pbs_size, $pbs_addr, $pbs_tile_id}, " >> $pbs_map;
         pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET));
         echo "file is $pbs_size $pbs_tile_id $pbs_name";

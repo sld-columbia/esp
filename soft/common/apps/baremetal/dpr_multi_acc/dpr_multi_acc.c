@@ -24,6 +24,33 @@
 #define DEV_NAME_ADDER "sld,adder_vivado"
 #define DEV_NAME_MAC "sld,mac_vivado"
 
+// Find tile router address relative to tile device
+int get_dco_reg_addr(struct esp_device *dev_tile_1, int tile_id) {
+    return (0x60090000
+        + 0x200 * tile_id)  // router base address
+        + 0b111001100       // address of DCO register in NoC CSR file (addr[6:2] = 19)
+        - dev_tile_1->addr; // relative to device for call to iowrite32
+}
+
+// Encode new DCO configuration value
+int encode_dco_ctrl(int freq_sel, int div_sel, int fc_sel, int cc_sel, int clk_sel, int en) {
+    return ((      en & 0b000001) <<  0) |
+           (( clk_sel & 0b000001) <<  1) |
+           ((  cc_sel & 0b111111) <<  2) |
+           ((  fc_sel & 0b111111) <<  8) |
+           (( div_sel & 0b000111) << 14) |
+           ((freq_sel & 0b000011) << 17);
+}
+
+// Configure new frequency
+void write_and_read_div_sel(struct esp_device *dev_tile_1, int tile_id, int div_sel, int en) {
+    tile_id = get_dco_reg_addr(dev_tile_1, tile_id);
+    iowrite32(dev_tile_1, tile_id, encode_dco_ctrl(0, div_sel, 0, 0, 0, en));
+    printf("Done writing register at tile %d with div_sel = %d, now reading\n", tile_id, div_sel);
+    tile_id = ioread32(dev_tile_1, tile_id);
+    printf("Read register and got %d\n", tile_id);
+}
+
 int main(int argc, char * argv[])
 {
 	int i, k;
@@ -59,14 +86,14 @@ int main(int argc, char * argv[])
     for(k = 0; k < NUM_ACC_INVOC_ITER; k++) {
 #endif
 
-#ifdef RUN_ADDER
-    //Adder acceleraotr section
+    //Adder accelerator section
     // Probing ADDER
     printf("  Probing... ADDER\n");
 
     // adder
     printf(" Initialize Adder app...\n");
-    ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_1, DEV_NAME_ADDER);
+    //ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_ADDER, DEV_NAME_ADDER);
+    ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_MAC, DEV_NAME_MAC);
     if (ndev == 0) {
       printf("adder not found\n");
       return 0;
@@ -74,6 +101,12 @@ int main(int argc, char * argv[])
 
     dev_tile_1 = &espdevs_tile_1[0];
 
+    decouple_acc(dev_tile_1, 1);
+    printf("Reading decoupled bit: %d\n", ioread32(dev_tile_1, DECOUPLER_REG));
+    decouple_acc(dev_tile_1, 0);
+    printf("Reading decoupled bit: %d\n", ioread32(dev_tile_1, DECOUPLER_REG));
+
+#ifdef RUN_ADDER
     printf("  ****  Loading Adder accelerator onto FPGA  **** \n");
     reconfigure_FPGA(dev_tile_1, RUN_ADDER);
     // Check DMA capabilities
@@ -156,8 +189,13 @@ int main(int argc, char * argv[])
 #ifdef RUN_MAC
     //reconfigure the accelerator tile :- load the mac accelerator
     printf("   **** Loading MAC accelerator onto FPGA ****\n");
-    reconfigure_FPGA(dev_tile_1, RUN_MAC);
 
+    decouple_acc(dev_tile_1, 1);
+    printf("Reading decoupled bit: %d\n", ioread32(dev_tile_1, DECOUPLER_REG));
+    decouple_acc(dev_tile_1, 0);
+    printf("Reading decoupled bit: %d\n", ioread32(dev_tile_1, DECOUPLER_REG));
+
+    reconfigure_FPGA(dev_tile_1, RUN_MAC);
 
     //MAC acceleraotr section
 	// Probing

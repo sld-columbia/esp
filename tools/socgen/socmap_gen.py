@@ -2347,7 +2347,6 @@ def print_default_pbs_map(fp):
 
 
 def print_soc_locations(fp, esp_config, soc):
-    fp.write("#include <monitors.h>\n\n")
     fp.write("soc_loc_t cpu_locs[" + str(esp_config.ncpu) + "] = {")
     for i in range(0, esp_config.ntiles):
         t = esp_config.tiles[i]

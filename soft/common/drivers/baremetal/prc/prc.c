@@ -11,9 +11,12 @@
 #endif
 
 #define DPR_VERBOSE
-//#define MEASURE_RECONF_TIME
+#define DPR_MEASURE_RECONF_TIME
+//#define DPR_USE_ROUTER_CSR
 
+#ifdef DPR_USE_ROUTER_CSR
 static struct esp_device esp_tile_decoupler;
+#endif // DPR_USE_ROUTER_CSR
 static struct esp_device esp_prc;
 struct pbs_map *pb_map;
 
@@ -30,6 +33,7 @@ static void get_io_tile_id(struct esp_device* io_tile)
 #endif
 }
 
+#ifdef DPR_USE_ROUTER_CSR
 static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupler)
 {
     unsigned i;
@@ -67,19 +71,35 @@ static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupl
     //compute apb address for tile decoupler
     (*decoupler).addr = APB_BASE_ADDR + (monitor_base + tile_id * 0x200);
 #ifdef DPR_VERBOSE
-    printf("[PRC DRIVER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0x \n", tile_id, (unsigned) esp_tile_decoupler.addr);
+    printf("[PRC DRIVER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0x versus tile addr -- 0x%0x \n", tile_id, (unsigned) esp_tile_decoupler.addr, (unsigned) dev->addr);
 #endif
     return 0;
 }
+#endif // DPR_USE_ROUTER_CSR
 
 int decouple_acc(struct esp_device *dev, unsigned val)
 {
+#ifdef DPR_USE_ROUTER_CSR
+    // get address of router
     get_decoupler_addr(dev, &esp_tile_decoupler);
 
-    if (val == 0)
+    if (val == 0) {
         iowrite32(&esp_tile_decoupler, DECOUPLER_REG, 0);
-    else
+    }
+    else {
         iowrite32(&esp_tile_decoupler, DECOUPLER_REG, BIT(0));
+    }
+
+#else
+
+    if (val == 0) {
+        iowrite32(dev, DECOUPLER_REG, 0);
+    }
+    else {
+        iowrite32(dev, DECOUPLER_REG, BIT(0));
+    }
+
+#endif // DPR_USE_ROUTER_CSR
 
     return 0;
 }
@@ -161,7 +181,7 @@ unsigned int reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
 {
     unsigned prc_done = 0;
 
-#ifdef MEASURE_RECONF_TIME
+#ifdef DPR_MEASURE_RECONF_TIME
     //esp monitor for measuring time
     esp_monitor_args_t mon_args;
     const int CPU_TILE_IDX = 1;
@@ -199,7 +219,7 @@ unsigned int reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
         printf("[PRC DRIVER]: Error reconfiguring FPGA \n");
         return -1;;
     }
-#ifdef MEASURE_RECONF_TIME
+#ifdef DPR_MEASURE_RECONF_TIME
     cycles_start = esp_monitor(mon_args, NULL);
 #endif
 
@@ -207,7 +227,7 @@ unsigned int reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
         prc_done = ioread32(&io_tile_csr, PRC_INTERRUPT_REG);
     }
 
-#ifdef MEASURE_RECONF_TIME
+#ifdef DPR_MEASURE_RECONF_TIME
     cycles_end = esp_monitor(mon_args, NULL);
     cycles_diff = sub_monitor_vals(cycles_start, cycles_end);
     printf("[PRC DRIVER]: time is %u %u %u \n", cycles_start, cycles_end, cycles_diff);
