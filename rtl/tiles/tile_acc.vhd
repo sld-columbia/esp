@@ -249,6 +249,10 @@ architecture rtl of tile_acc is
   attribute keep of apb_rcv_empty              : signal is "true";
   attribute keep of tile_config                : signal is "true";
   attribute keep of tile_id                    : signal is "true";
+  attribute keep of decouple_acc               : signal is "true";
+
+  attribute mark_debug : string;
+  attribute mark_debug of decouple_acc         : signal is "true";
 
 begin
 
@@ -481,7 +485,7 @@ begin
   end process decoupler_gen;
 
   -- CSR map for decoupler
-  decouple_acc <= tile_config(ESP_CSR_ACC_DECOUPLER_MSB);
+  decouple_acc <= tile_config(ESP_CSR_ACC_PRC_CSR_LSB);
   --decouple_acc <= tile_config(98);
 
 -----------------------------------------------------------------------------

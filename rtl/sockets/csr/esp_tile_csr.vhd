@@ -185,8 +185,9 @@ begin
           readdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0) <=
             config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB);
         when ESP_CSR_ACC_COH_ADDR =>
-          readdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0) <=
-            config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB);
+          readdata(0) <= prc_interrupt or config_r(ESP_CSR_ACC_COH_LSB);
+          readdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 1) <=
+            config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB+1);
         when ESP_CSR_DCO_NOC_CFG_ADDR =>
           readdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0) <=
             config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB);
@@ -218,10 +219,9 @@ begin
         when ESP_CSR_CPU_LOC_OVR_3_ADDR =>
           readdata <=
             config_r(ESP_CSR_CPU_LOC_OVR_LSB + 128 downto ESP_CSR_CPU_LOC_OVR_LSB + 97);
-        when ESP_CSR_ACC_DECOUPLER_ADDR =>
-          readdata(ESP_CSR_ACC_DECOUPLER_MSB - ESP_CSR_ACC_DECOUPLER_LSB downto 0) <= config_r(ESP_CSR_ACC_DECOUPLER_MSB downto ESP_CSR_ACC_DECOUPLER_LSB);
-        when ESP_CSR_PRC_INTR_ADDR =>
-          readdata(ESP_CSR_PRC_INTR_MSB - ESP_CSR_PRC_INTR_LSB downto 0) <= (0 =>  prc_interrupt, others => '0'); --config_r(ESP_CSR_PRC_INTR_MSB downto ESP_CSR_PRC_INTR_LSB);
+        when ESP_CSR_ACC_PRC_CSR_ADDR =>
+          readdata(0) <= config_r(ESP_CSR_ACC_PRC_CSR_LSB);
+          readdata(16) <= prc_interrupt;
         when others =>
           readdata <= (others => '0');
       end case;
@@ -309,8 +309,8 @@ begin
             config_r(ESP_CSR_CPU_LOC_OVR_LSB + 96 downto ESP_CSR_CPU_LOC_OVR_LSB + 65) <= apbi.pwdata;
           when ESP_CSR_CPU_LOC_OVR_3_ADDR =>
             config_r(ESP_CSR_CPU_LOC_OVR_LSB + 128 downto ESP_CSR_CPU_LOC_OVR_LSB + 97) <= apbi.pwdata;
-          when ESP_CSR_ACC_DECOUPLER_ADDR =>
-            config_r(ESP_CSR_ACC_DECOUPLER_MSB downto ESP_CSR_ACC_DECOUPLER_LSB) <= apbi.pwdata(ESP_CSR_ACC_DECOUPLER_MSB - ESP_CSR_ACC_DECOUPLER_LSB downto 0);
+          when ESP_CSR_ACC_PRC_CSR_ADDR =>
+            config_r(ESP_CSR_ACC_PRC_CSR_LSB) <= apbi.pwdata(0);
           when others => null;
         end case;
       end if;

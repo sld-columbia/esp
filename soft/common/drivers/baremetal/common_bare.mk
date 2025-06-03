@@ -96,6 +96,7 @@ $(BUILD_PATH)/%.bin: $(BUILD_PATH)/%.exe
 	$(CROSS_COMPILE)objcopy -O binary $(OBJCPFLAGS) $< $@
 
 ifneq ($(CONFIG_PRC_EN),)
+.PHONY: BUILD_PRC
 BUILD_PRC: $(SRCS_PRC)
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../monitors MODE=BAREC \
 			 $(MAKE) -B -C $(DRIVERS)/../common/monitors

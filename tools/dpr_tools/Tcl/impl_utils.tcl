@@ -14,7 +14,7 @@ proc get_module_file { module } {
    global synthDir
    global ipDir
    global netlistDir
-   
+
    if {![info exists synthDir]} {
       set synthDir "."
    }
@@ -40,7 +40,7 @@ proc get_module_file { module } {
          set moduleFile $file
          break
       }
-   } 
+   }
    if {![llength $moduleFile]} {
       #If verbose==0 to generate scripts only, no file may exist if synthesis has not been run.
       #Instead of erroring in this case, just return default file of $synthDir/...
@@ -88,7 +88,7 @@ proc generate_dfx_binfiles { config } {
             set bitFile "$bitDir/${bitName}.bit"
             if {![file exists $bitFile]} {
                puts "\tCritical Warning: No bit file found for $cell ($module) in configuration $config. Skipping BIN file generation. Expected file \n\t$bitFile.\n\tRun write_bitstream first to generate the expected file."
-               return 
+               return
             }
             if {$icap} {
                set logFile "$bitDir/write_cfgmem_${config}_${name}_icap.log"
@@ -107,8 +107,8 @@ proc generate_dfx_binfiles { config } {
                command "puts \"$msg\""
                set start_time [clock seconds]
                set binFile "$bitDir/${config}_${pblock}_partial_pcap.bin"
-               #command "write_cfgmem -force -format BIN -interface $interface -disablebitswap -loadbit \"$offset $bitFile\" -size $size $binFile" $logFile 
-               command "write_cfgmem -force -format BIN -interface $interface -disablebitswap -loadbit \"$offset $bitFile\" $binFile" $logFile 
+               #command "write_cfgmem -force -format BIN -interface $interface -disablebitswap -loadbit \"$offset $bitFile\" -size $size $binFile" $logFile
+               command "write_cfgmem -force -format BIN -interface $interface -disablebitswap -loadbit \"$offset $bitFile\" $binFile" $logFile
                set end_time [clock seconds]
                log_time write_cfgmem $start_time $end_time 1 "Generate PCAP format bin file for ${config}(${name})"
             }
@@ -221,7 +221,7 @@ proc generate_dfx_bitstreams { configs } {
 
          set end_time [clock seconds]
          log_time write_bitstream $start_time $end_time 1 $config
-         generate_dfx_binfiles $config 
+         generate_dfx_binfiles $config
          command "close_project" "$bitDir/temp.log"
       } else {
          puts "\tSkipping write_bitstream for Configuration $config with attribute \"bitstream\" set to \'$bitstream\'"
@@ -230,7 +230,7 @@ proc generate_dfx_bitstreams { configs } {
 }
 
 ###############################################################
-# Verify all configurations 
+# Verify all configurations
 ###############################################################
 proc verify_configs { configs } {
    global implDir
@@ -259,7 +259,7 @@ proc verify_configs { configs } {
          puts "\tInfo: Skipping Configuration $config with attribute \"verify\" set to \'$verify\'"
       }
    }
-   
+
    if {[llength $configFiles] > 1} {
       set start_time [clock seconds]
       set initialConfig [lindex $configNames 0]
@@ -299,7 +299,7 @@ proc add_xdc { xdc {synth 0} {cell ""} } {
          command "add_files $file"
          set file_split [split $file "/"]
          set fileName [lindex $file_split end]
-         if { $synth ==2 || [string match "*synth*" $fileName] } { 
+         if { $synth ==2 || [string match "*synth*" $fileName] } {
             if {[string match "*ooc*" $fileName]} {
                command "set_property USED_IN {synthesis out_of_context} \[get_files $file\]"
             } else {
@@ -337,14 +337,14 @@ proc add_xdc { xdc {synth 0} {cell ""} } {
             command "set_property PROCESSING_ORDER early \[get_files $file\]"
          }
       } else {
-         set errMsg "\nERROR: Could not find specified XDC: $file" 
-         error $errMsg 
+         set errMsg "\nERROR: Could not find specified XDC: $file"
+         error $errMsg
       }
    }
 }
 
 ###############################################################
-# A proc to read in XDC files post link_design 
+# A proc to read in XDC files post link_design
 ###############################################################
 proc readXDC { xdc {cell ""} } {
    upvar resultDir resultDir
@@ -360,8 +360,8 @@ proc readXDC { xdc {cell ""} } {
             command "read_xdc -cell $cell $file" "$resultDir/read_xdc_cell.log"
          }
       } else {
-         set errMsg "\nERROR: Could not find specified XDC: $file" 
-         error $errMsg 
+         set errMsg "\nERROR: Could not find specified XDC: $file"
+         error $errMsg
       }
    }
 }
@@ -374,9 +374,9 @@ proc add_ip { ips } {
    upvar resultDir resultDir
 
    foreach ip $ips {
-      if {[string length ip] > 0} { 
+      if {[string length ip] > 0} {
          if {[file exists $ip]} {
-            set ip_split [split $ip "/"] 
+            set ip_split [split $ip "/"]
             set xci [lindex $ip_split end]
             set ipPathList [lrange $ip_split 0 end-1]
             set ipPath [join $ipPathList "/"]
@@ -397,7 +397,7 @@ proc add_ip { ips } {
                command "generate_target all \[get_ips $ipName]" "$resultDir/${ipName}_generate.log"
             }
          } else {
-            set errMsg "\nERROR: Could not find specified IP file: $ip" 
+            set errMsg "\nERROR: Could not find specified IP file: $ip"
             error $errMsg
          }
       }
@@ -405,19 +405,19 @@ proc add_ip { ips } {
 }
 
 ###############################################################
-# Add all core netlists in list 
+# Add all core netlists in list
 ###############################################################
 proc add_cores { cores } {
    #Flatten list if nested lists exist
    set files [join [join $cores]]
    foreach file $files {
-      if {[string length $file] > 0} { 
+      if {[string length $file] > 0} {
          if {[file exists $file]} {
             #Comment this out to prevent adding files 1 at a time. Add all at once instead.
             puts "\t#HD: Adding core file $file"
             command "add_files $file"
          } else {
-            set errMsg "\nERROR: Could not find specified core file: $file" 
+            set errMsg "\nERROR: Could not find specified core file: $file"
             error $errMsg
          }
       }
@@ -425,9 +425,9 @@ proc add_cores { cores } {
 }
 
 #==============================================================
-# TCL proc for running DRC on post-route_design to catch 
-# Critical Warnings. These will be errors in write_bitstream. 
-# Catches unroutes, antennas, etc. 
+# TCL proc for running DRC on post-route_design to catch
+# Critical Warnings. These will be errors in write_bitstream.
+# Catches unroutes, antennas, etc.
 #==============================================================
 proc check_drc { module {ruleDeck default} {quiet 0} } {
    upvar reportDir reportDir
@@ -435,7 +435,7 @@ proc check_drc { module {ruleDeck default} {quiet 0} } {
    if {[info exists reportDir]==0} {
       set reportDir "."
    }
-   puts "\t#HD: Running report_drc with ruledeck $ruleDeck.\n\tResults saved to $reportDir/${module}_drc_$ruleDeck.rpt" 
+   puts "\t#HD: Running report_drc with ruledeck $ruleDeck.\n\tResults saved to $reportDir/${module}_drc_$ruleDeck.rpt"
    command "report_drc -ruledeck $ruleDeck -name $module -file $reportDir/${module}_drc_$ruleDeck.rpt" "$reportDir/temp.log"
    set Advisories   [get_drc_violations -quiet -name $module -filter {SEVERITY=~"Advisory"}]
    set Warnings     [get_drc_violations -quiet -name $module -filter {SEVERITY=~"Warning"}]
@@ -475,7 +475,7 @@ proc check_drc { module {ruleDeck default} {quiet 0} } {
 }
 
 #==============================================================
-# TCL proc for print out rule information for given ruledecks 
+# TCL proc for print out rule information for given ruledecks
 # Use get_drc_ruledecks to list valid ruledecks
 #==============================================================
 proc printRuleDecks { {decks ""} } {

@@ -66,13 +66,9 @@ package esp_csr_pkg is
   constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 142;
   constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 142 + NCPU_TILE_MAX * 2 * YX_WIDTH;
 
-  constant ESP_CSR_ACC_DECOUPLER_ADDR : integer range 0 to 31 := 16;
-  constant ESP_CSR_ACC_DECOUPLER_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := ESP_CSR_CPU_LOC_OVR_MSB + 1;
-  constant ESP_CSR_ACC_DECOUPLER_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := ESP_CSR_CPU_LOC_OVR_MSB + 1;
-
-  constant ESP_CSR_PRC_INTR_ADDR : integer range 0 to 31 := 17;
-  constant ESP_CSR_PRC_INTR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := ESP_CSR_CPU_LOC_OVR_MSB + 2;
-  constant ESP_CSR_PRC_INTR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := ESP_CSR_CPU_LOC_OVR_MSB + 2;
+  constant ESP_CSR_ACC_PRC_CSR_ADDR : integer range 0 to 31 := 16;
+  constant ESP_CSR_ACC_PRC_CSR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := ESP_CSR_CPU_LOC_OVR_MSB + 1;
+  constant ESP_CSR_ACC_PRC_CSR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := ESP_CSR_ACC_PRC_CSR_LSB + 1;
 
   component esp_tile_csr
     generic (

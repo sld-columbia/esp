@@ -921,6 +921,11 @@ elif [ "$4" == "REPORT" ]; then
     extract_acc $1 $2 $3
     gen_report_script $1 $2 $3 $4 $5
 
+elif [ "$4" == "FLOORPLAN" ]; then
+    extract_acc $1 $2 $3
+    initialize_acc_tiles $1 $2 $3
+    gen_floorplan $1 $2 $3 $4;
+
 elif [ "$4" == "test" ]; then
     extract_acc $1 $2 $3
     extract_acc_old $1 $2 $3

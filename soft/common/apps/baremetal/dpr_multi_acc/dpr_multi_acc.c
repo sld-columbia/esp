@@ -20,12 +20,13 @@
 #define RUN_MAC 0
 
 #define SLD_ACC_TILE_ADDER 0x98
-#define SLD_ACC_TILE_MAC 0x98
+#define SLD_ACC_TILE_MAC 0x4a
 #define DEV_NAME_ADDER "sld,adder_vivado"
-#define DEV_NAME_MAC "sld,mac_vivado"
+#define DEV_NAME_MAC "sld,mac_sysc_catapult"
 
 // Find tile router address relative to tile device
 int get_dco_reg_addr(struct esp_device *dev_tile_1, int tile_id) {
+    // TODO compute tile ID as in get_decoupler_addr from base address
     return (0x60090000
         + 0x200 * tile_id)  // router base address
         + 0b111001100       // address of DCO register in NoC CSR file (addr[6:2] = 19)
@@ -95,16 +96,15 @@ int main(int argc, char * argv[])
     //ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_ADDER, DEV_NAME_ADDER);
     ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_MAC, DEV_NAME_MAC);
     if (ndev == 0) {
-      printf("adder not found\n");
-      return 0;
+        printf("adder not found\n");
+        dev_tile_1->addr = 0x60010000;
+    }
+    else {
+        dev_tile_1 = &espdevs_tile_1[0];
     }
 
-    dev_tile_1 = &espdevs_tile_1[0];
-
     decouple_acc(dev_tile_1, 1);
-    printf("Reading decoupled bit: %d\n", ioread32(dev_tile_1, DECOUPLER_REG));
     decouple_acc(dev_tile_1, 0);
-    printf("Reading decoupled bit: %d\n", ioread32(dev_tile_1, DECOUPLER_REG));
 
 #ifdef RUN_ADDER
     printf("  ****  Loading Adder accelerator onto FPGA  **** \n");
@@ -184,6 +184,8 @@ int main(int argc, char * argv[])
     printf("\n  Test FAILED. Number of errors: %d\n", errors);
     }
 
+#else
+    printf("RUN_ADDER not defined\n");
 #endif // RUN_ADDER
 
 #ifdef RUN_MAC
@@ -191,9 +193,7 @@ int main(int argc, char * argv[])
     printf("   **** Loading MAC accelerator onto FPGA ****\n");
 
     decouple_acc(dev_tile_1, 1);
-    printf("Reading decoupled bit: %d\n", ioread32(dev_tile_1, DECOUPLER_REG));
     decouple_acc(dev_tile_1, 0);
-    printf("Reading decoupled bit: %d\n", ioread32(dev_tile_1, DECOUPLER_REG));
 
     reconfigure_FPGA(dev_tile_1, RUN_MAC);
 
@@ -301,6 +301,10 @@ int main(int argc, char * argv[])
         aligned_free(ptable_mac);
         aligned_free(mem_mac);
         aligned_free(mem_gold_mac);
+#else
+
+    printf("RUN_MAC not defined\n");
+
 #endif // RUN_MAC
     }
 

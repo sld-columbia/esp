@@ -19,21 +19,21 @@ endif
 
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
-XDC   = $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX).xdc
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mig-pins.xdc
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mig-constraints.xdc
+XDC	  = $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX).xdc
+XDC	 += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mig-pins.xdc
+XDC	 += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mig-constraints.xdc
 ifneq ($(findstring profpga, $(BOARD)),)
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mmi64.xdc
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-cable-pins.xdc
+XDC	 += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mmi64.xdc
+XDC	 += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-cable-pins.xdc
 endif
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-eth-pins.xdc
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-dvi-pins.xdc
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-eth-constraints.xdc
+XDC	 += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-eth-pins.xdc
+XDC	 += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-dvi-pins.xdc
+XDC	 += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-eth-constraints.xdc
 ifeq ($(CONFIG_SVGA_ENABLE),y)
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-dvi-constraints.xdc
+XDC	 += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-dvi-constraints.xdc
 endif
 ifeq ($(CONFIG_HAS_DVFS),y)
-XDC  += $(ESP_ROOT)/constraints/esp-common/esp-plls.xdc
+XDC	 += $(ESP_ROOT)/constraints/esp-common/esp-plls.xdc
 endif
 endif
 
@@ -97,7 +97,7 @@ else
 endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
-	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
+	@echo "set_property board_part $(PROTOBOARD) [current_project]"	 >> $@
 endif
 ifneq ($(IP_XCI_SRCS),)
 	@for rtl in $(IP_XCI_SRCS); do \
@@ -170,17 +170,17 @@ endif
 		echo "import_files $(UTILS_GRLIB)/netlists/$(TECHLIB)" >> $@; \
 	fi;
 	@if test -r $(DESIGN_PATH)/socgen/esp/mem_tile_floorplanning.xdc; then \
-		echo "read_xdc  $(DESIGN_PATH)/socgen/esp/mem_tile_floorplanning.xdc" >> $@; \
-	    echo "set_property used_in_synthesis true [get_files $(DESIGN_PATH)/socgen/esp/mem_tile_floorplanning.xdc]" >> $@; \
-	    echo "set_property used_in_implementation true [get_files $(DESIGN_PATH)/socgen/esp/mem_tile_floorplanning.xdc]" >> $@; \
+		echo "read_xdc	$(DESIGN_PATH)/socgen/esp/mem_tile_floorplanning.xdc" >> $@; \
+		echo "set_property used_in_synthesis true [get_files $(DESIGN_PATH)/socgen/esp/mem_tile_floorplanning.xdc]" >> $@; \
+		echo "set_property used_in_implementation true [get_files $(DESIGN_PATH)/socgen/esp/mem_tile_floorplanning.xdc]" >> $@; \
 	echo "set_property strategy Congestion_SpreadLogic_high [get_runs impl_1]" >> $@; \
 	fi;
 	@for i in $(XDC); do \
 	  if test -e $$i; then \
-	    echo "read_xdc $$i" >> $@; \
-	    echo "set_property used_in_synthesis true [get_files $$i]" >> $@; \
-	    echo "set_property used_in_implementation true [get_files $$i]" >> $@; \
-          fi; \
+		echo "read_xdc $$i" >> $@; \
+		echo "set_property used_in_synthesis true [get_files $$i]" >> $@; \
+		echo "set_property used_in_implementation true [get_files $$i]" >> $@; \
+		  fi; \
 	done;
 	@echo "set_property top $(TOP) [current_fileset]" >> $@
 
@@ -198,14 +198,14 @@ else
 endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
-	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
+	@echo "set_property board_part $(PROTOBOARD) [current_project]"	 >> $@
 endif
 	@for i in $(XDC_EMU); do \
 	  if test -e $$i; then \
-	    echo "read_xdc $$i" >> $@; \
-	    echo "set_property used_in_synthesis true [get_files $$i]" >> $@; \
-	    echo "set_property used_in_implementation true [get_files $$i]" >> $@; \
-          fi; \
+		echo "read_xdc $$i" >> $@; \
+		echo "set_property used_in_synthesis true [get_files $$i]" >> $@; \
+		echo "set_property used_in_implementation true [get_files $$i]" >> $@; \
+		  fi; \
 	done;
 	@echo "set_property top chip_emu_top [get_filesets {sim_1 sources_1}]" >> $@
 	@echo "update_compile_order -fileset sources_1" >> $@
@@ -228,11 +228,11 @@ vivado/syn.tcl: vivado
 	@echo "wait_on_run -timeout 480 synth_1" >> $@
 	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
 	@if [ "$(DPR_ENABLED)" != "y" ]; then \
-        echo "launch_runs impl_1 -jobs 12" >> $@; \
-        echo "wait_on_run -timeout 480 impl_1" >> $@; \
-        echo "launch_runs impl_1 -to_step write_bitstream" >> $@; \
-        echo "wait_on_run -timeout 60 impl_1" >> $@; \
-    fi;
+		echo "launch_runs impl_1 -jobs 12" >> $@; \
+		echo "wait_on_run -timeout 480 impl_1" >> $@; \
+		echo "launch_runs impl_1 -to_step write_bitstream" >> $@; \
+		echo "wait_on_run -timeout 60 impl_1" >> $@; \
+	fi;
 
 vivado/syn_emu.tcl: vivado
 	$(QUIET_INFO)echo "generating synthesis script for Vivado"
@@ -268,18 +268,18 @@ vivado/program.tcl: vivado
 	@echo "puts \"Searching for \$$part...\"" >> $@
 	@echo "" >> $@
 	@echo "foreach cable [get_hw_targets ] {" >> $@
-	@echo "    open_hw_target \$$cable" >> $@
-	@echo "    set dev [get_hw_devices]" >> $@
-	@echo "    if [string match -nocase \"\$$part*\" \$$dev] {" >> $@
-	@echo "	puts \"Programming \$$part ...\"" >> $@
-	@echo "	set_property PROGRAM.FILE \$$bit \$$dev" >> $@
-	@echo "	program_hw_devices \$$dev" >> $@
-	@echo "	close_hw_target" >> $@
-	@echo "	disconnect_hw_server" >> $@
-	@echo "	close_hw" >> $@
-	@echo "	exit" >> $@
-	@echo "    }" >> $@
-	@echo "    close_hw_target" >> $@
+	@echo "	   open_hw_target \$$cable" >> $@
+	@echo "	   set dev [get_hw_devices]" >> $@
+	@echo "	   if [string match -nocase \"\$$part*\" \$$dev] {" >> $@
+	@echo " puts \"Programming \$$part ...\"" >> $@
+	@echo " set_property PROGRAM.FILE \$$bit \$$dev" >> $@
+	@echo " program_hw_devices \$$dev" >> $@
+	@echo " close_hw_target" >> $@
+	@echo " disconnect_hw_server" >> $@
+	@echo " close_hw" >> $@
+	@echo " exit" >> $@
+	@echo "	   }" >> $@
+	@echo "	   close_hw_target" >> $@
 	@echo "}" >> $@
 	@echo "" >> $@
 	@echo "disconnect_hw_server" >> $@
@@ -355,102 +355,118 @@ vivado-syn: vivado-setup
 	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../$(VIVADO_LOGS)/vivado_syn.log; \
 	cd ../;
 	@if [ "$(DPR_ENABLED)" != "y" ]; then \
-        bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
-        if  test -r $$bit; then \
-            rm -rf $(TOP).bit; \
-            ln -s $$bit; \
-        else \
-            echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
-        fi; \
-    else \
-        echo $(SPACES)"DPR: starting DPR implementation"; \
-        echo $(SPACES)"DPR: assembling top level static design"; \
-        $(RM) static_config.tcl; \
-        echo "set part $(DEVICE) " >> static_config.tcl; \
-        echo "set board $(BOARD) " >> static_config.tcl; \
+		bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
+		if	test -r $$bit; then \
+			rm -rf $(TOP).bit; \
+			ln -s $$bit; \
+		else \
+			echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
+		fi; \
+	else \
+		echo $(SPACES)"DPR: starting DPR implementation"; \
+		echo $(SPACES)"DPR: assembling top level static design"; \
+		$(RM) static_config.tcl; \
+		echo "set part $(DEVICE) " >> static_config.tcl; \
+		echo "set board $(BOARD) " >> static_config.tcl; \
 		echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
 		if [ "$(BOARD)" = xilinx-vc707-xc7vx485t ]; then \
 			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_v7/prc_ctrlr_v7.xci" >> static_config.tcl; \
-        else \
+		else \
 			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_us/prc_ctrlr_us.xci" >> static_config.tcl; \
 		fi;\
 		if [ "$(BOARD)" = xilinx-vcu128-xcvu37p ]; then \
-            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig_clamshell/mig_clamshell.xci" >> static_config.tcl; \
-            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii_vcu128/sgmii_vcu128.xci" >> static_config.tcl; \
-        else \
-            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig/mig.xci" >> static_config.tcl; \
-            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii/sgmii.xci" >> static_config.tcl; \
-        fi; \
-        echo "link_design -top $(TOP) -part $(DEVICE)" >> static_config.tcl; \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig_clamshell/mig_clamshell.xci" >> static_config.tcl; \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii_vcu128/sgmii_vcu128.xci" >> static_config.tcl; \
+		else \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig/mig.xci" >> static_config.tcl; \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii/sgmii.xci" >> static_config.tcl; \
+		fi; \
+		echo "link_design -top $(TOP) -part $(DEVICE)" >> static_config.tcl; \
 		echo "write_checkpoint -force $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp" >> static_config.tcl; \
-        echo "close_project" >> static_config.tcl; \
-        echo "exit" >> static_config.tcl; \
-        echo $(SPACES)"DPR: Assembling sgmii and mig into static part"; \
-        vivado $(VIVADO_BATCH_OPT) -source static_config.tcl | tee ../vivado_syn.log; \
-        echo $(SPACES)"DPR: creating Vivado dpr directory"; \
-        $(RM) vivado_dpr; \
-        $(RM) partial_bitstreams;\
-               mkdir -p partial_bitstreams;\
-               mkdir -p vivado_dpr; \
-        mkdir -p vivado_dpr/Bitstreams; \
-        mkdir -p vivado_dpr/Checkpoint; \
-        mkdir -p vivado_dpr/Implement; \
-        mkdir -p vivado_dpr/Synth; \
-        mkdir -p vivado_dpr/Synth/Static; \
-        mkdir -p vivado_dpr/Sources/xdc; \
-        cp ./socgen/esp/.esp_config vivado_dpr/; \
-        cp $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
-        echo $(SPACES)"DPR : launching setup script for Vivado DPR flow";  \
-		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) DPR $(PROCESS_DPR_ARG);  \
+		echo "close_project" >> static_config.tcl; \
+		echo "exit" >> static_config.tcl; \
+		echo $(SPACES)"DPR: Assembling sgmii and mig into static part"; \
+		vivado $(VIVADO_BATCH_OPT) -source static_config.tcl | tee ../vivado_syn.log; \
+		echo $(SPACES)"DPR: creating Vivado dpr directory"; \
+		$(RM) vivado_dpr; \
+		$(RM) partial_bitstreams;\
+			   mkdir -p partial_bitstreams;\
+			   mkdir -p vivado_dpr; \
+		mkdir -p vivado_dpr/Bitstreams; \
+		mkdir -p vivado_dpr/Checkpoint; \
+		mkdir -p vivado_dpr/Implement; \
+		mkdir -p vivado_dpr/Synth; \
+		mkdir -p vivado_dpr/Synth/Static; \
+		mkdir -p vivado_dpr/Sources/xdc; \
+		cp ./socgen/esp/.esp_config vivado_dpr/; \
+		cp $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
+		echo $(SPACES)"DPR : launching setup script for Vivado DPR flow";  \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) DPR $(PROCESS_DPR_ARG);	 \
 		cd vivado_dpr; \
 		vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
-        cd ../; \
+		cd ../; \
 		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) IMPL_DPR $(PROCESS_DPR_ARG);  \
 		cd vivado_dpr; \
-        vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_syn_dpr.log; \
-		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_BS $(PROCESS_DPR_ARG);  \
-        cd vivado_dpr; \
-        vivado $(VIVADO_BATCH_OPT) -source bs.tcl | tee ../vivado_syn_dpr.log; \
+		vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_syn_dpr.log; \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_BS $(PROCESS_DPR_ARG);	\
+		cd vivado_dpr; \
+		vivado $(VIVADO_BATCH_OPT) -source bs.tcl | tee ../vivado_syn_dpr.log; \
 		cd ../ ; \
 		cp res_reqs.csv vivado_dpr/ ; \
-		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_HDR $(PROCESS_DPR_ARG);  \
-    fi;
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_HDR $(PROCESS_DPR_ARG);	 \
+	fi;
 
+# run the top-level DPR flow
 vivado-syn-dpr: DPR_ENABLED = y
 vivado-syn-dpr: PROCESS_DPR_ARG = DPR
 vivado-syn-dpr: vivado-syn
 
+# run the top-level DPR flow with black boxes for all accelerators
 vivado-syn-dpr-bbox: DPR_ENABLED = y
 vivado-syn-dpr-bbox: PROCESS_DPR_ARG = BBOX
 vivado-syn-dpr-bbox: vivado-syn
 
+# synthesize a changed accelerator
 SYN_ARG ?= ACC
 vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl
 	@if ! test -d vivado_dpr; then \
-        echo $(SPACES)"DPR: vivado_dpr directory not found"; \
-        echo $(SPACES)"DPR: you should run vivado-syn-dpr first"; \
-    else \
-        echo $(SPACES)"INFO starting DPR flow"; \
-        /bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) $(SYN_ARG) $(PROCESS_DPR_ARG);  \
-        cd vivado_dpr; \
-        vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
-        cd ../ ; \
+		echo $(SPACES)"DPR: vivado_dpr directory not found"; \
+		echo $(SPACES)"DPR: you should run vivado-syn-dpr first"; \
+	else \
+		echo $(SPACES)"INFO starting DPR flow"; \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) $(SYN_ARG) $(PROCESS_DPR_ARG);	\
+		cd vivado_dpr; \
+		vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
+		cd ../ ; \
 		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) IMPL_ACC $(PROCESS_DPR_ARG);  \
-        cd vivado_dpr; \
-        vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_impl_dpr.log; \
-        cd ../ ; \
-        /bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_BS $(PROCESS_DPR_ARG);  \
-        cd vivado_dpr; \
-        vivado $(VIVADO_BATCH_OPT) -source bs.tcl | tee ../vivado_syn_dpr.log; \
-        cd ../ ; \
+		cd vivado_dpr; \
+		vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_impl_dpr.log; \
+		cd ../ ; \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_BS $(PROCESS_DPR_ARG);	\
+		cd vivado_dpr; \
+		vivado $(VIVADO_BATCH_OPT) -source bs.tcl | tee ../vivado_syn_dpr.log; \
+		cd ../ ; \
 		cp ./socgen/esp/.esp_config vivado_dpr/; \
 		cp res_reqs.csv vivado_dpr/ ; \
-		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_HDR $(PROCESS_DPR_ARG);  \
-    fi;
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_HDR $(PROCESS_DPR_ARG);	 \
+	fi;
 
+# synthesize all accelerators as black boxes
 vivado-syn-dpr-acc-bbox: SYN_ARG = BBOX
 vivado-syn-dpr-acc-bbox: PROCESS_DPR_ARG = BBOX
 vivado-syn-dpr-acc-bbox: vivado-syn-dpr-acc
+
+# report statistics for a reconfigurable system
+vivado-syn-dpr-report:
+	@if ! test -d vivado_dpr; then \
+		echo $(SPACES)"DPR: vivado_dpr directory not found"; \
+		echo $(SPACES)"DPR: you should run vivado-syn-dpr first"; \
+	else \
+		echo $(SPACES)"INFO reporting for DPR flow"; \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) REPORT;	 \
+		cd vivado_dpr; \
+		vivado $(VIVADO_BATCH_OPT) -source report.tcl | tee ../vivado_syn_dpr_report.log; \
+	fi;
 
 vivado-syn-emu: vivado-setup-emu
 	$(QUIET_INFO)echo "launching Vivado implementation script"
@@ -503,20 +519,20 @@ endif # ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 
 vivado-prog-fpga: vivado/program.tcl
 	@cd vivado; \
-    if [ "$(DPR_ENABLED)" != "y" ]; then \
-        bit=$(DESIGN).runs/impl_1/$(TOP).bit; \
-    else \
-        echo $(SPACES)"DPR: copying partial bitstream";\
-        mkdir -p $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1; \
-        cp $(ESP_ROOT)/socs/$(BOARD)/vivado_dpr/Bitstreams/acc_bs.bit $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
-        bit=$(DESIGN).runs/impl_1/top.bit; \
-    fi;\
-    if test -r $$bit; then \
-        vivado $(VIVADO_BATCH_OPT) -source program.tcl -tclargs $(FPGA_HOST) $(XIL_HW_SERVER_PORT) $(PART) $$bit; \
-    else \
-        echo $(SPACES)"ERROR: bistream not found; please run target vivado-syn first"; \
-    fi; \
-    cd ../;
+	if [ "$(DPR_ENABLED)" != "y" ]; then \
+		bit=$(DESIGN).runs/impl_1/$(TOP).bit; \
+	else \
+		echo $(SPACES)"DPR: copying partial bitstream";\
+		mkdir -p $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1; \
+		cp $(ESP_ROOT)/socs/$(BOARD)/vivado_dpr/Bitstreams/acc_bs.bit $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
+		bit=$(DESIGN).runs/impl_1/top.bit; \
+	fi;\
+	if test -r $$bit; then \
+		vivado $(VIVADO_BATCH_OPT) -source program.tcl -tclargs $(FPGA_HOST) $(XIL_HW_SERVER_PORT) $(PART) $$bit; \
+	else \
+		echo $(SPACES)"ERROR: bistream not found; please run target vivado-syn first"; \
+	fi; \
+	cd ../;
 
 vivado-clean:
 	$(QUIET_CLEAN)$(RM) $(VIVADO_LOGS)

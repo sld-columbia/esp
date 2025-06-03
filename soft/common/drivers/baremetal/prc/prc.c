@@ -12,11 +12,8 @@
 
 #define DPR_VERBOSE
 #define DPR_MEASURE_RECONF_TIME
-//#define DPR_USE_ROUTER_CSR
 
-#ifdef DPR_USE_ROUTER_CSR
 static struct esp_device esp_tile_decoupler;
-#endif // DPR_USE_ROUTER_CSR
 static struct esp_device esp_prc;
 struct pbs_map *pb_map;
 
@@ -33,7 +30,6 @@ static void get_io_tile_id(struct esp_device* io_tile)
 #endif
 }
 
-#ifdef DPR_USE_ROUTER_CSR
 static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupler)
 {
     unsigned i;
@@ -63,23 +59,21 @@ static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupl
     }
 
     if(tile_id == 0XFF) {
-        printf("Error: cannot find tile id\n");
+        printf("[PRC DRIVER]: Error: cannot find tile id\n");
         return -1;
         //exit(EXIT_FAILURE);
     }
 
-    //compute apb address for tile decoupler
+    // compute apb address for tile decoupler
     (*decoupler).addr = APB_BASE_ADDR + (monitor_base + tile_id * 0x200);
 #ifdef DPR_VERBOSE
-    printf("[PRC DRIVER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0x versus tile addr -- 0x%0x \n", tile_id, (unsigned) esp_tile_decoupler.addr, (unsigned) dev->addr);
+    printf("[PRC DRIVER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0x \n", tile_id, (unsigned) esp_tile_decoupler.addr);
 #endif
     return 0;
 }
-#endif // DPR_USE_ROUTER_CSR
 
 int decouple_acc(struct esp_device *dev, unsigned val)
 {
-#ifdef DPR_USE_ROUTER_CSR
     // get address of router
     get_decoupler_addr(dev, &esp_tile_decoupler);
 
@@ -90,16 +84,9 @@ int decouple_acc(struct esp_device *dev, unsigned val)
         iowrite32(&esp_tile_decoupler, DECOUPLER_REG, BIT(0));
     }
 
-#else
-
-    if (val == 0) {
-        iowrite32(dev, DECOUPLER_REG, 0);
-    }
-    else {
-        iowrite32(dev, DECOUPLER_REG, BIT(0));
-    }
-
-#endif // DPR_USE_ROUTER_CSR
+#ifdef DPR_VERBOSE
+    printf("After writing %0x to decoupler at 0x%0x, read bit %0x\n", val, (unsigned) esp_tile_decoupler.addr, ioread32(&esp_tile_decoupler, DECOUPLER_REG));
+#endif
 
     return 0;
 }
@@ -202,7 +189,7 @@ unsigned int reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
 #ifdef DPR_VERBOSE
     printf("[PRC DRIVER]: prc done -- %u \n", prc_done);
 #endif
-    if (prc_done == 1)
+    if (prc_done == 1<<16)
         iowrite32(&esp_prc, 0x0, 0x3);
 
 
