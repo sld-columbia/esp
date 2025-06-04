@@ -300,6 +300,7 @@ architecture rtl of tile_io is
   signal remote_apbo      : apb_slv_out_vector;
   signal noc_apbi         : apb_slv_in_type;
   signal noc_apbi_wirq    : apb_slv_in_type;
+  signal noc_apbi_dummy   : apb_slv_in_type;
   signal noc_apbo         : apb_slv_out_vector;
   signal apb_req, apb_ack : std_ulogic;
   signal local_apb_ack    : std_ulogic;
@@ -427,8 +428,19 @@ architecture rtl of tile_io is
     for i in 1 to 19 loop
       cfg(i) := fixed_pconfig(i);
     end loop;  -- i
+    cfg(127) := fixed_pconfig(127);
     return cfg;
   end function set_local_pconfig;
+
+  function set_dummy_apbi (
+    signal noc_apbi : apb_slv_in_type)
+    return apb_slv_in_type is
+    variable cfg : apb_slv_in_type;
+  begin  -- function set_dummy_apbi
+    cfg := noc_apbi;
+    cfg.paddr(8 downto 7) := "11";
+    return cfg;
+  end function set_dummy_apbi;
 
   constant local_apbo_pconfig : apb_slv_config_vector := set_local_pconfig(this_csr_pconfig, fixed_apbo_pconfig);
 
@@ -1457,171 +1469,197 @@ begin
       prc_interrupt => vsm_VS_0_sw_startup_req
     );
 
-  -- PRC
+  -- bridge from APB(127) to partial reconfiguration controller
   generate_prc : if has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 and SIMULATION = false generate
-  prc_1: prc_inst
-    generic map (
-      tech => CFG_FABTECH)
-    port map (
-      clk                       => tile_clk,
-      reset                     => rst,
-      m_axi_mem_araddr          => m_axi_mem_araddr,
-      m_axi_mem_arlen           => m_axi_mem_arlen,
-      m_axi_mem_arsize          => m_axi_mem_arsize,
-      m_axi_mem_arburst         => m_axi_mem_arburst,
-      m_axi_mem_arprot          => m_axi_mem_arprot,
-      m_axi_mem_arcache         => m_axi_mem_arcache,
-      m_axi_mem_aruser          => m_axi_mem_aruser,
-      m_axi_mem_arvalid         => m_axi_mem_arvalid,
-      m_axi_mem_arready         => m_axi_mem_arready,
-      m_axi_mem_rdata           => m_axi_mem_rdata,
-      m_axi_mem_rresp           => m_axi_mem_rresp,
-      m_axi_mem_rlast           => m_axi_mem_rlast,
-      m_axi_mem_rvalid          => m_axi_mem_rvalid,
-      m_axi_mem_rready          => m_axi_mem_rready,
-      icap_clk                  => tile_clk,
-      icap_reset                => rst,
-      icap_csib                 => icap_csib,
-      icap_rdwrb                => icap_rdwrb,
-      icap_i                    => icap_o,
-      icap_o                    => icap_i,
-      --vsm_VS_0_rm_shutdown_req  => vsm_VS_0_rm_shutdown_req,
-      vsm_VS_0_rm_shutdown_ack  => vsm_VS_0_rm_shutdown_ack,
-      --vsm_VS_0_rm_decouple      => vsm_VS_0_rm_decouple,
-      --vsm_VS_0_rm_reset         => vsm_VS_0_rm_reset,
-      --vsm_VS_0_event_error      => vsm_VS_0_event_error,
-      --vsm_VS_0_sw_shutdown_req  => vsm_VS_0_sw_shutdown_req,
-      vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
-      icap_avail                => icap_avail,
-      icap_prdone               => icap_prdone,
-      icap_prerror              => icap_prerror,
-      s_axi_reg_awaddr          => s_axil_awaddr_masked,
-      s_axi_reg_awvalid         => s_axil_awvalid,
-      s_axi_reg_awready         => s_axil_awready,
-      s_axi_reg_wdata           => s_axil_wdata,
-      s_axi_reg_wvalid          => s_axil_wvalid,
-      s_axi_reg_wready          => s_axil_wready,
-      s_axi_reg_bresp           => s_axil_bresp,
-      s_axi_reg_bvalid          => s_axil_bvalid,
-      s_axi_reg_bready          => s_axil_bready,
-      s_axi_reg_araddr          => s_axil_araddr_masked,
-      s_axi_reg_arvalid         => s_axil_arvalid,
-      s_axi_reg_arready         => s_axil_arready,
-      s_axi_reg_rdata           => s_axil_rdata,
-      s_axi_reg_rresp           => s_axil_rresp,
-      s_axi_reg_rvalid          => s_axil_rvalid,
-      s_axi_reg_rready          => s_axil_rready);
+    prc_1: prc_inst
+      generic map (
+        tech => CFG_FABTECH)
+      port map (
+        clk                       => tile_clk,
+        reset                     => rst,
+        m_axi_mem_araddr          => m_axi_mem_araddr,
+        m_axi_mem_arlen           => m_axi_mem_arlen,
+        m_axi_mem_arsize          => m_axi_mem_arsize,
+        m_axi_mem_arburst         => m_axi_mem_arburst,
+        m_axi_mem_arprot          => m_axi_mem_arprot,
+        m_axi_mem_arcache         => m_axi_mem_arcache,
+        m_axi_mem_aruser          => m_axi_mem_aruser,
+        m_axi_mem_arvalid         => m_axi_mem_arvalid,
+        m_axi_mem_arready         => m_axi_mem_arready,
+        m_axi_mem_rdata           => m_axi_mem_rdata,
+        m_axi_mem_rresp           => m_axi_mem_rresp,
+        m_axi_mem_rlast           => m_axi_mem_rlast,
+        m_axi_mem_rvalid          => m_axi_mem_rvalid,
+        m_axi_mem_rready          => m_axi_mem_rready,
+        icap_clk                  => tile_clk,
+        icap_reset                => rst,
+        icap_csib                 => icap_csib,
+        icap_rdwrb                => icap_rdwrb,
+        icap_i                    => icap_o,
+        icap_o                    => icap_i,
+        --vsm_VS_0_rm_shutdown_req  => vsm_VS_0_rm_shutdown_req,
+        vsm_VS_0_rm_shutdown_ack  => vsm_VS_0_rm_shutdown_ack,
+        --vsm_VS_0_rm_decouple      => vsm_VS_0_rm_decouple,
+        --vsm_VS_0_rm_reset         => vsm_VS_0_rm_reset,
+        --vsm_VS_0_event_error      => vsm_VS_0_event_error,
+        --vsm_VS_0_sw_shutdown_req  => vsm_VS_0_sw_shutdown_req,
+        vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
+        icap_avail                => icap_avail,
+        icap_prdone               => icap_prdone,
+        icap_prerror              => icap_prerror,
+        s_axi_reg_awaddr          => s_axil_awaddr_masked,
+        s_axi_reg_awvalid         => s_axil_awvalid,
+        s_axi_reg_awready         => s_axil_awready,
+        s_axi_reg_wdata           => s_axil_wdata,
+        s_axi_reg_wvalid          => s_axil_wvalid,
+        s_axi_reg_wready          => s_axil_wready,
+        s_axi_reg_bresp           => s_axil_bresp,
+        s_axi_reg_bvalid          => s_axil_bvalid,
+        s_axi_reg_bready          => s_axil_bready,
+        s_axi_reg_araddr          => s_axil_araddr_masked,
+        s_axi_reg_arvalid         => s_axil_arvalid,
+        s_axi_reg_arready         => s_axil_arready,
+        s_axi_reg_rdata           => s_axil_rdata,
+        s_axi_reg_rresp           => s_axil_rresp,
+        s_axi_reg_rvalid          => s_axil_rvalid,
+        s_axi_reg_rready          => s_axil_rready);
 
-    s_axil_araddr_masked <= s_axil_araddr and prc_mask;
-    s_axil_awaddr_masked <= s_axil_awaddr and prc_mask;
+      s_axil_araddr_masked <= s_axil_araddr and prc_mask;
+      s_axil_awaddr_masked <= s_axil_awaddr and prc_mask;
 
-  -- ICAP3 instance
-  icap_inst_1: icap
-    generic map (
-      tech  =>  CFG_FABTECH)
-    port map (
-      icap_clk      => tile_clk,
-      icap_csib     => icap_csib,
-      icap_rdwrb    => icap_rdwrb,
-      icap_i        => icap_i,
-      icap_o        => icap_o,
-      icap_avail    => icap_avail,
-      icap_prdone   => icap_prdone,
-      icap_prerror  => icap_prerror);
+    -- ICAP3 instance
+    icap_inst_1: icap
+      generic map (
+        tech  =>  CFG_FABTECH)
+      port map (
+        icap_clk      => tile_clk,
+        icap_csib     => icap_csib,
+        icap_rdwrb    => icap_rdwrb,
+        icap_i        => icap_i,
+        icap_o        => icap_o,
+        icap_avail    => icap_avail,
+        icap_prdone   => icap_prdone,
+        icap_prerror  => icap_prerror);
 
-  axi2noc_1: axislv2noc
-    generic map (
-      tech                        => CFG_FABTECH,
-      nmst                        => 1,
-      split_transaction           => SPLIT_TRANS,
-      retarget_for_dma            => 1,    --enable retarget_for_dma
-      mem_axi_port                => 0,
-      mem_num                     => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
-      mem_info                    => tile_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1), -- was: tile_mem_list
-      this_noc_flit_size          => DMA_NOC_FLIT_SIZE,
-      slv_y                       => tile_y(io_tile_id),
-      slv_x                       => tile_x(io_tile_id))
-    port map (
-      rst                        => rst,
-      clk                        => tile_clk,
-      local_y                    => this_local_y, -- was: tile_y(io_tile_id), --local_y
-      local_x                    => this_local_x, -- was: tile_x(io_tile_id), --local_x
-      mosi                       => mosi,
-      somi                       => somi,
-      coherence_req_wrreq        => prc_dma_snd_wrreq,
-      coherence_req_data_in      => prc_dma_snd_data_in,
-      coherence_req_full         => prc_dma_snd_full,
-      coherence_rsp_rcv_rdreq    => prc_dma_rcv_rdreq,
-      coherence_rsp_rcv_data_out => prc_dma_rcv_data_out,
-      coherence_rsp_rcv_empty    => prc_dma_rcv_empty,
-      remote_ahbs_snd_wrreq      => open,
-      remote_ahbs_snd_data_in    => open,
-      remote_ahbs_snd_full       => '0',
-      remote_ahbs_rcv_rdreq      => open,
-      remote_ahbs_rcv_data_out   => (others => '0'),
-      remote_ahbs_rcv_empty      => '1',
-      coherence                  => prc_coherence);
+    axi2noc_1: axislv2noc
+      generic map (
+        tech                        => CFG_FABTECH,
+        nmst                        => 1,
+        split_transaction           => SPLIT_TRANS,
+        retarget_for_dma            => 1,    --enable retarget_for_dma
+        mem_axi_port                => 0,
+        mem_num                     => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
+        mem_info                    => tile_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1), -- was: tile_mem_list
+        this_noc_flit_size          => DMA_NOC_FLIT_SIZE,
+        slv_y                       => tile_y(io_tile_id),
+        slv_x                       => tile_x(io_tile_id))
+      port map (
+        rst                        => rst,
+        clk                        => tile_clk,
+        local_y                    => this_local_y, -- was: tile_y(io_tile_id), --local_y
+        local_x                    => this_local_x, -- was: tile_x(io_tile_id), --local_x
+        mosi                       => mosi,
+        somi                       => somi,
+        coherence_req_wrreq        => prc_dma_snd_wrreq,
+        coherence_req_data_in      => prc_dma_snd_data_in,
+        coherence_req_full         => prc_dma_snd_full,
+        coherence_rsp_rcv_rdreq    => prc_dma_rcv_rdreq,
+        coherence_rsp_rcv_data_out => prc_dma_rcv_data_out,
+        coherence_rsp_rcv_empty    => prc_dma_rcv_empty,
+        remote_ahbs_snd_wrreq      => open,
+        remote_ahbs_snd_data_in    => open,
+        remote_ahbs_snd_full       => '0',
+        remote_ahbs_rcv_rdreq      => open,
+        remote_ahbs_rcv_data_out   => (others => '0'),
+        remote_ahbs_rcv_empty      => '1',
+        coherence                  => prc_coherence);
 
-  mosi(0).ar.addr(31 downto 0)      <= m_axi_mem_araddr;
-  mosi(0).ar.len                    <= m_axi_mem_arlen;
-  mosi(0).ar.size                   <= m_axi_mem_arsize;
-  mosi(0).ar.burst                  <= m_axi_mem_arburst;
-  mosi(0).ar.prot                   <= m_axi_mem_arprot;
-  mosi(0).ar.cache                  <= m_axi_mem_arcache;
-  mosi(0).ar.valid                  <= m_axi_mem_arvalid;
-  mosi(0).r.ready                   <= m_axi_mem_rready;
-  m_axi_mem_arready                 <= somi(0).ar.ready;
-  m_axi_mem_rdata                   <= somi(0).r.data(31 downto 0);
-  m_axi_mem_rresp                   <= somi(0).r.resp;
-  m_axi_mem_rlast                   <= somi(0).r.last;
-  m_axi_mem_rvalid                  <= somi(0).r.valid;
+    mosi(0).ar.addr(31 downto 0)      <= m_axi_mem_araddr;
+    mosi(0).ar.len                    <= m_axi_mem_arlen;
+    mosi(0).ar.size                   <= m_axi_mem_arsize;
+    mosi(0).ar.burst                  <= m_axi_mem_arburst;
+    mosi(0).ar.prot                   <= m_axi_mem_arprot;
+    mosi(0).ar.cache                  <= m_axi_mem_arcache;
+    mosi(0).ar.valid                  <= m_axi_mem_arvalid;
+    mosi(0).r.ready                   <= m_axi_mem_rready;
+    m_axi_mem_arready                 <= somi(0).ar.ready;
+    m_axi_mem_rdata                   <= somi(0).r.data(31 downto 0);
+    m_axi_mem_rresp                   <= somi(0).r.resp;
+    m_axi_mem_rlast                   <= somi(0).r.last;
+    m_axi_mem_rvalid                  <= somi(0).r.valid;
 
-  -----------------------------------------------------------------------------
-  -- APB 127: apb2axi
-  -----------------------------------------------------------------------------
-  apb2axil_1: apb2axil
-    port map (
-      clk               => tile_clk,
-      rstn              => rst,
-      paddr             => noc_apbi.paddr,
-      penable           => noc_apbi.penable,
-      psel              => noc_apbi.psel(127),
-      pwdata            => noc_apbi.pwdata,
-      pwrite            => noc_apbi.pwrite,
-      prdata            => noc_apbo(127).prdata,
-      pready            => prc_pready,
-      pslverr           => open,
-      s_axil_awvalid    => s_axil_awvalid,
-      s_axil_awready    => s_axil_awready,
-      s_axil_awaddr     => s_axil_awaddr,
-      s_axil_wvalid     => s_axil_wvalid,
-      s_axil_wready     => s_axil_wready,
-      s_axil_wdata      => s_axil_wdata,
-      s_axil_wstrb      => s_axil_wstrb,
-      s_axil_arvalid    => s_axil_arvalid,
-      s_axil_arready    => s_axil_arready,
-      s_axil_araddr     => s_axil_araddr,
-      s_axil_rvalid     => s_axil_rvalid,
-      s_axil_rready     => s_axil_rready,
-      s_axil_rdata      => s_axil_rdata,
-      s_axil_rresp      => s_axil_rresp,
-      s_axil_bvalid     => s_axil_bvalid,
-      s_axil_bready     => s_axil_bready,
-      s_axil_bresp      => s_axil_bresp);
+    -----------------------------------------------------------------------------
+    -- APB 127: apb2axi
+    -----------------------------------------------------------------------------
+    apb2axil_1: apb2axil
+      port map (
+        clk               => tile_clk,
+        rstn              => rst,
+        paddr             => noc_apbi.paddr,
+        penable           => noc_apbi.penable,
+        psel              => noc_apbi.psel(127),
+        pwdata            => noc_apbi.pwdata,
+        pwrite            => noc_apbi.pwrite,
+        prdata            => noc_apbo(127).prdata,
+        pready            => prc_pready,
+        pslverr           => open,
+        s_axil_awvalid    => s_axil_awvalid,
+        s_axil_awready    => s_axil_awready,
+        s_axil_awaddr     => s_axil_awaddr,
+        s_axil_wvalid     => s_axil_wvalid,
+        s_axil_wready     => s_axil_wready,
+        s_axil_wdata      => s_axil_wdata,
+        s_axil_wstrb      => s_axil_wstrb,
+        s_axil_arvalid    => s_axil_arvalid,
+        s_axil_arready    => s_axil_arready,
+        s_axil_araddr     => s_axil_araddr,
+        s_axil_rvalid     => s_axil_rvalid,
+        s_axil_rready     => s_axil_rready,
+        s_axil_rdata      => s_axil_rdata,
+        s_axil_rresp      => s_axil_rresp,
+        s_axil_bvalid     => s_axil_bvalid,
+        s_axil_bready     => s_axil_bready,
+        s_axil_bresp      => s_axil_bresp);
 
-    noc_apbo(127).pirq <= (CFG_PRC_IRQ => vsm_VS_0_sw_startup_req, others => '0'); --connect PRC interrupt
+    noc_apbo(127).pirq <= (CFG_PRC_IRQ => vsm_VS_0_sw_startup_req, others => '0');
     noc_apbo(127).pconfig <= fixed_apbo_pconfig(127);
     noc_apbo(127).pindex <= 127;
   end generate generate_prc;
 
-  generate_no_prc : if not(has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 and SIMULATION = false) generate
+  -- dummy APB receptor in place of PRC bridge
+  generate_prc_sim : if has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 and SIMULATION = true generate
+    vsm_VS_0_sw_startup_req <= '0';
+    noc_apbi_dummy <= set_dummy_apbi(noc_apbi);
+    dummy_apb_127 : esp_tile_csr
+      generic map(
+        pindex  => 127)
+      port map(
+        clk => tile_clk,
+        rstn => rst,
+        pconfig => fixed_apbo_pconfig(this_prc_pindex),
+        rst_tile_id => (others => '0'),
+        mon_ddr => monitor_ddr_none,
+        mon_mem => monitor_mem_none,
+        mon_noc => mon_noc,
+        mon_l2 => monitor_cache_none,
+        mon_llc => monitor_cache_none,
+        mon_acc => monitor_acc_none,
+        mon_dvfs => monitor_dvfs_none,
+        tile_config => open,
+        srst => open,
+        tp_acc_rst => open,
+        apbi => noc_apbi_dummy,
+        apbo => noc_apbo(127),
+        prc_interrupt => vsm_VS_0_sw_startup_req
+      );
+  end generate generate_prc_sim;
+
+  generate_no_prc : if not(has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1) generate
     vsm_VS_0_sw_startup_req <= '0';
     noc_apbo(this_prc_pindex) <= apb_none;
   end generate generate_no_prc;
 
-
-
------------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
   -- Tile queues
   -----------------------------------------------------------------------------
 

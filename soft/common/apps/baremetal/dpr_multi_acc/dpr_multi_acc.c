@@ -19,11 +19,6 @@
 //#define RUN_ADDER 0
 #define RUN_MAC 0
 
-#define SLD_ACC_TILE_ADDER 0x98
-#define SLD_ACC_TILE_MAC 0x4a
-#define DEV_NAME_ADDER "sld,adder_vivado"
-#define DEV_NAME_MAC "sld,mac_sysc_catapult"
-
 // Find tile router address relative to tile device
 int get_dco_reg_addr(struct esp_device *dev_tile_1, int tile_id) {
     // TODO compute tile ID as in get_decoupler_addr from base address
@@ -66,7 +61,7 @@ int main(int argc, char * argv[])
 	token_t *mem_adder, *mem_gold_adder;
     token_t *mem_mac, *mem_gold_mac;
 
-  printf("Hello from dpr_multi_acc\n");
+    printf("Hello from dpr_multi_acc\n");
 
     //MAC
     if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
@@ -93,10 +88,14 @@ int main(int argc, char * argv[])
 
     // adder
     printf(" Initialize Adder app...\n");
-    //ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_ADDER, DEV_NAME_ADDER);
-    ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_MAC, DEV_NAME_MAC);
+#ifdef RUN_ADDER
+    ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_ADDER, DEV_NAME_ADDER);
+#else
+    ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_MAC, DEV_NAME_MAC);
+#endif
+
     if (ndev == 0) {
-        printf("adder not found\n");
+        printf("Reconfigurable tile not found, defaulting to tile @ 0x60010000\n");
         dev_tile_1->addr = 0x60010000;
     }
     else {
@@ -165,8 +164,8 @@ int main(int argc, char * argv[])
     done = 0;
 
     while (!done) {
-    done = ioread32(dev_tile_1, STATUS_REG);
-    done &= STATUS_MASK_DONE;
+        done = ioread32(dev_tile_1, STATUS_REG);
+        done &= STATUS_MASK_DONE;
     }
 
     iowrite32(dev_tile_1, CMD_REG, 0x0);
@@ -179,9 +178,9 @@ int main(int argc, char * argv[])
     errors = validate_adder(mem_adder, mem_gold_adder);
 
     if (!errors) {
-    printf("\n  Test PASSED!\n");
+        printf("\n  Test PASSED!\n");
     } else {
-    printf("\n  Test FAILED. Number of errors: %d\n", errors);
+        printf("\n  Test FAILED. Number of errors: %d\n", errors);
     }
 
 #else
@@ -197,22 +196,24 @@ int main(int argc, char * argv[])
 
     reconfigure_FPGA(dev_tile_1, RUN_MAC);
 
-    //MAC acceleraotr section
 	// Probing
 	printf("  Probing... MAC\n");
 
     // Search for the device
     printf("Scanning device tree... \n");
 
-    ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_MAC, DEV_NAME_MAC);
+    ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_MAC, DEV_NAME_MAC);
     if (ndev == 0) {
-        printf("mac not found\n");
-        return 0;
+        printf("Reconfigurable tile not found, defaulting to tile @ 0x60010000\n");
+        dev_tile_1->addr = 0x60010000;
+    }
+    else {
+        dev_tile_1 = &espdevs_tile_1[0];
     }
 
     for (n = 0; n < ndev; n++) {
 
-        printf("**************** %s.%d ****************\n", DEV_NAME, n);
+        printf("**************** %s.%d ****************\n", DEV_NAME_MAC, n);
 
         dev_tile_1 = &espdevs_tile_1[n];
 
@@ -222,7 +223,7 @@ int main(int argc, char * argv[])
             return 0;
         }
 
-        if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size_mac)) {
+        if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) < NCHUNK_MAC(mem_size_mac)) {
             printf("  -> Not enough TLB entries available. Abort.\n");
             return 0;
         }
@@ -233,12 +234,12 @@ int main(int argc, char * argv[])
         printf("  memory buffer base-address = %p\n", mem_mac);
 
         // Alocate and populate page table
-        ptable_mac = aligned_malloc(NCHUNK(mem_size_mac) * sizeof(unsigned *));
-        for (i = 0; i < NCHUNK(mem_size_mac); i++)
+        ptable_mac = aligned_malloc(NCHUNK_MAC(mem_size_mac) * sizeof(unsigned *));
+        for (i = 0; i < NCHUNK_MAC(mem_size_mac); i++)
             ptable_mac[i] = (unsigned *) &mem_mac[i * (CHUNK_SIZE_MAC / sizeof(token_t))];
 
         printf("  ptable = %p\n", ptable_mac);
-        printf("  nchunk = %lu\n", NCHUNK(mem_size_mac));
+        printf("  nchunk = %lu\n", NCHUNK_MAC(mem_size_mac));
 
 #ifndef __riscv
         for (coherence = ACC_COH_NONE; coherence <= ACC_COH_RECALL; coherence++) {
@@ -260,7 +261,7 @@ int main(int argc, char * argv[])
 #else
             iowrite32(dev_tile_1, PT_ADDRESS_REG, (unsigned) ptable_mac);
 #endif
-            iowrite32(dev_tile_1, PT_NCHUNK_REG, NCHUNK(mem_size_mac));
+            iowrite32(dev_tile_1, PT_NCHUNK_REG, NCHUNK_MAC(mem_size_mac));
             iowrite32(dev_tile_1, PT_SHIFT_REG, CHUNK_SHIFT_MAC);
 
             // Use the following if input and output data are not allocated at the default offsets

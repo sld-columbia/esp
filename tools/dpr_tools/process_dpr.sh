@@ -646,7 +646,7 @@ array=$(ls -ls $1/socs/$2/partial_bitstreams)
         if [[ $(($pbs_size % 8)) == 0 ]]; then
 			pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET));
 		else
-			pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET + $(($pbs_size % 8))));
+			pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET + (8 - ($pbs_size % 8))));
 		fi
         echo "file is $pbs_size $pbs_tile_id $pbs_name";
     done
@@ -687,7 +687,7 @@ pbs_path=$1/socs/$2/partial_bitstreams;
 		if [[ $(($pbs_size % 8)) == 0 ]]; then
             pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET));
         else
-            pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET + $(($pbs_size % 8))));
+            pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET + (8 - ($pbs_size % 8))));
         fi
         #pbs_addr=$(($pbs_base_addr + $pbs_size + $PBS_DDR_OFFSET));
     done
