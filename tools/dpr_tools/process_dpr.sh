@@ -27,7 +27,7 @@ declare -A new_accelerators old_accelerators modified_accelerators
 declare -A res_consumption
 declare -A bitstream_descr
 
-PBS_DDR_OFFSET=0x3000;
+PBS_DDR_OFFSET=0x300;
 
 acc_include_dirs="$1/rtl/cores/ariane/ariane/src/common_cells/include $1/rtl/caches/esp-caches/common/defs $1/socs/$2/socgen/esp"
 
@@ -531,7 +531,8 @@ echo "set_attribute impl top_dpr top        \$top" >> $dpr_syn_tcl;
 #echo "set_attribute impl top_dpr pr.impl      1" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr dfx.impl      1" >> $dpr_syn_tcl;
 if [[ "$2" == "xilinx-vcu118-xcvu9p" ]]; then
-    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/par/mig.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
+    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/sgmii/synth/sgmii.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/par/mig.xdc ] ]" >> $dpr_syn_tcl;
+    #echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/par/mig.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
 elif [[ $2 == "xilinx-vcu128-xcvu37p" ]]; then
 echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
 else
@@ -642,7 +643,11 @@ array=$(ls -ls $1/socs/$2/partial_bitstreams)
         #pbs_tile_id=$(echo $pbs_name | awk -F'[_]' '{print($3)}');
         pbs_tile_id=${pbs_name##*_}
         echo "{\"$pbs_name\", $pbs_size, $pbs_addr, $pbs_tile_id}, " >> $pbs_map;
-        pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET));
+        if [[ $(($pbs_size % 8)) == 0 ]]; then
+			pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET));
+		else
+			pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET + $(($pbs_size % 8))));
+		fi
         echo "file is $pbs_size $pbs_tile_id $pbs_name";
     done
     echo "};" >>$pbs_map;
@@ -679,7 +684,12 @@ pbs_path=$1/socs/$2/partial_bitstreams;
         pbs_size=$(echo `ls -ls $FILE` | awk '{print($6)}');
         $1/socs/$2/socgen/esp/esplink --load -a $pbs_addr  -i $1/socs/$2/partial_bitstreams/$pbs_name;
         pbs_base_addr=$pbs_addr;
-        pbs_addr=$(($pbs_base_addr + $pbs_size + $PBS_DDR_OFFSET));
+		if [[ $(($pbs_size % 8)) == 0 ]]; then
+            pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET));
+        else
+            pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET + $(($pbs_size % 8))));
+        fi
+        #pbs_addr=$(($pbs_base_addr + $pbs_size + $PBS_DDR_OFFSET));
     done
 }
 
