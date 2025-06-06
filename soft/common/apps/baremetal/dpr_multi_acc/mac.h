@@ -25,8 +25,8 @@ static const int32_t mac_n = 1;
 static const int32_t mac_vec = 8;
 static const int32_t mac_len = 16;
 
-static unsigned in_words_adj;
-static unsigned out_words_adj;
+static unsigned in_words_adj_mac;
+static unsigned out_words_adj_mac;
 static unsigned in_len_mac;
 static unsigned out_len_mac;
 static unsigned in_size_mac;
@@ -37,5 +37,5 @@ static unsigned mem_size_mac;
 int validate_buf_mac(token_t *out, token_t *gold);
 void init_buf_mac(token_t *in, token_t * gold);
 
-#endif //__MAC_H_
+#endif // __MAC_H__
 

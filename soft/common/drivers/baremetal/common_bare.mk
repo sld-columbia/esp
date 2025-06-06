@@ -42,6 +42,13 @@ SRCS := $(wildcard *.c)
 HEADERS := $(wildcard *.h) $(wildcard $(DRIVERS)/include/*.h)
 HEADERS += $(wildcard $(DRIVERS)/../common/include/*.h) $(wildcard $(DESIGN_PATH)/*.h)
 SRCS_PROBE := $(wildcard $(DRIVERS)/probe/*.c)
+
+# compile utils files into objects
+# must attach these as dependencies to other objects that are not the main program
+SRCS_UTILS := $(wildcard $(DRIVERS)/../common/utils/*.c)
+OBJS_UTILS := $(SRCS_UTILS:.c=.o)
+OBJS_UTILS := $(SRCS_UTILS:$(DRIVERS)/../common/utils=$(BUILD_PATH)/../../utils/baremetal)
+
 ifeq ($(APPNAME),)
 EXES := $(SRCS:.c=.exe)
 EXES := $(addprefix  $(BUILD_PATH)/, $(EXES))
@@ -54,16 +61,19 @@ SRC := $(APPNAME).c
 EXE := $(BUILD_PATH)/$(APPNAME).exe
 BIN := $(BUILD_PATH)/$(APPNAME).bin
 endif
+
+# C Flags for versioning and includes
 CFLAGS += $(EXTRA_CFLAGS)
 CFLAGS += -I$(DRIVERS)/include -I$(DRIVERS)/../common/include -I$(DESIGN_PATH)
 CFLAGS +=-std=gnu99
 CFLAGS +=-O2
 CFLAGS += -L$(BUILD_PATH)/../../monitors
+
+# Library flags
 LDFLAGS += -lm
 LDFLAGS += -lmonitors
 LDFLAGS += $(BUILD_PATH)/../../probe/libprobe.a
 LDFLAGS += $(BUILD_PATH)/../../monitors/libmonitors.a
-LDFLAGS += $(BUILD_PATH)/../../utils/baremetal/libutils.a
 ifneq ($(CONFIG_PRC_EN),)
 SRCS_PRC := $(wildcard $(DRIVERS)/prc/*.c)
 BUILD_PRC := BUILD_PRC
@@ -90,7 +100,7 @@ $(BUILD_PATH)/%.exe: %.c $(OBJS) $(SRCS_PROBE) $(BUILD_PRC) $(HEADERS)
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../monitors MODE=BAREC \
 			 $(MAKE) -B -C $(DRIVERS)/../common/monitors
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../utils/baremetal $(MAKE) -C $(DRIVERS)/utils
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS_RISCV) $(LDFLAGS) $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS_RISCV) $(LDFLAGS) $(OBJS) $(OBJS_UTILS)
 
 $(BUILD_PATH)/%.bin: $(BUILD_PATH)/%.exe
 	$(CROSS_COMPILE)objcopy -O binary $(OBJCPFLAGS) $< $@
