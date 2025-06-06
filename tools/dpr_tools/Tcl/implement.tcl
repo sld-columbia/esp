@@ -261,10 +261,12 @@ proc implement {impl} {
             }
 
                #Read in scoped module impl XDC even if module is imported since routed cell DCPs won't have timing constraints
-               set implXDC [get_attribute module $module implXDC]
+               #set implXDC [get_attribute module $module implXDC]
                if {[llength $implXDC] > 0} {
                   puts "\tAdding scoped XDC files for $cell"
-                  add_xdc $implXDC 0 $cell
+                  #add_xdc $implXDC 0 $cell
+		  		  add_xdc $implXDC
+				  #readXDC $implXDC
                } else {
                   puts "\tInfo: No scoped XDC files specified for $cell"
                }
