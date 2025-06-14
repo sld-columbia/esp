@@ -167,6 +167,9 @@ proc synthesize { module } {
       command "synth_design -mode default $options -top $moduleName -part $part" "$resultDir/${moduleName}_synth_design.rds"
    } else {
       command "synth_design -mode out_of_context $options -top $moduleName -part $part" "$resultDir/${moduleName}_synth_design.rds"
+
+      # keep hierarchy if shared cell is optimized differently across accelerators
+      command "set_property KEEP_HIERARCHY \"YES\" \[get_cells *_gen.noc*\]"
    }
    set end_time [clock seconds]
    log_time synth_design $start_time $end_time 0 "$moduleName $options"

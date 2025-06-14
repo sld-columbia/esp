@@ -531,21 +531,19 @@ echo "set_attribute impl top_dpr top        \$top" >> $dpr_syn_tcl;
 #echo "set_attribute impl top_dpr pr.impl      1" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr dfx.impl      1" >> $dpr_syn_tcl;
 if [[ "$2" == "xilinx-vcu118-xcvu9p" ]]; then
-    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/sgmii/synth/sgmii.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/par/mig.xdc ] ]" >> $dpr_syn_tcl;
-    #echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/par/mig.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
+    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/sgmii/synth/sgmii.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/par/mig.xdc ] ]" >> $dpr_syn_tcl;
 elif [[ $2 == "xilinx-vcu128-xcvu37p" ]]; then
-echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
+echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
 else
-    #echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/mig/user_design/constraints/mig.xdc ]]" >> $dpr_syn_tcl;
-    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc ]]" >> $dpr_syn_tcl;
+    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc ]]" >> $dpr_syn_tcl;
 fi;
 
 #if [[ "$2" == "xilinx-vcu118-xcvu9p" ]]; then
-#   echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/par/mig.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
+#   echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/par/mig.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
 #elif [[ $2 == "xilinx-vcu128-xcvu37p" ]]; then
-#echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
+#echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
 #else
-#    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/mig/user_design/constraints/mig.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
+#    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/mig/user_design/constraints/mig.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
 #fi;
 #echo "set_property SEVERITY {Warning} [get_drc_checks HDPR-41]" >> $dpr_syn_tcl;
 
@@ -622,6 +620,7 @@ bs_gen_script=$1/socs/$2/vivado_dpr/bs.tcl;
 
 function gen_bs_descriptor() {
 pbs_map=$1/socs/$2/socgen/esp/pbs_map.h;
+pbs_list=$1/socs/$2/socgen/esp/pbs_list.h;
 pbs_path=$1/socs/$2/partial_bitstreams;
 
     for((i=0; i<$num_acc_tiles; i++)) do
@@ -629,28 +628,47 @@ pbs_path=$1/socs/$2/partial_bitstreams;
         cp $1/socs/$2/vivado_dpr/Bitstreams/${new_accelerators[$i,1]}.bin $1/socs/$2/partial_bitstreams/${new_accelerators[$i,1]}.bin
     done
 
-
 num_pbs=$(cd $1/socs/$2/partial_bitstreams && (ls | wc -l));
 pbs_addr=0;
 array=$(ls -ls $1/socs/$2/partial_bitstreams)
 
-    echo " " > $pbs_map;
-    echo "pbs_map bs_descriptor [$num_pbs] = { " >> $pbs_map;
+    echo "" > $pbs_list;
+    echo "#ifndef __PBS_LIST_H__" >> $pbs_list;
+    echo "#define __PBS_LIST_H__" >> $pbs_list;
+    echo "" >> $pbs_list;
+
+    echo "#define NUM_PBS $num_pbs" >> $pbs_list;
+    echo "" >> $pbs_list;
+
+    i=0;
+    for FILE in $pbs_path/*; do
+        pbs_name=$(basename $FILE | awk -F'[.]' '{print toupper($1)}');
+        echo "#define PBS_IDX_${pbs_name} ${i}" >> $pbs_list;
+        ((i++))
+    done
+    echo "" >> $pbs_list;
+    echo "#endif // __PBS_LIST_H__" >> $pbs_list;
+
+    echo "" > $pbs_map;
+    echo "#define NUM_PBS $num_pbs" >> $pbs_map;
+    echo "" >> $pbs_map;
+
+    echo "pbs_map bs_descriptor [NUM_PBS] = { " >> $pbs_map;
 
     for FILE in $pbs_path/*; do
         pbs_name=$(basename $FILE | awk -F'[.]' '{print($1)}');
         pbs_size=$(echo `ls -ls $FILE` | awk '{print($6)}');
         #pbs_tile_id=$(echo $pbs_name | awk -F'[_]' '{print($3)}');
         pbs_tile_id=${pbs_name##*_}
-        echo "{\"$pbs_name\", $pbs_size, $pbs_addr, $pbs_tile_id}, " >> $pbs_map;
+        echo "    { \"$pbs_name\", $pbs_size, $pbs_addr, $pbs_tile_id }, " >> $pbs_map;
         if [[ $(($pbs_size % 8)) == 0 ]]; then
-			pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET));
-		else
-			pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET + (8 - ($pbs_size % 8))));
-		fi
+          pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET));
+        else
+          pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET + (8 - ($pbs_size % 8))));
+        fi
         echo "file is $pbs_size $pbs_tile_id $pbs_name";
     done
-    echo "};" >>$pbs_map;
+    echo "};" >> $pbs_map;
 
 }
 
@@ -768,18 +786,25 @@ done
 function gen_floorplan() {
     src_dir=$1/socs/$2;
     fplan_dir=$1/tools/dpr_tools/dpr_floor_planner;
+    #fplan_dir=${HOME}/src/FLORA
 
     #TODO:type of FPGA must be a variable of $2
     if [[ "$device" == "xc7vx485t-ffg1761-2" ]]; then
         TARGET_DEV="VC707"
-    else
+    elif [[ "$device" == "xcvu9p-flga2104-2l-e" ]]; then
         TARGET_DEV="VCU118"
+    elif [[ "$device" == "xcvu37p-fsvh2892-2l-e" ]]; then
+        TARGET_DEV="VCU128"
+    else
+        echo "Invalid device: $device"
+        exit;
     fi;
 
     cd $fplan_dir;
     make flora FPGA=$TARGET_DEV;
     ./bin/flora $num_acc_tiles  $1/socs/$2/flora_input.csv $1/socs/$2/res_reqs.csv;
-    cp pblocks.xdc $1/constraints/$2/;
+    #cp pblocks.xdc $1/constraints/$2/;
+    cp pblocks.xdc $1/socs/$2/vivado_dpr/pblocks.xdc;
     cd $src_dir;
 }
 
@@ -921,14 +946,14 @@ elif [ "$4" == "GEN_HDR" ]; then
     if [ "$5" == "BBOX" ]; then
         set_acc_name_gbox $1 $2 $3
     fi;
-    gen_bs_descriptor $1 $2 $3 $4
+    gen_bs_descriptor $1 $2 $3 $4;
 
 elif [ "$4" == "LOAD_BS" ]; then
-    load_bs $1 $2 $3 $4
+    load_bs $1 $2 $3 $4;
 
 elif [ "$4" == "REPORT" ]; then
     extract_acc $1 $2 $3
-    gen_report_script $1 $2 $3 $4 $5
+    gen_report_script $1 $2 $3 $4 $5;
 
 elif [ "$4" == "FLOORPLAN" ]; then
     extract_acc $1 $2 $3

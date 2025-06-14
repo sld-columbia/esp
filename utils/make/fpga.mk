@@ -1,8 +1,7 @@
 # Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-BOARD_SUFFIX ?=
-BOARD_DIR = $(BOARD)$(BOARD_SUFFIX)
+BOARD_DIR ?= $(BOARD)
 
 ifneq ($(findstring profpga, $(BOARD)),)
 fpga-program: profpga-prog-fpga

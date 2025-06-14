@@ -1,8 +1,7 @@
 # Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-BOARD_SUFFIX ?=
-BOARD_DIR = $(BOARD)$(BOARD_SUFFIX)
+BOARD_DIR ?= $(BOARD)
 
 ### Constaints ###
 ifneq ("$(OVR_TECHLIB)","")
@@ -392,9 +391,9 @@ vivado-syn: vivado-setup
 		vivado $(VIVADO_BATCH_OPT) -source static_config.tcl | tee ../vivado_syn.log; \
 		echo $(SPACES)"DPR: creating Vivado dpr directory"; \
 		$(RM) vivado_dpr; \
-		$(RM) partial_bitstreams;\
-			   mkdir -p partial_bitstreams;\
-			   mkdir -p vivado_dpr; \
+		$(RM) partial_bitstreams; \
+	    mkdir -p partial_bitstreams; \
+	    mkdir -p vivado_dpr; \
 		mkdir -p vivado_dpr/Bitstreams; \
 		mkdir -p vivado_dpr/Checkpoint; \
 		mkdir -p vivado_dpr/Implement; \
@@ -411,6 +410,7 @@ vivado-syn: vivado-setup
 		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) IMPL_DPR $(PROCESS_DPR_ARG);  \
 		cd vivado_dpr; \
 		vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_syn_dpr.log; \
+		cd ../; \
 		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) GEN_BS $(PROCESS_DPR_ARG);	\
 		cd vivado_dpr; \
 		vivado $(VIVADO_BATCH_OPT) -source bs.tcl | tee ../vivado_syn_dpr.log; \
@@ -423,11 +423,6 @@ vivado-syn: vivado-setup
 vivado-syn-dpr: DPR_ENABLED = y
 vivado-syn-dpr: PROCESS_DPR_ARG = DPR
 vivado-syn-dpr: vivado-syn
-
-# run the top-level DPR flow with black boxes for all accelerators
-vivado-syn-dpr-bbox: DPR_ENABLED = y
-vivado-syn-dpr-bbox: PROCESS_DPR_ARG = BBOX
-vivado-syn-dpr-bbox: vivado-syn
 
 # synthesize a changed accelerator
 SYN_ARG ?= ACC

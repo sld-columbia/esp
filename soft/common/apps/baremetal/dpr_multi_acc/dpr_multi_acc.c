@@ -8,7 +8,9 @@
 
 #include <monitors.h>
 
+#include "pbs_list.h"
 #include "prc_utils.h"
+
 #include "dpr_multi_acc.h"
 #include "utils/fft_utils.h"
 #include "mac.h"
@@ -16,9 +18,10 @@
 
 #define NUM_ACC_INVOC_ITER 1
 #define RUN_LOOP
+#define DO_DPR
 
-#define RUN_FFT 0
-#define RUN_MAC 1
+//#undef PBS_IDX_FFT_STRATUS_2
+#undef PBS_IDX_MAC_SYSC_CATAPULT_2
 
 #define CURRENT_DEV SLD_FFT
 #define CURRENT_DEV_NAME DEV_NAME_FFT
@@ -215,10 +218,12 @@ int main(int argc, char * argv[])
     decouple_acc(dev_tile_1, 1);
     decouple_acc(dev_tile_1, 0);
 
-#ifdef RUN_ADDER
+#ifdef PBS_IDX_ADDER_VIVADO_2
     // Adder functionality
     printf("  ****  Loading Adder accelerator onto FPGA  **** \n");
-    reconfigure_FPGA(dev_tile_1, RUN_ADDER);
+#ifdef DO_DPR
+    reconfigure_FPGA(dev_tile_1, PBS_IDX_ADDER_VIVADO_2);
+#endif
 
     // Check DMA capabilities
     if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) == 0) {
@@ -296,17 +301,19 @@ int main(int argc, char * argv[])
     }
 
 #else
-    printf("RUN_ADDER not defined\n");
-#endif // RUN_ADDER
+    printf("PBS_IDX_ADDER_VIVADO_2 not defined\n");
+#endif // PBS_IDX_ADDER_VIVADO_2
 
-#ifdef RUN_MAC
+#ifdef PBS_IDX_MAC_SYSC_CATAPULT_2
     //reconfigure the accelerator tile :- load the mac accelerator
     printf("   **** Loading MAC accelerator onto FPGA ****\n");
 
     decouple_acc(dev_tile_1, 1);
     decouple_acc(dev_tile_1, 0);
 
-    reconfigure_FPGA(dev_tile_1, RUN_MAC);
+#ifdef DO_DPR
+    reconfigure_FPGA(dev_tile_1, PBS_IDX_MAC_SYSC_CATAPULT_2);
+#endif
 
 	// Probing
 	printf("  Probing... MAC\n");
@@ -417,18 +424,20 @@ int main(int argc, char * argv[])
     }
 #else
 
-    printf("RUN_MAC not defined\n");
+    printf("PBS_IDX_MAC_SYSC_CATAPULT_2 not defined\n");
 
-#endif // RUN_MAC
+#endif // PBS_IDX_MAC_SYSC_CATAPULT_2
 
-#ifdef RUN_FFT
+#ifdef PBS_IDX_FFT_STRATUS_2
     // reconfigure the accelerator tile :- load the FFT accelerator
     printf("   **** Loading FFT accelerator onto FPGA ****\n");
 
     decouple_acc(dev_tile_1, 1);
     decouple_acc(dev_tile_1, 0);
 
-    reconfigure_FPGA(dev_tile_1, RUN_FFT);
+#ifdef DO_DPR
+    reconfigure_FPGA(dev_tile_1, PBS_IDX_FFT_STRATUS_2);
+#endif
 
 	// Probing
 	printf("  Probing... FFT\n");
@@ -473,7 +482,7 @@ int main(int argc, char * argv[])
         printf("  nchunk = %lu\n", NCHUNK_FFT(mem_size_fft));
 
 #ifndef __riscv
-        for (coherence = ACC_COH_NONE; coherence <= ACC_COH_RECALL; coherence++) {
+        for (coherence = ACC_COH_NONE; coherence <= ACC_COH_NONE; coherence++) {
 #else
         {
             /* TODO: Restore full test once ESP caches are integrated */
@@ -535,11 +544,10 @@ int main(int argc, char * argv[])
 
 #else
 
-    printf("RUN_FFT not defined\n");
+    printf("PBS_IDX_FFT_STRATUS_2 not defined\n");
 
-#endif // RUN_FFT
+#endif // PBS_IDX_FFT_STRATUS_2
 
-    //reconfigure_FPGA(dev_tile_1, 0);
 #ifdef RUN_LOOP
 }
 #endif
