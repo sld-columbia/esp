@@ -533,19 +533,10 @@ echo "set_attribute impl top_dpr dfx.impl      1" >> $dpr_syn_tcl;
 if [[ "$2" == "xilinx-vcu118-xcvu9p" ]]; then
     echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/sgmii/synth/sgmii.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/par/mig.xdc ] ]" >> $dpr_syn_tcl;
 elif [[ $2 == "xilinx-vcu128-xcvu37p" ]]; then
-echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
+echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
 else
     echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc ]]" >> $dpr_syn_tcl;
 fi;
-
-#if [[ "$2" == "xilinx-vcu118-xcvu9p" ]]; then
-#   echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/par/mig.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
-#elif [[ $2 == "xilinx-vcu128-xcvu37p" ]]; then
-#echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
-#else
-#    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/mig/user_design/constraints/mig.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
-#fi;
-#echo "set_property SEVERITY {Warning} [get_drc_checks HDPR-41]" >> $dpr_syn_tcl;
 
 if [[ "$4" == "IMPL_DPR" ]]; then
     echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  implement ] \\" >> $dpr_syn_tcl;
@@ -786,9 +777,7 @@ done
 function gen_floorplan() {
     src_dir=$1/socs/$2;
     fplan_dir=$1/tools/dpr_tools/dpr_floor_planner;
-    #fplan_dir=${HOME}/src/FLORA
 
-    #TODO:type of FPGA must be a variable of $2
     if [[ "$device" == "xc7vx485t-ffg1761-2" ]]; then
         TARGET_DEV="VC707"
     elif [[ "$device" == "xcvu9p-flga2104-2l-e" ]]; then
@@ -803,7 +792,6 @@ function gen_floorplan() {
     cd $fplan_dir;
     make flora FPGA=$TARGET_DEV;
     ./bin/flora $num_acc_tiles  $1/socs/$2/flora_input.csv $1/socs/$2/res_reqs.csv;
-    #cp pblocks.xdc $1/constraints/$2/;
     cp pblocks.xdc $1/socs/$2/vivado_dpr/pblocks.xdc;
     cd $src_dir;
 }
@@ -870,9 +858,11 @@ do
 
         if [ "$5" == "BBOX" ]; then
             echo "update_design -cells [get_cells ${acc_base_name}_gen.noc_${acc_base_name}_i] -black_box" >> $dpr_report_tcl;
+            echo "do_report tile_blanked_${new_accelerators[$i,0]} \$clock_periods" >> $dpr_report_tcl;
+        else
+            echo "do_report ${new_accelerators[$i,1]} \$clock_periods" >> $dpr_report_tcl;
         fi
 
-        echo "do_report tile_blanked_${new_accelerators[$i,0]} \$clock_periods" >> $dpr_report_tcl;
         echo "close_design" >> $dpr_report_tcl;
     fi
 done

@@ -12,12 +12,17 @@ set_clock_groups -asynchronous -group [get_clocks ${clkm_elab}] -group [get_cloc
 # set tile clocks as asynchronous
 #   Generates warning because masking timing violations between these groups
 #   Must ensure proper synchronization
-set pll_clocks [get_clocks -filter {NAME =~ "*pll_clkout*"} -of_objects [get_pins esp_1/tiles_gen[2].accelerator_tile.tile_acc_i/tile_acc_1/dco_gen.plle_drp_inst/clk_freq_sel_gen.clkmux_vote/tec.xil.buf/buf/O]]
-set_clock_groups -asynchronous -group [get_clocks -of_objects [get_nets chip_refclk]] -group [get_clocks -of_objects [get_pins esp_1/tiles_gen[2].accelerator_tile.tile_acc_i/tile_acc_1/dco_gen.plle_drp_inst/u_pll_clkout0_bufg/O]]
+# iterate through all clock buffers
+# foreach not supported in XDC file
+set clk_bufs [get_cells esp_1/tiles_gen[*].accelerator_tile.tile_acc_i/tile_acc_1/pll_gen.plle_drp_inst/clk_freq_sel_gen.clkmux_vote/tec.xil.buf/buf]
+
+# get all possible clocks coming out of the buffer
+set pll_clocks [get_clocks -of_objects $clk_bufs]
+
+# mark as asynchronous
 set_clock_groups -asynchronous -group [get_clocks -of_objects [get_nets chip_refclk]] -group $pll_clocks
 set_clock_groups -asynchronous -group [get_clocks -of_objects [get_nets gen_mig.ddrc/MCB_inst/u_mig_mig/u_ddr3_infrastructure/clk_pll_i]] -group $pll_clocks
 set_clock_groups -asynchronous -group $pll_clocks -group $pll_clocks
-
 
 # --- False paths
 set_false_path -to [get_ports {led[*]}]

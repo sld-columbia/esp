@@ -245,7 +245,7 @@ begin
       this_device        => this_device,
       this_irq_type      => this_irq_type,
       this_has_l2        => this_has_l2,
-      this_has_dco       => 1)
+      this_has_dco       => 2)
     port map (
       raw_rstn            => '0',
       tile_rst            => rst,

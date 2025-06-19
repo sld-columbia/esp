@@ -19,6 +19,7 @@ use ieee.std_logic_textio.all;
 
 entity plle_drp is
     generic (
+        tech           : integer := 0;
         CLKFBOUT_MULT  : integer range 2 to 64 := 16;
         CLKIN1_PERIOD  : real := 8.0;
         CLKIN2_PERIOD  : real := 8.0;
@@ -29,7 +30,8 @@ entity plle_drp is
         CLKOUT4_DIVIDE : integer range 1 to 128 := 14;
         CLKOUT5_DIVIDE : integer range 1 to 128 := 13;
         NUM_OUT_CLOCKS : integer range 1 to 6   := 1;
-        EN_FREQ_SEL    : integer range 0 to 1   := 0
+        EN_PLL_PROG    : integer range 0 to 1   := 0;
+        EN_FREQ_SEL    : integer range 0 to 1   := 1
     );
     port (
         -- clock and reset interface
@@ -57,6 +59,10 @@ entity plle_drp is
 end plle_drp;
 
 architecture rtl of plle_drp is
+
+    -- virtex chips have the PLLE2_ADV
+    constant has_plle2_adv : tech_ability_type :=
+          (virtex7 => 1, virtexup => 1, virtexu => 1,  others => 0);
 
     -- FSM states
     type pll_fsm_type is (idle, send_address, wait_address_ack, send_data,
@@ -111,111 +117,127 @@ architecture rtl of plle_drp is
 
 begin -- rtl
 
-    -- next state process
     locked <= pll_locked;
-    p_next_state : process(pll_state, pll_reconfig, pll_drdy, pll_locked)
-    begin
-        next_pll_state <= pll_state;
-        case pll_state is
-            when idle =>
-                if pll_reconfig = '1' then
-                    next_pll_state <= send_address;
-                end if;
-            when send_address =>
-                next_pll_state <= wait_address_ack;
-            when wait_address_ack =>
-                if pll_drdy = '1' then
-                    next_pll_state <= send_data;
-                end if;
-            when send_data =>
-                next_pll_state <= wait_data_ack;
-            when wait_data_ack =>
-                if pll_drdy = '1' then
-                    next_pll_state <= wait_lock;
-                end if;
-            when wait_lock =>
+
+    no_pll_prog : if EN_PLL_PROG = 0 generate
+
+        pll_daddr <= (others => '0');
+        pll_di    <= (others => '0');
+        pll_drst  <= '0';
+        pll_den   <= '0';
+        pll_dwe   <= '0';
+
+    end generate no_pll_prog;
+
+
+    -- next state process
+    gen_pll_prog : if EN_PLL_PROG = 1 generate
+
+        p_next_state : process(pll_state, pll_reconfig, pll_drdy, pll_locked)
+        begin
+            next_pll_state <= pll_state;
+            case pll_state is
+                when idle =>
+                    if pll_reconfig = '1' then
+                        next_pll_state <= send_address;
+                    end if;
+                when send_address =>
+                    next_pll_state <= wait_address_ack;
+                when wait_address_ack =>
+                    if pll_drdy = '1' then
+                        next_pll_state <= send_data;
+                    end if;
+                when send_data =>
+                    next_pll_state <= wait_data_ack;
+                when wait_data_ack =>
+                    if pll_drdy = '1' then
+                        next_pll_state <= wait_lock;
+                    end if;
+                when wait_lock =>
+                    if pll_locked = '1' then
+                        next_pll_state <= idle;
+                    end if;
+                when others => next_pll_state <= idle;
+            end case;
+        end process p_next_state;
+
+        -- save new input signals
+        p_input : process(dco_reconfig, dco_hicycles,
+                        pll_locked,
+                        next_pll_state, pll_reconfig, pll_hicycles)
+        begin
+            if dco_reconfig = '1' then
+                -- save new input if already locked
+                next_pll_reconfig <= pll_locked;
                 if pll_locked = '1' then
-                    next_pll_state <= idle;
+                    next_pll_hicycles <= dco_hicycles;
+                else
+                    next_pll_hicycles <= pll_hicycles;
                 end if;
-            when others => next_pll_state <= idle;
-        end case;
-    end process p_next_state;
-
-    -- save new input signals
-    p_input : process(dco_reconfig, dco_hicycles,
-                    pll_locked,
-                    next_pll_state, pll_reconfig, pll_hicycles)
-    begin
-        if dco_reconfig = '1' then
-            -- save new input if already locked
-            next_pll_reconfig <= pll_locked;
-            if pll_locked = '1' then
-                next_pll_hicycles <= dco_hicycles;
             else
+                -- keep previous input
                 next_pll_hicycles <= pll_hicycles;
+                if next_pll_state = idle then
+                    next_pll_reconfig <= pll_reconfig;
+                else
+                    -- do not reconfigure if already processing request
+                    next_pll_reconfig <= '0';
+                end if;
             end if;
-        else
-            -- keep previous input
-            next_pll_hicycles <= pll_hicycles;
-            if next_pll_state = idle then
-                next_pll_reconfig <= pll_reconfig;
-            else
-                -- do not reconfigure if already processing request
-                next_pll_reconfig <= '0';
+        end process p_input;
+
+        -- propagate next state
+        p_state : process(clk, rstn)
+        begin
+            if rstn = '0' then
+                pll_state    <= idle;
+                pll_hicycles <= (others => '0');
+                pll_reconfig <= '0';
+            elsif clk'event and clk = '1' then
+                pll_state    <= next_pll_state;
+                pll_hicycles <= next_pll_hicycles;
+                pll_reconfig <= next_pll_reconfig;
             end if;
-        end if;
-    end process p_input;
+        end process p_state;
 
-    -- propagate next state
-    p_state : process(clk, rstn)
-    begin
-        if rstn = '0' then
-            pll_state    <= idle;
-            pll_hicycles <= (others => '0');
-            pll_reconfig <= '0';
-        elsif clk'event and clk = '1' then
-            pll_state    <= next_pll_state;
-            pll_hicycles <= next_pll_hicycles;
-            pll_reconfig <= next_pll_reconfig;
-        end if;
-    end process p_state;
+        -- output process
+        pll_daddr <= "0010110"; -- 0x16, DIVCLK Register
+        pll_di    <= "00" & "1" & "0" & next_pll_hicycles & next_pll_hicycles; -- DivReg bitmap
+        p_output : process(pll_state)
+        begin
+            case pll_state is
+                when idle =>
+                    pll_drst  <= '0';
+                    pll_den   <= '0';
+                    pll_dwe   <= '0';
+                when send_address =>
+                    pll_drst  <= '1';
+                    pll_den   <= '1';
+                    pll_dwe   <= '0';
+                when wait_address_ack =>
+                    pll_drst  <= '1';
+                    pll_den   <= '0';
+                    pll_dwe   <= '0';
+                when send_data =>
+                    pll_drst  <= '1';
+                    pll_den   <= '1';
+                    pll_dwe   <= '1';
+                when wait_data_ack =>
+                    pll_drst  <= '1';
+                    pll_den   <= '0';
+                    pll_dwe   <= '0';
+                when wait_lock =>
+                    pll_drst  <= '0';
+                    pll_den   <= '0';
+                    pll_dwe   <= '0';
+                when others =>
+                    pll_drst  <= '0';
+                    pll_den   <= '0';
+                    pll_dwe   <= '0';
+            end case;
+        end process p_output;
 
-    -- output process
-    pll_daddr <= "0010110"; -- 0x16, DIVCLK Register
-    pll_di    <= "00" & "1" & "0" & next_pll_hicycles & next_pll_hicycles; -- DivReg bitmap
-    p_output : process(pll_state)
-    begin
-        case pll_state is
-            when idle =>
-                pll_drst  <= '0';
-                pll_den   <= '0';
-                pll_dwe   <= '0';
-            when send_address =>
-                pll_drst  <= '1';
-                pll_den   <= '1';
-                pll_dwe   <= '0';
-            when wait_address_ack =>
-                pll_drst  <= '1';
-                pll_den   <= '0';
-                pll_dwe   <= '0';
-            when send_data =>
-                pll_drst  <= '1';
-                pll_den   <= '1';
-                pll_dwe   <= '1';
-            when wait_data_ack =>
-                pll_drst  <= '1';
-                pll_den   <= '0';
-                pll_dwe   <= '0';
-            when wait_lock =>
-                pll_drst  <= '0';
-                pll_den   <= '0';
-                pll_dwe   <= '0';
-            when others =>
-                pll_drst  <= '0';
-                pll_den   <= '0';
-                pll_dwe   <= '0';
-        end case;
-    end process p_output;
+    end generate gen_pll_prog;
 
     -- PLL buffers
     u_pll_clk_bufg : BUFG
@@ -256,7 +278,7 @@ begin -- rtl
         -- final level selection
         clkmux_vote : clkmux
             generic map (
-                tech => virtex7
+                tech => tech
             )
             port map (
                 clk_sel_0123, clk_sel_4567, freq_sel2, clk_sel, rstn
@@ -341,81 +363,100 @@ begin -- rtl
     end generate clkout5_gen;
 
     -- PLL instantiation
-    u_plle2_adv : PLLE2_ADV
-    generic map (
-        BANDWIDTH => "OPTIMIZED",       -- OPTIMIZED, HIGH, LOW
-        CLKFBOUT_MULT => CLKFBOUT_MULT, -- Multiply value for all CLKOUT, (2-64)
-        CLKFBOUT_PHASE => 0.0,          -- Phase offset in degrees of CLKFB, (-360.000-360.000).
+    plle2_adv_gen : if has_plle2_adv(tech) = 1 generate
 
-        -- CLKIN_PERIOD: Input clock period in nS to ps resolution (i.e. 33.333 is 30 MHz).
-        CLKIN1_PERIOD => CLKIN1_PERIOD,
-        CLKIN2_PERIOD => CLKIN2_PERIOD,
+        u_plle2_adv : PLLE2_ADV
+        generic map (
+            BANDWIDTH => "OPTIMIZED",       -- OPTIMIZED, HIGH, LOW
+            CLKFBOUT_MULT => CLKFBOUT_MULT, -- Multiply value for all CLKOUT, (2-64)
+            CLKFBOUT_PHASE => 0.0,          -- Phase offset in degrees of CLKFB, (-360.000-360.000).
 
-        -- CLKOUT0_DIVIDE - CLKOUT5_DIVIDE: Divide amount for CLKOUT (1-128)
-        CLKOUT0_DIVIDE => CLKOUT0_DIVIDE,
-        CLKOUT1_DIVIDE => CLKOUT1_DIVIDE,
-        CLKOUT2_DIVIDE => CLKOUT2_DIVIDE,
-        CLKOUT3_DIVIDE => CLKOUT3_DIVIDE,
-        CLKOUT4_DIVIDE => CLKOUT4_DIVIDE,
-        CLKOUT5_DIVIDE => CLKOUT5_DIVIDE,
+            -- CLKIN_PERIOD: Input clock period in nS to ps resolution (i.e. 33.333 is 30 MHz).
+            CLKIN1_PERIOD => CLKIN1_PERIOD,
+            CLKIN2_PERIOD => CLKIN2_PERIOD,
 
-        -- CLKOUT0_DUTY_CYCLE - CLKOUT5_DUTY_CYCLE: Duty cycle for CLKOUT outputs (0.001-0.999).
-        CLKOUT0_DUTY_CYCLE => 0.5,
-        CLKOUT1_DUTY_CYCLE => 0.5,
-        CLKOUT2_DUTY_CYCLE => 0.5,
-        CLKOUT3_DUTY_CYCLE => 0.5,
-        CLKOUT4_DUTY_CYCLE => 0.5,
-        CLKOUT5_DUTY_CYCLE => 0.5,
+            -- CLKOUT0_DIVIDE - CLKOUT5_DIVIDE: Divide amount for CLKOUT (1-128)
+            CLKOUT0_DIVIDE => CLKOUT0_DIVIDE,
+            CLKOUT1_DIVIDE => CLKOUT1_DIVIDE,
+            CLKOUT2_DIVIDE => CLKOUT2_DIVIDE,
+            CLKOUT3_DIVIDE => CLKOUT3_DIVIDE,
+            CLKOUT4_DIVIDE => CLKOUT4_DIVIDE,
+            CLKOUT5_DIVIDE => CLKOUT5_DIVIDE,
 
-        -- CLKOUT0_PHASE - CLKOUT5_PHASE: Phase offset for CLKOUT outputs (-360.000-360.000).
-        CLKOUT0_PHASE => 0.0,
-        CLKOUT1_PHASE => 0.0,
-        CLKOUT2_PHASE => 0.0,
-        CLKOUT3_PHASE => 0.0,
-        CLKOUT4_PHASE => 0.0,
-        CLKOUT5_PHASE => 0.0,
-        COMPENSATION => "ZHOLD",   -- ZHOLD, BUF_IN, EXTERNAL, INTERNAL
-        DIVCLK_DIVIDE => 1,        -- Master division value (1-56)
+            -- CLKOUT0_DUTY_CYCLE - CLKOUT5_DUTY_CYCLE: Duty cycle for CLKOUT outputs (0.001-0.999).
+            CLKOUT0_DUTY_CYCLE => 0.5,
+            CLKOUT1_DUTY_CYCLE => 0.5,
+            CLKOUT2_DUTY_CYCLE => 0.5,
+            CLKOUT3_DUTY_CYCLE => 0.5,
+            CLKOUT4_DUTY_CYCLE => 0.5,
+            CLKOUT5_DUTY_CYCLE => 0.5,
 
-        -- REF_JITTER: Reference input jitter in UI (0.000-0.999).
-        REF_JITTER1 => 0.010, -- MG XXX
-        REF_JITTER2 => 0.010 -- MG XXX
-    )
-    port map (
-        -- Clock Outputs: 1-bit (each) output: User configurable clock outputs
-        CLKOUT0 => pll_clkout0, -- 1-bit output: CLKOUT0
-        CLKOUT1 => pll_clkout1,      -- 1-bit output: CLKOUT1
-        CLKOUT2 => pll_clkout2,      -- 1-bit output: CLKOUT2
-        CLKOUT3 => pll_clkout3,      -- 1-bit output: CLKOUT3
-        CLKOUT4 => pll_clkout4,      -- 1-bit output: CLKOUT4
-        CLKOUT5 => pll_clkout5,      -- 1-bit output: CLKOUT5
-        -- DRP Ports: 16-bit (each) output: Dynamic reconfiguration ports
-        DO => open,       -- 16-bit output: DRP data
-        --DO => pll_do,     -- 16-bit output: DRP data
-        DRDY => pll_drdy, -- 1-bit output: DRP ready
+            -- CLKOUT0_PHASE - CLKOUT5_PHASE: Phase offset for CLKOUT outputs (-360.000-360.000).
+            CLKOUT0_PHASE => 0.0,
+            CLKOUT1_PHASE => 0.0,
+            CLKOUT2_PHASE => 0.0,
+            CLKOUT3_PHASE => 0.0,
+            CLKOUT4_PHASE => 0.0,
+            CLKOUT5_PHASE => 0.0,
+            COMPENSATION => "ZHOLD",   -- ZHOLD, BUF_IN, EXTERNAL, INTERNAL
+            DIVCLK_DIVIDE => 1,        -- Master division value (1-56)
 
-        -- Feedback Clocks: 1-bit (each) output: Clock feedback ports
-        CLKFBOUT => pll_clkfb_bufgin, -- 1-bit output: Feedback clock
-        LOCKED => pll_locked,         -- 1-bit output: LOCK
+            -- REF_JITTER: Reference input jitter in UI (0.000-0.999).
+            REF_JITTER1 => 0.010, -- MG XXX
+            REF_JITTER2 => 0.010 -- MG XXX
+        )
+        port map (
+            -- Clock Outputs: 1-bit (each) output: User configurable clock outputs
+            CLKOUT0 => pll_clkout0, -- 1-bit output: CLKOUT0
+            CLKOUT1 => pll_clkout1,      -- 1-bit output: CLKOUT1
+            CLKOUT2 => pll_clkout2,      -- 1-bit output: CLKOUT2
+            CLKOUT3 => pll_clkout3,      -- 1-bit output: CLKOUT3
+            CLKOUT4 => pll_clkout4,      -- 1-bit output: CLKOUT4
+            CLKOUT5 => pll_clkout5,      -- 1-bit output: CLKOUT5
+            -- DRP Ports: 16-bit (each) output: Dynamic reconfiguration ports
+            DO => open,       -- 16-bit output: DRP data
+            --DO => pll_do,     -- 16-bit output: DRP data
+            DRDY => pll_drdy, -- 1-bit output: DRP ready
 
-        -- Clock Inputs: 1-bit (each) input: Clock inputs
-        CLKIN1 => clkin_bufgout,   -- 1-bit input: Primary clock
-        CLKIN2 => '0',             -- 1-bit input: Secondary clock
+            -- Feedback Clocks: 1-bit (each) output: Clock feedback ports
+            CLKFBOUT => pll_clkfb_bufgin, -- 1-bit output: Feedback clock
+            LOCKED => pll_locked,         -- 1-bit output: LOCK
 
-        -- Control Ports: 1-bit (each) input: PLL control ports
-        CLKINSEL => '1',       -- 1-bit input: Clock select, High=CLKIN1 Low=CLKIN2
-        PWRDWN => '0',         -- 1-bit input: Power-down
-        RST => pll_rst,        -- 1-bit input: Reset
+            -- Clock Inputs: 1-bit (each) input: Clock inputs
+            CLKIN1 => clkin_bufgout,   -- 1-bit input: Primary clock
+            CLKIN2 => '0',             -- 1-bit input: Secondary clock
 
-        -- DRP Ports: 7-bit (each) input: Dynamic reconfiguration ports
-        DADDR => pll_daddr,    -- 7-bit input: DRP address
-        DCLK => clkin_bufgout, -- 1-bit input: DRP clock
-        DEN => pll_den,        -- 1-bit input: DRP enable
-        DI => pll_di,          -- 16-bit input: DRP data
-        DWE => pll_dwe,        -- 1-bit input: DRP write enable
+            -- Control Ports: 1-bit (each) input: PLL control ports
+            CLKINSEL => '1',       -- 1-bit input: Clock select, High=CLKIN1 Low=CLKIN2
+            PWRDWN => '0',         -- 1-bit input: Power-down
+            RST => pll_rst,        -- 1-bit input: Reset
 
-        -- Feedback Clocks: 1-bit (each) input: Clock feedback ports
-        CLKFBIN => pll_clkfb_bufgout  -- 1-bit input: Feedback clock
-    );
+            -- DRP Ports: 7-bit (each) input: Dynamic reconfiguration ports
+            DADDR => pll_daddr,    -- 7-bit input: DRP address
+            DCLK => clkin_bufgout, -- 1-bit input: DRP clock
+            DEN => pll_den,        -- 1-bit input: DRP enable
+            DI => pll_di,          -- 16-bit input: DRP data
+            DWE => pll_dwe,        -- 1-bit input: DRP write enable
+
+            -- Feedback Clocks: 1-bit (each) input: Clock feedback ports
+            CLKFBIN => pll_clkfb_bufgout  -- 1-bit input: Feedback clock
+        );
+
+    end generate plle2_adv_gen;
+
+    -- pass through
+    no_plle2_adv_gen : if has_plle2_adv(tech) = 0 generate
+
+        pll_locked <= rstn;
+        pll_clkfb_bufgin <= clkin_bufgout;
+        pll_drdy <= '0';
+        pll_clkout0 <= clkin_bufgout;
+        pll_clkout1 <= clkin_bufgout;
+        pll_clkout2 <= clkin_bufgout;
+        pll_clkout3 <= clkin_bufgout;
+        pll_clkout4 <= clkin_bufgout;
+        pll_clkout5 <= clkin_bufgout;
+
+    end generate no_plle2_adv_gen;
 
 end rtl;

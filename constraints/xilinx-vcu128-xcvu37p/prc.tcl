@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set ip_name prc_ctrlr_us
-source [get_property REPOSITORY [get_ipdefs *prc:1.3]]/xilinx/prc_v1_3/tcl/api.tcl -notrace
-create_ip -name prc -vendor xilinx.com -library ip -module_name $ip_name
+source [get_property REPOSITORY [get_ipdefs *dfx_controller:1.0]]/xilinx/dfx_controller_v1_0/tcl/api.tcl -notrace
+create_ip -name dfx_controller -vendor xilinx.com -library ip -module_name $ip_name
 
-prc_v1_3::set_property -dict [list                                                      \
+dfx_controller_v1_0::set_property -dict [list                                                      \
                                     CONFIG.HAS_AXI_LITE_IF                      1\
                                     CONFIG.RESET_ACTIVE_LEVEL                   0\
                                     CONFIG.CP_FIFO_DEPTH                        32\
@@ -30,4 +30,5 @@ prc_v1_3::set_property -dict [list                                              
                                     CONFIG.VS.VS_0.RM.RM_0.BS.0.SIZE            0\
                                     CONFIG.VS.VS_0.RM.RM_0.BS.0.CLEAR           0\
                                     ] [get_ips $ip_name]
+
 generate_target {all} [get_ips $ip_name]

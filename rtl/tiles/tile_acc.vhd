@@ -33,7 +33,7 @@ entity tile_acc is
     this_device        : devid_t              := 0;
     this_irq_type      : integer              := 0;
     this_has_l2        : integer range 0 to 1 := 0;
-    this_has_dco       : integer range 0 to 1 := 0);
+    this_has_dco       : integer range 0 to 2 := 0); -- 0 for none, 1 for DCO, 2 for PLL
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
@@ -111,8 +111,6 @@ architecture rtl of tile_acc is
   signal dco_clk_lock_1  : std_ulogic;
   signal dco_clk_lock_2  : std_ulogic;
   signal dco_en_int      : std_ulogic;
-  signal dco_cc_sel_prev : std_logic_vector(5 downto 0);
-  signal dco_reconfig    : std_ulogic;
 
   -- BUS
   signal apbi           : apb_slv_in_type;
@@ -259,33 +257,49 @@ begin
   noc_clk <= ext_clk;
 
   -- DCO Reset synchronizer
-  rst_gen: if this_has_dco = 1 generate
+  rst_gen: if this_has_dco /= 0 generate
     tile_rstn_out : rstgen
       generic map (acthigh => 0, syncin => 0)
       port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
   end generate rst_gen;
 
-  no_rst_gen: if this_has_dco /= 1 generate
+  no_rst_gen: if this_has_dco = 0 generate
     rst <= tile_rst;
   end generate no_rst_gen;
 
   tile_rstn_out <= rst;
 
-  -- clock modifier
+  -- DCO clock modifier
   dco_gen: if this_has_dco = 1 generate
-
-    -- generate reconfigure bit (at noc_clk)
     dco_en_int <= dco_en and tile_rst;
-    --dco_reconfig <= dco_clk_lock_2 when dco_cc_sel /= dco_cc_sel_prev else '0';
-    dco_reconfig <= '0';
-    dco_cc_sel_prev_gen: process (noc_clk, tile_rst) is
-    begin  -- process dco_cc_sel_prev_gen
-      if tile_rst = '0' then
-        dco_cc_sel_prev <= (others => '0');
-      elsif noc_clk'event and noc_clk = '1' then
-        dco_cc_sel_prev <= dco_cc_sel;
-      end if;
-    end process dco_cc_sel_prev_gen;
+
+    dco_i: dco
+      generic map (
+        tech => CFG_FABTECH,
+        enable_div2 => 0,
+        dlog => 9)                      -- come out of reset after NoC, but
+                                        -- before tile_io.
+      port map (
+        rstn     => raw_rstn,
+        ext_clk  => ext_clk,
+        en       => dco_en_int,
+        clk_sel  => dco_clk_sel,
+        cc_sel   => dco_cc_sel,
+        fc_sel   => dco_fc_sel,
+        div_sel  => dco_div_sel,
+        freq_sel => dco_freq_sel,
+        clk      => dco_clk,
+        clk_div  => clk_div,
+        lock     => dco_clk_lock);
+
+    tile_clk <= dco_clk;
+    tile_clk_out <= tile_clk;
+  end generate dco_gen;
+
+  -- PLL clock modifier
+  pll_gen: if this_has_dco = 2 generate
+
+    dco_en_int <= dco_en and tile_rst;
 
     -- synchronize dco_clk_lock with tile_clk
     dco_clk_lock_sync_gen: process(tile_clk, tile_rst) is
@@ -302,20 +316,21 @@ begin
     -- PLL instantiation
     plle_drp_inst : plle_drp
       generic map (
+        tech           => ( CFG_FABTECH ),
         CLKFBOUT_MULT  => ( 16 ),
-        CLKIN1_PERIOD  => ( 20.0 ), -- TODO MG - for simulation and synthesis reporting
-        CLKIN2_PERIOD  => ( 20.0 ), -- TODO MG - for simulation and synthesis reporting
+        CLKIN1_PERIOD  => ( 20.0 ),
+        CLKIN2_PERIOD  => ( 20.0 ),
         CLKOUT0_DIVIDE => ( 19 ),
         CLKOUT1_DIVIDE => ( 18 ),
         CLKOUT2_DIVIDE => ( 17 ),
         CLKOUT3_DIVIDE => ( 15 ),
         CLKOUT4_DIVIDE => ( 14 ),
         CLKOUT5_DIVIDE => ( 13 ),
+        EN_PLL_PROG    => ( 0 ),
         EN_FREQ_SEL    => ( 1 )
       )
       port map (
           -- clock and reset interface
-          -- TODO simulate to see that dvfs_clk has a signal
           clk           => noc_clk,
           rstn          => tile_rst,
 
@@ -329,7 +344,7 @@ begin
           locked        => dco_clk_lock_2,
 
           -- hicycles control signals
-          dco_reconfig  => ( dco_reconfig ),
+          dco_reconfig  => ( '0' ),
           dco_hicycles  => ( dco_cc_sel ),
 
           -- frequency selection control signals
@@ -340,9 +355,9 @@ begin
     tile_clk <= dco_clk;
     clk_div <= tile_clk;
     tile_clk_out <= ext_clk;
-  end generate dco_gen;
+  end generate pll_gen;
 
-  no_dco_gen: if this_has_dco /= 1 generate
+  no_dco_gen: if this_has_dco = 0 generate
     dco_en_int   <= '0';
     tile_clk     <= ext_clk;
     dco_clk_lock <= '1';

@@ -54,8 +54,8 @@
 	path = soft/common/drivers/common/utils/eigen
 	url = https://gitlab.com/libeigen/eigen.git
 [submodule "linux"]
-	url = git@github.com:michaelg29/linux
+	url = https://github.com/michaelg29/linux
 [submodule "tools/dpr_tools/dpr_floor_planner"]
-        path = tools/dpr_tools/dpr_floor_planner
-        url = https://github.com/biruk-belay/FLORA
-        branch = master
+	path = tools/dpr_tools/dpr_floor_planner
+	url = https://github.com/michaelg29/FLORA
+	branch = master

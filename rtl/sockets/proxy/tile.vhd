@@ -922,6 +922,7 @@ package tile is
 
   component plle_drp
     generic (
+      tech           : integer := 0;
       CLKFBOUT_MULT  : integer range 2 to 64 := 8;
       CLKIN1_PERIOD  : real := 8.0;
       CLKIN2_PERIOD  : real := 8.0;
@@ -932,7 +933,8 @@ package tile is
       CLKOUT4_DIVIDE : integer range 1 to 128 := 14;
       CLKOUT5_DIVIDE : integer range 1 to 128 := 13;
       NUM_OUT_CLOCKS : integer range 1 to 6   := 6;
-      EN_FREQ_SEL    : integer range 0 to 1   := 0);
+      EN_PLL_PROG    : integer range 0 to 1   := 0;
+      EN_FREQ_SEL    : integer range 0 to 1   := 1);
     port (
       clk           : in  std_ulogic;
       rstn          : in  std_ulogic;

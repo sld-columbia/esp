@@ -21,10 +21,10 @@
 #define DO_DPR
 
 //#undef PBS_IDX_FFT_STRATUS_2
-#undef PBS_IDX_MAC_SYSC_CATAPULT_2
+//#undef PBS_IDX_MAC_SYSC_CATAPULT_2
 
-#define CURRENT_DEV SLD_FFT
-#define CURRENT_DEV_NAME DEV_NAME_FFT
+#define CURRENT_DEV SLD_MAC
+#define CURRENT_DEV_NAME DEV_NAME_MAC
 
 /* Scheduling */
 #define NUM_SERVERS 1
@@ -246,7 +246,6 @@ int main(int argc, char * argv[])
     mem_gold_adder = aligned_malloc(OUT_SIZE_ADDER);
     printf("  memory buffer base-address = %lu\n", (unsigned long) mem_gold_adder);
 
-
     // Allocate and populate page table
     ptable_adder = aligned_malloc(NCHUNK_ADDER * sizeof(unsigned *));
     for (i = 0; i < NCHUNK_ADDER; i++)
@@ -311,30 +310,14 @@ int main(int argc, char * argv[])
     decouple_acc(dev_tile_1, 1);
     decouple_acc(dev_tile_1, 0);
 
-#ifdef DO_DPR
-    reconfigure_FPGA(dev_tile_1, PBS_IDX_MAC_SYSC_CATAPULT_2);
-#endif
-
-	// Probing
-	printf("  Probing... MAC\n");
-
-    // Search for the device
-    printf("Scanning device tree... \n");
-
-    ndev = probe(&espdevs_tile_1, VENDOR_SLD, CURRENT_DEV, CURRENT_DEV_NAME);
-    if (ndev == 0) {
-        printf("Reconfigurable tile not found, defaulting to tile @ 0x60010000\n");
-        dev_tile_1->addr = 0x60010000;
-    }
-    else {
-        dev_tile_1 = &espdevs_tile_1[0];
-    }
-
-    for (n = 0; n < ndev; n++) {
+    n = 0;
+    for (k = 0; k < 7; k++) {
 
         printf("**************** %s.%d ****************\n", DEV_NAME_MAC, n);
 
         dev_tile_1 = &espdevs_tile_1[n];
+
+        spawn_hw_thread(dev_tile_1, 0, PBS_IDX_MAC_SYSC_CATAPULT_2, k);
 
         // Check DMA capabilities
         if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) == 0) {

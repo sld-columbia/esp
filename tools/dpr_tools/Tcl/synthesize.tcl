@@ -170,6 +170,7 @@ proc synthesize { module } {
 
       # keep hierarchy if shared cell is optimized differently across accelerators
       command "set_property KEEP_HIERARCHY \"YES\" \[get_cells *_gen.noc*\]"
+      command "rename_ref -prefix_all ${module}_"
    }
    set end_time [clock seconds]
    log_time synth_design $start_time $end_time 0 "$moduleName $options"
@@ -178,6 +179,11 @@ proc synthesize { module } {
    command "write_checkpoint -force $resultDir/${moduleName}_synth.dcp" "$resultDir/write_checkpoint.log"
    set end_time [clock seconds]
    log_time write_checkpiont $start_time $end_time 0 "Write out synthesis DCP"
+
+   set start_time [clock seconds]
+   command "write_edif -force $resultDir/${moduleName}_synth.edif" "$resultDir/write_edif.log"
+   set end_time [clock seconds]
+   log_time write_edif $start_time $end_time 0 "Write out synthesis EDIF"
 
    if {$verbose >= 1} {
       set start_time [clock seconds]

@@ -286,7 +286,7 @@ proc implement {impl} {
          }
       }
       if {$dfx} {
-         set linkCommand "link_design -mode default -reconfig_partitions \{$partitionCells\} -part $part -top $top"
+         set linkCommand "link_design -mode out_of_context -reconfig_partitions \{$partitionCells\} -part $part -top $top"
          command $linkCommand "$resultDir/${top}_link_design.log"
       } elseif {$hd} {
          set linkCommand "link_design -mode default -partitions \{$partitionCells\} -part $part -top $top"
