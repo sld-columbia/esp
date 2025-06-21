@@ -618,7 +618,7 @@ def print_constants(fp, soc, esp_config):
 
     fp.write("  ------ Custom Memory Link to FPGA for DDR access\n")
     fp.write("  constant CFG_MEM_LINK_BITS : integer := " +
-             str(soc.mem_link_width.get()) + ";\n\n")
+             str(soc.ARCH_BITS) + ";\n\n")
 
     #
     fp.write("  ------ SVGA\n")
@@ -2707,8 +2707,14 @@ def print_devtree(fp, soc, esp_config):
     # Reset all THIRDPARTY accelerators counters
     THIRDPARTY_N = 0
 
-    for i in range(esp_config.nacc):
-        acc = esp_config.accelerators[i]
+    old_fp = fp
+
+    # write all accelerators in current configuration
+    for tile_id, tile in enumerate(esp_config.tiles):
+        acc = tile.acc
+        if acc.id == -1:
+            continue
+
         base = AHB2APB_HADDR[esp_config.cpu_arch] << 20
         if acc.vendor == "sld":
             address = base + ((SLD_APB_ADDR + acc.id * 2) << 8)
@@ -2730,6 +2736,11 @@ def print_devtree(fp, soc, esp_config):
 
         address_str = format(address, "x")
         size_str = format(size, "x")
+
+        if soc.prc.get() == 1:
+            fname = "dpr_dts/" + acc.lowercase_name + "_" + str(tile_id)
+            print("Creating DTS file at " + fname + " with acc " + str(acc))
+            fp = open(fname, "w")
 
         fp.write("    " + acc.lowercase_name + "@" + address_str + " {\n")
         if acc.vendor == "sld":
@@ -2755,6 +2766,52 @@ def print_devtree(fp, soc, esp_config):
         if acc.vendor != "sld" and esp_config.nmem != 0:
             fp.write("      memory-region = <&thirdparty_reserved>;\n")
         fp.write("    };\n")
+
+        if soc.prc.get() == 1:
+            fp.close()
+            fp = old_fp
+
+    # keep reconfigurable partitions in device tree
+    if soc.prc.get() == 1:
+        # read previous device tree
+        for fpath in [f for f in
+                os.listdir("dpr_dts") if
+                    os.path.isfile(os.path.join("dpr_dts", f))
+                    and f.rfind(".") == -1]:
+
+            # check that partial bitstream exists or in current configuration
+            acc_exists = False
+
+            # check if partial bitstream exists (previous run)
+            if os.path.isfile("../../partial_bitstreams/" + fpath + ".bin"):
+                print("Accelerator " + fpath + " exists from eligible bitstream")
+                acc_exists = True
+
+            # check if in current configuration (current run)
+            idx = fpath.rfind("_")
+            if idx != -1:
+                acc_name = fpath[0:idx]
+                acc_tile_id = int(fpath[idx+1:])
+
+                acc_y = acc_tile_id // soc.noc.cols
+                acc_x = acc_tile_id % soc.noc.cols
+                print("Tile ID is " + str(acc_tile_id) + " => x = " + str(acc_x) + ", y = " + str(acc_y))
+                acc_tile = soc.noc.topology[acc_y][acc_x]
+                if acc_tile.ip_type.get().lower() == acc_name:
+                    print("Accelerator " + fpath + " exists in current config")
+                    acc_exists = True
+
+            # delete file because no longer in configuration
+            if not acc_exists:
+                print("Removing " + fpath)
+                os.remove(os.path.join("dpr_dts", fpath))
+                continue
+
+            # paste contents into new DTS
+            with open(os.path.join("dpr_dts", fpath), "r") as acc_fp:
+                for line in acc_fp:
+                    fp.write(line)
+
     fp.write("  };\n")
     fp.write("};\n")
 

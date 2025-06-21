@@ -428,7 +428,7 @@ architecture rtl of tile_io is
     for i in 1 to 19 loop
       cfg(i) := fixed_pconfig(i);
     end loop;  -- i
-    cfg(127) := fixed_pconfig(127);
+    cfg(this_prc_pindex) := fixed_pconfig(this_prc_pindex);
     return cfg;
   end function set_local_pconfig;
 
@@ -1305,7 +1305,7 @@ begin
       pready <= plic_pready;
     elsif noc_apbi.psel(3) = '1' and GLOB_CPU_ARCH = ibex then
       pready <= ibex_timer_pready;
-    elsif noc_apbi.psel(127) = '1' then
+    elsif noc_apbi.psel(this_prc_pindex) = '1' then
       pready <= prc_pready;
     else
       pready <= '1';
@@ -1469,7 +1469,7 @@ begin
       prc_interrupt => vsm_VS_0_sw_startup_req
     );
 
-  -- bridge from APB(127) to partial reconfiguration controller
+  -- bridge from APB(this_prc_pindex) to partial reconfiguration controller
   generate_prc : if has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 and SIMULATION = false generate
     prc_1: prc_inst
       generic map (
@@ -1597,10 +1597,10 @@ begin
         rstn              => rst,
         paddr             => noc_apbi.paddr,
         penable           => noc_apbi.penable,
-        psel              => noc_apbi.psel(127),
+        psel              => noc_apbi.psel(this_prc_pindex),
         pwdata            => noc_apbi.pwdata,
         pwrite            => noc_apbi.pwrite,
-        prdata            => noc_apbo(127).prdata,
+        prdata            => noc_apbo(this_prc_pindex).prdata,
         pready            => prc_pready,
         pslverr           => open,
         s_axil_awvalid    => s_axil_awvalid,
@@ -1621,9 +1621,9 @@ begin
         s_axil_bready     => s_axil_bready,
         s_axil_bresp      => s_axil_bresp);
 
-    noc_apbo(127).pirq <= (CFG_PRC_IRQ => vsm_VS_0_sw_startup_req, others => '0');
-    noc_apbo(127).pconfig <= fixed_apbo_pconfig(127);
-    noc_apbo(127).pindex <= 127;
+    noc_apbo(this_prc_pindex).pirq <= (CFG_PRC_IRQ => vsm_VS_0_sw_startup_req, others => '0');
+    noc_apbo(this_prc_pindex).pconfig <= fixed_apbo_pconfig(this_prc_pindex);
+    noc_apbo(this_prc_pindex).pindex <= this_prc_pindex;
   end generate generate_prc;
 
   -- dummy APB receptor in place of PRC bridge
@@ -1632,7 +1632,7 @@ begin
     noc_apbi_dummy <= set_dummy_apbi(noc_apbi);
     dummy_apb_127 : esp_tile_csr
       generic map(
-        pindex  => 127)
+        pindex  => this_prc_pindex)
       port map(
         clk => tile_clk,
         rstn => rst,
@@ -1649,7 +1649,7 @@ begin
         srst => open,
         tp_acc_rst => open,
         apbi => noc_apbi_dummy,
-        apbo => noc_apbo(127),
+        apbo => noc_apbo(this_prc_pindex),
         prc_interrupt => vsm_VS_0_sw_startup_req
       );
   end generate generate_prc_sim;
