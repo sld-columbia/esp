@@ -397,6 +397,7 @@ vivado-syn: vivado-setup
 		mkdir -p vivado_dpr/Bitstreams; \
 		mkdir -p vivado_dpr/Checkpoint; \
 		mkdir -p vivado_dpr/Implement; \
+		mkdir -p vivado_dpr/Reports; \
 		mkdir -p vivado_dpr/Synth; \
 		mkdir -p vivado_dpr/Synth/Static; \
 		mkdir -p vivado_dpr/Sources/xdc; \
@@ -454,17 +455,19 @@ vivado-syn-dpr-acc-bbox: SYN_ARG = BBOX
 vivado-syn-dpr-acc-bbox: PROCESS_DPR_ARG = BBOX
 vivado-syn-dpr-acc-bbox: vivado-syn-dpr-acc
 
-# report statistics for a reconfigurable system
-vivado-syn-dpr-report:
-	@if ! test -d vivado_dpr; then \
-		echo $(SPACES)"DPR: vivado_dpr directory not found"; \
-		echo $(SPACES)"DPR: you should run vivado-syn-dpr first"; \
+# report statistics
+vivado-syn-report:
+	@if test -d vivado/Reports/dfs_viability; then \
+		mkdir -p vivado/Reports/dfs_viability.bak; \
+		mv vivado/Reports/dfs_viability/* vivado/Reports/dfs_viability.bak; \
 	else \
-		echo $(SPACES)"INFO reporting for DPR flow"; \
-		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) REPORT;	 \
-		cd vivado_dpr; \
-		vivado $(VIVADO_BATCH_OPT) -source report.tcl | tee ../vivado_syn_dpr_report.log; \
-	fi;
+		mkdir -p vivado/Reports; \
+		mkdir -p vivado/Reports/dfs_viability; \
+	fi; \
+	echo $(SPACES)"INFO reporting flow"; \
+	/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) REPORT; \
+	cd vivado; \
+	vivado $(VIVADO_BATCH_OPT) -source report.tcl | tee ../$(VIVADO_LOGS)/vivado_report.log;
 
 vivado-syn-emu: vivado-setup-emu
 	$(QUIET_INFO)echo "launching Vivado implementation script"

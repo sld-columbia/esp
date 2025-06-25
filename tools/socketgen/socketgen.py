@@ -2611,7 +2611,7 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
         for tline in ftemplate:
             if tline.find("-- <<accelerator-wrappers-gen>>") >= 0:
                 for acc in accelerator_list + axi_accelerator_list:
-                    f.write("  " + acc.name + "_gen: if this_device = SLD_" + acc.name.upper() + " generate\n")
+                    f.write("  " + acc.name + "_gen: if device = SLD_" + acc.name.upper() + " generate\n")
                     f.write("    noc_" + acc.name + "_i: noc_" + acc.name + "\n")
                     f.write("      generic map (\n")
                     f.write("        hls_conf       => hls_conf,\n")

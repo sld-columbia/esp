@@ -392,6 +392,7 @@ begin
   acc_top_inst : acc_top
     generic map (
       hls_conf       => this_hls_conf,
+      device         => this_device,
       tech           => CFG_FABTECH,
       mem_num        => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_SVGA_ENABLE,
       cacheable_mem_num => CFG_NMEM_TILE,

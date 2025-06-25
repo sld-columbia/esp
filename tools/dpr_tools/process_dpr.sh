@@ -3,8 +3,10 @@
 # Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-#variables related to srcs of accelerators
-#tile_acc="$1/socs/$2/socketgen/tile_acc.vhd"
+# offset of the partial bitstream in memory
+PBS_DDR_OFFSET=0x300;
+
+# variables related to srcs of accelerators
 tile_acc="$1/socs/$2/socketgen/acc_top.vhd"
 dpr_srcs="$1/socs/$2/socketgen/dpr_srcs"
 dpr_bbox="$dpr_srcs/acc_top_bbox.vhd"
@@ -14,22 +16,54 @@ esp_config="$1/socs/$2/socgen/esp/.esp_config"
 esp_config_old="$1/socs/$2/vivado_dpr/.esp_config"
 tcl_dir="$1/tools/dpr_tools/Tcl"
 
-#variables related to accelerator tiles
+# detect DPR flow
+if [ -d "$1/socs/$2/vivado_dpr" ]; then
+    dpr=1
+else
+    dpr=0
+fi
+
+# variables related to accelerator tiles
 num_acc_tiles=0
 num_old_acc_tiles=0
 num_modified_acc_tiles=0
 regenerate_fplan=0;
 
+# accelerator properties indexed by i and j
+#     i = accelerator index
+#     j = property
+#         j = 0 => tile index
+#         j = 1 => accelerator name (<name>_<flow>_<tile_index>)
+declare -A new_accelerators old_accelerators modified_accelerators
+
+# consumption numbers indexed by i and j
+#     i = partition index (first tile-level then nested regions)
+#     j = property
+#         j = 0 => clb
+#         j = 1 => bram
+#         j = 2 => dsp
+declare -A res_consumption
+
+# device detection
 DEVICE=$3
 device=$(echo ${DEVICE} | awk '{print tolower($0)}')
-acc_id_match="hls_conf       : hlscfg_t"
-declare -A new_accelerators old_accelerators modified_accelerators
-declare -A res_consumption
-declare -A bitstream_descr
+if [[ "$device" == "xc7vx485t-ffg1761-2" ]]; then
+    TARGET_DEV="VC707"
+    TARGET_SOC="xilinx-vc707-xc7vx485t"
+elif [[ "$device" == "xcvu9p-flga2104-2l-e" ]]; then
+    TARGET_DEV="VCU118"
+    TARGET_SOC="xilinx-vcu118-xcvu9p"
+elif [[ "$device" == "xcvu37p-fsvh2892-2l-e" ]]; then
+    TARGET_DEV="VCU128"
+    TARGET_SOC="xilinx-vcu128-xcvu37p"
+else
+    echo "Invalid device: $device"
+    exit;
+fi;
 
-PBS_DDR_OFFSET=0x300;
-
+# RTL strings
 acc_include_dirs="$1/rtl/cores/ariane/ariane/src/common_cells/include $1/rtl/caches/esp-caches/common/defs $1/socs/$2/socgen/esp"
+acc_id_match="hls_conf       : hlscfg_t"
 
 #function to extract the number and types of accelerator tiles from current esp_config
 function extract_acc() {
@@ -530,12 +564,12 @@ echo "add_implementation top_dpr " >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr top        \$top" >> $dpr_syn_tcl;
 #echo "set_attribute impl top_dpr pr.impl      1" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr dfx.impl      1" >> $dpr_syn_tcl;
-if [[ "$2" == "xilinx-vcu118-xcvu9p" ]]; then
-    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/sgmii/synth/sgmii.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig/par/mig.xdc ] ]" >> $dpr_syn_tcl;
-elif [[ $2 == "xilinx-vcu128-xcvu37p" ]]; then
-echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.gen/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
+if [[ "$TARGET_DEV" == "xilinx-vcu118-xcvu9p" ]]; then
+    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-constraints.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-pins.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-mig-pins.xdc $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/sgmii/synth/sgmii.xdc $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/mig/par/mig.xdc ] ]" >> $dpr_syn_tcl;
+elif [[ $TARGET_DEV == "xilinx-vcu128-xcvu37p" ]]; then
+echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-constraints.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-pins.xdc  $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-mig-pins.xdc $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
 else
-    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc ]]" >> $dpr_syn_tcl;
+    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-constraints.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-pins.xdc ]]" >> $dpr_syn_tcl;
 fi;
 
 if [[ "$4" == "IMPL_DPR" ]]; then
@@ -778,17 +812,6 @@ function gen_floorplan() {
     src_dir=$1/socs/$2;
     fplan_dir=$1/tools/dpr_tools/dpr_floor_planner;
 
-    if [[ "$device" == "xc7vx485t-ffg1761-2" ]]; then
-        TARGET_DEV="VC707"
-    elif [[ "$device" == "xcvu9p-flga2104-2l-e" ]]; then
-        TARGET_DEV="VCU118"
-    elif [[ "$device" == "xcvu37p-fsvh2892-2l-e" ]]; then
-        TARGET_DEV="VCU128"
-    else
-        echo "Invalid device: $device"
-        exit;
-    fi;
-
     cd $fplan_dir;
     make flora FPGA=$TARGET_DEV;
     ./bin/flora $num_acc_tiles  $1/socs/$2/flora_input.csv $1/socs/$2/res_reqs.csv;
@@ -831,46 +854,83 @@ function gen_report_script() {
 base_clock="20.0"
 clock_multiplier="16.0"
 clock_dividers=("19.0" "18.0" "17.0" "16.0" "15.0" "14.0" "13.0")
-dpr_report_tcl="vivado_dpr/report.tcl"
+dpr_report_tcl="$1/socs/$2/vivado/report.tcl"
 echo "Writing to $dpr_report_tcl"
 echo "set tclParams [list hd.visual 1]" > $dpr_report_tcl;
 echo "set tclHome \"$tcl_dir\" ">> $dpr_report_tcl;
 echo "set tclDir \$tclHome " >> $dpr_report_tcl;
 echo "set projDir \"$1/socs/$2/vivado_dpr\" " >> $dpr_report_tcl;
 echo "source \$tclDir/report_utils.tcl" >> $dpr_report_tcl;
-
-echo "set base_clock $base_clock" >> $dpr_report_tcl;
-echo "set clock_periods [list \\" >> $dpr_report_tcl;
-for divider in "${clock_dividers[@]}"; do
-    echo "  [expr \$base_clock * $clock_multiplier / $divider] \\" >> $dpr_report_tcl;
-done
-echo "]" >> $dpr_report_tcl;
 echo "" >> $dpr_report_tcl;
 
-for ((i=0; i<$num_acc_tiles; i++))
-do
-    dcp="$1/socs/$2/vivado_dpr/Checkpoint/acc_top_inst_${new_accelerators[$i,1]}_route_design.dcp"
-    acc_base_name=${new_accelerators[$i,1]}
-    acc_base_name=${acc_base_name%%_${new_accelerators[$i,0]}}
+# load in top routed checkpoint
+if [ $dpr -eq 0 ]; then
+    dcp="$1/socs/$2/vivado/esp-$TARGET_SOC.runs/impl_1/top_routed.dcp"
+    echo "open_checkpoint $dcp" >> $dpr_report_tcl;
 
-    if [ -f "$dcp" ]; then
+    echo "set filters [list \"NAME =~ *0\" \"NAME =~ *1\" \"NAME =~ *2\" \"NAME =~ *clk_nobuf*\" \"NAME =~ *3\" \"NAME =~ *4\" \"NAME =~ *5\"]" >> $dpr_report_tcl;
+    echo "" >> $dpr_report_tcl;
+
+    for ((i=0; i<$num_acc_tiles; i++))
+    do
+        acc_name=${new_accelerators[$i,1]}
+        acc_base_name=${acc_name%%_[0-9]*}
+        acc_tile_id=${new_accelerators[$i,0]}
+
+        echo "# Reporting timing for $acc_name" >> $dpr_report_tcl;
+        echo "set clk_obj [get_nets esp_1/tiles_gen[$acc_tile_id].accelerator_tile.tile_acc_i/tile_acc_1/pll_gen.plle_drp_inst/clk_freq_sel_gen.clkmux_vote/clk_sel]" >> $dpr_report_tcl;
+        echo "puts \$clk_obj" >> $dpr_report_tcl;
+        echo "set cells [get_cells esp_1/tiles_gen[$acc_tile_id].accelerator_tile.tile_acc_i/tile_acc_1/acc_top_inst]" >> $dpr_report_tcl;
+        echo "puts \$cells" >> $dpr_report_tcl;
+        echo "do_report_viability_clocks ${acc_name} \$clk_obj \$filters \$cells" >> $dpr_report_tcl;
+        echo "" >> $dpr_report_tcl;
+    done
+
+    echo "close_design" >> $dpr_report_tcl;
+
+else
+    echo "set base_clock $base_clock" >> $dpr_report_tcl;
+    echo "set clock_periods [list \\" >> $dpr_report_tcl;
+    for divider in "${clock_dividers[@]}"; do
+        echo "  [expr \$base_clock * $clock_multiplier / $divider] \\" >> $dpr_report_tcl;
+    done
+    echo "]" >> $dpr_report_tcl;
+    echo "" >> $dpr_report_tcl;
+
+    pushd $1/socs/$2/vivado_dpr/Checkpoint
+
+    for f in acc_top_inst_*_route_design.dcp; do
+        dcp=$(realpath $f)
+
+        # strip off checkpoint text
+        acc_name=${f%%_route_design.dcp}
+        acc_name=${acc_name##acc_top_inst_}
+
+        # parse accelerator name and tile ID
+        acc_base_name=${acc_name%%_[0-9]*}
+        acc_tile_id=${acc_name##*_}
+
+        echo "# Reporting timing for ${acc_name}" >> $dpr_report_tcl;
         echo "open_checkpoint $dcp" >> $dpr_report_tcl;
 
         if [ "$5" == "BBOX" ]; then
             echo "update_design -cells [get_cells ${acc_base_name}_gen.noc_${acc_base_name}_i] -black_box" >> $dpr_report_tcl;
-            echo "do_report tile_blanked_${new_accelerators[$i,0]} \$clock_periods" >> $dpr_report_tcl;
-        else
-            echo "do_report ${new_accelerators[$i,1]} \$clock_periods" >> $dpr_report_tcl;
+            acc_name="tile_blanked_${acc_tile_id}"
         fi
 
-        echo "close_design" >> $dpr_report_tcl;
-    fi
-done
-}
+        echo "set clk_obj [get_port clk]" >> $dpr_report_tcl;
+        echo "puts \$clk_obj" >> $dpr_report_tcl;
+        echo "set cells [get_cells \"${acc_base_name}_gen.noc_${acc_base_name}_i\"]" >> $dpr_report_tcl;
+        echo "puts \$cells" >> $dpr_report_tcl;
+        echo "do_report_viability_periods ${acc_name} \$clock_periods \$clk_obj \$cells" >> $dpr_report_tcl;
 
-# create directory before generating code
-mkdir -p $1/socs/$2/vivado_dpr
-mkdir -p $1/socs/$2/vivado_dpr/Reports
+        echo "close_design" >> $dpr_report_tcl;
+
+    done
+
+    popd # $1/socs/$2/vivado_dpr/Checkpoint
+fi
+}
 
 if [ "$4" == "BBOX" ]; then
     extract_acc $1 $2 $3

@@ -8,6 +8,8 @@ import math
 import os
 from thirdparty import *
 
+PARTIAL_DTS_DIR = "partial_dts"
+
 # Maximum number of AHB and APB slaves can also be increased, but Leon3 utility
 # mklinuximg, GRLIB AMBA package and bare-metal probe constants must be updated.
 # The related constants are defined in
@@ -2737,10 +2739,9 @@ def print_devtree(fp, soc, esp_config):
         address_str = format(address, "x")
         size_str = format(size, "x")
 
-        if soc.prc.get() == 1:
-            fname = "dpr_dts/" + acc.lowercase_name + "_" + str(tile_id)
-            print("Creating DTS file at " + fname + " with acc " + str(acc))
-            fp = open(fname, "w")
+        # open partial file
+        fname = PARTIAL_DTS_DIR + "/" + acc.lowercase_name + "_" + str(tile_id)
+        fp = open(fname, "w")
 
         fp.write("    " + acc.lowercase_name + "@" + address_str + " {\n")
         if acc.vendor == "sld":
@@ -2771,46 +2772,43 @@ def print_devtree(fp, soc, esp_config):
             fp.close()
             fp = old_fp
 
-    # keep reconfigurable partitions in device tree
-    if soc.prc.get() == 1:
-        # read previous device tree
-        for fpath in [f for f in
-                os.listdir("dpr_dts") if
-                    os.path.isfile(os.path.join("dpr_dts", f))
-                    and f.rfind(".") == -1]:
+    # read previous device descriptions
+    for fpath in [f for f in
+            os.listdir(PARTIAL_DTS_DIR) if
+                os.path.isfile(os.path.join(PARTIAL_DTS_DIR, f))
+                and f.rfind(".") == -1]:
 
-            # check that partial bitstream exists or in current configuration
-            acc_exists = False
+        # check that partial bitstream exists or in current configuration
+        acc_exists = False
 
-            # check if partial bitstream exists (previous run)
-            if os.path.isfile("../../partial_bitstreams/" + fpath + ".bin"):
-                print("Accelerator " + fpath + " exists from eligible bitstream")
+        # check if partial bitstream exists (previous run)
+        if soc.prc.get() == 1 and os.path.isfile("../../partial_bitstreams/" + fpath + ".bin"):
+            print("Accelerator " + fpath + " exists from eligible bitstream")
+            acc_exists = True
+
+        # check if in current configuration (current run)
+        idx = fpath.rfind("_")
+        if idx != -1:
+            acc_name = fpath[0:idx]
+            acc_tile_id = int(fpath[idx+1:])
+
+            acc_y = acc_tile_id // soc.noc.cols
+            acc_x = acc_tile_id % soc.noc.cols
+            acc_tile = soc.noc.topology[acc_y][acc_x]
+            if acc_tile.ip_type.get().lower() == acc_name:
+                print("Accelerator " + fpath + " exists in current config")
                 acc_exists = True
 
-            # check if in current configuration (current run)
-            idx = fpath.rfind("_")
-            if idx != -1:
-                acc_name = fpath[0:idx]
-                acc_tile_id = int(fpath[idx+1:])
+        # delete file because no longer in configuration
+        if not acc_exists:
+            print("Removing " + fpath)
+            os.remove(os.path.join(PARTIAL_DTS_DIR, fpath))
+            continue
 
-                acc_y = acc_tile_id // soc.noc.cols
-                acc_x = acc_tile_id % soc.noc.cols
-                print("Tile ID is " + str(acc_tile_id) + " => x = " + str(acc_x) + ", y = " + str(acc_y))
-                acc_tile = soc.noc.topology[acc_y][acc_x]
-                if acc_tile.ip_type.get().lower() == acc_name:
-                    print("Accelerator " + fpath + " exists in current config")
-                    acc_exists = True
-
-            # delete file because no longer in configuration
-            if not acc_exists:
-                print("Removing " + fpath)
-                os.remove(os.path.join("dpr_dts", fpath))
-                continue
-
-            # paste contents into new DTS
-            with open(os.path.join("dpr_dts", fpath), "r") as acc_fp:
-                for line in acc_fp:
-                    fp.write(line)
+        # paste contents into new DTS
+        with open(os.path.join(PARTIAL_DTS_DIR, fpath), "r") as acc_fp:
+            for line in acc_fp:
+                fp.write(line)
 
     fp.write("  };\n")
     fp.write("};\n")

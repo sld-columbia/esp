@@ -32,7 +32,7 @@ entity acc_top is
 
   generic (
     hls_conf       : hlscfg_t;
-    this_device    : devid_t := 0;
+    device         : devid_t := 0;
     tech           : integer;
     mem_num        : integer;
     cacheable_mem_num : integer;
@@ -153,6 +153,8 @@ architecture rtl of acc_top is
   attribute keep of interrupt_ack_empty        : signal is "true";
 
 begin
+
+  assert device /= 0 report "Undefined device ID for acc_top instance" severity error;
 
 -------------------------------------------------------------------------------
 -- ACCELERATOR ----------------------------------------------------------------

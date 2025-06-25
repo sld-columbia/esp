@@ -313,9 +313,8 @@ int main(int argc, char * argv[])
     n = 0;
     for (k = 0; k < 7; k++) {
 
-        printf("**************** %s.%d ****************\n", DEV_NAME_MAC, n);
-
         dev_tile_1 = &espdevs_tile_1[n];
+        printf("**************** %s.%d ****************\n", dev_tile_1->name, n);
 
         spawn_hw_thread(dev_tile_1, 0, PBS_IDX_MAC_SYSC_CATAPULT_2, k);
 

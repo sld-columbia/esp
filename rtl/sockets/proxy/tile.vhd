@@ -1231,6 +1231,7 @@ package tile is
   component acc_top
   generic (
     hls_conf       : hlscfg_t;
+    device         : devid_t := 0;
     tech           : integer;
     mem_num        : integer;
     cacheable_mem_num : integer;
