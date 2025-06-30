@@ -30,7 +30,7 @@ static void get_io_tile_id(struct esp_device* io_tile)
 #endif
 }
 
-static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupler)
+int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupler)
 {
     unsigned i;
     unsigned tile_id = 0xFF;
@@ -67,7 +67,7 @@ static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupl
     // compute apb address for tile decoupler
     (*decoupler).addr = APB_BASE_ADDR + (monitor_base + tile_id * 0x200);
 #ifdef DPR_VERBOSE
-    printf("[PRC DRIVER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0x \n", tile_id, (unsigned) esp_tile_decoupler.addr);
+    printf("[PRC DRIVER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0llx \n", tile_id, (*decoupler).addr);
 #endif
     return 0;
 }

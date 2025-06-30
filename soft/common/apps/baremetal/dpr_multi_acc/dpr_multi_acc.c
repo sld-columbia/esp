@@ -8,8 +8,15 @@
 
 #include <monitors.h>
 
-#include "pbs_list.h"
-#include "prc_utils.h"
+// DPR includes
+#define DO_DPR
+#ifdef DO_DPR
+    #include "pbs_list.h"
+    #include "prc_utils.h"
+#endif // DO_DPR
+
+#include "scheduler_utils.h"
+#include "esp_acc_profiles.h"
 
 #include "dpr_multi_acc.h"
 #include "utils/fft_utils.h"
@@ -18,24 +25,31 @@
 
 #define NUM_ACC_INVOC_ITER 1
 #define RUN_LOOP
-#define DO_DPR
 
 //#undef PBS_IDX_FFT_STRATUS_2
 //#undef PBS_IDX_MAC_SYSC_CATAPULT_2
+#ifndef DO_DPR
+    #define PBS_IDX_MAC_SYSC_CATAPULT_2 0
+#endif // DO_DPR
 
 #define CURRENT_DEV SLD_MAC
 #define CURRENT_DEV_NAME DEV_NAME_MAC
 
 /* Scheduling */
 #define NUM_SERVERS 1
-#define NUM_FREQUENCIES 7
+//#define NUM_FREQUENCIES 7
+
+#ifdef __riscv
+#define APB_BASE_ADDR 0x60000000
+#endif
+//const unsigned monitor_base = 0x90180;
 
 // profiling for a server
 typedef struct {
-  unsigned duration[NUM_FREQUENCIES]; // microseconds
-  unsigned power[NUM_FREQUENCIES];    // milliwatts
-  unsigned reconf_time;               // microseconds
-  unsigned reconf_cycles;             // cycles
+  unsigned duration[N_FREQS]; // microseconds
+  unsigned power[N_FREQS];    // milliwatts
+  unsigned reconf_time;       // microseconds
+  unsigned reconf_cycles;     // cycles
 } server_profile_t;
 
 // current configuration
@@ -46,7 +60,7 @@ typedef struct {
 } server_runtime_t;
 
 // selection values for the clock multiplexor
-unsigned div_sel[NUM_FREQUENCIES] = { 0b001, 0b010, 0b011, 0b100, 0b101, 0b110, 0b111 };
+//unsigned div_sel[NUM_FREQUENCIES] = { 0b001, 0b010, 0b011, 0b100, 0b101, 0b110, 0b111 };
 
 // cycle monitor
 unsigned int sched_cycles_start = 0, sched_cycles_new = 0, sched_cycles_diff = 0;
@@ -55,7 +69,7 @@ unsigned sched_power_start;
 esp_monitor_args_t mon_args = {ESP_MON_READ_SINGLE, 0xffff, 1, 0, MON_DVFS_BASE_INDEX + 3, 0};
 
 // power profiles under each frequency
-server_profile_t profiles[NUM_SERVERS] = {
+server_profile_t my_profiles[NUM_SERVERS] = {
   {
     { 489, 440, 398, 363, 328, 299, 273 },
     { 22, 24, 25, 27, 29, 30, 32 },
@@ -68,12 +82,12 @@ server_profile_t profiles[NUM_SERVERS] = {
 server_runtime_t servers[NUM_SERVERS];
 
 // Find tile router address relative to tile device
-int get_dco_reg_addr(struct esp_device *dev, int tile_id) {
-  return (0x60090000
-        + 0x200 * tile_id)  // router base address
-        + 0b111001100       // address of DCO register in NoC CSR file (addr[6:2] = 19)
-        - dev->addr; // relative to device for call to iowrite32
-}
+//int get_dco_reg_addr(struct esp_device *dev, int tile_id) {
+//  return (0x60090000
+//        + 0x200 * tile_id)  // router base address
+//        + 0b111001100       // address of DCO register in NoC CSR file (addr[6:2] = 19)
+//        - dev->addr; // relative to device for call to iowrite32
+//}
 
 // Encode new DCO configuration value
 int encode_dco_ctrl(int freq_sel, int div_sel, int fc_sel, int cc_sel, int clk_sel, int en) {
@@ -86,11 +100,20 @@ int encode_dco_ctrl(int freq_sel, int div_sel, int fc_sel, int cc_sel, int clk_s
 }
 
 // Configure new frequency
+static struct esp_device esp_tile_dfs_controller;
 void write_and_read_div_sel(struct esp_device *dev, int tile_id, int div_sel, int en) {
-    tile_id = get_dco_reg_addr(dev, tile_id);
-    iowrite32(dev, tile_id, encode_dco_ctrl(0, div_sel, 0, 0, 0, en));
+    //printf("Writing DCO for tile %d\n", tile_id);
+    //tile_id = get_dco_reg_addr(dev, tile_id);
+
+    // compute apb address for tile decoupler
+
+    //esp_tile_dfs_controller.addr = APB_BASE_ADDR + (monitor_base + tile_id * 0x200);
+
+    printf("Writing to offset at %d\n", esp_tile_dfs_controller.addr);
+    iowrite32(&esp_tile_dfs_controller, 0b1001100, encode_dco_ctrl(0, div_sel, 0, 0, 0, en));
+
     printf("Done writing register with div_sel = %d, en = %d, now reading\n", div_sel, en);
-    tile_id = ioread32(dev, tile_id);
+    tile_id = ioread32(&esp_tile_dfs_controller, 0b1001100);
     printf("Read register and got %d\n", tile_id);
 }
 
@@ -123,7 +146,7 @@ unsigned int dpr_wait_cycles_start = 0, dpr_wait_cycles_new, dpr_wait_cycles_dif
 #endif
 void spawn_hw_thread(struct esp_device *dev, int server_idx, int pbs_id, int new_div_sel_idx) {
     server_runtime_t *server = &servers[server_idx];
-    server_profile_t *profile = &profiles[server_idx];
+    server_profile_t *profile = &my_profiles[server_idx];
 
     log_power(profile->power[server->div_sel_idx], EVENT_DPR_START);
 
@@ -213,108 +236,32 @@ int main(int argc, char * argv[])
     else {
         dev_tile_1 = &espdevs_tile_1[0];
     }
+    init_server(0, dev_tile_1, 2, 3);
+    get_decoupler_addr(dev_tile_1, &esp_tile_dfs_controller);
 
+#ifdef DO_DPR
     // test decoupling
     decouple_acc(dev_tile_1, 1);
     decouple_acc(dev_tile_1, 0);
-
-#ifdef PBS_IDX_ADDER_VIVADO_2
-    // Adder functionality
-    printf("  ****  Loading Adder accelerator onto FPGA  **** \n");
-#ifdef DO_DPR
-    reconfigure_FPGA(dev_tile_1, PBS_IDX_ADDER_VIVADO_2);
-#endif
-
-    // Check DMA capabilities
-    if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) == 0) {
-        printf("  -> scatter-gather DMA is disabled. Abort.\n");
-        return 0;
-    }
-    if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) < NCHUNK_ADDER) {
-        printf("  -> Not enough TLB entries available. Abort.\n");
-        return 0;
-    }
-
-    // Allocation
-    printf("  Allocation...\n");
-
-    // Allocate memory (will be contiguos anyway in baremetal)
-    mem_adder = aligned_malloc(SIZE_ADDER);
-    printf("  memory buffer base-address = %lu\n", (unsigned long) mem_adder);
-
-    // Allocate memory for gold output
-    mem_gold_adder = aligned_malloc(OUT_SIZE_ADDER);
-    printf("  memory buffer base-address = %lu\n", (unsigned long) mem_gold_adder);
-
-    // Allocate and populate page table
-    ptable_adder = aligned_malloc(NCHUNK_ADDER * sizeof(unsigned *));
-    for (i = 0; i < NCHUNK_ADDER; i++)
-        ptable_adder[i] = (unsigned *)
-        &mem_adder[i * (CHUNK_SIZE_ADDER / sizeof(unsigned))];
-
-    printf("  ptable = %p\n", ptable_adder);
-    printf("  nchunk = %lu\n", NCHUNK_ADDER);
-
-    //initialize Adder memory
-    init_buff_adder(mem_adder, mem_gold_adder);
-
-    // Configure Adder accelerator
-    //iowrite32(dev_tile_1, SELECT_REG, ioread32(dev_tile_1, DEVID_REG));
-    iowrite32(dev_tile_1, COHERENCE_REG, coherence);
-    iowrite32(dev_tile_1, PT_ADDRESS_REG, (unsigned long) ptable_adder);
-    iowrite32(dev_tile_1, PT_NCHUNK_REG, NCHUNK_ADDER);
-    iowrite32(dev_tile_1, PT_SHIFT_REG, CHUNK_SHIFT_ADDER);
-    iowrite32(dev_tile_1, SRC_OFFSET_REG, 0);
-    iowrite32(dev_tile_1, DST_OFFSET_REG, 0);
-
-    // Configure Adder registers
-    iowrite32(dev_tile_1, NBURSTS_REG, 4);
-
-    // Flush for non-coherent DMA
-    esp_flush(coherence);
-
-    // Start Adder accelerator
-    printf("  Start..\n");
-    iowrite32(dev_tile_1, CMD_REG, CMD_MASK_START);
-
-    done = 0;
-
-    while (!done) {
-        done = ioread32(dev_tile_1, STATUS_REG);
-        done &= STATUS_MASK_DONE;
-    }
-
-    iowrite32(dev_tile_1, CMD_REG, 0x0);
-    printf("  Done\n");
-
-    /* Validation */
-    printf("  validating...\n");
-
-    errors = 0;
-    errors = validate_adder(mem_adder, mem_gold_adder);
-
-    if (!errors) {
-        printf("\n  Test PASSED!\n");
-    } else {
-        printf("\n  Test FAILED. Number of errors: %d\n", errors);
-    }
-
-#else
-    printf("PBS_IDX_ADDER_VIVADO_2 not defined\n");
-#endif // PBS_IDX_ADDER_VIVADO_2
+#endif // DO_DPR
 
 #ifdef PBS_IDX_MAC_SYSC_CATAPULT_2
     //reconfigure the accelerator tile :- load the mac accelerator
     printf("   **** Loading MAC accelerator onto FPGA ****\n");
-
-    decouple_acc(dev_tile_1, 1);
-    decouple_acc(dev_tile_1, 0);
 
     n = 0;
     for (k = 0; k < 7; k++) {
 
         dev_tile_1 = &espdevs_tile_1[n];
         printf("**************** %s.%d ****************\n", dev_tile_1->name, n);
+
+        if (!profiles[PBS_IDX_MAC_SYSC_CATAPULT_2].op[k].viable) {
+            printf("%s not viable at frequency index %0d.\n", dev_tile_1->name, k);
+            continue;
+        }
+        else {
+            printf("%s is viable at frequency index %0d.\n", dev_tile_1->name, k);
+        }
 
         spawn_hw_thread(dev_tile_1, 0, PBS_IDX_MAC_SYSC_CATAPULT_2, k);
 
@@ -413,9 +360,6 @@ int main(int argc, char * argv[])
 #ifdef PBS_IDX_FFT_STRATUS_2
     // reconfigure the accelerator tile :- load the FFT accelerator
     printf("   **** Loading FFT accelerator onto FPGA ****\n");
-
-    decouple_acc(dev_tile_1, 1);
-    decouple_acc(dev_tile_1, 0);
 
 #ifdef DO_DPR
     reconfigure_FPGA(dev_tile_1, PBS_IDX_FFT_STRATUS_2);

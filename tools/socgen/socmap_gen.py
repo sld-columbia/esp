@@ -2345,7 +2345,7 @@ def print_soc_defines(fp, esp_config, soc):
         fp.write("#define YX_WIDTH 4\n\n")
 
     if soc.prc.get() == 1:
-        fp.write("#define SOC_DFX_EN 1")
+        fp.write("#define SOC_DFX_EN 1\n\n")
 
     fp.write("#endif /* __SOC_DEFS_H__ */\n")
 
@@ -3717,17 +3717,17 @@ def create_profile(fp, esp_config, soc):
     # report_dir += "/Reports/dfs_latency"
     # report_dir += "/Reports/dfs_power"
 
+    # preamble
+    fp.write("\n")
+    fp.write("#ifndef __ESP_ACC_PROFILE_H__\n")
+    fp.write("#define __ESP_ACC_PROFILE_H__\n\n")
     fp.write("#include \"scheduler_utils.h\"\n\n")
 
-    # read previous device tree
-    fp.write("// Profiles\n")
-    fp.write("acc_profile_t profiles[XXX] = {\n")
-    files = [f for f in os.listdir(report_dir) if
+    # read profiles
+    n_acc_profiles = 0
+    for fpath in [f for f in os.listdir(report_dir) if
                 os.path.isfile(os.path.join(report_dir, f))
-                and f.rfind(".") == -1]
-    rem = len(files)
-    for fpath in files:
-        fp.write("    {\n")
+                and f.rfind(".") == -1]:
 
         # check that partial bitstream exists or in current configuration
         acc_exists = False
@@ -3739,6 +3739,7 @@ def create_profile(fp, esp_config, soc):
 
         # check if in current configuration (current run)
         idx = fpath.rfind("_")
+        acc_tile_id = 0
         if idx != -1:
             acc_name = fpath[0:idx]
             acc_tile_id = int(fpath[idx+1:])
@@ -3757,18 +3758,41 @@ def create_profile(fp, esp_config, soc):
             os.remove(os.path.join(report_dir, fpath))
             continue
 
-        # paste contents into new DTS
+        n_acc_profiles += 1
+
+    # preamble
+    fp.write("// Profiles\n")
+    fp.write("#define NUM_ACC_PROFILES " + str(n_acc_profiles) + "\n")
+    fp.write("static acc_profile_t profiles[NUM_ACC_PROFILES] = {\n")
+
+    # write out profiles
+    files = [f for f in os.listdir(report_dir) if
+                os.path.isfile(os.path.join(report_dir, f))
+                and f.rfind(".") == -1]
+    remaining = len(files)
+    for fpath in files:
+
+        fp.write("    {\n")
+
+        # write tile ID
+        fp.write("        " + str(acc_tile_id) + ",\n")
+
+        # write viability
+        fp.write("        { ")
         with open(os.path.join(report_dir, fpath), "r") as acc_fp:
             line_idx = 0
             for line in acc_fp:
-                fp.write(line)
+                fp.write(line[0])
 
                 line_idx += 1
                 if line_idx >= NFREQS:
                     break
                 fp.write(", ")
+        fp.write(" }\n")
 
         fp.write("    }")
+
+        # move to next accelerator
         remaining -= 1
         if remaining == 0:
             fp.write("\n")
@@ -3776,6 +3800,11 @@ def create_profile(fp, esp_config, soc):
         else:
             fp.write(",\n")
     fp.write("};\n")
+
+    # postamble
+    fp.write("\n")
+    fp.write("#endif // __ESP_ACC_PROFILE_H__\n")
+
 
 def create_socmap(esp_config, soc):
 

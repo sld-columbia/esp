@@ -18,6 +18,7 @@ typedef struct pbs_map {
     unsigned pbs_tile_id;
 } pbs_map;
 
+int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupler);
 int decouple_acc(struct esp_device *dev, unsigned val);
 unsigned int reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id);
 

@@ -558,14 +558,12 @@ begin
     if tile_rst = '0' then
       -- hard reset
       rst_tile_id <= (others => '0');
+    elsif rst = '0' then
+      -- persist value on soft reset
+      rst_tile_id <= rst_tile_id;
     elsif tile_clk'event and tile_clk = '1' then
-      if rst = '1' then
-        -- update soft reset value
-        rst_tile_id <= tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
-      else
-        -- soft reset value
-        rst_tile_id <= rst_tile_id;
-      end if;
+      -- update soft reset value
+      rst_tile_id <= tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
     end if;
   end process rst_tile_id_gen;
 

@@ -468,6 +468,7 @@ $(ACC-app): $(SOFT_BUILD)/sysroot soft-build
 				for f in $$BUILD_PATH/*.exe; do echo '   ' CP $@ $${f##*/}; cp $$f $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=)_$${f##*/} ; done; \
 			fi; \
 			if [ `ls -1 $$ACC_PATH/sw/linux/app/*.so 2>/dev/null | wc -l ` -gt 0 ]; then \
+				mkdir -p $(SOFT_BUILD)/sysroot/lib; \
 				echo '   ' CP "shared libraries"; cp $$ACC_PATH/sw/linux/app/*.so $(SOFT_BUILD)/sysroot/lib/ ; \
 			fi; \
 		else \

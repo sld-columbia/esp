@@ -43,6 +43,11 @@ $(ESP_CFG_BUILD)/socmap.vhd: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grl
 	echo "Generating ESP configuration..."; \
 	LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/tools/socgen/esp_creator_batch.py $(ARCH_BITS) $(TECH_TYPE) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK) $(BOARD) $(EMU_TECH) $(EMU_FREQ)
 
+.PHONY: $(ESP_CFG_BUILD)/esp_acc_profiles.h
+$(ESP_CFG_BUILD)/esp_acc_profiles.h: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grlib_config.vhd top.vhd Makefile
+	@cd $(ESP_CFG_BUILD); \
+	LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/tools/socgen/esp_profile_creator_batch.py $(ARCH_BITS) $(TECH_TYPE) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK) $(BOARD) $(EMU_TECH) $(EMU_FREQ)
+
 $(ESP_CFG_BUILD)/esplink.h: $(ESP_CFG_BUILD)/socmap.vhd
 
 ESPLINK_SRCS = $(wildcard $(ESP_ROOT)/tools/esplink/src/*.c)

@@ -162,7 +162,7 @@ do
     do
         if [[ $acc_src == *"$acc_id_match"*  ]]; then
             echo "  hls_conf           : hlscfg_t := tile_design_point(${new_accelerators[$i,0]});" >> $acc_dir/acc_$i.vhd;
-            echo "  this_device        : devid_t  := tile_device(${new_accelerators[$i,0]});" >> $acc_dir/acc_$i.vhd;
+            echo "  device             : devid_t  := tile_device(${new_accelerators[$i,0]});" >> $acc_dir/acc_$i.vhd;
             echo "  tech               : integer  := CFG_FABTECH;">> $acc_dir/acc_$i.vhd;
             echo "  mem_num            : integer  := CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_SVGA_ENABLE;">> $acc_dir/acc_$i.vhd;
             echo "  cacheable_mem_num  : integer  := CFG_NMEM_TILE;">> $acc_dir/acc_$i.vhd;
@@ -564,12 +564,12 @@ echo "add_implementation top_dpr " >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr top        \$top" >> $dpr_syn_tcl;
 #echo "set_attribute impl top_dpr pr.impl      1" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr dfx.impl      1" >> $dpr_syn_tcl;
-if [[ "$TARGET_DEV" == "xilinx-vcu118-xcvu9p" ]]; then
-    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-constraints.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-pins.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-mig-pins.xdc $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/sgmii/synth/sgmii.xdc $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/mig/par/mig.xdc ] ]" >> $dpr_syn_tcl;
-elif [[ $TARGET_DEV == "xilinx-vcu128-xcvu37p" ]]; then
-echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-constraints.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-pins.xdc  $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-mig-pins.xdc $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
+if [[ "$TARGET_SOC" == "xilinx-vcu118-xcvu9p" ]]; then
+    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$TARGET_SOC/$TARGET_SOC.xdc $1/constraints/$TARGET_SOC/$TARGET_SOC-eth-constraints.xdc $1/constraints/$TARGET_SOC/$TARGET_SOC-eth-pins.xdc $1/constraints/$TARGET_SOC/$TARGET_SOC-mig-pins.xdc $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/sgmii/synth/sgmii.xdc $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/mig/par/mig.xdc ] ]" >> $dpr_syn_tcl;
+elif [[ $TARGET_SOC == "xilinx-vcu128-xcvu37p" ]]; then
+echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$TARGET_SOC/$TARGET_SOC.xdc $1/constraints/$TARGET_SOC/$TARGET_SOC-eth-constraints.xdc $1/constraints/$TARGET_SOC/$TARGET_SOC-eth-pins.xdc  $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$TARGET_SOC/$TARGET_SOC-mig-pins.xdc $1/socs/$2/vivado/esp-$TARGET_SOC.gen/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
 else
-    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-constraints.xdc $1/constraints/$TARGET_DEV/$TARGET_DEV-eth-pins.xdc ]]" >> $dpr_syn_tcl;
+    echo "set_attribute impl top_dpr implXDC     [list [ list $1/socs/$2/vivado_dpr/pblocks.xdc $1/constraints/$TARGET_SOC/$TARGET_SOC.xdc $1/constraints/$TARGET_SOC/$TARGET_SOC-eth-constraints.xdc $1/constraints/$TARGET_SOC/$TARGET_SOC-eth-pins.xdc ]]" >> $dpr_syn_tcl;
 fi;
 
 if [[ "$4" == "IMPL_DPR" ]]; then

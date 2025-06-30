@@ -33,8 +33,7 @@ CFLAGS += -DLINUX
 CFLAGS += -I$(DRIVERS)/include -I$(DRIVERS)/../common/include -I../include -I$(DESIGN_PATH)/socgen/esp
 CFLAGS += -L$(BUILD_DRIVERS)/contig_alloc -L$(BUILD_DRIVERS)/test
 CFLAGS += -L$(BUILD_DRIVERS)/libesp -L$(BUILD_DRIVERS)/utils/linux -L$(BUILD_DRIVERS)/monitors
-CFLAGS += -L$(BUILD_DRIVERS)/libdpr
-LDFLAGS += -lm -lrt -lpthread -lesp -ltest -lcontig -lutils -lmonitors -ldpr
+LDFLAGS += -lm -lrt -lpthread -lesp -ltest -lcontig -lutils -lmonitors
 
 CC := $(CROSS_COMPILE)gcc
 LD := $(CROSS_COMPILE)$(LD)
@@ -46,7 +45,6 @@ $(BUILD_PATH)/%.o: %.c $(HEADERS)
 	CROSS_COMPILE=$(CROSS_COMPILE) DRIVERS=$(DRIVERS) $(MAKE) -C $(BUILD_DRIVERS)/contig_alloc/ libcontig.a
 	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/test $(MAKE) -C $(DRIVERS)/test
 	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/libesp $(MAKE) -C $(DRIVERS)/libesp
-	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/libdpr $(MAKE) -C $(DRIVERS)/libdpr
 	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/monitors DESIGN_PATH=$(DESIGN_PATH) MODE=LINUX \
 				  $(MAKE) -B -C $(DRIVERS)/../common/monitors
 	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/utils/linux $(MAKE) -C $(DRIVERS)/utils
@@ -57,7 +55,6 @@ $(BUILD_PATH)/%.exe: %.c $(OBJS) $(HEADERS)
 	CROSS_COMPILE=$(CROSS_COMPILE) DRIVERS=$(DRIVERS) $(MAKE) -C $(BUILD_DRIVERS)/contig_alloc/ libcontig.a
 	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/test $(MAKE) -C $(DRIVERS)/test
 	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/libesp $(MAKE) -C $(DRIVERS)/libesp
-	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/libdpr $(MAKE) -C $(DRIVERS)/libdpr
 	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/monitors DESIGN_PATH=$(DESIGN_PATH) MODE=LINUX \
 				  $(MAKE) -B -C $(DRIVERS)/../common/monitors
 	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/utils/linux $(MAKE) -C $(DRIVERS)/utils
