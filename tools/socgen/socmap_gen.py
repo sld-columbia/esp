@@ -58,6 +58,9 @@ NTILE_MAX = 256
 NACC_MAX = NAPBS - NCPU_MAX - NMEM_MAX - NTILE_MAX - 8
 #NACC_MAX = NAPBS - 2 * NCPU_MAX - NMEM_MAX - NTILE_MAX - 8 # PRC
 
+# Number of tunable frequencies
+NFREQS = 7
+
 # Default device mapping
 RST_ADDR = dict()
 RST_ADDR["leon3"] = 0x0
@@ -2341,6 +2344,9 @@ def print_soc_defines(fp, esp_config, soc):
     else:
         fp.write("#define YX_WIDTH 4\n\n")
 
+    if soc.prc.get() == 1:
+        fp.write("#define SOC_DFX_EN 1")
+
     fp.write("#endif /* __SOC_DEFS_H__ */\n")
 
 
@@ -3702,6 +3708,74 @@ def print_verilog_constants(fp, soc, esp_config):
         fp.write("`define MAX_Y 16\n")
         fp.write("`define MAX_X 16\n")
 
+
+def create_profile(fp, esp_config, soc):
+
+    # construct path to reports directory
+    report_dir = "../../vivado" # TODO vary based on technology
+    report_dir += "/Reports/dfs_viability"
+    # report_dir += "/Reports/dfs_latency"
+    # report_dir += "/Reports/dfs_power"
+
+    fp.write("#include \"scheduler_utils.h\"\n\n")
+
+    # read previous device tree
+    fp.write("// Profiles\n")
+    fp.write("acc_profile_t profiles[XXX] = {\n")
+    files = [f for f in os.listdir(report_dir) if
+                os.path.isfile(os.path.join(report_dir, f))
+                and f.rfind(".") == -1]
+    rem = len(files)
+    for fpath in files:
+        fp.write("    {\n")
+
+        # check that partial bitstream exists or in current configuration
+        acc_exists = False
+
+        # check if partial bitstream exists (previous run)
+        if os.path.isfile("../../partial_bitstreams/" + fpath + ".bin"):
+            print("Accelerator " + fpath + " exists from eligible bitstream")
+            acc_exists = True
+
+        # check if in current configuration (current run)
+        idx = fpath.rfind("_")
+        if idx != -1:
+            acc_name = fpath[0:idx]
+            acc_tile_id = int(fpath[idx+1:])
+
+            acc_y = acc_tile_id // soc.noc.cols
+            acc_x = acc_tile_id % soc.noc.cols
+            print("Tile ID is " + str(acc_tile_id) + " => x = " + str(acc_x) + ", y = " + str(acc_y))
+            acc_tile = soc.noc.topology[acc_y][acc_x]
+            if acc_tile.ip_type.get().lower() == acc_name:
+                print("Accelerator " + fpath + " exists in current config")
+                acc_exists = True
+
+        # delete file because no longer in configuration
+        if not acc_exists:
+            print("Removing " + fpath)
+            os.remove(os.path.join(report_dir, fpath))
+            continue
+
+        # paste contents into new DTS
+        with open(os.path.join(report_dir, fpath), "r") as acc_fp:
+            line_idx = 0
+            for line in acc_fp:
+                fp.write(line)
+
+                line_idx += 1
+                if line_idx >= NFREQS:
+                    break
+                fp.write(", ")
+
+        fp.write("    }")
+        remaining -= 1
+        if remaining == 0:
+            fp.write("\n")
+            break
+        else:
+            fp.write(",\n")
+    fp.write("};\n")
 
 def create_socmap(esp_config, soc):
 
