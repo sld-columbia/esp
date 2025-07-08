@@ -98,16 +98,12 @@ solution library add {[Block] leakyrelu_com.v1}
 
 solution design set $ACCELERATOR -top
 
-go analyze
-go compile
 go libraries
-go assembly
-go architect
 
-ignore_memory_precedences -from *write_mem* -to *read_mem*
-ignore_memory_precedences -from *write_mem* -to *write_mem*
+directive set /leakyrelu_sysc_catapult/LeakyreluConfig -MAP_TO_MODULE {[Block] leakyrelu_cfg.v1}
+directive set /leakyrelu_sysc_catapult/LeakyreluEngine -MAP_TO_MODULE {[Block] leakyrelu_com.v1}
+directive set /leakyrelu_sysc_catapult/LeakyreluController -MAP_TO_MODULE {[Block] leakyrelu_ctrl.v1}
 
-go allocate
 go extract
 
 
