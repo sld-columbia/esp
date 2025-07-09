@@ -277,13 +277,16 @@ int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const ch
 unsigned ioread32(struct esp_device *dev, unsigned offset)
 {
     const long unsigned addr = dev->addr + offset;
+    printf("Reading from address %lx\n", addr);
     volatile unsigned *reg   = (unsigned *)addr;
+    printf("  => found %x\n", *reg);
     return *reg;
 }
 
 void iowrite32(struct esp_device *dev, unsigned offset, unsigned payload)
 {
     const long unsigned addr = dev->addr + offset;
+    printf("Writing %x to address %lx\n", payload, addr);
     volatile unsigned *reg   = (unsigned *)addr;
     *reg                     = payload;
 }

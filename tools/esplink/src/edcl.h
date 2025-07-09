@@ -67,6 +67,7 @@ void die(char *s);
 void connect_edcl(const char *server);
 void dump_memory(u32 address, u32 size, char *fname);
 void load_memory(char *fname);
+void load_memory_bin_limit(u32 base_addr, char *fname, u32 max_size);
 void load_memory_bin(u32 base_addr, char *fname);
 void dump_memory_bin(u32 address, u32 size, char *fname);
 void set_word(u32 addr, u32 data);

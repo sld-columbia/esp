@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
 
         case DO_LOAD_DRAM:
             if (infile == NULL) die("Invalid options for action --dram");
-            load_memory_bin(DRAM_BASE_ADDR, infile);
+            load_memory_bin_limit(DRAM_BASE_ADDR, infile, size);
             break;
 
     	  case DO_LOAD_PBS :

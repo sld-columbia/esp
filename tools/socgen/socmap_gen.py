@@ -3758,9 +3758,12 @@ def create_profile(fp, esp_config, soc):
             os.remove(os.path.join(report_dir, fpath))
             continue
 
+        fp.write("#define ACC_CFG_IDX_" + fpath.upper() + " " + str(n_acc_profiles) + "\n")
+
         n_acc_profiles += 1
 
     # preamble
+    fp.write("\n")
     fp.write("// Profiles\n")
     fp.write("#define NUM_ACC_PROFILES " + str(n_acc_profiles) + "\n")
     fp.write("static acc_profile_t profiles[NUM_ACC_PROFILES] = {\n")

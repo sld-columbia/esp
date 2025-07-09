@@ -1,10 +1,11 @@
 #include "prc_utils.h"
 #include "soc_defs.h"
-#include "soc_locs.h"
+//#include "soc_locs.h"
 #include <monitors.h>
 #include <pbs_map.h>
 #include <prc_aux.h>
 #include <esplink.h>
+#include <scheduler_utils.h>
 
 #ifdef __riscv
 #define APB_BASE_ADDR 0x60000000
@@ -30,7 +31,7 @@ static void get_io_tile_id(struct esp_device* io_tile)
 #endif
 }
 
-int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupler)
+/*int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupler)
 {
     unsigned i;
     unsigned tile_id = 0xFF;
@@ -49,13 +50,15 @@ int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupler)
 //#ifdef ACCS_PRESENT
 
     //Obtain tile id
+    USE_SOC_LOCS();
     for (i = 0; i < SOC_NACC; i++) {
         if(dev_start_addr == dev_addr_trunc) {
             tile_id = acc_locs[i].row * SOC_COLS + acc_locs[i].col;
             break;
         }
-         else
+        else {
             dev_start_addr += addr_incr;
+        }
     }
 
     if(tile_id == 0XFF) {
@@ -70,12 +73,13 @@ int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupler)
     printf("[PRC DRIVER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0llx \n", tile_id, (*decoupler).addr);
 #endif
     return 0;
-}
+}*/
 
 int decouple_acc(struct esp_device *dev, unsigned val)
 {
     // get address of router
-    get_decoupler_addr(dev, &esp_tile_decoupler);
+    esp_tile_decoupler.addr = get_router_addr(dev->addr);
+    //get_router_addr(dev, &esp_tile_decoupler);
 
     if (val == 0) {
         iowrite32(&esp_tile_decoupler, DECOUPLER_REG, 0);

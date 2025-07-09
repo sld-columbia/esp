@@ -645,7 +645,6 @@ bs_gen_script=$1/socs/$2/vivado_dpr/bs.tcl;
 
 function gen_bs_descriptor() {
 pbs_map=$1/socs/$2/socgen/esp/pbs_map.h;
-pbs_list=$1/socs/$2/socgen/esp/pbs_list.h;
 pbs_path=$1/socs/$2/partial_bitstreams;
 
     for((i=0; i<$num_acc_tiles; i++)) do
@@ -656,23 +655,6 @@ pbs_path=$1/socs/$2/partial_bitstreams;
 num_pbs=$(cd $1/socs/$2/partial_bitstreams && (ls | wc -l));
 pbs_addr=0;
 array=$(ls -ls $1/socs/$2/partial_bitstreams)
-
-    echo "" > $pbs_list;
-    echo "#ifndef __PBS_LIST_H__" >> $pbs_list;
-    echo "#define __PBS_LIST_H__" >> $pbs_list;
-    echo "" >> $pbs_list;
-
-    echo "#define NUM_PBS $num_pbs" >> $pbs_list;
-    echo "" >> $pbs_list;
-
-    i=0;
-    for FILE in $pbs_path/*; do
-        pbs_name=$(basename $FILE | awk -F'[.]' '{print toupper($1)}');
-        echo "#define PBS_IDX_${pbs_name} ${i}" >> $pbs_list;
-        ((i++))
-    done
-    echo "" >> $pbs_list;
-    echo "#endif // __PBS_LIST_H__" >> $pbs_list;
 
     echo "" > $pbs_map;
     echo "#define NUM_PBS $num_pbs" >> $pbs_map;

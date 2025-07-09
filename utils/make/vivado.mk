@@ -367,24 +367,24 @@ vivado-syn: vivado-setup
 		$(RM) static_config.tcl; \
 		echo "set part $(DEVICE) " >> static_config.tcl; \
 		echo "set board $(BOARD) " >> static_config.tcl; \
-		echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
+		echo "add_files $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
 		if [ "$(BOARD)" = xilinx-vc707-xc7vx485t ]; then \
-			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_v7/prc_ctrlr_v7.xci" >> static_config.tcl; \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_v7/prc_ctrlr_v7.xci" >> static_config.tcl; \
 		else \
-			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_us/prc_ctrlr_us.xci" >> static_config.tcl; \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_us/prc_ctrlr_us.xci" >> static_config.tcl; \
 		fi;\
 		if [ "$(BOARD)" = xilinx-vcu128-xcvu37p ]; then \
-			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig_clamshell/mig_clamshell.xci" >> static_config.tcl; \
-			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii_vcu128/sgmii_vcu128.xci" >> static_config.tcl; \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado/$(DESIGN).srcs/sources_1/ip/mig_clamshell/mig_clamshell.xci" >> static_config.tcl; \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii_vcu128/sgmii_vcu128.xci" >> static_config.tcl; \
 		else \
-			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig/mig.xci" >> static_config.tcl; \
-			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii/sgmii.xci" >> static_config.tcl; \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado/$(DESIGN).srcs/sources_1/ip/mig/mig.xci" >> static_config.tcl; \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii/sgmii.xci" >> static_config.tcl; \
 		fi; \
 		echo "if { [ file exists $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-debug.xdc ] } {" >> static_config.tcl; \
 		echo "  read_xdc $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-debug.xdc" >> static_config.tcl; \
 		echo "}" >> static_config.tcl; \
 		echo "link_design -top $(TOP) -part $(DEVICE)" >> static_config.tcl; \
-		echo "write_checkpoint -force $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp" >> static_config.tcl; \
+		echo "write_checkpoint -force $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp" >> static_config.tcl; \
 		echo "close_project" >> static_config.tcl; \
 		echo "exit" >> static_config.tcl; \
 		echo $(SPACES)"DPR: Assembling sgmii and mig into static part"; \
@@ -402,7 +402,7 @@ vivado-syn: vivado-setup
 		mkdir -p vivado_dpr/Synth/Static; \
 		mkdir -p vivado_dpr/Sources/xdc; \
 		cp ./socgen/esp/.esp_config vivado_dpr/; \
-		cp $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
+		cp $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
 		echo $(SPACES)"DPR : launching setup script for Vivado DPR flow";  \
 		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD_DIR) $(DEVICE) DPR $(PROCESS_DPR_ARG);	 \
 		cd vivado_dpr; \
@@ -524,8 +524,8 @@ vivado-prog-fpga: vivado/program.tcl
 		bit=$(DESIGN).runs/impl_1/$(TOP).bit; \
 	else \
 		echo $(SPACES)"DPR: copying partial bitstream";\
-		mkdir -p $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1; \
-		cp $(ESP_ROOT)/socs/$(BOARD)/vivado_dpr/Bitstreams/acc_bs.bit $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
+		mkdir -p $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado/$(DESIGN).runs/impl_1; \
+		cp $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado_dpr/Bitstreams/acc_bs.bit $(ESP_ROOT)/socs/$(BOARD_DIR)/vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
 		bit=$(DESIGN).runs/impl_1/top.bit; \
 	fi;\
 	if test -r $$bit; then \

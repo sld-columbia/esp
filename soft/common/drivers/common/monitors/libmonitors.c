@@ -266,6 +266,54 @@ uint64_t sub_monitor_vals64(uint64_t val_start, uint64_t val_end)
         return (0xFFFFFFFFFFFFFFFFll - val_start + val_end);
 }
 
+// Get base address of router
+unsigned int get_router_addr(unsigned int dev_addr) {
+    return 0;
+}
+/*unsigned int get_router_addr(unsigned int dev_addr)
+{
+#include "soc_locs.h"
+
+    unsigned int i = 0;
+    unsigned int tile_id = 0xFF;
+    unsigned int dev_addr_trunc;
+    unsigned int dev_start_addr = 0x10000;
+
+    const unsigned int addr_incr = 0x100;
+    const unsigned int monitor_base = 0x90180;
+
+    dev_addr_trunc = (dev_addr << 12) >> 12;
+
+#ifdef SCHEDULER_VERBOSE
+    printf("[SCHEDULER]: device address -- 0x%0x, truncated addr -- 0x%0x \n", dev_addr, dev_addr_trunc);
+#endif
+
+    //Obtain tile id
+    //USE_SOC_LOCS();
+    #ifdef ACCS_PRESENT
+    for (i = 0; i < SOC_NACC; i++) {
+        if(dev_start_addr == dev_addr_trunc) {
+            tile_id = acc_locs[i].row * SOC_COLS + acc_locs[i].col;
+            break;
+        }
+         else
+            dev_start_addr += addr_incr;
+    }
+    #endif
+
+    if(tile_id == 0XFF) {
+        printf("[SCHEDULER]: Error: cannot find tile id\n");
+        return 0;
+    }
+
+    // compute apb address for tile decoupler
+    dev_addr = MONITOR_BASE_ADDR + (monitor_base + tile_id * 0x200);
+#ifdef SCHEDULER_VERBOSE
+    printf("[SCHEDULER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0x \n", tile_id, dev_addr);
+#endif
+    return dev_addr;
+}*/
+
 esp_monitor_vals_t esp_monitor_diff(esp_monitor_vals_t vals_start, esp_monitor_vals_t vals_end)
 {
 #include "soc_locs.h"

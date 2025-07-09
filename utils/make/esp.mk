@@ -33,6 +33,7 @@ esp-defconfig: $(ESP_DEFCONFIG) $(ESP_CFG_BUILD)
 $(ESP_CFG_BUILD)/socmap.vhd: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grlib_config.vhd top.vhd Makefile
 	$(QUIET_DIFF)echo "checking .esp_config..."
 	@cd $(ESP_CFG_BUILD); \
+	mkdpr -p partial_dts; \
 	/usr/bin/diff .esp_config $(ESP_DEFCONFIG) -q > /dev/null; \
 	if test $$? = "0"; then \
 		echo $(SPACES)"INFO Using default configuration file for ESP"; \
@@ -63,6 +64,7 @@ esplink: $(ESP_CFG_BUILD)/esplink.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
 esplink-fpga-proxy: $(ESP_CFG_BUILD)/esplink.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
 	$(QUIET_CC) \
 	cd $(ESP_CFG_BUILD); \
+	mkdpr -p partial_dts; \
 	gcc -O3 -Wall -Werror -fmax-errors=5 \
 		-DESPLINK_IP=\"$(FPGA_PROXY_IP)\" -DPORT=$(FPGA_PROXY_PORT) \
 		-I$(ESP_ROOT)/tools/esplink/src/ -I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \

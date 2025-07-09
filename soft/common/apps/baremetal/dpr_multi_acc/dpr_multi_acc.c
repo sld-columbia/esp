@@ -9,11 +9,9 @@
 #include <monitors.h>
 
 // DPR includes
-#define DO_DPR
-#ifdef DO_DPR
-    #include "pbs_list.h"
+#ifdef SOC_DFX_EN
     #include "prc_utils.h"
-#endif // DO_DPR
+#endif // SOC_DFX_EN
 
 #include "scheduler_utils.h"
 #include "esp_acc_profiles.h"
@@ -26,14 +24,8 @@
 #define NUM_ACC_INVOC_ITER 1
 #define RUN_LOOP
 
-//#undef PBS_IDX_FFT_STRATUS_2
-//#undef PBS_IDX_MAC_SYSC_CATAPULT_2
-#ifndef DO_DPR
-    #define PBS_IDX_MAC_SYSC_CATAPULT_2 0
-#endif // DO_DPR
-
-#define CURRENT_DEV SLD_MAC
-#define CURRENT_DEV_NAME DEV_NAME_MAC
+#define CURRENT_DEV SLD_FFT
+#define CURRENT_DEV_NAME DEV_NAME_FFT
 
 /* Scheduling */
 #define NUM_SERVERS 1
@@ -89,8 +81,9 @@ server_runtime_t servers[NUM_SERVERS];
 //        - dev->addr; // relative to device for call to iowrite32
 //}
 
+static struct esp_device esp_tile_dfs_controller;
 // Encode new DCO configuration value
-int encode_dco_ctrl(int freq_sel, int div_sel, int fc_sel, int cc_sel, int clk_sel, int en) {
+/*int encode_dco_ctrl(int freq_sel, int div_sel, int fc_sel, int cc_sel, int clk_sel, int en) {
     return ((      en & 0b000001) <<  0) |
            (( clk_sel & 0b000001) <<  1) |
            ((  cc_sel & 0b111111) <<  2) |
@@ -102,20 +95,13 @@ int encode_dco_ctrl(int freq_sel, int div_sel, int fc_sel, int cc_sel, int clk_s
 // Configure new frequency
 static struct esp_device esp_tile_dfs_controller;
 void write_and_read_div_sel(struct esp_device *dev, int tile_id, int div_sel, int en) {
-    //printf("Writing DCO for tile %d\n", tile_id);
-    //tile_id = get_dco_reg_addr(dev, tile_id);
-
-    // compute apb address for tile decoupler
-
-    //esp_tile_dfs_controller.addr = APB_BASE_ADDR + (monitor_base + tile_id * 0x200);
-
     printf("Writing to offset at %d\n", esp_tile_dfs_controller.addr);
     iowrite32(&esp_tile_dfs_controller, 0b1001100, encode_dco_ctrl(0, div_sel, 0, 0, 0, en));
 
     printf("Done writing register with div_sel = %d, en = %d, now reading\n", div_sel, en);
     tile_id = ioread32(&esp_tile_dfs_controller, 0b1001100);
     printf("Read register and got %d\n", tile_id);
-}
+}*/
 
 // initialize server state
 void init_server(unsigned server_idx, struct esp_device *dev, unsigned tile_id, unsigned div_sel_idx) {
@@ -141,7 +127,7 @@ void log_power(unsigned power_new, int event_id) {
 #define EVENT_DPR_START 1
 #define EVENT_DFS_START 2
 #define EVENT_WRK_START 3
-#ifndef DO_DPR
+#ifndef SOC_DFX_EN
 unsigned int dpr_wait_cycles_start = 0, dpr_wait_cycles_new, dpr_wait_cycles_diff;;
 #endif
 void spawn_hw_thread(struct esp_device *dev, int server_idx, int pbs_id, int new_div_sel_idx) {
@@ -151,7 +137,7 @@ void spawn_hw_thread(struct esp_device *dev, int server_idx, int pbs_id, int new
     log_power(profile->power[server->div_sel_idx], EVENT_DPR_START);
 
     // load PBs
-#ifdef DO_DPR
+#ifdef SOC_DFX_EN
     reconfigure_FPGA(dev, pbs_id);
 #else
     // wait for profiled reconfiguration time
@@ -165,7 +151,8 @@ void spawn_hw_thread(struct esp_device *dev, int server_idx, int pbs_id, int new
     log_power(profile->power[server->div_sel_idx], EVENT_DFS_START);
 
     // schedule new frequency based on budget
-    write_and_read_div_sel(server->dev_tile, server->tile_id, div_sel[new_div_sel_idx], 1);
+    write_div_sel(&esp_tile_dfs_controller, div_sel[new_div_sel_idx], 1);
+    //write_and_read_div_sel(server->dev_tile, server->tile_id, div_sel[new_div_sel_idx], 1);
     server->div_sel_idx = new_div_sel_idx;
 
     log_power(profile->power[server->div_sel_idx], EVENT_WRK_START);
@@ -230,22 +217,24 @@ int main(int argc, char * argv[])
     printf("  Probing... device\n");
     ndev = probe(&espdevs_tile_1, VENDOR_SLD, CURRENT_DEV, CURRENT_DEV_NAME);
     if (ndev == 0) {
-        printf("Reconfigurable tile not found, defaulting to tile @ 0x60010000\n");
+        printf("Reconfigurable tile not found\n");
         dev_tile_1->addr = 0x60010000;
+        return 0;
     }
     else {
         dev_tile_1 = &espdevs_tile_1[0];
     }
     init_server(0, dev_tile_1, 2, 3);
-    get_decoupler_addr(dev_tile_1, &esp_tile_dfs_controller);
+    //get_router_addr(dev_tile_1, &esp_tile_dfs_controller);
+    esp_tile_dfs_controller.addr = get_router_addr(dev_tile_1->addr);
 
-#ifdef DO_DPR
+#ifdef SOC_DFX_EN
     // test decoupling
     decouple_acc(dev_tile_1, 1);
     decouple_acc(dev_tile_1, 0);
-#endif // DO_DPR
+#endif // SOC_DFX_EN
 
-#ifdef PBS_IDX_MAC_SYSC_CATAPULT_2
+#ifdef ACC_CFG_IDX_MAC_SYSC_CATAPULT_2
     //reconfigure the accelerator tile :- load the mac accelerator
     printf("   **** Loading MAC accelerator onto FPGA ****\n");
 
@@ -255,7 +244,7 @@ int main(int argc, char * argv[])
         dev_tile_1 = &espdevs_tile_1[n];
         printf("**************** %s.%d ****************\n", dev_tile_1->name, n);
 
-        if (!profiles[PBS_IDX_MAC_SYSC_CATAPULT_2].op[k].viable) {
+        if (!profiles[ACC_CFG_IDX_MAC_SYSC_CATAPULT_2].op[k].viable) {
             printf("%s not viable at frequency index %0d.\n", dev_tile_1->name, k);
             continue;
         }
@@ -263,7 +252,7 @@ int main(int argc, char * argv[])
             printf("%s is viable at frequency index %0d.\n", dev_tile_1->name, k);
         }
 
-        spawn_hw_thread(dev_tile_1, 0, PBS_IDX_MAC_SYSC_CATAPULT_2, k);
+        spawn_hw_thread(dev_tile_1, 0, ACC_CFG_IDX_MAC_SYSC_CATAPULT_2, k);
 
         // Check DMA capabilities
         if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) == 0) {
@@ -353,16 +342,16 @@ int main(int argc, char * argv[])
     }
 #else
 
-    printf("PBS_IDX_MAC_SYSC_CATAPULT_2 not defined\n");
+    printf("ACC_CFG_IDX_MAC_SYSC_CATAPULT_2 not defined\n");
 
-#endif // PBS_IDX_MAC_SYSC_CATAPULT_2
+#endif // ACC_CFG_IDX_MAC_SYSC_CATAPULT_2
 
-#ifdef PBS_IDX_FFT_STRATUS_2
+#ifdef ACC_CFG_IDX_FFT_STRATUS_2
     // reconfigure the accelerator tile :- load the FFT accelerator
     printf("   **** Loading FFT accelerator onto FPGA ****\n");
 
-#ifdef DO_DPR
-    reconfigure_FPGA(dev_tile_1, PBS_IDX_FFT_STRATUS_2);
+#ifdef SOC_DFX_EN
+    reconfigure_FPGA(dev_tile_1, ACC_CFG_IDX_FFT_STRATUS_2);
 #endif
 
 	// Probing
@@ -470,9 +459,9 @@ int main(int argc, char * argv[])
 
 #else
 
-    printf("PBS_IDX_FFT_STRATUS_2 not defined\n");
+    printf("ACC_CFG_IDX_FFT_STRATUS_2 not defined\n");
 
-#endif // PBS_IDX_FFT_STRATUS_2
+#endif // ACC_CFG_IDX_FFT_STRATUS_2
 
 #ifdef RUN_LOOP
 }

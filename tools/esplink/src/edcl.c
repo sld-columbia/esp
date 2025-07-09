@@ -343,6 +343,11 @@ void dump_memory(u32 address, u32 size, char *fname)
 
 void load_memory_bin(u32 base_addr, char *fname)
 {
+    load_memory_bin_limit(base_addr, fname, 0);
+}
+
+void load_memory_bin_limit(u32 base_addr, char *fname, u32 max_size)
+{
     edcl_snd_t *snd = malloc(sizeof(edcl_snd_t));
     edcl_rcv_t *rcv = malloc(sizeof(edcl_rcv_t));
     FILE *fp        = fopen(fname, "rb");
@@ -356,7 +361,13 @@ void load_memory_bin(u32 base_addr, char *fname)
     fseek(fp, 0L, SEEK_END);
     sz = ftell(fp);
     rewind(fp);
-    rem = sz;
+    if (max_size != 0 && (u32)sz > max_size) {
+        rem = max_size;
+    }
+    else {
+        rem = sz;
+    }
+    printf("Loading %d bytes (out of %d)\n", (u32)rem, (u32)sz);
 
     // First packet
     snd->offset   = 0;
