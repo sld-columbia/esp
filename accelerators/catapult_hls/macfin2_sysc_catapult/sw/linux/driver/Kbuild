@@ -1,3 +1,0 @@
-EXTRA_CFLAGS += \
-             -I$(DRIVERS)/include -I$(DRIVERS)/../common/include -I$(DESIGN_PATH)/socgen/esp -I$(ACC_SW)/linux/include
-obj-m := macfin2_sysc_catapult.o
