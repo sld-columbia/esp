@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2024 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef __PVC_GEMM_PV_H__
@@ -8,9 +8,7 @@
 
 #include "double_matrix_t.h"
 
-void gemm_pv(
-  double_matrix_t *matrix_in1,
-  double_matrix_t *matrix_in2,
-  double_matrix_t **matrix_out);
+void gemm_pv(double_matrix_t *matrix_in1, double_matrix_t *matrix_in2,
+             double_matrix_t **matrix_out);
 
 #endif // __PVC_GEMM_PV_H__

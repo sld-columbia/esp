@@ -30,7 +30,7 @@
 // Custom sc_uint types
 
 #define DIVIDEND_WIDTH 13
-#define DIVISOR_WIDTH 7
+#define DIVISOR_WIDTH  7
 #define QUOTIENT_WIDTH 6
 
 typedef sc_uint<DIVIDEND_WIDTH> dividend_t;

@@ -19,7 +19,7 @@ void divider_hls::beh()
 
         wait();
         dividend_t n = dividend.read();
-        divisor_t d = divisor.read();
+        divisor_t d  = divisor.read();
         quotient_t q = n / d;
 
         // quotient_t q = 0;
@@ -27,7 +27,5 @@ void divider_hls::beh()
         //     q = n / d;
 
         quotient.write(q);
-
     }
-
 }

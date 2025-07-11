@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2011-2024 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
@@ -153,6 +153,16 @@ NPARAMS=0
 
 ### Configuration registers
 if [ $FLOW != "hls4ml" ]; then
+    if [ $FLOW == "catapult_hls" ]; then
+	read -p "  * Select PLM coding style (${bold}a${normal}c_shared, ${bold}s${normal}cratchpad) ${def}[a]${normal}: " PLM_CS_SELECT
+	PLM_CS_SELECT=${PLM_CS_SELECT:-a}
+	case $PLM_CS_SELECT in
+	    [Aa]* ) PLM_CS="ac_shared";;
+	    [Ss]* ) PLM_CS="scratchpad";;
+	    * ) PLM_CS="ac_shared";;
+	esac
+    fi
+
     echo "  * Enter accelerator registers"
     read -p "    - register $NPARAMS name ${def}[size]${normal}: " param
     param=${param:-"size"}
@@ -305,6 +315,12 @@ ACC_DIR=$ESP_ROOT/accelerators/$FLOW_DIR/$LOWERFULL
 
 TEMPLATES_DIR=$ESP_ROOT/tools/accgen/templates/$FLOW
 
+
+if [ $FLOW == "catapult_hls" ]; then
+    TEMPLATES_DIR=$ESP_ROOT/tools/accgen/templates/$FLOW/$PLM_CS
+fi
+
+# echo $TEMPLATES_DIR
 mkdir -p $ACC_DIR/hw
 
 if [ "$FLOW" == "stratus_hls" ]; then
@@ -353,15 +369,15 @@ for d in $dirs; do
     fi
     
     if [[ "$FLOW" == "rtl" && "$d" != "hls" ]]; then
-	sed -i "s/<accelerator_name>/$LOWER/g" */*
-	sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" */*
-	sed -i "s/<acc_full_name>/$LOWERFULL/g" */*
-	sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" */*
+	sed -i "s/accelerator_name/$LOWER/g" */*
+	sed -i "s/ACCELERATOR_NAME/$UPPER/g" */*
+	sed -i "s/cc_full_name/$LOWERFULL/g" */*
+	sed -i "s/ACC_FULL_NAME/$UPPERFULL/g" */*
     elif [ "$FLOW" != "rtl" ]; then
-	find . -type f -exec sed -i "s/<accelerator_name>/$LOWER/g" {} +
-	find . -type f -exec sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" {} +
-	find . -type f -exec sed -i "s/<acc_full_name>/$LOWERFULL/g" {} +
-	find . -type f -exec sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" {} +
+	find . -type f -exec sed -i "s/accelerator_name/$LOWER/g" {} +
+	find . -type f -exec sed -i "s/ACCELERATOR_NAME/$UPPER/g" {} +
+	find . -type f -exec sed -i "s/acc_full_name/$LOWERFULL/g" {} +
+	find . -type f -exec sed -i "s/ACC_FULL_NAME/$UPPERFULL/g" {} +
     fi
 
 
@@ -527,14 +543,14 @@ if [ "$FLOW" == "catapult_hls" ]; then
     sed -i "s/\/\* <<--mem-footprint-->> \*\//${memory_footprint}/g" ${LOWER}_specs.hpp
 
 
-    for d in ${dma_width[@]}; do
-	p=$(( (d+data_width-1)/data_width ))
-	dbpw=$(( (data_width+d-1)/d ))
-	dwpb=$(( d/data_width ))
-	sed -i "s/\/\* <<--dbpw${d}-->> \*\//${dbpw}/g" ${LOWER}_specs.hpp
-	sed -i "s/\/\* <<--dwpb${d}-->> \*\//${dwpb}/g " ${LOWER}_specs.hpp
-	sed -i "s/\/\* <<--inwp${d}-->> \*\//${p}/g" ${LOWER}_specs.hpp
-    done
+    # for d in ${dma_width[@]}; do
+    # 	p=$(( (d+data_width-1)/data_width ))
+    # 	dbpw=$(( (data_width+d-1)/d ))
+    # 	dwpb=$(( d/data_width ))
+    # 	sed -i "s/\/\* <<--dbpw${d}-->> \*\//${dbpw}/g" ${LOWER}_specs.hpp
+    # 	sed -i "s/\/\* <<--dwpb${d}-->> \*\//${dwpb}/g " ${LOWER}_specs.hpp
+    # 	sed -i "s/\/\* <<--inwp${d}-->> \*\//${p}/g" ${LOWER}_specs.hpp
+    # done
 
 fi
 
@@ -731,10 +747,10 @@ for d in $dirs; do
 	rename acc_full $LOWERFULL *
     fi
 
-    sed -i "s/<accelerator_name>/$LOWER/g" *
-    sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
-    sed -i "s/<acc_full_name>/$LOWERFULL/g" *
-    sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" *
+    sed -i "s/accelerator_name/$LOWER/g" *
+    sed -i "s/ACCELERATOR_NAME/$UPPER/g" *
+    sed -i "s/acc_full_name/$LOWERFULL/g" *
+    sed -i "s/ACC_FULL_NAME/$UPPERFULL/g" *
 done
 
 ## Linux driver include file
@@ -759,7 +775,7 @@ for key in ${!values[@]}; do
 	sed -i "/\/\* <<--regs-->> \*\//a #define ${register_name} 0x${reg_offset_hex}" ${f}
     done
     sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}iowrite32be(a->${key}, esp->iomem + ${register_name});" linux/driver/${LOWERFULL}.c
-    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}${indent}iowrite32(dev, ${register_name}, ${key});" baremetal/${LOWER}.c
+    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}${indent}${indent}iowrite32(dev, ${register_name}, ${key});" baremetal/${LOWER}.c
     user_reg_offset=$((user_reg_offset + 4))
 done
 

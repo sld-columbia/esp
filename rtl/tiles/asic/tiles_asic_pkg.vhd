@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2024 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -21,8 +21,6 @@ package tiles_asic_pkg is
   component asic_tile_cpu is
     generic (
       SIMULATION   : boolean;
-      HAS_SYNC     : integer range 0 to 1 := 1;
-      ROUTER_PORTS : ports_vec;
       this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_ulogic;
@@ -92,8 +90,6 @@ package tiles_asic_pkg is
       this_irq_type     : integer;
       this_has_l2       : integer range 0 to 1;
       this_has_token_pm : integer range 0 to 1;
-      HAS_SYNC : integer range 0 to 1 := 1;
-      ROUTER_PORTS      : ports_vec;
       this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_ulogic;
@@ -158,8 +154,6 @@ package tiles_asic_pkg is
   component asic_tile_mem is
     generic (
       SIMULATION   : boolean := false;
-      ROUTER_PORTS : ports_vec;
-      HAS_SYNC     : integer range 0 to 1 := 1;
       this_has_dco : integer range 0 to 2 := 0);
     port (
       rst                : in    std_ulogic;
@@ -233,8 +227,6 @@ package tiles_asic_pkg is
   component asic_tile_io is
     generic (
       SIMULATION   : boolean;
-      HAS_SYNC     : integer range 0 to 1 := 1;
-      ROUTER_PORTS : ports_vec;
       this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_ulogic;
@@ -331,8 +323,6 @@ package tiles_asic_pkg is
   component asic_tile_empty is
     generic (
       SIMULATION   : boolean; 
-      HAS_SYNC     : integer range 0 to 1 := 1;
-      ROUTER_PORTS : ports_vec;
       this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_logic;
@@ -397,8 +387,6 @@ package tiles_asic_pkg is
   component asic_tile_slm is
     generic (
       SIMULATION   : boolean := false;
-      HAS_SYNC     : integer range 0 to 1 := 1;
-      ROUTER_PORTS : ports_vec;
       this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_ulogic;
@@ -464,9 +452,7 @@ package tiles_asic_pkg is
   component asic_tile_slm_ddr is
     generic (
       SIMULATION   : boolean := false;
-      ROUTER_PORTS : ports_vec;
-      this_has_dco : integer range 0 to 2;
-      HAS_SYNC     : integer range 0 to 1 := 1);
+      this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_ulogic;
       raw_rstn           : in  std_ulogic;

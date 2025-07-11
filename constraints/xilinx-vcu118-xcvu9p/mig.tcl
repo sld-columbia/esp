@@ -1,9 +1,9 @@
-# Copyright (c) 2011-2024 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 create_ip -name ddr4 -vendor xilinx.com -library ip -version 2.2 -module_name mig
 
 set_property -dict [list \
-			CONFIG.C0_CLOCK_BOARD_INTERFACE {default_250mhz_clk1} \
+			CONFIG.C0_CLOCK_BOARD_INTERFACE {Custom} \
 			CONFIG.C0.DDR4_TimePeriod {1600} \
 			CONFIG.C0.DDR4_InputClockPeriod {4000} \
 			CONFIG.C0.DDR4_CLKOUT0_DIVIDE {8} \

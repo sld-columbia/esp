@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2024 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -24,7 +24,7 @@ genus:
 
 genus/incdir.tcl: genus $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 	$(QUIET_MAKE) \
-	echo "set log_syn(hdl_search_path) \"$(INCDIR) $(BSG_INCDIR)\"" > $@
+	echo "set DES(hdl_search_path) \"$(INCDIR) $(BSG_INCDIR)\"" > $@
 
 genus/srcs.tcl: genus $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 	$(QUIET_MAKE) $(RM) $@

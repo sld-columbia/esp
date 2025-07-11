@@ -6,11 +6,15 @@ repository, including co-authors of portions of code from the first commit.
 ### Core Team Members
 
  - Luca P. Carloni (principal investigator)
+ - Elli Alvanaki
  - Maico Cassel dos Santos
  - Kuan-lin Chiu
  - Guy Eichler
+ - Kevin Lee
  - Biruk Seyoum
  - Gabriele Tombesi
+ - Pei-Huan Tsai
+ - Je Yang
  - Joseph Zuckerman (project lead)
 
 ### Former Team Members
@@ -39,6 +43,6 @@ contribution. Current affiliation may be different.
  - Erik Loscalzo (Columbia University)
  - Ajay Vanamali (Columbia University)
  - Manish Shankar (Columbia University)
-
+ - Marian Abuhazi (Columbia University)
 
 ### [Contacts](https://esp.cs.columbia.edu/contact/)

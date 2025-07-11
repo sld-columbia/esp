@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2024 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #ifndef INC_ESPACC_CONFIG_H
 #define INC_ESPACC_CONFIG_H
@@ -8,10 +8,10 @@
 // Data type
 
 #define IS_TYPE_FIXED_POINT 1
-#define FRAC_BITS /* <<--frac-bits-->> */
-#define IS_TYPE_UINT 0
-#define IS_TYPE_INT 0
-#define IS_TYPE_FLOAT 0
+#define FRAC_BITS           /* <<--frac-bits-->> */
+#define IS_TYPE_UINT        0
+#define IS_TYPE_INT         0
+#define IS_TYPE_FLOAT       0
 
 // In/out arrays
 

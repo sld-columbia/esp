@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 struct init_dev {
-	uint32_t addr;
-	uint32_t value;
+    uint32_t addr;
+    uint32_t value;
 };
 
 /*

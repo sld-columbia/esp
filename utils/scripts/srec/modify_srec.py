@@ -3,11 +3,13 @@ from pathlib import Path
 from math import ceil
 
 if len(sys.argv) < 4 or len(sys.argv) % 2 == 1:
-    print("usage: python3 modify_srec.py infile.srec data_file1 [data_file2] ... start_address1 [start_address2] ...")
+    print(
+        "usage: python3 modify_srec.py infile.srec data_file1 [data_file2] ... start_address1 [start_address2] ...")
     exit()
 
 srec_path = sys.argv[1]
 srec_file = open(srec_path, "a")
+
 
 def calc_checksum(count, address, data):
     total = 0
@@ -16,12 +18,13 @@ def calc_checksum(count, address, data):
         total += address & 0xFF
         address >>= 8
     for i in range(16):
-       total += int(data[i*2:i*2 + 2], 16)
+        total += int(data[i * 2:i * 2 + 2], 16)
     return total & 0xFF
 
+
 for k in range(int((len(sys.argv) - 2) / 2)):
-    data_path = sys.argv[k+2]
-    start_addr = int(sys.argv[2+int((len(sys.argv)-2) / 2) + k], 0)
+    data_path = sys.argv[k + 2]
+    start_addr = int(sys.argv[2 + int((len(sys.argv) - 2) / 2) + k], 0)
 
     if data_path[-3:] == "txt":
         data_file = open(data_path, "r")
@@ -59,7 +62,8 @@ for k in range(int((len(sys.argv) - 2) / 2)):
             if k >= len(data) / 4:
                 word = "0"
             else:
-                word = str(hex(int.from_bytes(data[k*4:k*4+4], byteorder='big', signed=False))[2:])
+                word = str(
+                    hex(int.from_bytes(data[k * 4:k * 4 + 4], byteorder='big', signed=False))[2:])
             string += word.zfill(8)
 
             if i == 3:

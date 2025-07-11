@@ -15,57 +15,56 @@ int cache_fill(int ways, int ncpu, int size)
 
     if (size == BYTE) {
 
-	psync(sync_cache_fill_bytes, pid, ncpu);
+        psync(sync_cache_fill_bytes, pid, ncpu);
 
-	no_of_ints = cache_size;
-	mem_ptr_char = (char *) cache_fill_matrix[pid];
+        no_of_ints   = cache_size;
+        mem_ptr_char = (char *)cache_fill_matrix[pid];
 
-	/* Fill the whole cache */
-	for (i = 0; i < no_of_ints * 2; i++)
-	    mem_ptr_char[i] = (char) ((pid + 10 + (unsigned int) &mem_ptr_char[i]) % 0x100);
+        /* Fill the whole cache */
+        for (i = 0; i < no_of_ints * 2; i++)
+            mem_ptr_char[i] = (char)((pid + 10 + (unsigned int)&mem_ptr_char[i]) % 0x100);
 
-	/* Read all values written */
-	for (i = 0; i < no_of_ints * 2; i++) {
-	    if (mem_ptr_char[i] !=  (char) ((pid + 10 + (unsigned int) &mem_ptr_char[i]) % 0x100)) {
-		report_fail(FAIL_FILL_B);
-	    }
-	}
+        /* Read all values written */
+        for (i = 0; i < no_of_ints * 2; i++) {
+            if (mem_ptr_char[i] != (char)((pid + 10 + (unsigned int)&mem_ptr_char[i]) % 0x100)) {
+                report_fail(FAIL_FILL_B);
+            }
+        }
+    }
+    else if (size == HALFWORD) {
 
-    } else if (size == HALFWORD) {
+        psync(sync_cache_fill_halfwords, pid, ncpu);
 
-	psync(sync_cache_fill_halfwords, pid, ncpu);
+        no_of_ints    = cache_size / sizeof(short);
+        mem_ptr_short = (short *)cache_fill_matrix[pid];
 
-	no_of_ints = cache_size / sizeof(short);
-	mem_ptr_short = (short *) cache_fill_matrix[pid];
+        /* Fill the whole cache */
+        for (i = 0; i < no_of_ints * 2; i++)
+            mem_ptr_short[i] = (short)((pid + 11 + (unsigned int)&mem_ptr_short[i]) % 0x10000);
 
-	/* Fill the whole cache */
-	for (i = 0; i < no_of_ints * 2; i++)
-	    mem_ptr_short[i] = (short) ((pid + 11 + (unsigned int) &mem_ptr_short[i]) % 0x10000);
+        /* Read all values written */
+        for (i = 0; i < no_of_ints * 2; i++) {
+            if (mem_ptr_short[i] !=
+                (short)((pid + 11 + (unsigned int)&mem_ptr_short[i]) % 0x10000)) {
+                report_fail(FAIL_FILL_HW);
+            }
+        }
+    }
+    else if (size == WORD) {
 
-	/* Read all values written */
-	for (i = 0; i < no_of_ints * 2; i++) {
-	    if (mem_ptr_short[i] !=  (short) ((pid + 11 + (unsigned int) &mem_ptr_short[i]) % 0x10000)) {
-		report_fail(FAIL_FILL_HW);
-	    }
-	}
+        psync(sync_cache_fill_words, pid, ncpu);
 
-    } else if (size == WORD) {
+        no_of_ints  = cache_size / sizeof(int);
+        mem_ptr_int = (int *)cache_fill_matrix[pid];
 
-	psync(sync_cache_fill_words, pid, ncpu);
+        /* Fill the whole cache */
+        for (i = 0; i < no_of_ints * 2; i++)
+            mem_ptr_int[i] = pid + 12 + (int)&mem_ptr_int[i];
 
-	no_of_ints = cache_size / sizeof(int);
-	mem_ptr_int = (int *) cache_fill_matrix[pid];
-
-	/* Fill the whole cache */
-	for (i = 0; i < no_of_ints * 2; i++)
-	    mem_ptr_int[i] = pid + 12 + (int) &mem_ptr_int[i];
-
-	/* Read all values written */
-	for (i = 0; i < no_of_ints * 2; i++) {
-	    if (mem_ptr_int[i] !=  pid + 12 + (int) &mem_ptr_int[i]) {
-		report_fail(FAIL_FILL_W);
-	    }
-	}
+        /* Read all values written */
+        for (i = 0; i < no_of_ints * 2; i++) {
+            if (mem_ptr_int[i] != pid + 12 + (int)&mem_ptr_int[i]) { report_fail(FAIL_FILL_W); }
+        }
     }
 
     return 0;

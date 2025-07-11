@@ -60,7 +60,6 @@ void system_t::sink()
     for (int i = 0; i < TEST_SAMPLES; i++)
         q[i] = n[i] / d[i];
 
-
     for (int i = 0; i < TEST_SAMPLES; i++) {
 
         // RTL latency
@@ -73,15 +72,12 @@ void system_t::sink()
 
         sc_uint<QUOTIENT_WIDTH> tmp = quotient_ch.read();
         std::cout << n[i] << " / " << d[i] << " = " << q[i] << " *** " << tmp << std::endl;
-        if (tmp != q[i]) {
-            err++;
-        }
+        if (tmp != q[i]) { err++; }
     }
 
     std::cout << "@ " << sc_time_stamp() << ": Simulation complete --- ";
     std::cout << err << " errors" << std::endl;
-    if (err)
-        std::cout << "TEST FAILED!" << std::endl;
+    if (err) std::cout << "TEST FAILED!" << std::endl;
 
     sc_stop();
 }

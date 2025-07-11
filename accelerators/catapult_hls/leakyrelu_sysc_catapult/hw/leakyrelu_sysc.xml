@@ -1,0 +1,10 @@
+<2?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="leakyrelu_sysc" desc="Modularized accelerator for laekyrelu" data_size="65" device_id="777" hls_tool="catapult_hls_sysc">
+    <param name="batch" desc="batch" />
+    <param name="row" desc="row" />
+    <param name="addrA" desc="addrA" />
+    <param name="addrB" desc="addrB" />
+    <param name="addrO" desc="addrO" />
+  </accelerator>
+</sld>

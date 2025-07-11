@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef __CONF_INFO_HPP__
@@ -16,7 +16,7 @@ struct conf_info_t {
     uint32 aes_iv_bytes;
     uint32 aes_in_bytes;
     uint32 aes_key_bytes;
-    //uint32 aes_encryption;
+    // uint32 aes_encryption;
     uint32 aes_oper_mode;
     // sha2
     uint32 sha2_out_bytes;

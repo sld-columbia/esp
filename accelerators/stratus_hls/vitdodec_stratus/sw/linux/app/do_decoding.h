@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2024 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #ifndef INCLUDED_VITERBI_GENERIC_H
 #define INCLUDED_VITERBI_GENERIC_H
@@ -20,15 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-#undef VERBOSE_OUTPUT 
+#undef VERBOSE_OUTPUT
 
 #ifdef VERBOSE_OUTPUT
- #define VERBOSE(_x_) _x_;
+    #define VERBOSE(_x_) _x_;
 #else
- #define VERBOSE(_x_) ;
+    #define VERBOSE(_x_) ;
 #endif
 
-extern void do_decoding(int in_n_data_bits, int in_cbps, int in_ntraceback, unsigned char *inMemory, unsigned char *l_decoded);
+extern void do_decoding(int in_n_data_bits, int in_cbps, int in_ntraceback, unsigned char *inMemory,
+                        unsigned char *l_decoded);
 
 #endif

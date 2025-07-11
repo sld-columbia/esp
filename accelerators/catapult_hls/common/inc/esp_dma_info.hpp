@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2024 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: MIT
 
 #ifndef __ESP_DMA_INFO_HPP__
@@ -27,7 +27,7 @@ struct dma_info_t {
     ac_int<3, false> size;
 
     // User
-    ac_int<5, false> user;
+    ac_int<6, false> user;
 };
 
 #endif // __ESP_DMA_INFO_HPP__

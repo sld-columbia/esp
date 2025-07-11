@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2024 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
@@ -38,8 +38,6 @@ use work.tiles_pkg.all;
 entity asic_tile_empty is
   generic (
     SIMULATION   : boolean              := false;
-    HAS_SYNC     : integer range 0 to 1 := 1;
-    ROUTER_PORTS : ports_vec            := "11111";
     this_has_dco : integer range 0 to 2 := 1);
   port (
     rst                : in  std_logic;

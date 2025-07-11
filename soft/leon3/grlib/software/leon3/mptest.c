@@ -1,8 +1,7 @@
 #include "testmod.h"
 #include "defines.h"
 
-asm(
-    "	.text\n"
+asm("	.text\n"
     "	.align 4\n"
     "	.global get_pid\n"
     "	.global get_sem\n"
@@ -15,10 +14,10 @@ asm(
     "	set  0, %o0\n"
     "	retl\n"
     "	ldstuba [%o1] 1, %o0 \n"
-/*"	swapa [%o1] 1, %o0 \n"*/
+    /*"	swapa [%o1] 1, %o0 \n"*/
 
     "ret_sem:\n"
-/*"	set 1, %o0 \n" */
+    /*"	set 1, %o0 \n" */
     "	set 0, %o0 \n"
     "	set mpsem, %o1\n"
     "	retl\n"
@@ -58,24 +57,21 @@ asm(
 
     "mpsem_casa:	.word 0\n"
     "	.text \n"
-    "	.align 4\n"
-    );
+    "	.align 4\n");
 
 #define MPLOOPS 10
 
 volatile int cnt = 0;
 
-volatile int pstart[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
-volatile int pdone[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
-volatile int pindex[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
-
+volatile int pstart[17] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+volatile int pdone[17]  = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+volatile int pindex[17] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
 
 static int absl(int a, int b)
 {
-    if (a > b)
-	return(a-b);
+    if (a > b) return (a - b);
     else
-	return(b-a);
+        return (b - a);
 }
 
 void psync(volatile int arr[], int n, int ncpu)
@@ -84,9 +80,9 @@ void psync(volatile int arr[], int n, int ncpu)
 
     arr[n] = 1;
     do {
-	go = 1;
-	for (i = 0; i < ncpu; i++)
-	    if (!arr[i]) go = 0;
+        go = 1;
+        for (i = 0; i < ncpu; i++)
+            if (!arr[i]) go = 0;
     } while (!go);
 }
 
@@ -95,37 +91,36 @@ int mptest(volatile int *irqmp_ptr)
     int id, i, sem, ncpu;
     unsigned int ccfg;
 
-    ncpu = (((*(irqmp_ptr + 0x10/4)) >> 28) & 0x0f) + 1;
-    if (ncpu == 1) return(-1);
+    ncpu = (((*(irqmp_ptr + 0x10 / 4)) >> 28) & 0x0f) + 1;
+    if (ncpu == 1) return (-1);
 
     id = get_pid();
     /* report_subtest(MP_TEST + (id <<4)); */
     ccfg = getccfg();
     if (!((ccfg >> 27) & 1)) fail(1);
 
-    *(irqmp_ptr + 0x10/4) = (1 << (id+1));
+    *(irqmp_ptr + 0x10 / 4) = (1 << (id + 1));
 
     psync(pstart, id, ncpu);
 
-    for (pindex[id] = 0; pindex[id] < MPLOOPS; pindex[id]++)
-    {
+    for (pindex[id] = 0; pindex[id] < MPLOOPS; pindex[id]++) {
         // do {sem = get_sem();} while (!sem);
-	do {sem = get_sem();} while (sem);
-	for (i = 0; i < ncpu; i++)
-	{
-	    if (absl(pindex[id], pindex[i]) > 1) fail(2);
-	}
-	cnt++;
-	ret_sem();
+        do {
+            sem = get_sem();
+        } while (sem);
+        for (i = 0; i < ncpu; i++) {
+            if (absl(pindex[id], pindex[i]) > 1) fail(2);
+        }
+        cnt++;
+        ret_sem();
     }
 
     psync(pdone, id, ncpu);
-    if (cnt != (MPLOOPS*ncpu)) fail(3);
-    if ((cnt <= 0) || (cnt > (MPLOOPS*ncpu))) fail(3);
+    if (cnt != (MPLOOPS * ncpu)) fail(3);
+    if ((cnt <= 0) || (cnt > (MPLOOPS * ncpu))) fail(3);
 
     if (id != 0) asm("ta 0");
-    return(0);
-
+    return (0);
 }
 
 int mptest_start(volatile int *irqmp_ptr)
@@ -133,14 +128,12 @@ int mptest_start(volatile int *irqmp_ptr)
     int id, i, sem, ncpu;
     unsigned int ccfg;
 
-    ncpu = (((*(irqmp_ptr + 0x10/4)) >> 28) & 0x0f) + 1;
-    if (ncpu == 1) return(-1);
+    ncpu = (((*(irqmp_ptr + 0x10 / 4)) >> 28) & 0x0f) + 1;
+    if (ncpu == 1) return (-1);
 
     id = get_pid();
 
-    if (id == 0) {
-	*(irqmp_ptr + 0x10/4) = 0x0ffff;
-    }
+    if (id == 0) { *(irqmp_ptr + 0x10 / 4) = 0x0ffff; }
 }
 
 int mptest_end(volatile int *irqmp_ptr)
@@ -148,8 +141,8 @@ int mptest_end(volatile int *irqmp_ptr)
     int id, i, sem, ncpu;
     unsigned int ccfg;
 
-    ncpu = (((*(irqmp_ptr + 0x10/4)) >> 28) & 0x0f) + 1;
-    if (ncpu == 1) return(-1);
+    ncpu = (((*(irqmp_ptr + 0x10 / 4)) >> 28) & 0x0f) + 1;
+    if (ncpu == 1) return (-1);
 
     id = get_pid();
     /* report_subtest(MP_TEST + (id << 4)); */
@@ -158,16 +151,17 @@ int mptest_end(volatile int *irqmp_ptr)
 
     psync(pstart, id, ncpu);
 
-    for (pindex[id] = 0; pindex[id] < MPLOOPS; pindex[id]++)
-    {
+    for (pindex[id] = 0; pindex[id] < MPLOOPS; pindex[id]++) {
         // do {sem = get_sem();} while (!sem);
-	do {sem = get_sem();} while (sem);
-	/* for (i = 0; i < ncpu; i++) */
-	/* { */
-	/*     if (absl(pindex[id], pindex[i]) > 1) report_fail(FAIL_MPTEST); */
-	/* } */
-	/* cnt++; */
-	ret_sem();
+        do {
+            sem = get_sem();
+        } while (sem);
+        /* for (i = 0; i < ncpu; i++) */
+        /* { */
+        /*     if (absl(pindex[id], pindex[i]) > 1) report_fail(FAIL_MPTEST); */
+        /* } */
+        /* cnt++; */
+        ret_sem();
     }
 
     psync(pdone, id, ncpu);
@@ -180,5 +174,5 @@ int mptest_end(volatile int *irqmp_ptr)
     /* Use this for FPGA prototyping */
     /* if (id != 0) while(1); */
 
-    return(0);
+    return (0);
 }

@@ -1,45 +1,42 @@
-// Copyright (c) 2011-2024 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef __SYSTEM_HPP__
 #define __SYSTEM_HPP__
 
-#include "<accelerator_name>_conf_info.hpp"
-#include "<accelerator_name>_debug_info.hpp"
-#include "<accelerator_name>.hpp"
-#include "<accelerator_name>_directives.hpp"
+#include "accelerator_name_conf_info.hpp"
+#include "accelerator_name_debug_info.hpp"
+#include "accelerator_name.hpp"
+#include "accelerator_name_directives.hpp"
 
 #include "esp_templates.hpp"
 
-const size_t MEM_SIZE = /* <<--mem-footprint-->> */ / (DMA_WIDTH/8);
+const size_t MEM_SIZE = /* <<--mem-footprint-->> */ / (DMA_WIDTH / 8);
 
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "<accelerator_name>_wrap.h"
+    #include "accelerator_name_wrap.h"
 #endif
 
-class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
-{
-public:
-
+class system_t : public esp_system<DMA_WIDTH, MEM_SIZE> {
+  public:
     // ACC instance
 #ifdef CADENCE
-    <accelerator_name>_wrapper *acc;
+    accelerator_name_wrapper *acc;
 #else
-    <accelerator_name> *acc;
+    accelerator_name *acc;
 #endif
 
     // Constructor
     SC_HAS_PROCESS(system_t);
-    system_t(sc_module_name name)
-        : esp_system<DMA_WIDTH, MEM_SIZE>(name)
+    system_t(sc_module_name name) : esp_system<DMA_WIDTH, MEM_SIZE>(name)
     {
         // ACC
 #ifdef CADENCE
-        acc = new <accelerator_name>_wrapper("<accelerator_name>_wrapper");
+        acc = new accelerator_name_wrapper("accelerator_name_wrapper");
 #else
-        acc = new <accelerator_name>("<accelerator_name>_wrapper");
+        acc = new accelerator_name("accelerator_name_wrapper");
 #endif
         // Binding ACC
         acc->clk(clk);
@@ -77,9 +74,9 @@ public:
     uint32_t out_words_adj;
     uint32_t in_size;
     uint32_t out_size;
-    int/* <<--data-width-->> */_t *in;
-    int/* <<--data-width-->> */_t *out;
-    int/* <<--data-width-->> */_t *gold;
+    int /* <<--data-width-->> */ _t *in;
+    int /* <<--data-width-->> */ _t *out;
+    int /* <<--data-width-->> */ _t *gold;
 
     // Other Functions
 };

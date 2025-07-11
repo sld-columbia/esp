@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2024 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -734,6 +734,7 @@ package tile is
       rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1);
       exp_registers      : integer range 0 to 1;
       scatter_gather     : integer range 0 to 1;
+      has_l2             : integer range 0 to 1;
       tlb_entries        : integer);
     port (
       rst                           : in  std_ulogic;
@@ -753,7 +754,7 @@ package tile is
       rd_index                      : in  std_logic_vector(31 downto 0);
       rd_length                     : in  std_logic_vector(31 downto 0);
       rd_size                       : in  std_logic_vector(2 downto 0);
-      rd_source                     : in  std_logic_vector(4 downto 0);
+      rd_source                     : in  std_logic_vector(5 downto 0);
       rd_grant                      : out std_ulogic;
       bufdin_ready                  : in  std_ulogic;
       bufdin_data                   : out std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -762,7 +763,7 @@ package tile is
       wr_index                      : in  std_logic_vector(31 downto 0);
       wr_length                     : in  std_logic_vector(31 downto 0);
       wr_size                       : in  std_logic_vector(2 downto 0);
-      wr_ndests                     : in  std_logic_vector(4 downto 0);
+      wr_ndests                     : in  std_logic_vector(5 downto 0);
       wr_grant                      : out std_ulogic;
       bufdout_ready                 : out std_ulogic;
       bufdout_data                  : in  std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -1039,7 +1040,8 @@ package tile is
       is_tile_io        : boolean              := false;
       SIMULATION        : boolean              := false;
       ROUTER_PORTS      : ports_vec            := "11111";
-      HAS_SYNC          : integer range 0 to 1 := 1);
+      HAS_SYNC          : integer range 0 to 1 := 1;
+      is_asic           : boolean              := false);
     port (
       rst                : in  std_ulogic;
       noc_clk_lock       : in  std_ulogic;

@@ -18,16 +18,17 @@
 
 /* Register fields */
 /* Control register */
-#define CTR_EN  (1 << 7)  /* Enable core */
-#define CTR_IEN (1 << 6)  /* Interrupt enable */
+#define CTR_EN  (1 << 7) /* Enable core */
+#define CTR_IEN (1 << 6) /* Interrupt enable */
 /* Command register */
-#define CR_STA (1 << 7)   /* Generate start condition */
-#define CR_STO (1 << 6)   /* Generate stop condition */
-#define CR_RD  (1 << 5)   /* Read from slave */
-#define CR_WR  (1 << 4)   /* Write to slave */
-#define CR_ACK (1 << 3)   /* ACK, when a receiver send ACK (ACK = 0) 
-			     or NACK (ACK = 1) */
-#define CR_IACK (1 << 0)  /* Interrupt acknowledge */
+#define CR_STA (1 << 7) /* Generate start condition */
+#define CR_STO (1 << 6) /* Generate stop condition */
+#define CR_RD  (1 << 5) /* Read from slave */
+#define CR_WR  (1 << 4) /* Write to slave */
+#define CR_ACK                                                      \
+    (1 << 3)             /* ACK, when a receiver send ACK (ACK = 0) \
+                or NACK (ACK = 1) */
+#define CR_IACK (1 << 0) /* Interrupt acknowledge */
 /* Status register */
 #define SR_RXACK (1 << 7) /* Receibed acknowledge from slave */
 #define SR_BUSY  (1 << 6) /* I2C bus busy */
@@ -41,16 +42,16 @@
 #define RXR_RESVAL  0
 #define SR_RESVAL   0
 
-#define PRESCALER   0x0003
+#define PRESCALER 0x0003
 
 #define I2CMEM_ADDR 0x50
 #define TEST_DATA   0x55
 
 struct i2cmstregs {
-  volatile unsigned int prer;
-  volatile unsigned int ctr;
-  volatile unsigned int xr;
-  volatile unsigned int csr;
+    volatile unsigned int prer;
+    volatile unsigned int ctr;
+    volatile unsigned int xr;
+    volatile unsigned int csr;
 };
 
 /*
@@ -62,95 +63,88 @@ struct i2cmstregs {
  */
 int i2cmst_test(int addr)
 {
-  int i;
+    int i;
 
-  struct i2cmstregs *regs;
+    struct i2cmstregs *regs;
 
-  regs = (struct i2cmstregs *) addr;
-  report_device(0x01028000);
-  report_subtest(1);
-  
-  /* Check register reset values */
-  if (regs->prer != PRER_RESVAL)
-    fail(0);
+    regs = (struct i2cmstregs *)addr;
+    report_device(0x01028000);
+    report_subtest(1);
 
-  if (regs->ctr != CTR_RESVAL)
-    fail(1);
+    /* Check register reset values */
+    if (regs->prer != PRER_RESVAL) fail(0);
 
-  if (regs->xr != RXR_RESVAL)
-    fail(2);
+    if (regs->ctr != CTR_RESVAL) fail(1);
 
-  if (regs->csr != SR_RESVAL)
-    fail(3);
-  
-  report_subtest(2);
+    if (regs->xr != RXR_RESVAL) fail(2);
 
-  regs->prer = PRESCALER;
+    if (regs->csr != SR_RESVAL) fail(3);
 
-  regs->ctr = CTR_EN;
+    report_subtest(2);
 
-  for (i = 0; i < 6; i++) {
-    switch(i) {
-    case 0:
-      /* Address memory */
-      regs->xr = I2CMEM_ADDR << 1;
-      regs->csr = CR_STA | CR_WR;
-      break;
-    case 1:
-      /* Select memory position 0 */
-      regs->xr = 0;
-      regs->csr = CR_WR;
-      break;
-    case 2:
-      /* Write data to position 0 */
-      regs->xr = TEST_DATA;
-      regs->csr = CR_WR | CR_STO;
-      break;
-    case 3:
-      /* Address memory */
-      regs->xr = I2CMEM_ADDR << 1;
-      regs->csr = CR_STA | CR_WR;
-      break;
-    case 4:
-      /* Select memory position 0 */
-      regs->xr = 0;
-      regs->csr = CR_WR;
-      break;
-    case 5:
-      /* Address memory for reading */
-      regs->xr = (I2CMEM_ADDR << 1) | 1;
-      regs->csr = CR_STA | CR_WR;
-      break;
-    default: 
-      break;
+    regs->prer = PRESCALER;
+
+    regs->ctr = CTR_EN;
+
+    for (i = 0; i < 6; i++) {
+        switch (i) {
+            case 0:
+                /* Address memory */
+                regs->xr  = I2CMEM_ADDR << 1;
+                regs->csr = CR_STA | CR_WR;
+                break;
+            case 1:
+                /* Select memory position 0 */
+                regs->xr  = 0;
+                regs->csr = CR_WR;
+                break;
+            case 2:
+                /* Write data to position 0 */
+                regs->xr  = TEST_DATA;
+                regs->csr = CR_WR | CR_STO;
+                break;
+            case 3:
+                /* Address memory */
+                regs->xr  = I2CMEM_ADDR << 1;
+                regs->csr = CR_STA | CR_WR;
+                break;
+            case 4:
+                /* Select memory position 0 */
+                regs->xr  = 0;
+                regs->csr = CR_WR;
+                break;
+            case 5:
+                /* Address memory for reading */
+                regs->xr  = (I2CMEM_ADDR << 1) | 1;
+                regs->csr = CR_STA | CR_WR;
+                break;
+            default: break;
+        }
+
+        while (regs->csr & SR_TIP)
+            ;
+
+        if (regs->csr & SR_RXACK) {
+            fail(4 + i);
+            goto i2cmstfail;
+        }
+        if (regs->csr & SR_AL) {
+            fail(9 + i);
+            goto i2cmstfail;
+        }
     }
+
+    /* Read from memory and NAK*/
+    regs->csr = CR_RD | CR_STO | CR_ACK;
 
     while (regs->csr & SR_TIP)
-      ;
+        ;
 
-    if (regs->csr & SR_RXACK) {
-      fail(4+i);
-      goto i2cmstfail;
-    }
-    if (regs->csr & SR_AL) {
-      fail(9+i);
-      goto i2cmstfail;
-    }
-  }
-  
-  /* Read from memory and NAK*/
-  regs->csr = CR_RD | CR_STO | CR_ACK;
+    if (regs->xr != TEST_DATA) fail(15);
 
-  while (regs->csr & SR_TIP)
-    ;
-  
-  if (regs->xr != TEST_DATA)
-    fail(15);
+i2cmstfail:
 
- i2cmstfail:
+    regs->ctr = 0;
 
-  regs->ctr = 0;
-
-  return 0;
-
+    return 0;
 }

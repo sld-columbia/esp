@@ -1,9 +1,12 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ifeq ("$(ESP_ROOT)","")
 $(error ESP_ROOT not set)
 endif
+
+TECH_DIR_PATH=$(realpath ../$DIRTECH_NAME)
+PROJ_DIR_PATH=$(realpath ../$PROJECT_NAME)
 
 ASIC_PADGEN = $(ESP_ROOT)/tools/asicgen/asic_padgen.py
 ASIC_PADGEN_OUT = ../$(DIRTECH_NAME)/pad_wrappers
@@ -30,8 +33,6 @@ mem_slmgen: socgen/esp/slm_memgen.txt $(MEMGEN)
 	@$(MEMGEN) $(MEMTECH) $< $(MEMGEN_OUT) | tee mem_slmgen.log
 
 link_technology:
-	TECH_DIR_PATH=$(realpath ../$DIRTECH_NAME)
-	PROJ_DIR_PATH=$(realpath ../$PROJECT_NAME)
 	cd $(ESP_ROOT)/rtl/sim/asic ; \
         rm verilog; \
 	ln -s ../../../../$(DIRTECH_NAME)/verilog verilog ; \

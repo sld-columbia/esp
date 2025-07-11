@@ -10,8 +10,20 @@ cpu_arch = sys.argv[1]
 
 arch_bits = 32
 
-binfile = ["soft-build/" + cpu_arch + "/prom.bin", "soft-build/" + cpu_arch + "/systest.bin"]
-txtfile = ["soft-build/" + cpu_arch + "/prom.txt", "soft-build/" + cpu_arch + "/systest.txt"]
+binfile = [
+    "soft-build/" +
+    cpu_arch +
+    "/prom.bin",
+    "soft-build/" +
+    cpu_arch +
+    "/systest.bin"]
+txtfile = [
+    "soft-build/" +
+    cpu_arch +
+    "/prom.txt",
+    "soft-build/" +
+    cpu_arch +
+    "/systest.txt"]
 
 for i in range(len(binfile)):
 
@@ -26,6 +38,7 @@ for i in range(len(binfile)):
 
     print("Write text file " + txtfile[i])
     with open(txtfile[i], "w") as f:
-        f.write(str(format(len(hexlist), 'x')).zfill(int(arch_bits / 4)) + '\n')
+        f.write(str(format(len(hexlist), 'x')).zfill(
+            int(arch_bits / 4)) + '\n')
         for word in hexlist:
             f.write(word.zfill(int(arch_bits / 4)) + '\n')

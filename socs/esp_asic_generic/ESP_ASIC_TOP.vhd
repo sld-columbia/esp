@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2024 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -603,10 +603,12 @@ begin
     noc_domain_socket_i : noc_domain_socket
       generic map (
         this_has_token_pm => 0,
+        has_ddr           => false,
         is_tile_io        => is_io_tile(i),
         SIMULATION        => SIMULATION,
         ROUTER_PORTS      => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-        HAS_SYNC          => 1)
+        HAS_SYNC          => 1,
+        is_asic           => true)
       port map (
         rst                     => reset_int,
         noc_clk_lock            => noc_clk_lock,

@@ -52,4 +52,3 @@
 #ifndef CONFIG_GPT_WDOG
 #define CONFIG_GPT_WDOG 0
 #endif
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2024 Columbia University, System Level Design Group
+ * Copyright (c) 2011-2025 Columbia University, System Level Design Group
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -18,10 +18,10 @@ int fft_comp(float *data, unsigned int n, unsigned int logn, int sign, bool rev)
 
 #ifndef __linux__
 double sin(double x);
-#ifdef __riscv
+    #ifdef __riscv
 float rand(void);
-#define RAND_MAX 32768.0
-#endif
+        #define RAND_MAX 32768.0
+    #endif
 #endif
 
 #endif /* FFT_UTILS_H */

@@ -5,10 +5,10 @@
 #include "data.hpp"
 
 #ifndef C_SIMULATION
-#ifndef __MENTOR_CATAPULT_HLS__
-#include <hls_stream.h>
-#endif /* __MENTOR_CATAPULT_HLS__ */
-#endif /* C_SIMULATION */
+    #ifndef __MENTOR_CATAPULT_HLS__
+        #include <hls_stream.h>
+    #endif /* __MENTOR_CATAPULT_HLS__ */
+#endif     /* C_SIMULATION */
 
 #define SHA2_MAX_BLOCK_SIZE 1600
 const int sha2_max_addr_mem = 1600;
@@ -20,11 +20,9 @@ const int sha2_max_addr_mem = 1600;
 
 int sha2(
 #ifdef PROPERTIES_ENABLED
-          uint32 props,
+    uint32 props,
 #endif // PROPERTIES_ENABLED
-          uint32 in_bytes,
-          uint32 out_bytes,
-          uint32 in[SHA2_MAX_BLOCK_SIZE],
-          uint32 out[SHA2_MAX_DIGEST_WORDS]);
+    uint32 in_bytes, uint32 out_bytes, uint32 in[SHA2_MAX_BLOCK_SIZE],
+    uint32 out[SHA2_MAX_DIGEST_WORDS]);
 
 #endif /* __SHA2_H__ */
