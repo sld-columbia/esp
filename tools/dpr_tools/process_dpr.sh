@@ -522,6 +522,7 @@ echo "add_module \$static " >> $dpr_syn_tcl;
 echo "set_attribute module \$static moduleName    \$top" >> $dpr_syn_tcl;
 echo "set_attribute module \$static top_level     1 " >> $dpr_syn_tcl;
 echo "#set_attribute module \$static synthCheckpoint \$synthDir/\$static/top_synth.dcp " >> $dpr_syn_tcl;
+echo "set_attribute module \$static phys_options \"-aggressive_hold_fix\" " >> $dpr_syn_tcl;
 #echo "set_attribute module \$static synth         \${run.topSynth} " >> $dpr_syn_tcl;
 
 
@@ -539,6 +540,7 @@ echo -e "\t DPR: number of acc tiles inside dpr gen is $num_acc_tiles ";
         echo "add_module ${new_accelerators[$i,1]} " >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_top" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
+        echo "set_attribute module ${new_accelerators[$i,1]} phys_options \"-aggressive_hold_fix\" " >> $dpr_syn_tcl;
         #echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
     done
 #elif [[ "$4" == "ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then

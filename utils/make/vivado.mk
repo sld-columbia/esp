@@ -227,6 +227,8 @@ vivado/syn.tcl: vivado
 	@echo "wait_on_run -timeout 480 synth_1" >> $@
 	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
 	@if [ "$(DPR_ENABLED)" != "y" ]; then \
+		echo "set_property -dict [ list {STEPS.PHYS_OPT_DESIGN.ARGS.MORE OPTIONS} \"-aggressive_hold_fix\" ] [get_runs impl_1]" >> $@; \
+		echo "set_property -dict [ list {STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.MORE OPTIONS} \"-aggressive_hold_fix\" ] [get_runs impl_1]" >> $@; \
 		echo "launch_runs impl_1 -jobs 12" >> $@; \
 		echo "wait_on_run -timeout 480 impl_1" >> $@; \
 		echo "launch_runs impl_1 -to_step write_bitstream" >> $@; \
