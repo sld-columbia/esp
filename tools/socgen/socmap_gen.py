@@ -3887,24 +3887,27 @@ def create_socmap(esp_config, soc):
 
     print("Created soc defines into 'soc_defs.h'")
 
-    # io_tile locations
-    fp = open('prc_aux.h', 'w')
+    # partial reconfiguration files
+    if soc.prc.get() == 1:
 
-    print_aux_tile_locs(fp, esp_config, soc)
+        # io_tile locations
+        fp = open('prc_aux.h', 'w')
 
-    fp.close()
-
-    print("Created io_tile locations into 'prc_aux.h'")
-
-    # placeholder for pbs_map
-    if not os.path.exists('pbs_map.h'):
-        fp = open('pbs_map.h', 'w')
-
-        print_default_pbs_map(fp)
+        print_aux_tile_locs(fp, esp_config, soc)
 
         fp.close()
 
-        print("Created placeholder PBS list into 'pbs_map.h'")
+        print("Created io_tile locations into 'prc_aux.h'")
+
+        # placeholder for pbs_map
+        if not os.path.exists('pbs_map.h'):
+            fp = open('pbs_map.h', 'w')
+
+            print_default_pbs_map(fp)
+
+            fp.close()
+
+            print("Created placeholder PBS list into 'pbs_map.h'")
 
     # soc tile locations
     fp = open('soc_locs.h', 'w')
@@ -3914,6 +3917,15 @@ def create_socmap(esp_config, soc):
     fp.close()
 
     print("Created soc locations into 'soc_locs.h'")
+
+    # placeholder for accelerator profiles
+    fp = open("esp_acc_profiles.h", "w")
+
+    create_profile(fp, esp_config, soc)
+
+    fp.close()
+
+    print("Created accelerator profiles into 'esp_acc_profiles.h'")
 
     # Device tree
     if esp_config.cpu_arch == "ariane" or esp_config.cpu_arch == "ibex":

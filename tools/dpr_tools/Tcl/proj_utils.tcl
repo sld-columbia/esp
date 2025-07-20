@@ -484,7 +484,12 @@ if {![string match "stdout" $FH]} {
 
 source ./create_$projName.tcl
 start_gui
-launch_runs $childRuns
-foreach run $childRuns {
-   wait_on_run $run
+# TODO run jobs in parallel or sequentially
+if { false } {
+   launch_runs $childRuns
+} else {
+   foreach run $childRuns {
+      launch_runs $run
+      wait_on_run $run
+   }
 }
