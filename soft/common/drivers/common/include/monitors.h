@@ -122,6 +122,8 @@ esp_monitor_vals_t esp_monitor_diff(esp_monitor_vals_t vals_start, esp_monitor_v
 unsigned int esp_monitor(esp_monitor_args_t args, esp_monitor_vals_t *vals);
 uint32_t sub_monitor_vals(uint32_t val_start, uint32_t val_end);
 
+unsigned int get_router_addr(unsigned int dev_addr);
+
 #ifdef LINUX
 esp_monitor_vals_t *esp_monitor_vals_alloc();
 void esp_monitor_free();

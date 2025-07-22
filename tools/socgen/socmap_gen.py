@@ -2355,7 +2355,10 @@ def print_default_pbs_map(fp):
 
 
 def print_soc_locations(fp, esp_config, soc):
+    soc_locations_vars = []
+
     fp.write("soc_loc_t cpu_locs[" + str(esp_config.ncpu) + "] = {")
+    soc_locations_vars.append("cpu_locs")
     for i in range(0, esp_config.ntiles):
         t = esp_config.tiles[i]
         if t.type == "cpu":
@@ -2365,6 +2368,7 @@ def print_soc_locations(fp, esp_config, soc):
     fp.write("};\n\n")
 
     fp.write("soc_loc_t mem_locs[" + str(esp_config.nmem) + "] = {")
+    soc_locations_vars.append("mem_locs")
     for i in range(0, esp_config.ntiles):
         t = esp_config.tiles[i]
         if t.type == "mem":
@@ -2393,6 +2397,7 @@ def print_soc_locations(fp, esp_config, soc):
     if esp_config.nacc > 0:
         acc_counts = {}
         fp.write("soc_loc_t acc_locs[" + str(esp_config.nacc) + "] = {")
+        soc_locations_vars.append("acc_locs")
         for i in range(0, esp_config.ntiles):
             t = esp_config.tiles[i]
             if t.type == "acc":
@@ -2406,6 +2411,7 @@ def print_soc_locations(fp, esp_config, soc):
                     fp.write(", ")
         fp.write("};\n\n")
         fp.write("unsigned int acc_has_l2[" + str(esp_config.nacc) + "] = {")
+        soc_locations_vars.append("acc_has_l2")
         for i in range(0, esp_config.ntiles):
             t = esp_config.tiles[i]
             if t.type == "acc":
@@ -2416,6 +2422,11 @@ def print_soc_locations(fp, esp_config, soc):
                 if not t.acc.id == esp_config.nacc - 1:
                     fp.write(", ")
         fp.write("};\n")
+
+    fp.write("\n#define USE_SOC_LOCS() \\\n")
+    fp.write("    (void)")
+    fp.write("; \\\n    (void)".join(soc_locations_vars))
+    fp.write(";\n\n")
 
 
 def print_aux_tile_locs (fp, esp_config, soc):
@@ -3725,42 +3736,43 @@ def create_profile(fp, esp_config, soc):
 
     # read profiles
     n_acc_profiles = 0
-    for fpath in [f for f in os.listdir(report_dir) if
-                os.path.isfile(os.path.join(report_dir, f))
-                and f.rfind(".") == -1]:
+    if os.path.exists(report_dir):
+        for fpath in [f for f in os.listdir(report_dir) if
+                    os.path.isfile(os.path.join(report_dir, f))
+                    and f.rfind(".") == -1]:
 
-        # check that partial bitstream exists or in current configuration
-        acc_exists = False
+            # check that partial bitstream exists or in current configuration
+            acc_exists = False
 
-        # check if partial bitstream exists (previous run)
-        if os.path.isfile("../../partial_bitstreams/" + fpath + ".bin"):
-            print("Accelerator " + fpath + " exists from eligible bitstream")
-            acc_exists = True
-
-        # check if in current configuration (current run)
-        idx = fpath.rfind("_")
-        acc_tile_id = 0
-        if idx != -1:
-            acc_name = fpath[0:idx]
-            acc_tile_id = int(fpath[idx+1:])
-
-            acc_y = acc_tile_id // soc.noc.cols
-            acc_x = acc_tile_id % soc.noc.cols
-            print("Tile ID is " + str(acc_tile_id) + " => x = " + str(acc_x) + ", y = " + str(acc_y))
-            acc_tile = soc.noc.topology[acc_y][acc_x]
-            if acc_tile.ip_type.get().lower() == acc_name:
-                print("Accelerator " + fpath + " exists in current config")
+            # check if partial bitstream exists (previous run)
+            if os.path.isfile("../../partial_bitstreams/" + fpath + ".bin"):
+                print("Accelerator " + fpath + " exists from eligible bitstream")
                 acc_exists = True
 
-        # delete file because no longer in configuration
-        if not acc_exists:
-            print("Removing " + fpath)
-            os.remove(os.path.join(report_dir, fpath))
-            continue
+            # check if in current configuration (current run)
+            idx = fpath.rfind("_")
+            acc_tile_id = 0
+            if idx != -1:
+                acc_name = fpath[0:idx]
+                acc_tile_id = int(fpath[idx+1:])
 
-        fp.write("#define ACC_CFG_IDX_" + fpath.upper() + " " + str(n_acc_profiles) + "\n")
+                acc_y = acc_tile_id // soc.noc.cols
+                acc_x = acc_tile_id % soc.noc.cols
+                print("Tile ID is " + str(acc_tile_id) + " => x = " + str(acc_x) + ", y = " + str(acc_y))
+                acc_tile = soc.noc.topology[acc_y][acc_x]
+                if acc_tile.ip_type.get().lower() == acc_name:
+                    print("Accelerator " + fpath + " exists in current config")
+                    acc_exists = True
 
-        n_acc_profiles += 1
+            # delete file because no longer in configuration
+            if not acc_exists:
+                print("Removing " + fpath)
+                os.remove(os.path.join(report_dir, fpath))
+                continue
+
+            fp.write("#define ACC_CFG_IDX_" + fpath.upper() + " " + str(n_acc_profiles) + "\n")
+
+            n_acc_profiles += 1
 
     # preamble
     fp.write("\n")
@@ -3769,39 +3781,40 @@ def create_profile(fp, esp_config, soc):
     fp.write("static acc_profile_t profiles[NUM_ACC_PROFILES] = {\n")
 
     # write out profiles
-    files = [f for f in os.listdir(report_dir) if
-                os.path.isfile(os.path.join(report_dir, f))
-                and f.rfind(".") == -1]
-    remaining = len(files)
-    for fpath in files:
+    if os.path.exists(report_dir):
+        files = [f for f in os.listdir(report_dir) if
+                    os.path.isfile(os.path.join(report_dir, f))
+                    and f.rfind(".") == -1]
+        remaining = len(files)
+        for fpath in files:
 
-        fp.write("    {\n")
+            fp.write("    {\n")
 
-        # write tile ID
-        fp.write("        " + str(acc_tile_id) + ",\n")
+            # write tile ID
+            fp.write("        " + str(acc_tile_id) + ",\n")
 
-        # write viability
-        fp.write("        { ")
-        with open(os.path.join(report_dir, fpath), "r") as acc_fp:
-            line_idx = 0
-            for line in acc_fp:
-                fp.write(line[0])
+            # write viability
+            fp.write("        { ")
+            with open(os.path.join(report_dir, fpath), "r") as acc_fp:
+                line_idx = 0
+                for line in acc_fp:
+                    fp.write(line[0])
 
-                line_idx += 1
-                if line_idx >= NFREQS:
-                    break
-                fp.write(", ")
-        fp.write(" }\n")
+                    line_idx += 1
+                    if line_idx >= NFREQS:
+                        break
+                    fp.write(", ")
+            fp.write(" }\n")
 
-        fp.write("    }")
+            fp.write("    }")
 
-        # move to next accelerator
-        remaining -= 1
-        if remaining == 0:
-            fp.write("\n")
-            break
-        else:
-            fp.write(",\n")
+            # move to next accelerator
+            remaining -= 1
+            if remaining == 0:
+                fp.write("\n")
+                break
+            else:
+                fp.write(",\n")
     fp.write("};\n")
 
     # postamble

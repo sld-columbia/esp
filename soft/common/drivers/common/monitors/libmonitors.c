@@ -267,10 +267,7 @@ uint64_t sub_monitor_vals64(uint64_t val_start, uint64_t val_end)
 }
 
 // Get base address of router
-unsigned int get_router_addr(unsigned int dev_addr) {
-    return 0;
-}
-/*unsigned int get_router_addr(unsigned int dev_addr)
+unsigned int get_router_addr(unsigned int dev_addr)
 {
 #include "soc_locs.h"
 
@@ -289,7 +286,7 @@ unsigned int get_router_addr(unsigned int dev_addr) {
 #endif
 
     //Obtain tile id
-    //USE_SOC_LOCS();
+    USE_SOC_LOCS();
     #ifdef ACCS_PRESENT
     for (i = 0; i < SOC_NACC; i++) {
         if(dev_start_addr == dev_addr_trunc) {
@@ -312,7 +309,7 @@ unsigned int get_router_addr(unsigned int dev_addr) {
     printf("[SCHEDULER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0x \n", tile_id, dev_addr);
 #endif
     return dev_addr;
-}*/
+}
 
 esp_monitor_vals_t esp_monitor_diff(esp_monitor_vals_t vals_start, esp_monitor_vals_t vals_end)
 {

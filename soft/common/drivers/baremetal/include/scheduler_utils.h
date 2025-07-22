@@ -1,6 +1,5 @@
 
 #include "soc_defs.h"
-//#include "soc_locs.h"
 
 #ifndef __SCHEDULER_UTILS_H__
 #define __SCHEDULER_UTILS_H__
@@ -37,52 +36,89 @@ int encode_dco_ctrl(int freq_sel, int div_sel, int fc_sel, int cc_sel, int clk_s
            ((freq_sel & 0b000011) << 17);
 }
 
-// Get base address of router
-/*int get_router_addr(struct esp_device *dev, struct esp_device *router)
-{
-    unsigned i;
-    unsigned tile_id = 0xFF;
-    unsigned dev_addr;
-    unsigned dev_addr_trunc;
-    unsigned dev_start_addr = 0x10000;
-
-    const unsigned addr_incr = 0x100;
-    const unsigned monitor_base = 0x90180;
-
-    dev_addr = (unsigned) dev->addr;
-    dev_addr_trunc = (dev_addr << 12) >> 12;
-
-#ifdef SCHEDULER_VERBOSE
-    printf("[SCHEDULER]: device address -- 0x%0x, truncated addr -- 0x%0x \n", dev_addr, dev_addr_trunc);
-#endif
-
-    //Obtain tile id
-    USE_SOC_LOCS();
-    for (i = 0; i < SOC_NACC; i++) {
-        if(dev_start_addr == dev_addr_trunc) {
-            tile_id = acc_locs[i].row * SOC_COLS + acc_locs[i].col;
-            break;
-        }
-         else
-            dev_start_addr += addr_incr;
-    }
-
-    if(tile_id == 0XFF) {
-        printf("[PRC DRIVER]: Error: cannot find tile id\n");
-        return -1;
-    }
-
-    // compute apb address for tile decoupler
-    (*router).addr = APB_BASE_ADDR + (monitor_base + tile_id * 0x200);
-#ifdef SCHEDULER_VERBOSE
-    printf("[SCHEDULER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0llx \n", tile_id, (*router).addr);
-#endif
-    return 0;
-}*/
-
 // Write to frequency control register
 void write_div_sel(struct esp_device *router_dev, int div_sel, int en) {
     iowrite32(router_dev, DCO_REG, encode_dco_ctrl(0, div_sel, 0, 0, 0, en));
 }
+
+/*
+#define SCHED_PRIORITY_TIME 0
+#define SCHED_PRIORITY_POWER 1
+#define SCHED_PRIORITY_ENERGY 2
+
+// Submit accelerator task with deadline and profile
+// For each configuration, compute wait time/reconfiguration time/execution time
+// If multiple meet deadline, go for lowest power or energy deadline
+void spawn_hw_thread(struct esp_device *dev, int server_idx, int pbs_id, int new_div_sel_idx) {
+    server_runtime_t *server = &servers[server_idx];
+    server_profile_t *profile = &my_profiles[server_idx];
+    struct esp_device router_dev;
+
+    // TODO translate dev to router
+    router_dev.addr = get_router_addr(dev->addr);
+
+    // select server to spawn task (dev, pbs_id, new_div_sel_idx)
+    // foreach server eligible for a task
+    //   a server includes tile configuration and sub-tile region set
+    unsigned int min_cost = (unsigned int)-1;
+    //XXX min_cost_conf = XXX;
+    unsigned int server_idx = 0;
+    {
+        profile = profiles[server_idx];
+
+        // foreach frequency at which a server can run
+        for (unsigned int freq_i = 0; freq_i < N_FREQS; freq_i++) {
+            if (!profile.op[freq_i].viable) continue;
+
+            // total time =
+            //   time waiting for server to free
+            //       = current task to complete
+            //         + queued tasks
+            //   + reconf_dfx_cycles
+            //       = reprogram entire tile
+            //         + reprogram sub-tile regions
+            //   + reconf_dfs_cycles
+            //       = change frequency if not already there
+            //   + runtime at this frequency
+            unsigned int time = 0;
+
+            if (time >= deadline) {
+                continue;
+            }
+
+            if (priority == SCHED_PRIORITY_TIME) {
+                cost = time;
+            } else {
+                unsigned int power = profile.op[freq_i].power;
+
+                if (priority = SCHED_PRIORITY_POWER) {
+                    cost = power;
+                }
+                else {
+                    unsigned int energy = power * time;
+
+                    cost = energy;
+                }
+            }
+
+            if (cost < min_cost) {
+                min_cost = cost;
+                //min_cost_conf = XXX;
+            }
+        }
+    }
+
+    // with selected server dev, pbs_id, new_div_sel_idx
+    // reconfigure FPGA (wait reconf_dfx_cycles)
+    reconfigure_FPGA_async(router_dev, pbs_id);
+    // schedule new frequency based on budget (wait reconf_dfs_cycles)
+    write_div_sel(&router_dev, div_sel[new_div_sel_idx], 1);
+    // write other router registers
+
+    wait_for_reconfigure_FPGA_completion(router_dev);
+
+    // resume task setup (register writing) and execution (write start bit)
+}
+*/
 
 #endif // __SCHEDULER_UTILS_H__

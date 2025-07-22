@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
         return 0;
     }
     dev = &espdevs[0];
-    get_router_addr(dev, &esp_tile_dfs_controller);
+    esp_tile_dfs_controller.addr = get_router_addr(dev->addr);
 
     for (n = 0; n < ndev; n++) {
 
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 
         // reprogram bitstream
         #ifdef SOC_DFX_EN
-        reconfigure_FPGA(dev, ACC_CFG_IDX_FFT_STRATUS_2);
+        reconfigure_FPGA_async(&esp_tile_dfs_controller, ACC_CFG_IDX_FFT_STRATUS_2, DEV_IS_ROUTER);
         #endif
 
         for (k = 0; k < N_FREQS; k++) {
@@ -173,6 +173,7 @@ int main(int argc, char *argv[])
                 printf("%s is viable at frequency index %0d.\n", dev->name, k);
             }
             write_div_sel(&esp_tile_dfs_controller, div_sel[k], 1);
+            wait_for_reconfigure_FPGA_completion(&esp_tile_dfs_controller, DEV_IS_ROUTER);
 
             // Check DMA capabilities
             if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
