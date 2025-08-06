@@ -247,6 +247,7 @@ architecture rtl of tile_acc is
   attribute keep of apb_rcv_empty              : signal is "true";
   attribute keep of tile_config                : signal is "true";
   attribute keep of tile_id                    : signal is "true";
+  attribute keep of rst_tile_id                : signal is "true";
   attribute keep of decouple_acc               : signal is "true";
 
   attribute mark_debug : string;
@@ -318,8 +319,8 @@ begin
       generic map (
         tech           => ( CFG_FABTECH ),
         CLKFBOUT_MULT  => ( 16 ),
-        CLKIN1_PERIOD  => ( 20.0 ),
-        CLKIN2_PERIOD  => ( 20.0 ),
+        CLKIN1_PERIOD  => ( CPU_CLK_PER ),
+        CLKIN2_PERIOD  => ( CPU_CLK_PER ),
         CLKOUT0_DIVIDE => ( 19 ),
         CLKOUT1_DIVIDE => ( 18 ),
         CLKOUT2_DIVIDE => ( 17 ),
@@ -559,10 +560,10 @@ begin
       -- hard reset
       rst_tile_id <= (others => '0');
     elsif tile_clk'event and tile_clk = '1' then
-      --if rst = '1' then
-      -- update soft reset value
-      rst_tile_id <= tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
-      --end if;
+      if rst = '1' then
+        -- update soft reset value
+        rst_tile_id <= tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
+      end if;
     end if;
   end process rst_tile_id_gen;
 
@@ -594,9 +595,9 @@ begin
     generic map (
       tech => CFG_FABTECH)
     port map (
-      noc_rst                    => tile_rst, -- reset synchronous with noc clock
+      noc_rst                    => tile_rst,
       noc_clk                    => noc_clk,
-      tile_rst                   => tile_rst, -- reset synchronous with local clock
+      tile_rst                   => tile_rst,
       tile_clk                   => tile_clk,
       coherence_req_wrreq        => coherence_req_wrreq,
       coherence_req_data_in      => coherence_req_data_in,

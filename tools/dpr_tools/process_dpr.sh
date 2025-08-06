@@ -522,7 +522,6 @@ echo "add_module \$static " >> $dpr_syn_tcl;
 echo "set_attribute module \$static moduleName    \$top" >> $dpr_syn_tcl;
 echo "set_attribute module \$static top_level     1 " >> $dpr_syn_tcl;
 echo "#set_attribute module \$static synthCheckpoint \$synthDir/\$static/top_synth.dcp " >> $dpr_syn_tcl;
-echo "set_attribute module \$static phys_options \"-aggressive_hold_fix\" " >> $dpr_syn_tcl;
 #echo "set_attribute module \$static synth         \${run.topSynth} " >> $dpr_syn_tcl;
 
 
@@ -540,7 +539,6 @@ echo -e "\t DPR: number of acc tiles inside dpr gen is $num_acc_tiles ";
         echo "add_module ${new_accelerators[$i,1]} " >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_top" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
-        echo "set_attribute module ${new_accelerators[$i,1]} phys_options \"-aggressive_hold_fix\" " >> $dpr_syn_tcl;
         #echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
     done
 #elif [[ "$4" == "ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
@@ -618,6 +616,7 @@ echo "set_attribute impl top_dpr impl       \${run.dfxImpl}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr verify     \${run.prVerify}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr bitstream  \${run.writeBitstream}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr cfgmem.icap     1 " >> $dpr_syn_tcl;
+echo "set_attribute impl top_dpr phys_options \"-aggressive_hold_fix\" " >> $dpr_syn_tcl;
 
 echo "source \$tclDir/run.tcl" >> $dpr_syn_tcl;
 echo "exit" >> $dpr_syn_tcl;
@@ -847,12 +846,23 @@ echo "set projDir \"$1/socs/$2/vivado_dpr\" " >> $dpr_report_tcl;
 echo "source \$tclDir/report_utils.tcl" >> $dpr_report_tcl;
 echo "" >> $dpr_report_tcl;
 
+echo "file mkdir \"./Reports\"" >> $dpr_report_tcl;
+echo "" >> $dpr_report_tcl;
+
+if [[ "$TARGET_DEV" == "VC707" ]]; then
+    primary_clock="clk_nobuf"
+elif [[ "$TARGET_DEV" == "VCU118" ]]; then
+    primary_clock="mmcm_clkout1"
+elif [[ "$TARGET_DEV" == "VCU128" ]]; then
+    primary_clock="mmcm_clkout1"
+fi
+
 # load in top routed checkpoint
 if [ $dpr -eq 0 ]; then
     dcp="$1/socs/$2/vivado/esp-$TARGET_SOC.runs/impl_1/top_routed.dcp"
     echo "open_checkpoint $dcp" >> $dpr_report_tcl;
 
-    echo "set filters [list \"NAME =~ *0\" \"NAME =~ *1\" \"NAME =~ *2\" \"NAME =~ *clk_nobuf*\" \"NAME =~ *3\" \"NAME =~ *4\" \"NAME =~ *5\"]" >> $dpr_report_tcl;
+    echo "set filters [list \"NAME =~ *0\" \"NAME =~ *1\" \"NAME =~ *2\" \"NAME =~ *$primary_clock*\" \"NAME =~ *3\" \"NAME =~ *4\" \"NAME =~ *5\"]" >> $dpr_report_tcl;
     echo "" >> $dpr_report_tcl;
 
     for ((i=0; i<$num_acc_tiles; i++))

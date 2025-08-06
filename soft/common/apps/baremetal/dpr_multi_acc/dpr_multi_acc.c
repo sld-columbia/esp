@@ -102,20 +102,23 @@ void spawn_hw_thread(struct esp_device *router_dev, int server_idx, int pbs_id, 
     reconfigure_FPGA_async(router_dev, pbs_id, DEV_IS_ROUTER);
 #else
     // wait for profiled reconfiguration time
-    dpr_wait_cycles_start = esp_monitor(mon_args, NULL);
-    do {
-      dpr_wait_cycles_new = esp_monitor(mon_args, NULL);
-      dpr_wait_cycles_diff = sub_monitor_vals(dpr_wait_cycles_start, dpr_wait_cycles_new);
-    } while (dpr_wait_cycles_diff < profile->reconf_cycles);
+    //dpr_wait_cycles_start = esp_monitor(mon_args, NULL);
+    //do {
+    //  dpr_wait_cycles_new = esp_monitor(mon_args, NULL);
+    //  dpr_wait_cycles_diff = sub_monitor_vals(dpr_wait_cycles_start, dpr_wait_cycles_new);
+    //} while (dpr_wait_cycles_diff < profile->reconf_cycles);
 #endif
 
     log_power(profile->power[server->div_sel_idx], EVENT_DFS_START);
 
     // schedule new frequency based on budget
+    printf("Writing %d as selection\n", div_sel[new_div_sel_idx]);
     write_div_sel(router_dev, div_sel[new_div_sel_idx], 1);
     server->div_sel_idx = new_div_sel_idx;
 
+#ifdef SOC_DFX_EN
     wait_for_reconfigure_FPGA_completion(router_dev, DEV_IS_ROUTER);
+#endif
 
     log_power(profile->power[server->div_sel_idx], EVENT_WRK_START);
 }
@@ -199,7 +202,7 @@ int main(int argc, char * argv[])
             printf("%s is viable at frequency index %0d.\n", dev_tile_1->name, k);
         }
 
-        spawn_hw_thread(dev_tile_1, 0, ACC_CFG_IDX_MAC_SYSC_CATAPULT_2, k);
+        spawn_hw_thread(&esp_tile_dfs_controller, 0, ACC_CFG_IDX_MAC_SYSC_CATAPULT_2, k);
 
         // Check DMA capabilities
         if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) == 0) {

@@ -1,5 +1,5 @@
 #==============================================================
-# TCL proc for getting a list of cells marked with HD.RECONFIGURABLE 
+# TCL proc for getting a list of cells marked with HD.RECONFIGURABLE
 #==============================================================
 proc get_rps {} {
    if {[catch current_instance]} {
@@ -16,7 +16,7 @@ proc get_rps {} {
 }
 
 #==============================================================
-# TCL proc for changing current value of HD.RECONFIGURABLE 
+# TCL proc for changing current value of HD.RECONFIGURABLE
 #==============================================================
 proc toggle_dfx { cells } {
    if {[catch current_instance]} {

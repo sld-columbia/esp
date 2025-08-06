@@ -1,4 +1,6 @@
 
+#include <monitors.h>
+#include <esp_probe.h>
 #include "soc_defs.h"
 
 #ifndef __SCHEDULER_UTILS_H__

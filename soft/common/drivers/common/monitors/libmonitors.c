@@ -277,13 +277,9 @@ unsigned int get_router_addr(unsigned int dev_addr)
     unsigned int dev_start_addr = 0x10000;
 
     const unsigned int addr_incr = 0x100;
-    const unsigned int monitor_base = 0x90180;
+    const unsigned int monitor_base = 0x180;
 
     dev_addr_trunc = (dev_addr << 12) >> 12;
-
-#ifdef SCHEDULER_VERBOSE
-    printf("[SCHEDULER]: device address -- 0x%0x, truncated addr -- 0x%0x \n", dev_addr, dev_addr_trunc);
-#endif
 
     //Obtain tile id
     USE_SOC_LOCS();
@@ -299,14 +295,14 @@ unsigned int get_router_addr(unsigned int dev_addr)
     #endif
 
     if(tile_id == 0XFF) {
-        printf("[SCHEDULER]: Error: cannot find tile id\n");
+        printf("[MONITOR]: Error: cannot find tile id\n");
         return 0;
     }
 
     // compute apb address for tile decoupler
     dev_addr = MONITOR_BASE_ADDR + (monitor_base + tile_id * 0x200);
-#ifdef SCHEDULER_VERBOSE
-    printf("[SCHEDULER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0x \n", tile_id, dev_addr);
+#ifdef MONITOR_VERBOSE
+    printf("[MONITOR]: tile_id -- 0x%0x, router addr is -- 0x%0x \n", tile_id, dev_addr);
 #endif
     return dev_addr;
 }

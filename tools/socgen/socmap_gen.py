@@ -649,6 +649,17 @@ def print_constants(fp, soc, esp_config):
 
     #
     fp.write("  ------ Clock Strategy\n")
+    # Get CPU base frequency
+    with open("../../top.vhd") as top_fp:
+        for line in top_fp:
+            if line.find("constant CPU_FREQ : integer") != -1:
+                line.strip()
+                items = line.split()
+                CPU_CLK_PER = 1000000.0 / float(int(items[5].replace(";", "")))
+                top_fp.close()
+                break
+    fp.write("  constant CPU_CLK_PER : real := " + 
+             str(round(CPU_CLK_PER,3)) + ";\n")
     fp.write("  constant CFG_CLK_STR : integer := " +
              str(soc.clk_str.get()) + ";\n")
     fp.write("  constant CFG_SYNC_EN : integer := " +
@@ -2785,9 +2796,8 @@ def print_devtree(fp, soc, esp_config):
             fp.write("      memory-region = <&thirdparty_reserved>;\n")
         fp.write("    };\n")
 
-        if soc.prc.get() == 1:
-            fp.close()
-            fp = old_fp
+        fp.close()
+        fp = old_fp
 
     # read previous device descriptions
     for fpath in [f for f in

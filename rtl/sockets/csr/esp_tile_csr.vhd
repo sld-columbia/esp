@@ -78,6 +78,8 @@ architecture rtl of esp_tile_csr is
   constant MONITOR_REG_COUNT : integer                                     := MON_NOC_QUEUES_FULL_BASE_INDEX + NOCS_NUM * NOC_QUEUES;  --58
   constant REGISTER_WIDTH    : integer                                     := 32;
 
+  signal prev_rstn              : std_ulogic;
+
   signal burst                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
   signal readdata               : std_logic_vector(REGISTER_WIDTH-1 downto 0);
   signal wdata                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
@@ -251,21 +253,28 @@ begin
   wr_registers : process(clk, rstn)
   begin
     if rstn = '0' then
+      prev_rstn <= '0';
       burst <= (others => '0');
       --config_r     <= DEFAULT_CONFIG;
       -- hard reset for all registers but the tile ID
-      config_r(ESP_CSR_WIDTH-1 downto ESP_CSR_TILE_ID_MSB+1) <= DEFAULT_CONFIG(ESP_CSR_WIDTH-1 downto ESP_CSR_TILE_ID_MSB+1);
-      config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= rst_tile_id;
-      config_r(ESP_CSR_TILE_ID_LSB-1 downto 0) <= DEFAULT_CONFIG(ESP_CSR_TILE_ID_LSB-1 downto 0);
+      --config_r(ESP_CSR_WIDTH-1 downto ESP_CSR_TILE_ID_MSB+1) <= DEFAULT_CONFIG(ESP_CSR_WIDTH-1 downto ESP_CSR_TILE_ID_MSB+1);
+      --config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= rst_tile_id;
+      --config_r(ESP_CSR_TILE_ID_LSB-1 downto 0) <= DEFAULT_CONFIG(ESP_CSR_TILE_ID_LSB-1 downto 0);
+      config_r     <= DEFAULT_CONFIG;
       srst         <= '0';
-      tp_acc_rst    <= '0';
+      tp_acc_rst   <= '0';
     elsif clk'event and clk = '1' then
+      prev_rstn <= '1';
       -- Monitors
       if burst_sample = '1' then
         burst <= wdata;
       end if;
       -- Config write
       tp_acc_rst <= '0';
+      -- remember pre-reset value for tile ID
+      if prev_rstn = '0' then
+        config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= rst_tile_id;
+      end if;
       if apbi.paddr(8 downto 7) = "11" and (apbi.psel(pindex) and apbi.penable and apbi.pwrite) = '1' then
         case csr_addr is
           when ESP_CSR_VALID_ADDR =>

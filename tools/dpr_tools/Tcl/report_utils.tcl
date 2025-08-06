@@ -21,6 +21,7 @@ proc check_timing { report_name clk cells } {
 
 # Loop through clocks from an object
 proc do_report_viability_clocks { name clk_obj filters cells } {
+  file mkdir "./Reports/dfs_viability"
   set fh [open "./Reports/dfs_viability/${name}" "w"]
 
   # loop through clocks in the list
