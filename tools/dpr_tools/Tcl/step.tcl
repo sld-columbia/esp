@@ -1,7 +1,7 @@
 proc impl_step {phase instance {options none} {directive none} {pre none} {settings none} } {
    global dcpLevel
    global verbose
-   upvar  impl impl 
+   upvar  impl impl
    upvar  resultDir resultDir
    upvar  reportDir reportDir
 
@@ -26,7 +26,7 @@ proc impl_step {phase instance {options none} {directive none} {pre none} {setti
    }
    #If no design is open
    if { [catch {current_instance > $resultDir/temp.log} errMsg] && $verbose > 0 } {
-      puts "\tNo open design" 
+      puts "\tNo open design"
       if {[info exists checkpoint1] || [info exists checkpoint2]} {
          if {[file exists $checkpoint1]} {
             puts "\tOpening checkpoint $checkpoint1 for $instance"
@@ -49,7 +49,7 @@ proc impl_step {phase instance {options none} {directive none} {pre none} {setti
         error $errMsg
       }
    }
-  
+
    #Run any specified pre-phase scripts
    if {![string match $pre "none"] && ![string match $pre ""] } {
       foreach script $pre {
@@ -57,12 +57,12 @@ proc impl_step {phase instance {options none} {directive none} {pre none} {setti
             puts "\t#HD: Running pre-$phase script $script"
             command "source $script" "$resultDir/pre_${phase}_script.log"
          } else {
-            set errMsg "\nERROR: Script $script specified for pre-${phase} does not exist"
-            error $errMsg
+            set warnMsg "\nWARNING: Script $script specified for pre-${phase} does not exist"
+            puts $warnMsg
          }
       }
    }
- 
+
    #Append options or directives to command
    if {[string match $phase "write_bitstream"]} {
       set impl_step "$phase -force -file $resultDir/$instance"
@@ -95,10 +95,10 @@ proc impl_step {phase instance {options none} {directive none} {pre none} {setti
    puts "\t$phase start time: \[[clock format $start_time -format {%a %b %d %H:%M:%S %Y}]\]"
    command "$impl_step" "$log"
    set end_time [clock seconds]
-   log_time $phase $start_time $end_time 0 "$impl_step" 
+   log_time $phase $start_time $end_time 0 "$impl_step"
    command "puts \"\t#HD: Completed: $phase\""
    puts "\t################################"
-      
+
    #Write out checkpoint for successfully completed phase
    if {($dcpLevel > 0 || [string match $phase "route_design"]) && ![string match $phase "write_bitstream"]} {
       set start_time [clock seconds]

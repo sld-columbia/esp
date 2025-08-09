@@ -94,6 +94,7 @@ array set impl_attributes   [list "top"                        [list string   nu
                                                                   string   null   \
                                                                ] \
                                   "link"                       [list boolean {0 1}]  \
+                                  "link.pre"                   [list string   null]  \
                                   "opt"                        [list boolean {0 1}]  \
                                   "opt.pre"                    [list string   null]  \
                                   "opt_options"                [list string   null]  \
@@ -156,6 +157,7 @@ proc add_implementation { name } {
    set_attribute impl $name "hd.budget"                   1
    set_attribute impl $name "hd.budget_exclude"           ""
    set_attribute impl $name "link"                        1
+   set_attribute impl $name "link.pre"                    ""
    set_attribute impl $name "partitions"                  ""
    set_attribute impl $name "opt"                         1
    set_attribute impl $name "opt.pre"                     ""

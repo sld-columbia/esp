@@ -616,7 +616,7 @@ echo "set_attribute impl top_dpr impl       \${run.dfxImpl}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr verify     \${run.prVerify}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr bitstream  \${run.writeBitstream}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr cfgmem.icap     1 " >> $dpr_syn_tcl;
-echo "set_attribute impl top_dpr phys_options \"-aggressive_hold_fix\" " >> $dpr_syn_tcl;
+#echo "set_attribute impl top_dpr phys_options \"-aggressive_hold_fix\" " >> $dpr_syn_tcl;
 
 echo "source \$tclDir/run.tcl" >> $dpr_syn_tcl;
 echo "exit" >> $dpr_syn_tcl;
@@ -834,7 +834,14 @@ regenerate_fplan=0;
 }
 
 function gen_report_script() {
-base_clock="20.0"
+if [[ "$TARGET_DEV" == "VC707" ]]; then
+    base_clock="20.0"
+elif [[ "$TARGET_DEV" == "VCU118" ]]; then
+    base_clock="12.8"
+elif [[ "$TARGET_DEV" == "VCU128" ]]; then
+    base_clock="13.3"
+fi
+
 clock_multiplier="16.0"
 clock_dividers=("19.0" "18.0" "17.0" "16.0" "15.0" "14.0" "13.0")
 dpr_report_tcl="$1/socs/$2/vivado/report.tcl"
