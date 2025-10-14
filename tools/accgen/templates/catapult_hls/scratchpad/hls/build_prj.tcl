@@ -51,8 +51,8 @@ solution file add "../../../common/inc/esp_dma_info_sysc.hpp"
 solution file add "../inc/accelerator_name_conf_info.hpp"
 solution file add "../inc/accelerator_name.hpp"
 solution file add "../src/accelerator_name.cpp"
-solution file add "../inc/accelerator_name_specs.hpp"
 solution file add "../inc/mem_wrap.hpp"
+solution file add "../inc/accelerator_name_specs.hpp"
 
 solution file set ../inc/accelerator_name_specs.hpp -args -DDMA_WIDTH=$DMA_WIDTH
 
