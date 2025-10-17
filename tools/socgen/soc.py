@@ -8,7 +8,7 @@ from tkinter import messagebox
 import os.path
 import glob
 import sys
-
+import re
 import NoCConfiguration as ncfg
 
 
