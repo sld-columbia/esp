@@ -37,10 +37,14 @@ ESP_ROOT=$(realpath ../../../../)
 logs="$ESP_ROOT/$result_logs_path"
 if [ -d "$logs" ]; then
     rm -rf "$logs"
+    echo "Overwriting existing $logs"
 else
-    mkdir -p "$logs"
-    mkdir -p "$logs/esp"
+    echo "Creating new $logs"
 fi
+
+mkdir -p "$logs/esp"
+
+
 
 workflow_result="$logs/workflow_result.log"
 ## set esp config file
@@ -60,17 +64,17 @@ echo -e "Configure ESP" >> "$workflow_result"
 cp "$testing_config" "$esp_config"
 make esp-config > "$logs/esp/make_esp_config.log" 2>&1
 
-echo -e "${BOLD}Execute HLS${NC}"
-echo -e "Execute HLS" >> "$workflow_result"
+echo -e "${BOLD}Running Logic Synthesis${NC}"
+echo -e "Execute Logic Synthesis" >> "$workflow_result"
 make vivado-syn > "$logs/esp/vivado_syn.log" 2>&1   # could be optimized
-echo -e "${BOLD}HLS done${NC}"
-echo "HLS done" >> "$workflow_result"
+echo -e "${BOLD}Logic Synthesis done${NC}"
+echo "Logic Synthesis done" >> "$workflow_result"
 
 if [ -s "top.bit" ]; then
-    echo -e "${BOLD}[PASS] HLS Success${NC}"
-    echo "[PASS] HLS Success" >> "$workflow_result"
+    echo -e "${BOLD}[PASS] Logic Synthesis Success${NC}"
+    echo "[PASS] Logic Synthesis Logic Synthesis" >> "$workflow_result"
 else
-    echo -e "${BOLD}[FAIL] HLS Fail${NC}"
-    echo "HLS Fail" >> "$workflow_result"
+    echo -e "${BOLD}[FAIL] Logic Synthesis Fail${NC}"
+    echo "Logic Synthesis Fail" >> "$workflow_result"
     exit 1
 fi
