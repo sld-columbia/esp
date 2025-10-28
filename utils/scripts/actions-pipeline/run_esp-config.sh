@@ -14,6 +14,8 @@ esp_config="$HOME/esp/socs/xilinx-vc707-xc7vx485t/socgen/esp/.esp_config"
 
 # FPGA run
 fpga_run="$HOME/esp/utils/scripts/actions-pipeline/./run_fpga_program.sh"
+# FPGA run linux
+fpga_run_linux="$HOME/esp/utils/scripts/actions-pipeline/./run_fpga_linux.sh"
 
 for accelerator in "${!dma[@]}"; do
     accelerator_upper=$(echo "$accelerator" | tr '[:lower:]' '[:upper:]')
@@ -24,7 +26,9 @@ for accelerator in "${!dma[@]}"; do
 	fpga_program="$logs/program/$accelerator.log"
 	vivado_syn="$logs/hls/$accelerator.log"
 	minicom="$logs/run/minicom_$accelerator.log"
+	minicom_linux="$logs/run/minicom_linux_$accelerator.log"
 	run="$logs/run/run_$accelerator.log"
+	linux="$logs/soft/$accelerator.log"
 
 	# Swap in the appropriate accelerator
     cp "$defconfig" "$esp_config"
@@ -78,13 +82,46 @@ for accelerator in "${!dma[@]}"; do
 		VIRTUAL_DEVICE=$(readlink ttyV0)
 
 		# Run fpga program in the background
-		echo -e "${BOLD}WRITING RESULTS TO MINICOM...${NC}"
+		echo -e "${BOLD}WRITING BAREMETAL RESULTS TO MINICOM...${NC}"
 		echo ""
-		$fpga_run > "$run" 2>&1 &
-		minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1
+		$fpga_run > "$run" 2>&1 &	# make fpga-run and kill minicom. runs in background.
+		minicom -p "$VIRTUAL_DEVICE" -C "$minicom" 2>&1		# open and close the minicom. run in foreground.
+
+		# End of work. Terminate the process.
 		kill -9 "$socat_pid"
 	else
 		echo -e "${BOLD}BITSTREAM GENERATION FAILED...${NC}"
 		echo -e "  - $accelerator"
 	fi
+
+	# Software flow. Create Linux image and run Linux on FPGA.
+	# TODO: Compile linux by $ make linux
+	echo ""
+	echo -e "${BOLD}STARTING COMPILE LINUX FOR ESP...${NC}"
+	echo -e "  ${EMOJI_CHECK} $accelerator"
+	make linux > "$linux" 2>&1
+
+	# TODO: Run fpga linux in background if make linux success
+	if [-s "./soft-build/ariane/linux.bin"]; then
+		# Open Minicom in the foreground
+		echo -e "${BOLD}OPENING MINICOM...${NC}"
+		echo ""
+		socat pty,link=ttyV0,waitslave,mode=777 tcp:goliah.cs.columbia.edu:4332 &
+		socat_pid=$!
+		sleep 2
+		VIRTUAL_DEVICE=$(readlink ttyV0)
+
+		# Run fpga linux
+		echo -e "${BOLD}WRITING LINUX RESULTS TO MINICOM...${NC}"
+		echo ""
+		$fpga_run_linux > "$run" 2>&1 &	# make fpga-run-fpga and kill minicom. runs in background.
+		minicom -p "$VIRTUAL_DEVICE" -C "$minicom_linux" 2>&1		# open and close the minicom. run in foreground.
+
+		# End of work. Terminate the process.
+		kill -9 "$socat_pid"
+	else
+		echo -e "${BOLD}LINUX GENERATION FAILED...${NC}"
+		echo -e "  - $accelerator"
+	fi
+
 done

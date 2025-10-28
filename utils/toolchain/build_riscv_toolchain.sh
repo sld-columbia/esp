@@ -18,7 +18,7 @@ BUILDROOT_SHA_PYTHON=fbff7d7289cc95db991184f890f4ca1fcf8a101e
 # A patch for buildroot RISCV64 with numpy enabled
 BUILDROOT_PATCH=${ESP_ROOT}/utils/toolchain/python-patches/python-numpy.patch
 
-DEFAULT_TARGET_DIR="/home/${USER}/riscv"
+DEFAULT_TARGET_DIR="/home/esp2025/${USER}/riscv_2"
 TMP=${ESP_ROOT}/_riscv_build
 
 # Helper functions

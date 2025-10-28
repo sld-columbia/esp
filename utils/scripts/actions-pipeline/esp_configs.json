@@ -1,0 +1,14 @@
+{
+    "configs": [
+        {
+            "config_name": "config1",
+            "fpga_name": "xilinx-vc707-xc7vx485t",
+            "config_path": "socs/defconfig/esp_xilinx-vc707-xc7vx485t_testing",
+            "result_logs_path": "utils/scripts/actions-pipeline/xilinx-vc707-xc7vx485t_logs",
+            "UART_IP": "espdev.cs.columbia.edu",
+            "UART_PORT": "<uart port>",
+            "SSH_IP": "128.59.22.75",
+            "SSH_PORT": "<ssh port>"
+        }
+    ]
+}

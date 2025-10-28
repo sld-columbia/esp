@@ -1,0 +1,119 @@
+#!/usr/bin/expect -f
+
+# original ssh command: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 5502 root@espgate.cs.columbia.edu
+# Usage: ./ssh_fft.exp <port> <username> <hostname> <password>
+# Usage: ./ssh_fft.exp 5502 root espgate.cs.columbia.edu openesp
+
+# Get command line arguments
+if {$argc < 4} {
+    puts "Usage: $argv0 port username hostname password"
+    exit 1
+}
+set port [lindex $argv 0]
+set username [lindex $argv 1]
+set hostname [lindex $argv 2]
+set password [lindex $argv 3]
+
+# Set timeout
+set timeout 30
+
+# Start the SSH process with specific port
+spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p $port $username@$hostname
+
+# Handle different possible login prompts
+expect {
+    "yes/no" {
+        send "yes\r"
+        exp_continue
+    }
+    "$username@$hostname's password:" {
+        send "$password\r"
+    }
+    timeout {
+        puts "Connection timed out"
+        exit 1
+    }
+}
+
+# Check for successful login
+expect {
+    -re "\\\$|#|>" {
+        puts "Successfully logged in to $hostname on port $port"
+    }
+    "Permission denied" {
+        puts "Login failed - incorrect username or password"
+        exit 1
+    }
+    timeout {
+        puts "Login process timed out"
+        exit 1
+    }
+}
+
+# Change directory in SSH
+set fftpath "../examples/multifft"
+set fftfile "multifft.exe"
+
+send "if \[ -d \"$fftpath\" \]; then echo \"DIR_EXISTS\"; else echo \"DIR_NOT_FOUND\"; fi\r"
+expect {
+    "DIR_EXISTS" {
+        puts "Directory exists, continue with changing directory to ../examples/multifft"
+        send "cd $fftpath\r"
+    }
+    "DIR_NOT_FOUND" {
+        # Directory doesn't exist, handle the error
+        puts "Directory not found - /examples/multifft"
+        exit 1
+    }
+}
+
+# Try execute FFT
+send "if \[ -f \"$fftfile\" \]; then echo \"FILE_EXISTS\"; else echo \"FILE_NOT_FOUND\"; fi\r"
+expect {
+    "FILE_EXISTS" {
+        puts "File found - multifft.exe"
+    }
+    "FILE_NOT_FOUND" {
+        puts "Error: File not found!"
+        expect -re "\\\$|#|>"
+        send "exit\r"
+        expect eof
+        exit 1
+    }
+}
+
+# Execute FFT file
+expect -re "\\\$|#|>"
+puts "Execute multifft.exe"
+send "./$fftfile\r"
+
+# Set up a loop to handle the prompts of FFT
+
+# This expect command will loop automatically due to exp_continue
+expect {
+    -re {\s*\*\* Press ENTER to START \*\*\s*} {
+        send "\r"
+        exp_continue
+    }
+    -re "\\\$|#|>" {
+        # Exit ssh (Takes time, like 10 sec, but yes it will exit.)
+        send "exit\r"
+        expect eof
+        exit 0
+    }
+    eof {
+        # End of file reached - program has terminated
+        puts "Program has completed execution"
+    }
+    timeout {
+        # Timeout, force exit
+        puts "Timeout occurred"
+    }
+}
+
+# Exit ssh (Takes time, like 10 sec, but yes it will exit.)
+send "exit\r"
+exit 0
+
+# Now manually interactive with the remote system
+# interact
