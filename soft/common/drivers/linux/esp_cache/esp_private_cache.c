@@ -157,13 +157,17 @@ static int esp_private_cache_probe(struct platform_device *pdev)
     }
 
     /* Determine which type of cache is present */
+#ifdef DO_CHECK_CACHE
 #ifdef __sparc
     compatible = of_get_property(esp_private_cache->pdev->of_node, "name", &cplen);
     if (strcmp(compatible, "eb_020") == 0)
 #else
     compatible = of_get_property(esp_private_cache->pdev->of_node, "compatible", &cplen);
     if (strcmp(compatible, "sld,l2_cache") == 0)
-#endif
+#endif // __sparc
+#else
+    if (1)
+#endif // DO_CHECK_CACHE
         dev_info(esp_private_cache->pdev, "ESP L2 cache registered.\n");
     else
         dev_info(esp_private_cache->pdev, "Spandex L2 cache registered.\n");
@@ -181,7 +185,8 @@ out_iomem:
     return rc;
 }
 
-static int __exit esp_private_cache_remove(struct platform_device *pdev)
+//static int __exit esp_private_cache_remove(struct platform_device *pdev)
+static void esp_private_cache_remove(struct platform_device *pdev)
 {
     struct esp_private_cache_device *esp_private_cache = platform_get_drvdata(pdev);
 
@@ -194,7 +199,7 @@ static int __exit esp_private_cache_remove(struct platform_device *pdev)
     devm_iounmap(&pdev->dev, esp_private_cache->iomem);
     kfree(esp_private_cache);
 
-    return 0;
+//    return 0;
 }
 
 static struct platform_driver esp_private_cache_driver = {

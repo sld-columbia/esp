@@ -101,13 +101,17 @@ static int esp_cache_probe(struct platform_device *pdev)
     }
 
     /* Determine which type of cache is present */
+#ifdef DO_CHECK_CACHE
 #ifdef __sparc
     compatible = of_get_property(esp_cache->pdev->of_node, "name", &cplen);
     if (strcmp(compatible, "eb_021") == 0)
 #else
     compatible = of_get_property(esp_cache->pdev->of_node, "compatible", &cplen);
     if (strcmp(compatible, "sld,llc_cache") == 0)
-#endif
+#endif // _sparc
+#else
+    if (1)
+#endif // DO_CHECK_CACHE
         dev_info(esp_cache->pdev, "ESP LLC cache registered.\n");
     else
         dev_info(esp_cache->pdev, "Spandex LLC cache registered.\n");
@@ -125,7 +129,8 @@ out_iomem:
     return rc;
 }
 
-static int __exit esp_cache_remove(struct platform_device *pdev)
+static void esp_cache_remove(struct platform_device *pdev)
+//static int __exit esp_cache_remove(struct platform_device *pdev)
 {
     struct esp_cache_device *esp_cache = platform_get_drvdata(pdev);
 
@@ -138,7 +143,7 @@ static int __exit esp_cache_remove(struct platform_device *pdev)
     devm_iounmap(&pdev->dev, esp_cache->iomem);
     kfree(esp_cache);
 
-    return 0;
+    //return 0;
 }
 
 static struct platform_driver esp_cache_driver = {

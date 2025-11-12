@@ -333,7 +333,7 @@ struct contig_desc *contig_alloc(const struct contig_alloc_params *params, unsig
 }
 EXPORT_SYMBOL_GPL(contig_alloc);
 
-void __contig_free(struct contig_desc *desc)
+static void __contig_free(struct contig_desc *desc)
 {
     struct contig_chunk *ch, *nxt;
     unsigned int deallocated = 0;
@@ -606,9 +606,9 @@ static int contig_mmap(struct file *file, struct vm_area_struct *vma)
     return 0;
 }
 
-static int __init contig_create_file(void)
+static int contig_create_file(void)
 {
-    contig_class = class_create(THIS_MODULE, "contig_alloc");
+    contig_class = class_create("contig_alloc");
     if (IS_ERR(contig_class)) return PTR_ERR(contig_class);
 
     if (register_chrdev(CONTIG_MAJOR, "contig_alloc", &contig_fops)) goto err_chrdev;
@@ -679,7 +679,7 @@ err_chunks:
     return rc;
 }
 
-static void contig_exit(void)
+static void __exit contig_exit(void)
 {
     struct contig_desc *desc, *nxt;
 

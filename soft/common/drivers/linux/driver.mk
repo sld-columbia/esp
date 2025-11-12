@@ -23,6 +23,6 @@ clean: check
 	rm -rf $(ESP_CORE_PATH)
 
 help: check
-	$(MAKE) -C $(KSRC) M=`pwd` CROSS_COMPILE=$(CROSS_COMPILE) ARCH=$(ARCH) help
+	$(MAKE) -C $(KSRC) M=$(PWD) CROSS_COMPILE=$(CROSS_COMPILE) ARCH=$(ARCH) help
 
 .PHONY: all clean help

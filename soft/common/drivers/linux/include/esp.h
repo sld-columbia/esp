@@ -97,6 +97,7 @@ struct esp_status {
     unsigned int active_footprint_split[N_MEM]; // 2 mem ctrl
 };
 
+void esp_status_init(void);
 int esp_driver_register(struct esp_driver *driver);
 void esp_driver_unregister(struct esp_driver *driver);
 int esp_device_register(struct esp_device *esp, struct platform_device *pdev);

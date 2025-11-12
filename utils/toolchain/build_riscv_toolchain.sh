@@ -10,15 +10,20 @@ ESP_ROOT=$(realpath ${SCRIPT_PATH}/../..)
 LINUXSRC=${ESP_ROOT}/soft/ariane/linux
 LINUX_VERSION=4.20.0
 export SYSROOT=${ESP_ROOT}/soft/ariane/sysroot
-RISCV_GNU_TOOLCHAIN_SHA_DEFAULT=afcc8bc655d30cf6af054ac1d3f5f89d0627aa79
+#RISCV_GNU_TOOLCHAIN_SHA_DEFAULT=3b011cffdce7f6041acfbc0cb94c5dec930b3ab1
+#RISCV_GNU_TOOLCHAIN_SHA_DEFAULT=afcc8bc655d30cf6af054ac1d3f5f89d0627aa79
+RISCV_GNU_TOOLCHAIN_SHA_DEFAULT=a33dac0251d17a7b74d99bd8fd401bfce87d2aed
 RISCV_GNU_TOOLCHAIN_SHA_PYTHON=2c037e631e27bc01582476f5b3c5d5e9e51489b8
-BUILDROOT_SHA_DEFAULT=d6fa6a45e196665d6607b522f290b1451b949c2c
+#BUILDROOT_SHA_DEFAULT=d6fa6a45e196665d6607b522f290b1451b949c2c # default
+BUILDROOT_SHA_DEFAULT=aa2d7ca53f704af901f6c33c13e4bb1591886700 # 2025.02
+#BUILDROOT_SHA_DEFAULT=d48a8beb39275a479185ab9b3232cd15dcfb87ab # 2022.11
+#BUILDROOT_SHA_DEFAULT=8cca1e6de1c69a0a5e876116906bb3f6da4a5bd5 # 2023.02
 BUILDROOT_SHA_PYTHON=fbff7d7289cc95db991184f890f4ca1fcf8a101e
 
 # A patch for buildroot RISCV64 with numpy enabled
 BUILDROOT_PATCH=${ESP_ROOT}/utils/toolchain/python-patches/python-numpy.patch
 
-DEFAULT_TARGET_DIR="/home/${USER}/riscv"
+DEFAULT_TARGET_DIR="${HOME}/riscv"
 TMP=${ESP_ROOT}/_riscv_build
 
 # Helper functions
@@ -100,7 +105,7 @@ fi
 
 # Remove and create temporary folder
 rm -rf $TMP
-mkdir $TMP
+mkdir -p $TMP
 cd $TMP
 
 git config --global url.https://.insteadOf git://
@@ -135,8 +140,9 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
     fi
 
     git reset --hard ${RISCV_GNU_TOOLCHAIN_SHA}
+    git rm dejagnu
     git submodule update --init --recursive
-    ./configure --prefix=${TARGET_DIR} --disable-gdb
+    ./configure --prefix=${TARGET_DIR} --disable-gdb --with-isa-spec=2.2 --enable-multilib --with-arch=rv64gcv --with-abi=lp64d --with-arch=rv64gcv --with-arch=rv64gc_zicsr_zifencei
     cmd="make -j ${NTHREADS}"
     runsudo ${TARGET_DIR} "$cmd"
 
@@ -155,12 +161,15 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
     fi
 
     git reset --hard ${RISCV_GNU_TOOLCHAIN_SHA}
+    git rm dejagnu
     git submodule update --init --recursive
-    ./configure --prefix=${TARGET_DIR} --disable-gdb
+    ./configure --prefix=${TARGET_DIR} --disable-gdb --with-isa-spec=2.2 --enable-multilib --with-arch=rv64gcv --with-abi=lp64d --with-arch=rv64imafdc --with-arch=rv64gc_zicsr_zifencei
     cmd="make linux -j ${NTHREADS}"
     runsudo ${TARGET_DIR} "$cmd"
 
 fi
+
+
 cd $TMP
 
 
@@ -176,11 +185,11 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
 
     if test -e $src; then
     	cd $src
-    	git checkout .
+      git checkout .
     	git pull
     else
-    	git clone https://git.buildroot.net/buildroot
-    	cd $src
+      git clone https://github.com/buildroot/buildroot
+      cd $src
     fi
 
 if [[ "$python_en" -eq 1 ]]; then       # python enable
@@ -189,13 +198,13 @@ if [[ "$python_en" -eq 1 ]]; then       # python enable
     git apply ${BUILDROOT_PATCH}
     make distclean
     make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_python_defconfig
-    make -j ${NTHREADS}
+    make -j ${NTHREADS} RISCV="${RISCV}"
 else                                    # default
     git reset --hard ${BUILDROOT_SHA}
     git submodule update --init --recursive
     make distclean
     make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_defconfig
-    make -j ${NTHREADS}
+    make -j ${NTHREADS} RISCV="${RISCV}"
 fi
 
     # Populate repository sysroot overlay w/ generated files (git ignores them)

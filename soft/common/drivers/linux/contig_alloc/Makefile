@@ -7,6 +7,10 @@ target: driver $(LIBCONTIG) contig_alloc-libtest
 
 include ../driver.mk
 
+include ./Kbuild
+ESPINCLUDE = $(EXTRA_CFLAGS)
+export ESPINCLUDE
+
 driver: check
 	ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) make -C $(KSRC) M=`pwd`
 

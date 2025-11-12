@@ -53,3 +53,5 @@
 [submodule "soft/common/drivers/common/utils/eigen"]
 	path = soft/common/drivers/common/utils/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "linux"]
+	url = git@github.com:michaelg29/linux

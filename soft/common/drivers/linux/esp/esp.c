@@ -30,6 +30,7 @@
 #include <asm/uaccess.h>
 
 #include <esp.h>
+#include <contig_alloc.h>
 
 #define PFX             "esp: "
 #define ESP_MAX_DEVICES 64
@@ -631,7 +632,8 @@ static int esp_sysfs_device_create(struct esp_driver *drv)
     const char *name = drv->plat.driver.name;
     int rc;
 
-    drv->class = class_create(drv->plat.driver.owner, name);
+    //drv->class = class_create(drv->plat.driver.owner, name);
+    drv->class = class_create(name);
     if (IS_ERR(drv->class)) {
         pr_err(PFX "Failed to create esp class\n");
         rc = PTR_ERR(drv->class);

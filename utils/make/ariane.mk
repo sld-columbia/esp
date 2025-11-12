@@ -116,26 +116,19 @@ $(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
 
 $(SOFT_BUILD)/sysroot:
 	@mkdir -p $(SOFT_BUILD)
-	$(QUIET_CP)cp -r $(SOFT)/sysroot $(SOFT_BUILD)
-
-$(SOFT_BUILD)/sysroot.files: $(SOFT_BUILD)/sysroot
-	@mkdir -p $(SOFT_BUILD)
-	$(QUIET_MAKE)$(MAKE) -C ${LINUXSRC}/usr gen_init_cpio
-	$(QUIET_INFO)echo "Generating root file-system list..."
-	@sh ${LINUXSRC}/usr/gen_initramfs_list.sh -u `id -u` -g `id -g` $< \
-	    | sed -e 's/^file \(\/bin\/busybox .*\) 755 0 0/file \1 4755 0 0/' \
-	    > $@;
-	@echo "nod /dev/console 622 0 0 c 5 1" >> $@
-	@touch $@
+	@$(QUIET_CP)cp -r $(SOFT)/sysroot $(SOFT_BUILD)
 
 
-$(SOFT_BUILD)/sysroot.cpio: $(SOFT_BUILD)/sysroot.files
-	$(QUIET_BUILD)${LINUXSRC}/usr/gen_init_cpio $< > $@
+$(SOFT_BUILD)/sysroot.cpio: $(SOFT_BUILD)/sysroot
+	@mkdir -p $(SOFT_BUILD); \
+	cd ${LINUXSRC}; \
+	$(MAKE) -C usr gen_init_cpio; \
+	bash ${LINUXSRC}/usr/gen_initramfs.sh -u 0 -g 0 -o $@ $<
 
 
 $(SOFT_BUILD)/linux-build/.config: $(LINUXSRC)/arch/$(ARCH)/configs/$(LINUX_CONFIG)
 	@$(MAKE) $(SOFT_BUILD)/linux-build
-	$(QUIET_MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE)  O=$(SOFT_BUILD)/linux-build -C ${LINUXSRC} $(LINUX_CONFIG)
+	$(QUIET_MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) O=$(SOFT_BUILD)/linux-build -C ${LINUXSRC} $(LINUX_CONFIG)
 
 
 $(SOFT_BUILD)/linux-build/vmlinux: $(SOFT_BUILD)/sysroot.cpio $(SOFT_BUILD)/linux-build/.config
