@@ -720,7 +720,7 @@ pbs_path=$1/socs/$2/partial_bitstreams;
 
 #This function parses the synthesis reports of accelerators to extract their resource requirements
 function parse_synth_report() {
-synth_report_base=$1/socs/$2/vivado_dpr/Synth;
+synth_report_base=$1/socs/$2/vivado_dfx/Synth;
 flora_input=$1/socs/$2/flora_input.csv;
 
 lut_keyword=LUTs*;
@@ -793,13 +793,17 @@ done
 
 function gen_floorplan() {
     src_dir=$1/socs/$2;
-    fplan_dir=$1/tools/dpr_tools/dpr_floor_planner;
+    if [ -d $CP_DIR ]; then
+      fplan_dir=$CP_DIR/implementation/floorplanner;
+    else
+      fplan_dir=$1/tools/dpr_tools/dpr_floor_planner;
+    fi
 
-    cd $fplan_dir;
+    pushd $fplan_dir;
     make flora FPGA=$TARGET_DEV;
     ./bin/flora $num_acc_tiles  $1/socs/$2/flora_input.csv $1/socs/$2/res_reqs.csv;
-    cp pblocks.xdc $1/socs/$2/vivado_dpr/pblocks.xdc;
-    cd $src_dir;
+    cp pblocks.xdc $1/socs/$2/vivado_dfx/pblocks.xdc;
+    popd;
 }
 
 function acc_fplan() {
@@ -849,7 +853,7 @@ echo "Writing to $dpr_report_tcl"
 echo "set tclParams [list hd.visual 1]" > $dpr_report_tcl;
 echo "set tclHome \"$tcl_dir\" ">> $dpr_report_tcl;
 echo "set tclDir \$tclHome " >> $dpr_report_tcl;
-echo "set projDir \"$1/socs/$2/vivado_dpr\" " >> $dpr_report_tcl;
+echo "set projDir \"$1/socs/$2/vivado_dfx\" " >> $dpr_report_tcl;
 echo "source \$tclDir/report_utils.tcl" >> $dpr_report_tcl;
 echo "" >> $dpr_report_tcl;
 
@@ -898,7 +902,7 @@ else
     echo "]" >> $dpr_report_tcl;
     echo "" >> $dpr_report_tcl;
 
-    pushd $1/socs/$2/vivado_dpr/Checkpoint
+    pushd $1/socs/$2/vivado_dfx/Checkpoint
 
     for f in acc_top_inst_*_route_design.dcp; do
         dcp=$(realpath $f)
@@ -929,7 +933,7 @@ else
 
     done
 
-    popd # $1/socs/$2/vivado_dpr/Checkpoint
+    popd # $1/socs/$2/vivado_dfx/Checkpoint
 fi
 }
 

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 BOARD_DIR ?= $(BOARD)
+CP_DIR ?= $(PWD)/../../tools/dpr_tools/composable-pat
 
 ### Constaints ###
 ifneq ("$(OVR_TECHLIB)","")
@@ -43,11 +44,18 @@ VIVADO_BATCH_OPT = -mode batch -quiet -notrace
 $(VIVADO_LOGS):
 	$(QUIET_MKDIR)mkdir -p $(VIVADO_LOGS)
 
+ifeq ($(DPR_ENABLED),y)
+
+vivado_dfx:
+	$(QUIET_MKDIR)mkdir -p vivado_dfx
+	@$(CP_DIR)/specification/create_design.sh $(DESIGN) $(PART)-$(PACKAGE)-$(SPEED)
+else
+vivado_dfx:
+endif
+
 vivado: $(VIVADO_LOGS)
 	$(QUIET_MKDIR)mkdir -p vivado
-	@if [ "$(DPR_ENABLED)" = "y" ]; then \
-		$(QUIET_MKDIR)mkdir -p vivado_dpr; \
-	fi;
+	$(MAKE) vivado_dfx
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 
@@ -355,6 +363,8 @@ vivado-syn: vivado-setup
 	@cd vivado; \
 	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../$(VIVADO_LOGS)/vivado_syn.log; \
 	cd ../;
+
+vivado-syn-2: vivado-setup
 	@if [ "$(DPR_ENABLED)" != "y" ]; then \
 		bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
 		if	test -r $$bit; then \
@@ -390,6 +400,7 @@ vivado-syn: vivado-setup
 		echo "close_project" >> static_config.tcl; \
 		echo "exit" >> static_config.tcl; \
 		echo $(SPACES)"DPR: Assembling sgmii and mig into static part"; \
+		exit; \
 		vivado $(VIVADO_BATCH_OPT) -source static_config.tcl | tee ../vivado_syn.log; \
 		echo $(SPACES)"DPR: creating Vivado dpr directory"; \
 		$(RM) vivado_dpr; \
@@ -554,4 +565,4 @@ vivado-dpr-clean:
 		*.csv \
 		static_config.tcl
 
-.PHONY: vivado-clean vivado-distclean vivado-syn vivado-prog-fpga vivado/$(DESIGN) vivado-setup vivado-gui vivado-dpr-clean
+.PHONY: vivado vivado_dfx vivado-clean vivado-distclean vivado-syn vivado-prog-fpga vivado/$(DESIGN) vivado-setup vivado-gui vivado-dpr-clean

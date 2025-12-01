@@ -185,6 +185,7 @@ class acc_info:
     id = -1
     idx = -1
     irq = 5
+    tile_id = -1
 
 
 class cache_info:
@@ -392,6 +393,7 @@ class soc_config:
                     acc.id = acc_id
                     acc.irq = acc_irq
                     acc.idx = SLD_APB_PINDEX + acc_id
+                    acc.tile_id = t
                     acc.vendor = soc.noc.topology[x][y].vendor
                     if acc.vendor != "sld":
                         self.nthirdparty += 1
@@ -658,7 +660,7 @@ def print_constants(fp, soc, esp_config):
                 CPU_CLK_PER = 1000000.0 / float(int(items[5].replace(";", "")))
                 top_fp.close()
                 break
-    fp.write("  constant CPU_CLK_PER : real := " + 
+    fp.write("  constant CPU_CLK_PER : real := " +
              str(round(CPU_CLK_PER,3)) + ";\n")
     fp.write("  constant CFG_CLK_STR : integer := " +
              str(soc.clk_str.get()) + ";\n")
@@ -3733,10 +3735,10 @@ def print_verilog_constants(fp, soc, esp_config):
 def create_profile(fp, esp_config, soc):
 
     # construct path to reports directory
-    report_dir = "../../vivado" # TODO vary based on technology
+    report_dir = "../../vivado_dfx" # TODO vary based on technology
+    report_dir_latency = report_dir + "/Reports/dfs_latency"
+    report_dir_power = report_dir + "/Reports/dfs_power"
     report_dir += "/Reports/dfs_viability"
-    # report_dir += "/Reports/dfs_latency"
-    # report_dir += "/Reports/dfs_power"
 
     # preamble
     fp.write("\n")
@@ -3755,22 +3757,15 @@ def create_profile(fp, esp_config, soc):
             acc_exists = False
 
             # check if partial bitstream exists (previous run)
-            if os.path.isfile("../../partial_bitstreams/" + fpath + ".bin"):
+            if os.path.isfile("../../vivado_dfx/Bitstreams/Static_" + fpath + "_partial.bit"):
                 print("Accelerator " + fpath + " exists from eligible bitstream")
                 acc_exists = True
 
             # check if in current configuration (current run)
-            idx = fpath.rfind("_")
-            acc_tile_id = 0
-            if idx != -1:
-                acc_name = fpath[0:idx]
-                acc_tile_id = int(fpath[idx+1:])
-
-                acc_y = acc_tile_id // soc.noc.cols
-                acc_x = acc_tile_id % soc.noc.cols
-                print("Tile ID is " + str(acc_tile_id) + " => x = " + str(acc_x) + ", y = " + str(acc_y))
-                acc_tile = soc.noc.topology[acc_y][acc_x]
-                if acc_tile.ip_type.get().lower() == acc_name:
+            tokens = fpath.split("_")
+            acc_name = "_".join(tokens[3:-1])
+            if n_acc_profiles < esp_config.nacc:
+                if esp_config.accelerators[n_acc_profiles].lowercase_name == acc_name:
                     print("Accelerator " + fpath + " exists in current config")
                     acc_exists = True
 
@@ -3796,30 +3791,37 @@ def create_profile(fp, esp_config, soc):
                     os.path.isfile(os.path.join(report_dir, f))
                     and f.rfind(".") == -1]
         remaining = len(files)
+        acc_id = 0
         for fpath in files:
 
             fp.write("    {\n")
 
             # write tile ID
-            fp.write("        " + str(acc_tile_id) + ",\n")
+            fp.write("        .tile_id = " + str(esp_config.accelerators[acc_id].tile_id) + ",\n")
 
-            # write viability
-            fp.write("        { ")
-            with open(os.path.join(report_dir, fpath), "r") as acc_fp:
-                line_idx = 0
-                for line in acc_fp:
-                    fp.write(line[0])
+            # write operating points
+            fp.write("        .op = { \n")
+            acc_fp = open(os.path.join(report_dir, fpath), "r")
+            power_fp = open(os.path.join(report_dir_power, fpath), "r")
+            line_idx = 0
+            for line, line_power in zip(acc_fp, power_fp):
+                fp.write("            { .viable = " + str(line[0]) +
+                    ", .power = " + str(line_power).strip() + " }")
 
-                    line_idx += 1
-                    if line_idx >= NFREQS:
-                        break
-                    fp.write(", ")
-            fp.write(" }\n")
+                line_idx += 1
+                if line_idx >= NFREQS:
+                    fp.write("\n")
+                    break
+                fp.write(",\n")
+            fp.write("        }\n")
+            acc_fp.close()
+            power_fp.close()
 
             fp.write("    }")
 
             # move to next accelerator
             remaining -= 1
+            acc_id += 1
             if remaining == 0:
                 fp.write("\n")
                 break

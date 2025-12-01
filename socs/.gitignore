@@ -6,11 +6,16 @@ logs
 *.bak
 *.jou
 vivado
-modelsim.ini
+vivado_dpr
+vivado_dfx
+design.tcl
+flora_input.csv
+res_reqs.csv
 *backup*
 xilinx_lib
 
 modelsim
+modelsim.ini
 questa
 vsim.mk
 *.wlf

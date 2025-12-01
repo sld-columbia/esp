@@ -59,3 +59,6 @@
 	path = tools/dpr_tools/dpr_floor_planner
 	url = https://github.com/michaelg29/FLORA
 	branch = master
+[submodule "tools/dpr_tools/composable-pat"]
+	path = tools/dpr_tools/composable-pat
+	url = https://github.com/michaelg29/composable-pat.git
