@@ -23,6 +23,7 @@ struct conf_info_t {
         int32_t n_channels;
         int32_t stride;
         int32_t is_relu;
+        // addr* are DATA_WIDTH word offsets into DMA memory.
         int32_t addrB;
         int32_t addrO;
         int32_t addrI;

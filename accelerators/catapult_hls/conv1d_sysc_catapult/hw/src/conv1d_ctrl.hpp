@@ -86,9 +86,10 @@ public:
     void load(uint32_t dma_ld_addr, uint32_t dma_ld_size, uint32_t plm_addr_offset, SharedArray2D& plm, const uint32_t num_banks, const uint32_t elems_per_bank) {
         uint32_t dma_beats = (dma_ld_size + DMA_WORD_PER_BEAT - 1) / DMA_WORD_PER_BEAT;
         dma_info_t dma_req;
-        dma_req.index = dma_ld_addr;
+        dma_req.index = dma_ld_addr / DMA_WORD_PER_BEAT;
         dma_req.length = dma_beats;
-        dma_req.size = (DMA_WIDTH/8) - 1;
+        dma_req.size = DMA_SIZE;
+        dma_req.user = 0;
         dma_read_ctrl.Push(dma_req);
 
         for (uint32_t i = 0; i < dma_beats; ++i) {
@@ -106,9 +107,10 @@ public:
     void store(uint32_t dma_st_addr, uint32_t dma_st_size, uint32_t plm_addr_offset, SharedArray2D& plm, const uint32_t num_banks, const uint32_t elems_per_bank) {
         uint32_t dma_beats = (dma_st_size + DMA_WORD_PER_BEAT - 1) / DMA_WORD_PER_BEAT;
         dma_info_t dma_req;
-        dma_req.index = dma_st_addr;
+        dma_req.index = dma_st_addr / DMA_WORD_PER_BEAT;
         dma_req.length = dma_beats;
-        dma_req.size = (DMA_WIDTH/8) - 1;
+        dma_req.size = DMA_SIZE;
+        dma_req.user = 0;
         dma_write_ctrl.Push(dma_req);
 
         for (uint32_t i = 0; i < dma_beats; ++i) {
@@ -139,7 +141,6 @@ public:
             uint32_t w_iter = config.n_filters / VEC_LEN;
             uint32_t input_size = config.feature_map_len * config.n_channels;
             uint32_t weights_per_filter_size = config.kernel_size * config.n_channels;
-            const uint32_t bytes_per_word = DATA_WIDTH / 8;
             load(config.addrI, input_size, 0, plm_in_ping, bks, ebks);
 
             for (uint32_t w_i = 0; w_i < w_iter; ++w_i) {
@@ -147,8 +148,8 @@ public:
                     st2ld_sync.Pop();
                 uint32_t current_weights_size = weights_per_filter_size * VEC_LEN;
                 uint32_t current_bias_size = VEC_LEN;
-                uint32_t weights_dma_addr = config.addrW + (w_i * current_weights_size * bytes_per_word);
-                uint32_t bias_dma_addr = config.addrB + (w_i * current_bias_size * bytes_per_word);
+                uint32_t weights_dma_addr = config.addrW + (w_i * current_weights_size);
+                uint32_t bias_dma_addr = config.addrB + (w_i * current_bias_size);
                 load(weights_dma_addr, current_weights_size, 0, plm_weight_ping, bks, ebks);
                 load(bias_dma_addr, current_bias_size, 0, plm_bias_ping, bks, ebks);
                 ld2com_sync.Push(1);
@@ -275,12 +276,10 @@ public:
             conf_info_t config = conf_info_acc2dma.Pop();
             uint32_t w_iter = config.n_filters / VEC_LEN;
             uint32_t output_len = config.feature_map_len / config.stride;
-            const uint32_t bytes_per_word = DATA_WIDTH / 8;
-
             for (uint32_t w_i = 0; w_i < w_iter; ++w_i) {
                 com2st_sync.Pop();
                 uint32_t current_output_size = output_len * VEC_LEN;
-                uint32_t output_dma_addr = config.addrO + (w_i * current_output_size * bytes_per_word);
+                uint32_t output_dma_addr = config.addrO + (w_i * current_output_size);
                 store(output_dma_addr, current_output_size, 0, plm_out_ping, bks, ebks);
                 st2ld_sync.Push(1);
             }

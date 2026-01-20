@@ -9,6 +9,8 @@
 #include <nvhls_int.h>
 #include <nvhls_types.h>
 #include <nvhls_vector.h>
+#include <sstream>
+#include "auto_gen_port_info.h"
 #include "conv1d_conf_info.hpp"
 #include "esp_dma_info_sysc.hpp"
 #include <ArbitratedScratchpadDP.h>
@@ -94,6 +96,10 @@ typedef ac_fixed<FPDATA_WL, FPDATA_IL, true, AC_RND, AC_SAT> FPDATA;
 template<typename T, int N>
 struct array_t {
     T data[N];
+
+    AUTO_GEN_FIELD_METHODS(array_t, ( \
+        data \
+    ))
 
     inline bool operator==(const array_t<T,N> &other) const {
         for(int i=0; i<N; i++) {
