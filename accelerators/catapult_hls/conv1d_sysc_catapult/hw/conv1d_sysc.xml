@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="conv1d_sysc" desc="Accelerator CONV1D" data_size="100663296" device_id="099" hls_tool="catapult_hls_sysc">
+    <param name="padding" desc="padding" />
+    <param name="feature_map_len" desc="feature_map_len" />
+    <param name="n_filters" desc="n_filters" />
+    <param name="batch_size" desc="batch_size" />
+    <param name="addrW" desc="addrW" />
+    <param name="addrI" desc="addrI" />
+    <param name="addrO" desc="addrO" />
+    <param name="addrB" desc="addrB" />
+    <param name="is_relu" desc="is_relu" />
+    <param name="stride" desc="stride" />
+    <param name="n_channels" desc="n_channels" />
+    <param name="kernel_size" desc="kernel_size" />
+  </accelerator>
+</sld>
