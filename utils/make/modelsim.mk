@@ -26,12 +26,55 @@ endif
 VSIMOPT += -uvmcontrol=disable -suppress 3009,2685,2718 -t fs
 VSIMOPT += +notimingchecks
 VSIMOPT += $(SIMTOP) $(EXTRA_SIMTOP)
+VSIMOPT += -modelsimini modelsim.ini
+
+SIM_LIBDIR ?= $(abspath $(RTL_CFG_BUILD)/sim_libs)
+
+ACC_TECH_ROOT := $(ESP_ROOT)/tech/$(TECHLIB)/acc
+ACC_TECH_PRESENT := $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_ROOT)/*)),$(RTL_ACC)))
+ACC_LIBS := $(addsuffix _lib,$(ACC_TECH_PRESENT))
+ACC_LIB_OPT := $(foreach lib,$(ACC_LIBS),-L $(lib))
+ACC_MODELSIM_DEFS ?= +define+MODELSIM
+ACC_MODELSIM_VLOGOPT ?= -override_timescale 1ns/1ps
+
+SIM_VLOG_SRCS_ALL := $(SIM_VLOG_SRCS)
+
+ifneq ($(ACC_TECH_PRESENT),)
+SIM_VLOG_SRCS := $(filter-out $(ACC_TECH_ROOT)/%,$(SIM_VLOG_SRCS))
+endif
 
 VLIB = vlib
 VCOM = vcom -quiet -93 $(VCOMOPT)
 VLOG = vlog -sv -quiet $(VLOGOPT)
 VSIM = VSIMOPT='$(VSIMOPT)' TECHLIB=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) vsim $(VSIMOPT)
 
+VSIMOPT += -L work $(ACC_LIB_OPT)
+
+define DEFINE_MODELSIM_ACC
+ACC_$(1)_NAME := $(1)
+ACC_$(1)_LIB := $(1)_lib
+ACC_$(1)_TECH_DIR := $(ACC_TECH_ROOT)/$(1)
+ACC_$(1)_SRC_BASE := $(ESP_ROOT)/accelerators/rtl/$(1)
+ACC_$(1)_RTL_DIR := $(ACC_$(1)_SRC_BASE)
+
+ACC_$(1)_PKG_DIR := $(ACC_$(1)_TECH_DIR)/vlog_incdir
+ACC_$(1)_VENDOR_PKG_DIR := $(ESP_ROOT)/accelerators/rtl/$(1)/vlog_incdir
+endef
+$(foreach acc,$(ACC_TECH_PRESENT),$(eval $(call DEFINE_MODELSIM_ACC,$(acc))))
+
+define DEFINE_MODELSIM_ACC_FLIST_RULES
+ifneq ($$(ACC_$(1)_FILELIST_SV_ABS),)
+$(ACC_$(1)_FILELIST_SV_ABS): $(ACC_$(1)_FILELIST_SV) | $(RTL_CFG_BUILD)
+	@awk -v base="$(ACC_$(1)_SRC_BASE)/vendor/" 'BEGIN {} /^[[:space:]]*#/ || NF==0 {print; next} /^\+incdir\+/ {sub(/^\+incdir\+/, "+incdir+" base); print; next} {print base $$0}' $$< > $$@
+endif
+ifneq ($$(ACC_$(1)_FILELIST_V_ABS),)
+$(ACC_$(1)_FILELIST_V_ABS): $(ACC_$(1)_FILELIST_V) | $(RTL_CFG_BUILD)
+	@awk -v base="$(ACC_$(1)_SRC_BASE)/vendor/" 'BEGIN {} /^[[:space:]]*#/ || NF==0 {print; next} /^\+incdir\+/ {sub(/^\+incdir\+/, "+incdir+" base); print; next} {print base $$0}' $$< > $$@
+endif
+endef
+$(foreach acc,$(ACC_TECH_PRESENT),$(eval $(call DEFINE_MODELSIM_ACC_FLIST_RULES,$(acc))))
+
+MODELSIM_ACC_LIB_TARGETS := $(foreach acc,$(ACC_TECH_PRESENT),modelsim-accel-$(acc))
 
 ### Xilinx Simulation libs targets ###
 $(ESP_ROOT)/.cache/modelsim/xilinx_lib:
@@ -53,6 +96,93 @@ $(ESP_ROOT)/.cache/modelsim/xilinx_lib:
 	sed -i '/\[msg_system\]/a suppress = 8780,8891,1491,12110\nwarning = 8891' modelsim.ini; \
 	cd ../;
 
+$(SIM_LIBDIR):
+	$(QUIET_MKDIR)mkdir -p $@
+
+modelsim-libs: modelsim/modelsim.ini $(SIM_LIBDIR)
+	@cd modelsim; \
+	for lib in $(ACC_LIBS); do \
+		if test -n "$$lib"; then \
+			if ! test -e $(SIM_LIBDIR)/$$lib; then \
+				vlib -type directory $(SIM_LIBDIR)/$$lib; \
+			fi; \
+			vmap $$lib $(SIM_LIBDIR)/$$lib; \
+		fi; \
+	done
+
+define MODELSIM_ACC_LIB_RULE
+modelsim-accel-$(1): modelsim-libs $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST)
+	@cd modelsim; \
+	if ! test -e $(SIM_LIBDIR)/$$(ACC_$(1)_LIB); then \
+		vlib -type directory $(SIM_LIBDIR)/$$(ACC_$(1)_LIB); \
+	fi; \
+	vmap $$(ACC_$(1)_LIB) $(SIM_LIBDIR)/$$(ACC_$(1)_LIB); \
+	\
+	rm -f $$(ACC_$(1)_LIB).f; \
+	\
+	for opt in $(ACC_MODELSIM_DEFS) $(ACC_MODELSIM_VLOGOPT); do \
+		echo "$$$$opt" >> $$(ACC_$(1)_LIB).f; \
+	done; \
+	\
+	if test -d "$$(ACC_$(1)_PKG_DIR)"; then \
+		find -L "$$(ACC_$(1)_PKG_DIR)" -type d | sort | while read dir; do \
+			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).f; \
+		done; \
+	fi; \
+	if test -d "$$(ACC_$(1)_VENDOR_PKG_DIR)"; then \
+		find -L "$$(ACC_$(1)_VENDOR_PKG_DIR)" -type d | sort | while read dir; do \
+			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).f; \
+		done; \
+	fi; \
+	if test -d "$$(ACC_$(1)_TECH_DIR)"; then \
+		find -L "$$(ACC_$(1)_TECH_DIR)" -type d -name "include" | sort | while read dir; do \
+			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).f; \
+		done; \
+	fi; \
+	if test -d "$$(ACC_$(1)_RTL_DIR)"; then \
+		find -L "$$(ACC_$(1)_RTL_DIR)" -type d -name "include" | sort | while read dir; do \
+			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).f; \
+		done; \
+		find -L "$$(ACC_$(1)_RTL_DIR)" -name "*.svh" -exec dirname {} \; | sort -u | while read dir; do \
+			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).f; \
+		done; \
+	fi; \
+	\
+	if test -d "$$(ACC_$(1)_PKG_DIR)"; then \
+		find -L $$(ACC_$(1)_PKG_DIR) -type f -name "*.sv" >> $$(ACC_$(1)_LIB).f; \
+	fi; \
+	if test -d "$$(ACC_$(1)_VENDOR_PKG_DIR)"; then \
+		find -L $$(ACC_$(1)_VENDOR_PKG_DIR) -type f -name "*.sv" >> $$(ACC_$(1)_LIB).f; \
+	fi; \
+	\
+	if test -d $$(ACC_$(1)_TECH_DIR); then \
+		find -L $$(ACC_$(1)_TECH_DIR) -type f \( -name "*.sv" -o -name "*.v" \) \
+			! -path "*/vlog_incdir/*" >> $$(ACC_$(1)_LIB).f; \
+	fi; \
+	\
+	DIR="$(ACC_$(1)_SRC_BASE)"; \
+	VENDOR_DIR="$$$$DIR/vendor/"; \
+	FILES=$$$$(ls $$$$DIR/*.sverilog $$$$DIR/*.verilog 2>/dev/null); \
+	if [ -n "$$$$FILES" ]; then \
+		for fl in $$$$FILES; do \
+			awk -v base="$$$$VENDOR_DIR" ' \
+				BEGIN { } \
+				/^[[:space:]]*$$$$/ { next } \
+				/^[[:space:]]*\/\// { next } \
+				/^[[:space:]]*#/ { next } \
+				/^\+incdir\+/ { sub(/^\+incdir\+/, "+incdir+" base); print; next } \
+				{ print base $$$$0 } \
+			' "$$$$fl" >> $$(ACC_$(1)_LIB).f; \
+		done; \
+	fi; \
+	\
+	if test -s $$(ACC_$(1)_LIB).f; then \
+		echo $(SPACES)"vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(ACC_$(1)_LIB) -f $$(ACC_$(1)_LIB).f"; \
+		vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(ACC_$(1)_LIB) -f $$(ACC_$(1)_LIB).f || exit 1; \
+	fi
+endef
+$(foreach acc,$(ACC_TECH_PRESENT),$(eval $(call MODELSIM_ACC_LIB_RULE,$(acc))))
+
 modelsim/modelsim.ini: $(ESP_ROOT)/.cache/modelsim/xilinx_lib
 	$(QUIET_MAKE)mkdir -p modelsim
 	@cp $(ESP_ROOT)/.cache/modelsim/modelsim.ini $@
@@ -62,7 +192,7 @@ modelsim/modelsim.ini: $(ESP_ROOT)/.cache/modelsim/xilinx_lib
 # Note that vmake fails to find unisim.vcomponents, however produces the correct
 # makefile for future compilation and all components are properly bound in simulation.
 # Please keep 2> /dev/null until the bug is fixed with a newer Modelsim release.
-modelsim/vsim.mk: modelsim/modelsim.ini $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST)
+modelsim/vsim.mk: modelsim/modelsim.ini $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST) modelsim-libs $(MODELSIM_ACC_LIB_TARGETS)
 	@cd modelsim; \
 	if ! test -e profpga; then \
 		vlib -type directory profpga; \
@@ -100,7 +230,7 @@ endif
 	echo $(SPACES)"### Compile Verilog source files ###"; \
 		for rtl in $(SIM_VLOG_SRCS); do \
 			echo $(SPACES)"$(VLOG) -work work $$rtl"; \
-			$(VLOG) -work work $$rtl || exit; \
+			$(VLOG) -work work $(ACC_LIB_OPT) $$rtl || exit; \
 		done;
 ifneq ("$(wildcard $(ESP_ROOT)/rtl/peripherals/bsg/.git)", "")
 	@echo $(SPACES)"### Compile BSG Verilog source files ###";
@@ -143,7 +273,7 @@ sim-clean:
 sim-distclean: sim-clean
 	$(QUIET_CLEAN)rm -rf modelsim
 
-.PHONY: sim sim-gui sim-compile sim-clean sim-distclean
+.PHONY: sim sim-gui sim-compile sim-clean sim-distclean modelsim-libs $(MODELSIM_ACC_LIB_TARGETS)
 
 
 

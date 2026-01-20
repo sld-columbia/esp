@@ -16,6 +16,13 @@ endif
 
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+
+ACC_TECH_DIR   := $(ESP_ROOT)/tech/$(TECHLIB)/acc
+ACC_VHDL_SRCS  := $(filter $(ACC_TECH_DIR)/%,$(VHDL_SRCS))
+ACC_VLOG_SRCS  := $(filter $(ACC_TECH_DIR)/%,$(VLOG_SRCS))
+BASE_VHDL_SRCS := $(filter-out $(ACC_VHDL_SRCS),$(VHDL_SRCS))
+BASE_VLOG_SRCS := $(filter-out $(ACC_VLOG_SRCS),$(VLOG_SRCS))
+
 XDC   = $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX).xdc
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mig-pins.xdc
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mig-constraints.xdc
@@ -62,12 +69,86 @@ endif
 	@for rtl in $(VHDL_PKGS); do \
 		echo "read_vhdl $$rtl" >> $@; \
 	done;
-	@for rtl in $(VHDL_SRCS); do \
+	@for rtl in $(BASE_VHDL_SRCS); do \
 		echo "read_vhdl $$rtl" >> $@; \
 	done;
-	@for rtl in $(VLOG_SRCS); do \
+	@for rtl in $(BASE_VLOG_SRCS); do \
 		echo "read_verilog -sv $$rtl" >> $@; \
 	done;
+	@if test -d $(ACC_TECH_DIR); then \
+		for accdir in $(ACC_TECH_DIR)/*; do \
+			if test -d "$$accdir"; then \
+				accname=`basename "$$accdir"`; \
+				acclib=acc_`echo $$accname | sed 's/[^A-Za-z0-9_]/_/g'`; \
+				accsrc="$(ESP_ROOT)/accelerators/rtl/$$accname"; \
+				incroot="$$accsrc/vlog_incdir"; \
+				echo "# Accelerator $$accname (library $$acclib)" >> $@; \
+				vendbn=$$(mktemp); vendbn_u=$$(mktemp); vendcmds=$$(mktemp); \
+				: > $$vendbn; : > $$vendcmds; : > $$vendbn_u; \
+				if test -d "$$incroot"; then \
+					incdirs=`find "$$incroot" -type d`; \
+					echo "set_property include_dirs [concat {$$incdirs} [get_property include_dirs [get_filesets sources_1]]] [get_filesets sources_1]" >> $@; \
+					echo "set_property include_dirs [concat {$$incdirs} [get_property include_dirs [get_filesets sim_1]]] [get_filesets sim_1]" >> $@; \
+				fi; \
+				hasflist=0; \
+				for fl in "$$accsrc"/*.sverilog "$$accsrc"/*.verilog; do \
+					if test -f "$$fl"; then hasflist=1; break; fi; \
+				done; \
+				for rtl in `find "$$accdir" -type f \( -name "*.vhd" -o -name "*.vhdl" \)`; do \
+					echo "read_vhdl -library $$acclib $$rtl" >> $@; \
+				done; \
+				if test $$hasflist -eq 1; then \
+					echo "# Vendor include dirs and sources from ordered filelists" >> $@; \
+					for fl in "$$accsrc"/*.sverilog "$$accsrc"/*.verilog; do \
+						if test -f "$$fl"; then \
+							svopt=""; \
+							case "$$fl" in *.sverilog) svopt="-sv" ;; esac; \
+							while IFS= read -r p; do \
+								p=`printf "%s" "$$p" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$$//'`; \
+								case "$$p" in \
+									""|\#*) continue ;; \
+									+incdir+*) \
+										dirs=`printf "%s" "$$p" | sed 's/^+incdir+//; s/+/ /g'`; \
+										for d in $$dirs; do \
+											d="$(ESP_ROOT)/accelerators/rtl/$$accname/vendor/$$d"; \
+											echo "set_property include_dirs [concat {$$d} [get_property include_dirs [get_filesets sources_1]]] [get_filesets sources_1]" >> $@; \
+											echo "set_property include_dirs [concat {$$d} [get_property include_dirs [get_filesets sim_1]]] [get_filesets sim_1]" >> $@; \
+										done; \
+										continue ;; \
+								esac; \
+								f="$(ESP_ROOT)/accelerators/rtl/$$accname/vendor/$$p"; \
+								if test -f "$$f"; then \
+									echo "$$(basename "$$f")" >> $$vendbn; \
+									echo "read_verilog -library $$acclib $$svopt $$f" >> $$vendcmds; \
+								else \
+									echo "ERROR missing vendor source $$f (from $$fl)" 1>&2; \
+									rm -f $$vendbn $$vendbn_u $$vendcmds; \
+									exit 1; \
+								fi; \
+							done < "$$fl"; \
+						fi; \
+					done; \
+					if test -s $$vendbn; then sort -u $$vendbn > $$vendbn_u; fi; \
+				fi; \
+				if test -d "$$incroot"; then \
+					echo "# SV packages and helpers from vlog_incdir (skip duplicates provided by vendor filelists)" >> $@; \
+					for pkg in `find "$$incroot" -type f -name "*.sv" | sort`; do \
+						bn=$$(basename "$$pkg"); \
+						if test -s $$vendbn_u && grep -qx "$$bn" $$vendbn_u; then \
+							continue; \
+						fi; \
+						echo "read_verilog -library $$acclib -sv $$pkg" >> $@; \
+					done; \
+				fi; \
+				if test -s $$vendcmds; then cat $$vendcmds >> $@; fi; \
+				rm -f $$vendbn $$vendbn_u $$vendcmds; \
+				echo "# Wrapper RTL from tech folder" >> $@; \
+				for rtl in `find "$$accdir" -type f \( -name "*.v" -o -name "*.sv" \)`; do \
+					echo "read_verilog -library $$acclib -sv $$rtl" >> $@; \
+				done; \
+			fi; \
+		done; \
+	fi;
 	@for dat in $(DAT_SRCS); do \
 		echo "add_files $$dat" >> $@; \
 	done;
