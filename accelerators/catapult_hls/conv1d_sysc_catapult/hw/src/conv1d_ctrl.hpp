@@ -178,26 +178,26 @@ public:
         wait();
         while (true) {
             conf_info_t config = conf_info_plm2vec.Pop();
-            int32_t kernel_size = static_cast<int32_t>(config.kernel_size);
-            int32_t n_channels = static_cast<int32_t>(config.n_channels);
-            int32_t stride = static_cast<int32_t>(config.stride);
-            int32_t feature_map_len = static_cast<int32_t>(config.feature_map_len);
-            int32_t n_filters = static_cast<int32_t>(config.n_filters);
-            act_mode_t act_mode = static_cast<act_mode_t>(config.is_relu);
+            int32_t kernel_size = config.kernel_size;
+            int32_t n_channels = config.n_channels;
+            int32_t stride = config.stride;
+            int32_t feature_map_len = config.feature_map_len;
+            int32_t n_filters = config.n_filters;
+            act_mode_t act_mode = config.is_relu;
 
-            uint32_t w_iter = static_cast<uint32_t>(n_filters / VEC_LEN);
+            uint32_t w_iter = n_filters / VEC_LEN;
             ac_int<32, false> ac_feature_map_len = feature_map_len;
             ac_int<32, false> ac_stride = stride;
             ac_int<32, false> ac_output_len;
             ac_math::ac_div(ac_feature_map_len, ac_stride, ac_output_len);
             uint32_t output_len = ac_output_len.to_uint();
-            int32_t pad_needed = (static_cast<int32_t>(output_len) - 1) * stride + kernel_size - feature_map_len;
+            int32_t pad_needed = (output_len - 1) * stride + kernel_size - feature_map_len;
             int32_t pad_left = (pad_needed > 0) ? pad_needed / 2 : 0;
             
             for (uint32_t w_i = 0; w_i < w_iter; ++w_i) {
                 ld2com_sync.Pop();
                 for (uint32_t l_out = 0; l_out < output_len; ++l_out) {
-                    int32_t l_in_start = static_cast<int32_t>(l_out) * stride - pad_left;
+                    int32_t l_in_start = l_out * stride - pad_left;
 
                     array_t<FPDATA, VEC_LEN> current_bias_vec;
                     #pragma hls_unroll yes
@@ -218,7 +218,7 @@ public:
                         if (l_in >= 0 && l_in < feature_map_len) {
                             for (int32_t c_in_idx = 0; c_in_idx < n_channels; ++c_in_idx) {
                                 array_t<FPDATA, VEC_LEN> v_in, v_w, v_p, v_o;
-                                uint32_t input_plm_idx = static_cast<uint32_t>(l_in * n_channels + c_in_idx);
+                                uint32_t input_plm_idx = l_in * n_channels + c_in_idx;
                                 ac_int<FPDATA_WL, true> in_val = (ac_int<FPDATA_WL, true>)plm_in_ping[input_plm_idx % bks][input_plm_idx / bks];
                                 #pragma hls_unroll yes
                                 for (int v_idx = 0; v_idx < VEC_LEN; ++v_idx) {
@@ -227,10 +227,8 @@ public:
 
                                 #pragma hls_unroll yes
                                 for (int v_idx = 0; v_idx < VEC_LEN; ++v_idx) {
-                                    // Weight layout in memory is filter-major (f, c, k).
-                                    // Re-index into PLM accordingly so each lane grabs its filter.
-                                    uint32_t w_plm_idx = static_cast<uint32_t>(v_idx * n_channels * kernel_size +
-                                                         (c_in_idx * kernel_size) + k_idx);
+                                    uint32_t w_plm_idx = v_idx * n_channels * kernel_size +
+                                                         (c_in_idx * kernel_size) + k_idx;
                                     ac_int<FPDATA_WL, true> weight_val = (ac_int<FPDATA_WL, true>)plm_weight_ping[w_plm_idx % bks][w_plm_idx / bks];
                                     int2fx(weight_val, v_w.data[v_idx]);
                                 }
@@ -252,7 +250,6 @@ public:
                     array_t<FPDATA, VEC_LEN> activated_output = data_out_bias_itcn.Pop();
                     #pragma hls_unroll yes
                     for (int v_idx = 0; v_idx < VEC_LEN; ++v_idx) {
-                        // Store outputs in filter-major order: each filter's outputs are contiguous.
                         uint32_t out_plm_idx = (v_idx * output_len) + l_out;
                         ac_int<FPDATA_WL, true> out_val;
                         fx2int(activated_output.data[v_idx], out_val);
