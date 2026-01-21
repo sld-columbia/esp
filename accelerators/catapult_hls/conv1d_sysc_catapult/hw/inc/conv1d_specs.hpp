@@ -100,28 +100,6 @@ struct array_t {
     AUTO_GEN_FIELD_METHODS(array_t, ( \
         data \
     ))
-
-    inline bool operator==(const array_t<T,N> &other) const {
-        for(int i=0; i<N; i++) {
-            if(data[i] != other.data[i]) return false;
-        }
-        return true;
-    }
-
-    inline friend std::ostream &operator<<(std::ostream &os, const array_t<T,N> &v) {
-        os << "[";
-        for(int i=0; i<N; i++) os << v.data[i] << (i==N-1 ? "" : ", ");
-        os << "]";
-        return os;
-    }
-
-    inline friend void sc_trace(sc_trace_file *tf, const array_t<T,N> &v, const std::string &NAME) {
-        for(int i=0; i<N; i++) {
-            std::stringstream ss;
-            ss << NAME << ".data_" << i;
-            sc_trace(tf, v.data[i], ss.str());
-        }
-    }
 };
 
 #endif

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
-  <accelerator name="conv1d_sysc" desc="Accelerator CONV1D" data_size="100663296" device_id="099" hls_tool="catapult_hls_sysc">
+  <accelerator name="conv1d_sysc" desc="Accelerator CONV1D" data_size="96" device_id="099" hls_tool="catapult_hls_sysc">
     <param name="padding" desc="padding" />
     <param name="feature_map_len" desc="feature_map_len" />
     <param name="n_filters" desc="n_filters" />

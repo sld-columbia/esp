@@ -5,6 +5,7 @@
 #include <nvhls_int.h>
 #include <nvhls_connections.h>
 #include <ac_shared_bank_array.h>
+#include <ac_math.h>
 
 #include "../inc/conv1d_conf_info.hpp"
 #include "../inc/conv1d_specs.hpp"
@@ -189,7 +190,11 @@ public:
             int32_t n_filters = static_cast<int32_t>(config.n_filters);
 
             uint32_t w_iter = static_cast<uint32_t>(n_filters / VEC_LEN);
-            uint32_t output_len = static_cast<uint32_t>(feature_map_len / stride);
+            ac_int<32, false> ac_feature_map_len = feature_map_len;
+            ac_int<32, false> ac_stride = stride;
+            ac_int<32, false> ac_output_len;
+            ac_math::ac_div(ac_feature_map_len, ac_stride, ac_output_len);
+            uint32_t output_len = ac_output_len.to_uint();
             int32_t pad_needed = (static_cast<int32_t>(output_len) - 1) * stride + kernel_size - feature_map_len;
             int32_t pad_left = (pad_needed > 0) ? pad_needed / 2 : 0;
             
@@ -275,7 +280,11 @@ public:
         while (true) {
             conf_info_t config = conf_info_acc2dma.Pop();
             uint32_t w_iter = config.n_filters / VEC_LEN;
-            uint32_t output_len = config.feature_map_len / config.stride;
+            ac_int<32, false> ac_feature_map_len = config.feature_map_len;
+            ac_int<32, false> ac_stride = config.stride;
+            ac_int<32, false> ac_output_len;
+            ac_math::ac_div(ac_feature_map_len, ac_stride, ac_output_len);
+            uint32_t output_len = ac_output_len.to_uint();
             for (uint32_t w_i = 0; w_i < w_iter; ++w_i) {
                 com2st_sync.Pop();
                 uint32_t current_output_size = output_len * VEC_LEN;
