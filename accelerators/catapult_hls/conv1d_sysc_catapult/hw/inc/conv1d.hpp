@@ -32,6 +32,7 @@ public:
     Connections::Combinational<conf_info_t> CCS_INIT_S1(conf_info_dma2acc);
     Connections::Combinational<conf_info_t> CCS_INIT_S1(conf_info_plm2vec);
     Connections::Combinational<conf_info_t> CCS_INIT_S1(conf_info_acc2dma);
+    Connections::Combinational<act_mode_t>  CCS_INIT_S1(act_mode_itcn);
 
     // To VectorEngine
     Connections::Combinational<array_t<FPDATA, VEC_LEN>> CCS_INIT_S1(vec_in);
@@ -90,6 +91,7 @@ public:
         ctrl_inst.data_in_bias_itcn(data_in_bias);
         ctrl_inst.data_bias_itcn(data_bias);
         ctrl_inst.data_out_bias_itcn(data_out_bias);
+        ctrl_inst.act_mode_itcn(act_mode_itcn);
 
         // Connect VectorEngine
         vec_inst.clk(clk);
@@ -105,6 +107,7 @@ public:
         bias_inst.data_in_itcn(data_in_bias);
         bias_inst.data_bias_itcn(data_bias);
         bias_inst.data_out_itcn(data_out_bias);
+        bias_inst.act_mode_itcn(act_mode_itcn);
     }
 };
 

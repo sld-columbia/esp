@@ -35,6 +35,7 @@ public:
     Connections::Out<array_t<FPDATA, VEC_LEN>> CCS_INIT_S1(data_in_bias_itcn);
     Connections::Out<array_t<FPDATA, VEC_LEN>> CCS_INIT_S1(data_bias_itcn);
     Connections::In<array_t<FPDATA, VEC_LEN>>  CCS_INIT_S1(data_out_bias_itcn);
+    Connections::Out<act_mode_t>               CCS_INIT_S1(act_mode_itcn);
 
     Connections::Combinational<int32_t> CCS_INIT_S1(ld2com_sync);
     Connections::Combinational<int32_t> CCS_INIT_S1(com2st_sync);
@@ -61,10 +62,11 @@ public:
         vec_in_itcn("vec_in_itcn"), 
 		vec_weight_itcn("vec_weight_itcn"), 
 		vec_psum_itcn("vec_psum_itcn"), 
-		vec_out_itcn("vec_out_itcn"),
+        vec_out_itcn("vec_out_itcn"),
         data_in_bias_itcn("data_in_bias_itcn"), 
 		data_bias_itcn("data_bias_itcn"), 
 		data_out_bias_itcn("data_out_bias_itcn"),
+        act_mode_itcn("act_mode_itcn"),
         ld2com_sync("ld2com_sync"), 
 		com2st_sync("com2st_sync"), 
 		st2ld_sync("st2ld_sync")
@@ -157,14 +159,6 @@ public:
             }
         }
     }
-    
-    void int2fx(const ac_int<FPDATA_WL, true> in, FPDATA &out) {
-        out.set_slc(0, in.template slc<FPDATA_WL>(0));
-    }
-
-    void fx2int(const FPDATA in, ac_int<FPDATA_WL, true> &out) {
-        out.set_slc(0, in.template slc<FPDATA_WL>(0));
-    }
 
     // Process 2: Compute Data (MAC + Bias + Activation)
     void plm2vec() {
@@ -176,6 +170,7 @@ public:
         data_in_bias_itcn.Reset();
         data_bias_itcn.Reset();
         data_out_bias_itcn.Reset();
+        act_mode_itcn.Reset();
         
 		ld2com_sync.ResetRead();
         com2st_sync.ResetWrite();
@@ -188,6 +183,7 @@ public:
             int32_t stride = static_cast<int32_t>(config.stride);
             int32_t feature_map_len = static_cast<int32_t>(config.feature_map_len);
             int32_t n_filters = static_cast<int32_t>(config.n_filters);
+            act_mode_t act_mode = static_cast<act_mode_t>(config.is_relu);
 
             uint32_t w_iter = static_cast<uint32_t>(n_filters / VEC_LEN);
             ac_int<32, false> ac_feature_map_len = feature_map_len;
@@ -252,6 +248,7 @@ public:
                     }
                     data_in_bias_itcn.Push(acc_vec);
                     data_bias_itcn.Push(current_bias_vec);
+                    act_mode_itcn.Push(act_mode);
                     array_t<FPDATA, VEC_LEN> activated_output = data_out_bias_itcn.Pop();
                     #pragma hls_unroll yes
                     for (int v_idx = 0; v_idx < VEC_LEN; ++v_idx) {

@@ -58,4 +58,4 @@ public:
     }
 };
 
-#endif
+#endif //_CONV1D_VEC_HPP_

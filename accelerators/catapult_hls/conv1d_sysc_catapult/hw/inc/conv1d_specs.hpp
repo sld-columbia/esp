@@ -6,6 +6,7 @@
 
 #include <mc_connections.h>
 #include "nvhls_connections.h"
+#include "ac_int.h"
 #include <nvhls_int.h>
 #include <nvhls_types.h>
 #include <nvhls_vector.h>
@@ -13,7 +14,7 @@
 #include "auto_gen_port_info.h"
 #include "conv1d_conf_info.hpp"
 #include "esp_dma_info_sysc.hpp"
-#include <ArbitratedScratchpadDP.h>
+//#include <ArbitratedScratchpadDP.h>
 
 //#define MAX(a, b) ((a) > (b) ? (a) : (b))
 //
@@ -38,13 +39,21 @@
 // DMA configuration
 #define DMA_SIZE SIZE_DWORD
 #define DATA_WIDTH 32
+
 #ifndef DMA_WIDTH
-#define DMA_WIDTH 32
+	#define DMA_WIDTH 32
 #endif
 
 // Fixed-point configuration
 #define FPDATA_WL 32
 #define FPDATA_IL 16
+
+// Bias/activation modes
+#define CONV1D_ACT_BIAS_ONLY 0
+#define CONV1D_ACT_RELU 1
+#define CONV1D_ACT_LEAKY_RELU 2
+#define CONV1D_LEAKY_RELU_SLOPE 0.3f
+typedef ac_int<2, false> act_mode_t;
 
 // Accelerator configuration
 #define VEC_LEN 8
@@ -90,7 +99,7 @@ const unsigned int bks = VEC_LEN;
 const unsigned int ebks = PLM_WORD / VEC_LEN;
 
 typedef NVINTW(DATA_WIDTH) DATA_TYPE;
-typedef ac_fixed<FPDATA_WL, FPDATA_IL, true, AC_RND, AC_SAT> FPDATA;
+//typedef ac_fixed<FPDATA_WL, FPDATA_IL, true, AC_RND, AC_SAT> FPDATA;
 
 // Define array_t helper
 template<typename T, int N>
