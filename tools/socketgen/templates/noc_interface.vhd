@@ -210,6 +210,7 @@ end;
   signal dma_write_ctrl_data_length : std_logic_vector(31 downto 0);
   signal dma_write_ctrl_data_size   : std_logic_vector(2 downto 0);
   signal dma_write_ctrl_data_user   : std_logic_vector(5 downto 0);
+  signal dma_write_ctrl_data_target : std_logic_vector(5 downto 0);
   signal dma_read_chnl_valid        : std_ulogic;
   signal dma_read_chnl_ready        : std_ulogic;
   signal dma_read_chnl_data         : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -261,6 +262,7 @@ end;
   attribute keep of dma_write_ctrl_data_length : signal is "true";
   attribute keep of dma_write_ctrl_data_size : signal is "true";
   attribute keep of dma_write_ctrl_data_user : signal is "true";
+  attribute keep of dma_write_ctrl_data_target : signal is "true";
   attribute keep of dma_read_chnl_valid : signal is "true";
   attribute keep of dma_read_chnl_ready : signal is "true";
   attribute keep of dma_read_chnl_data : signal is "true";
@@ -361,7 +363,6 @@ begin
       rdonly_reg_mask    => rdonly_reg_mask,
       exp_registers      => exp_registers,
       scatter_gather     => scatter_gather,
-      has_l2             => has_l2,
       tlb_entries        => tlb_entries)
     port map (
       rst                           => rst,
@@ -391,6 +392,7 @@ begin
       wr_length                     => dma_write_ctrl_data_length,
       wr_size                       => dma_write_ctrl_data_size,
       wr_ndests                     => dma_write_ctrl_data_user,
+      wr_p2p_dest                   => dma_write_ctrl_data_target,
       wr_grant                      => dma_write_ctrl_ready,
       bufdout_ready                 => dma_write_chnl_ready,
       bufdout_data                  => dma_write_chnl_data,
@@ -434,18 +436,9 @@ begin
   coherence_model_select: process (bank, dma_rcv_data, dma_rcv_valid, dma_snd_ready,
                                    dma_rcv_data_out, dma_rcv_empty, dma_snd_full,
                                    dma_rcv_rdreq_int, dma_snd_wrreq_int) is
-    variable coherence, coherence_tmp : integer range 0 to ACC_COH_FULL;
+    variable coherence : integer range 0 to ACC_COH_FULL;
   begin  -- process coherence_model_select
-    coherence_tmp := conv_integer(bank(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
-
-    if CFG_LLC_ENABLE = 0 then
-      coherence := ACC_COH_NONE;
-    elsif has_l2 = 0 and coherence_tmp = ACC_COH_FULL then
-      coherence := ACC_COH_RECALL;
-    else
-      coherence := coherence_tmp;
-    end if;
-
+    coherence := conv_integer(bank(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
     if coherence = ACC_COH_FULL then
       dma_rcv_data_out_int <= dma_rcv_data;
       dma_rcv_empty_int    <= not dma_rcv_valid;

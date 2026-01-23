@@ -59,7 +59,6 @@ entity esp_acc_dma is
     rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1) := (others => '0');
     exp_registers      : integer range 0 to 1                 := 0;  -- Not implemented
     scatter_gather     : integer range 0 to 1                 := 1;
-    has_l2             : integer range 0 to 1                 := 1;
     tlb_entries        : integer                              := 256);
   port (
     rst           : in  std_ulogic;
@@ -91,6 +90,8 @@ entity esp_acc_dma is
     wr_length     : in  std_logic_vector(31 downto 0);
     wr_size       : in  std_logic_vector(2 downto 0);
     wr_ndests     : in  std_logic_vector(5 downto 0);
+    -- Targeted P2P: index of intended receiver (same encoding as wr_ndests)
+    wr_p2p_dest : in  std_logic_vector(5 downto 0);
     wr_grant      : out std_ulogic;
     bufdout_ready : out std_ulogic;
     bufdout_data  : in  std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -148,8 +149,8 @@ architecture rtl of esp_acc_dma is
   constant dma_words : integer := DMA_NOC_WIDTH / ARCH_BITS;
   constant dma_word_bits : integer := ncpu_log(dma_words);
   constant dma_word_pad : std_logic_vector(dma_word_bits - 1 downto 0) := (others => '0');
-
-  constant YX_REG_ENTRIES : integer := 36;
+  -- Unmatched P2P request buffer (per-requester, depth capped by system policy)
+  constant P2P_REQ_BUF_DEPTH : integer := 64;
 
   -- Fix endianness
   function fix_endian (
@@ -195,13 +196,17 @@ architecture rtl of esp_acc_dma is
 
   -- Coherence
   signal coherence : integer range 0 to ACC_COH_FULL;
-  signal coherence_tmp : integer range 0 to ACC_COH_FULL;
 
   -- P2P
   signal p2p_src_index_r      : integer range 0 to 2;
   signal p2p_src_index_inc    : std_ulogic;
-  signal p2p_dst_y            : local_yx;
-  signal p2p_dst_x            : local_yx;
+  signal p2p_dst_y            : local_yx;  -- incoming p2p request coordinates 
+  signal p2p_dst_x            : local_yx;  -- incoming p2p request coordinates 
+  -- Latched destination for P2P responses when the request came from the buffer
+  signal p2p_dst_y_r          : local_yx; -- latched coordinates of current valid p2p destination 
+  signal p2p_dst_x_r          : local_yx; -- latched coordinates of current valid p2p destination
+  signal p2p_dst_y_r_in       : local_yx;
+  signal p2p_dst_x_r_in       : local_yx;
   signal p2p_req_rcv_rdreq    : std_ulogic;
   signal p2p_req_rcv_data_out : dma_noc_flit_type;
   signal p2p_req_rcv_empty    : std_ulogic;
@@ -214,11 +219,31 @@ architecture rtl of esp_acc_dma is
   signal p2p_mcast_ndests     : integer range 0 to MAX_MCAST_DESTS - 1;
   signal p2p_load             : std_ulogic;
   signal p2p_store            : std_ulogic;
+  -- Targeted P2P store: latched target index and decoded coordinates
+  signal wr_p2p_dest_r    : std_logic_vector(5 downto 0);
+  signal p2p_target_x         : local_yx;
+  signal p2p_target_y         : local_yx;
+  signal p2p_target_valid     : std_ulogic;
 
-  -- MCAST PACKET
-  signal p2p_mcast_packet     : std_ulogic;
-  signal p2p_mcast_packet_size: integer range 0 to 15;
-  signal p2p_mcast_depth      : std_logic_vector(3 downto 0);
+  -- Unmatched P2P request buffer (origin x/y + requested length)
+  type p2p_len_arr is array (0 to P2P_REQ_BUF_DEPTH - 1) of std_logic_vector(31 downto 0);
+  signal p2p_buf_valid    : std_logic_vector(0 to P2P_REQ_BUF_DEPTH - 1);
+  signal p2p_buf_x        : yx_vec(0 to P2P_REQ_BUF_DEPTH - 1);
+  signal p2p_buf_y        : yx_vec(0 to P2P_REQ_BUF_DEPTH - 1);
+  signal p2p_buf_len      : p2p_len_arr;
+  -- Match/free scan results (combinational)
+  signal p2p_buf_match    : std_ulogic;
+  signal p2p_buf_match_idx: integer range 0 to P2P_REQ_BUF_DEPTH - 1;
+  signal p2p_buf_free     : std_ulogic;
+  signal p2p_buf_free_idx : integer range 0 to P2P_REQ_BUF_DEPTH - 1;
+  -- Buffer write/pop controls (asserted by FSM)
+  signal p2p_buf_write    : std_ulogic;
+  signal p2p_buf_write_idx: integer range 0 to P2P_REQ_BUF_DEPTH - 1;
+  signal p2p_buf_write_x  : local_yx;
+  signal p2p_buf_write_y  : local_yx;
+  signal p2p_buf_write_len: std_logic_vector(31 downto 0);
+  signal p2p_buf_pop      : std_ulogic;
+  signal p2p_buf_pop_idx  : integer range 0 to P2P_REQ_BUF_DEPTH - 1;
 
   -- IRQ
   signal irq      : std_ulogic;
@@ -232,7 +257,7 @@ architecture rtl of esp_acc_dma is
   signal payload_length, payload_length_r    : dma_noc_flit_type;
   signal sample_flits                        : std_ulogic;
   signal sample_rd, sample_wr                : std_ulogic;
-  signal source_r                            : integer range 0 to YX_REG_ENTRIES - 1;
+  signal source_r                            : integer range 0 to 31;
   signal size_r                              : std_logic_vector(2 downto 0);
   signal irq_header_i, irq_header            : misc_noc_flit_type;
   signal irq_info                            : std_logic_vector(RESERVED_WIDTH_MISC - 1 downto 0);
@@ -241,7 +266,7 @@ architecture rtl of esp_acc_dma is
   type dma_fsm is (idle, request_header, request_address, request_length,
                    request_data, reply_header, reply_data, config,
                    send_header, rd_handshake, wr_handshake, wait_req_p2p,
-                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request, receive_p2p_length);
+                   serve_p2p_buf, running, reset, wait_for_completion, wait_flush_done, fully_coherent_request, receive_p2p_length);
   signal acc_rst_next : std_ulogic;
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
@@ -261,15 +286,12 @@ architecture rtl of esp_acc_dma is
 
   -- DMA word count
   signal burst_count            : std_logic_vector(31 downto 0);
-  signal burst_count_mcast      : std_logic_vector(3  downto 0);
   signal tlb_count              : std_logic_vector(31 downto 0);
   signal word_count             : std_logic_vector(31 downto 0);
   signal increment_burst_count  : std_ulogic;
-  signal increment_burst_count_mcast : std_ulogic;
   signal increment_tlb_count    : std_ulogic;
   signal increment_word_count   : std_ulogic;
   signal clear_burst_count      : std_ulogic;
-  signal clear_burst_count_mcast : std_ulogic;
   signal clear_tlb_count        : std_ulogic;
   signal clear_word_count       : std_ulogic;
   signal set_word_count         : std_ulogic;
@@ -305,71 +327,107 @@ architecture rtl of esp_acc_dma is
   -- De-comment signals you wish to debug
   -----------------------------------------------------------------------------
    attribute mark_debug : string;
-   --attribute mark_debug of dma_rcv_rdreq_int    : signal is "true";
-   --attribute mark_debug of dma_rcv_data_out_int : signal is "true";
-   --attribute mark_debug of dma_rcv_empty_int    : signal is "true";
-   --attribute mark_debug of dma_snd_wrreq_int    : signal is "true";
-   --attribute mark_debug of dma_snd_data_in_int  : signal is "true";
-   --attribute mark_debug of dma_snd_full_int     : signal is "true";
-   --attribute mark_debug of apbi    : signal is "true";
-   --attribute mark_debug of apbo    : signal is "true";
-   --attribute mark_debug of sample    : signal is "true";
-   --attribute mark_debug of readdata  : signal is "true";
-   --attribute mark_debug of irq      : signal is "true";
-   --attribute mark_debug of irqset   : signal is "true";
-   --attribute mark_debug of irq_state: signal is "true";
-   --attribute mark_debug of header                    : signal is "true";
-   --attribute mark_debug of payload_address: signal is "true";
-   --attribute mark_debug of payload_length    : signal is "true";
-   --attribute mark_debug of sample_flits                        : signal is "true";
-   --attribute mark_debug of irq_header                : signal is "true";
-   --attribute mark_debug of interrupt_full            : signal is "true";
-   --attribute mark_debug of interrupt_data_in         : signal is "true";
-   --attribute mark_debug of interrupt_wrreq           : signal is "true";
-   --attribute mark_debug of dma_state : signal is "true";
-   --attribute mark_debug of status : signal is "true";
-   --attribute mark_debug of sample_status : signal is "true";
-   --attribute mark_debug of burst_count                : signal is "true";
-   --attribute mark_debug of increment_burst_count      : signal is "true";
-   --attribute mark_debug of clear_burst_count          : signal is "true";
-   --attribute mark_debug of dma_tran_done        : signal is "true";
-   --attribute mark_debug of dma_tran_header_sent : signal is "true";
-   --attribute mark_debug of dma_tran_start       : signal is "true";
-   --attribute mark_debug of pending_dma_read : signal is "true";
-   --attribute mark_debug of pending_dma_write : signal is "true";
-   --attribute mark_debug of tlb_valid : signal is "true";
-   --attribute mark_debug of tlb_clear : signal is "true";
-   --attribute mark_debug of tlb_empty : signal is "true";
-   --attribute mark_debug of tlb_write : signal is "true";
-   --attribute mark_debug of tlb_wr_address : signal is "true";
-   --attribute mark_debug of dma_address : signal is "true";
-   --attribute mark_debug of dma_length : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_rcv_rdreq          : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_rcv_data_out       : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_rcv_empty          : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_snd_wrreq          : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_snd_data_in        : signal is "true";
-   --attribute mark_debug of llc_coherent_dma_snd_full           : signal is "true";
-   --attribute mark_debug of dma_rcv_rdreq                       : signal is "true";
-   --attribute mark_debug of dma_rcv_data_out                    : signal is "true";
-   --attribute mark_debug of dma_rcv_empty                       : signal is "true";
-   --attribute mark_debug of dma_snd_wrreq                       : signal is "true";
-   --attribute mark_debug of dma_snd_data_in                     : signal is "true";
-   --attribute mark_debug of dma_snd_full                        : signal is "true";
-   --attribute mark_debug of pending_acc_done : signal is "true";
-   --attribute mark_debug of clear_acc_done : signal is "true";
-   --attribute mark_debug of dma_snd_delay : signal is "true";
-   --attribute mark_debug of dma_rcv_delay : signal is "true";
-   --attribute mark_debug of read_burst : signal is "true";
-   --attribute mark_debug of write_burst : signal is "true";
-   --attribute mark_debug of noc_delay : signal is "true";
-   --attribute mark_debug of burst : signal is "true";
-   --attribute mark_debug of acc_idle : signal is "true";
-   --attribute mark_debug of mon_dvfs_ctrl : signal is "true";
-   --attribute mark_debug of rcv_p2p_length : signal is "true";
-   --attribute mark_debug of rcv_p2p_length_in : signal is "true";
-   --attribute mark_debug of skip_wait_p2p_req : signal is "true";
-   --attribute mark_debug of skip_wait_p2p_req_in : signal is "true";
+   attribute mark_debug of dma_rcv_rdreq_int    : signal is "true";
+   attribute mark_debug of dma_rcv_data_out_int : signal is "true";
+   attribute mark_debug of dma_rcv_empty_int    : signal is "true";
+   attribute mark_debug of dma_snd_wrreq_int    : signal is "true";
+   attribute mark_debug of dma_snd_data_in_int  : signal is "true";
+   attribute mark_debug of dma_snd_full_int     : signal is "true";
+   attribute mark_debug of apbi    : signal is "true";
+   attribute mark_debug of apbo    : signal is "true";
+   attribute mark_debug of sample    : signal is "true";
+   attribute mark_debug of readdata  : signal is "true";
+   attribute mark_debug of irq      : signal is "true";
+   attribute mark_debug of irqset   : signal is "true";
+   attribute mark_debug of irq_state: signal is "true";
+   attribute mark_debug of header                    : signal is "true";
+   attribute mark_debug of payload_address: signal is "true";
+   attribute mark_debug of payload_length    : signal is "true";
+   attribute mark_debug of sample_flits                        : signal is "true";
+   attribute mark_debug of irq_header                : signal is "true";
+   attribute mark_debug of interrupt_full            : signal is "true";
+   attribute mark_debug of interrupt_data_in         : signal is "true";
+   attribute mark_debug of interrupt_wrreq           : signal is "true";
+   attribute mark_debug of dma_state : signal is "true";
+   attribute mark_debug of status : signal is "true";
+   attribute mark_debug of sample_status : signal is "true";
+   attribute mark_debug of burst_count                : signal is "true";
+   attribute mark_debug of increment_burst_count      : signal is "true";
+   attribute mark_debug of clear_burst_count          : signal is "true";
+   attribute mark_debug of dma_tran_done        : signal is "true";
+   attribute mark_debug of dma_tran_header_sent : signal is "true";
+   attribute mark_debug of dma_tran_start       : signal is "true";
+   attribute mark_debug of pending_dma_read : signal is "true";
+   attribute mark_debug of pending_dma_write : signal is "true";
+   attribute mark_debug of tlb_valid : signal is "true";
+   attribute mark_debug of tlb_clear : signal is "true";
+   attribute mark_debug of tlb_empty : signal is "true";
+   attribute mark_debug of tlb_write : signal is "true";
+   attribute mark_debug of tlb_wr_address : signal is "true";
+   attribute mark_debug of dma_address : signal is "true";
+   attribute mark_debug of dma_length : signal is "true";
+   attribute mark_debug of llc_coherent_dma_rcv_rdreq          : signal is "true";
+   attribute mark_debug of llc_coherent_dma_rcv_data_out       : signal is "true";
+   attribute mark_debug of llc_coherent_dma_rcv_empty          : signal is "true";
+   attribute mark_debug of llc_coherent_dma_snd_wrreq          : signal is "true";
+   attribute mark_debug of llc_coherent_dma_snd_data_in        : signal is "true";
+   attribute mark_debug of llc_coherent_dma_snd_full           : signal is "true";
+   attribute mark_debug of dma_rcv_rdreq                       : signal is "true";
+   attribute mark_debug of dma_rcv_data_out                    : signal is "true";
+   attribute mark_debug of dma_rcv_empty                       : signal is "true";
+   attribute mark_debug of dma_snd_wrreq                       : signal is "true";
+   attribute mark_debug of dma_snd_data_in                     : signal is "true";
+   attribute mark_debug of dma_snd_full                        : signal is "true";
+   attribute mark_debug of pending_acc_done : signal is "true";
+   attribute mark_debug of clear_acc_done : signal is "true";
+   attribute mark_debug of dma_snd_delay : signal is "true";
+   attribute mark_debug of dma_rcv_delay : signal is "true";
+   attribute mark_debug of read_burst : signal is "true";
+   attribute mark_debug of write_burst : signal is "true";
+   attribute mark_debug of noc_delay : signal is "true";
+   attribute mark_debug of burst : signal is "true";
+   attribute mark_debug of acc_idle : signal is "true";
+   -- attribute mark_debug of mon_dvfs_ctrl : signal is "true";
+   attribute mark_debug of rcv_p2p_length : signal is "true";
+   attribute mark_debug of rcv_p2p_length_in : signal is "true";
+   attribute mark_debug of skip_wait_p2p_req : signal is "true";
+   attribute mark_debug of skip_wait_p2p_req_in : signal is "true";
+
+  attribute mark_debug of  p2p_src_index_r      : signal is "true";
+  attribute mark_debug of  p2p_src_index_inc    : signal is "true";
+  attribute mark_debug of  p2p_dst_y            : signal is "true";
+  attribute mark_debug of  p2p_dst_x            : signal is "true";
+  attribute mark_debug of  p2p_req_rcv_rdreq    : signal is "true";
+  attribute mark_debug of  p2p_req_rcv_data_out : signal is "true";
+  attribute mark_debug of  p2p_req_rcv_empty    : signal is "true";
+  attribute mark_debug of  p2p_rsp_snd_wrreq    : signal is "true";
+  attribute mark_debug of  p2p_rsp_snd_data_in  : signal is "true";
+  attribute mark_debug of  p2p_rsp_snd_full     : signal is "true";
+  attribute mark_debug of  p2p_dst_arr_x        : signal is "true";
+  attribute mark_debug of  p2p_dst_arr_y        : signal is "true";
+  attribute mark_debug of  count_n_dest         : signal is "true";
+  attribute mark_debug of  p2p_mcast_ndests     : signal is "true";
+  attribute mark_debug of  p2p_load             : signal is "true";
+  attribute mark_debug of  p2p_store            : signal is "true";
+
+  attribute mark_debug of rd_request    : signal is "true";
+  attribute mark_debug of rd_index      : signal is "true";
+  attribute mark_debug of rd_length     : signal is "true";
+  attribute mark_debug of rd_size       : signal is "true";
+  attribute mark_debug of rd_source     : signal is "true";
+  attribute mark_debug of rd_grant      : signal is "true";
+  attribute mark_debug of bufdin_ready  : signal is "true";
+  attribute mark_debug of bufdin_data   : signal is "true";
+  attribute mark_debug of bufdin_valid  : signal is "true";
+  attribute mark_debug of wr_request    : signal is "true";
+  attribute mark_debug of wr_index      : signal is "true";
+  attribute mark_debug of wr_length     : signal is "true";
+  attribute mark_debug of wr_size       : signal is "true";
+  attribute mark_debug of wr_ndests     : signal is "true";
+  attribute mark_debug of wr_grant      : signal is "true";
+  attribute mark_debug of bufdout_ready : signal is "true";
+  attribute mark_debug of bufdout_data  : signal is "true";
+  attribute mark_debug of bufdout_valid : signal is "true";
 
 begin  -- rtl
 
@@ -438,22 +496,14 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- DMA packet
   -----------------------------------------------------------------------------
-  coherence_tmp <= conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
+  coherence <= conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
 
   coherence_model_select: process (bankreg, dma_rcv_rdreq_int, dma_rcv_data_out, dma_rcv_empty,
                                    dma_snd_wrreq_int, dma_snd_data_in_int, dma_snd_full,
                                    llc_coherent_dma_rcv_data_out, llc_coherent_dma_rcv_empty,
                                    llc_coherent_dma_snd_full, p2p_req_rcv_rdreq,
-                                   p2p_rsp_snd_wrreq, p2p_rsp_snd_data_in, coherence_tmp) is
+                                   p2p_rsp_snd_wrreq, p2p_rsp_snd_data_in, coherence) is
   begin  -- process coherence_model_select
-
-    if CFG_LLC_ENABLE = 0 then
-      coherence <= ACC_COH_NONE;
-    elsif has_l2 = 0 and coherence_tmp = ACC_COH_FULL then
-      coherence <= ACC_COH_RECALL;
-    else
-      coherence <= coherence_tmp;
-    end if;
 
     if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
       -- P2P requests (1 flit each) share the LLC-coherent DMA queues in output
@@ -498,13 +548,53 @@ begin  -- rtl
 
   p2p_dst_y <= get_origin_y(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
   p2p_dst_x <= get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
-  p2p_mcast_packet <= bankreg(MCAST_REG)(MCAST_BIT_PACKET);
-  p2p_mcast_packet_size <= to_integer(unsigned(bankreg(MCAST_REG)(MCAST_BIT_PACKET_SIZE + MCAST_WIDTH_PACKET_SIZE - 1 downto MCAST_BIT_PACKET_SIZE)));
-  p2p_mcast_depth <= conv_std_logic_vector(p2p_mcast_packet_size, 4);
+
+  -- Decode wr_p2p_dest index into coordinates for match filtering
+  p2p_target_decode: process (bankreg, wr_p2p_dest_r) is
+    variable target_idx : integer;
+  begin
+    p2p_target_valid <= '0';
+    p2p_target_x <= (others => '0');
+    p2p_target_y <= (others => '0');
+    target_idx := to_integer(unsigned(wr_p2p_dest_r));
+    if target_idx /= 0 then
+      p2p_target_valid <= '1';
+      p2p_target_y <= bankreg(YX_REG + target_idx / 4)(2 * YX_WIDTH - 1 + 2 * YX_WIDTH * (target_idx mod 4) downto YX_WIDTH + 2 * YX_WIDTH * (target_idx mod 4));
+      p2p_target_x <= bankreg(YX_REG + target_idx / 4)(YX_WIDTH - 1 + 2 * YX_WIDTH * (target_idx mod 4) downto 2 * YX_WIDTH * (target_idx mod 4));
+    end if;
+  end process p2p_target_decode;
+
+  -- Find first matching buffered request and first free slot (linear scan)
+  p2p_buf_scan: process (p2p_buf_valid, p2p_buf_x, p2p_buf_y, p2p_target_x, p2p_target_y) is
+    variable match_found : std_ulogic;
+    variable free_found : std_ulogic;
+    variable match_idx_v : integer range 0 to P2P_REQ_BUF_DEPTH - 1;
+    variable free_idx_v : integer range 0 to P2P_REQ_BUF_DEPTH - 1;
+  begin
+    match_found := '0';
+    free_found := '0';
+    match_idx_v := 0;
+    free_idx_v := 0;
+    for i in 0 to P2P_REQ_BUF_DEPTH - 1 loop
+      if match_found = '0' and p2p_buf_valid(i) = '1' and p2p_buf_x(i) = p2p_target_x and p2p_buf_y(i) = p2p_target_y then
+        match_found := '1';
+        match_idx_v := i;
+      end if;
+      if free_found = '0' and p2p_buf_valid(i) = '0' then
+        free_found := '1';
+        free_idx_v := i;
+      end if;
+    end loop;
+    p2p_buf_match <= match_found;
+    p2p_buf_match_idx <= match_idx_v;
+    p2p_buf_free <= free_found;
+    p2p_buf_free_idx <= free_idx_v;
+  end process p2p_buf_scan;
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
-                        p2p_src_index_r, p2p_dst_arr_y, p2p_dst_arr_x, p2p_dst_y, p2p_dst_x,
-                        coherence, local_y, local_x, dma_tran_done, source_r)
+                        p2p_src_index_r, p2p_dst_arr_y, p2p_dst_arr_x, p2p_dst_y_r, p2p_dst_x_r,
+                        p2p_dst_y, p2p_dst_x, dma_state, coherence, local_y, local_x,
+                        dma_tran_done, source_r)
     variable msg_type : noc_msg_type;
     variable header_v : dma_noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
@@ -516,6 +606,7 @@ begin  -- rtl
     variable is_p2p : std_ulogic;
     variable p2p_src_x, p2p_src_y : local_yx;
     variable p2p_header_v : dma_noc_flit_type;
+    variable p2p_dst_x_v, p2p_dst_y_v : local_yx;
   begin  -- process make_packet
 
     is_p2p := '0';
@@ -591,10 +682,18 @@ begin  -- rtl
       p2p_header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
       p2p_header_v(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_HEADER;
     else
+      -- Use latched destination only when serving a buffered request
+      if dma_state = serve_p2p_buf then
+        p2p_dst_x_v := p2p_dst_x_r;
+        p2p_dst_y_v := p2p_dst_y_r;
+      else
+        p2p_dst_x_v := p2p_dst_x;
+        p2p_dst_y_v := p2p_dst_y;
+      end if;
       p2p_header_v := create_header_mcast(DMA_NOC_FLIT_SIZE, local_y, local_x,
                                           p2p_dst_arr_y(MAX_MCAST_DESTS - 2 downto 0),
                                           p2p_dst_arr_x(MAX_MCAST_DESTS - 2 downto 0),
-                                          p2p_dst_y, p2p_dst_x, p2p_mcast_ndests, msg_type);
+                                          p2p_dst_y_v, p2p_dst_x_v, p2p_mcast_ndests, msg_type);
     end if;
 
     header_v := (others => '0');
@@ -625,7 +724,6 @@ begin  -- rtl
       payload_address_r <= (others => '0');
       payload_length_r <= (others => '0');
       burst_count <= conv_std_logic_vector(1, 32);
-      burst_count_mcast <= (others => '0');
       p2p_count <= conv_std_logic_vector(1, 32);
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
@@ -635,6 +733,7 @@ begin  -- rtl
       p2p_store <= '0';
       p2p_load <= '0';
       source_r <= 0;
+      wr_p2p_dest_r <= (others => '0');
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_r <= header;
@@ -650,12 +749,6 @@ begin  -- rtl
       end if;
       if clear_burst_count = '1' then
         burst_count <= conv_std_logic_vector(1, 32);
-      end if;
-      if increment_burst_count_mcast = '1' then
-        burst_count_mcast <= burst_count_mcast + 1;
-      end if;
-      if clear_burst_count_mcast = '1' then
-        burst_count_mcast <= (others => '0');
       end if;
       if increment_tlb_count = '1' then
         tlb_count <= tlb_count + 1;
@@ -697,6 +790,7 @@ begin  -- rtl
           p2p_mcast_ndests <= to_integer(unsigned(wr_ndests)) - 1;
           p2p_store <= '1';
         end if;
+        wr_p2p_dest_r <= wr_p2p_dest;
       end if;
       if p2p_src_index_inc = '1' then
         if p2p_src_index_r = conv_integer(bankreg(P2P_REG)(P2P_BIT_NSRCS + P2P_WIDTH_NSRCS - 1 downto P2P_BIT_NSRCS)) then
@@ -746,7 +840,9 @@ begin  -- rtl
                           dma_tran_start, tlb_empty, pending_dma_write, pending_dma_read,
                           coherent_dma_ready, size_r, coherence, p2p_req_rcv_empty, p2p_req_rcv_data_out,
                           p2p_rsp_snd_full, acc_flush_done, read_length, rcv_p2p_length,
-                          skip_wait_p2p_req, p2p_header_r)
+                          skip_wait_p2p_req, p2p_header_r, p2p_target_valid, p2p_target_x, p2p_target_y,
+                          p2p_buf_match, p2p_buf_match_idx, p2p_buf_free, p2p_buf_free_idx,
+                          p2p_buf_x, p2p_buf_y, p2p_buf_len, p2p_dst_x_r, p2p_dst_y_r, p2p_dst_x, p2p_dst_y)
     variable payload_data : dma_noc_flit_type;
     variable preamble : noc_preamble_type;
     variable msg : noc_msg_type;
@@ -755,6 +851,7 @@ begin  -- rtl
     variable word_count_int : integer;
     variable continue_p2p : std_ulogic;
     variable p2p_length_v : std_logic_vector(31 downto 0);
+    variable targeted_store : std_ulogic;
   begin  -- process dma_roundtrip
 
     dma_next <= dma_state;
@@ -771,11 +868,6 @@ begin  -- rtl
     word_count_int := to_integer(unsigned(word_count));
     increment_p2p_count <= '0';
     clear_p2p_count <= '0';
-
-    -- MCAST PACKET
-    clear_burst_count_mcast <= '0';
-    increment_burst_count_mcast <= '0';
-
     --TLB
     tlb_wr_address_next := tlb_count;
     tlb_wr_address <= tlb_wr_address_next(log2xx(tlb_entries) - 1 downto 0);
@@ -796,11 +888,26 @@ begin  -- rtl
     p2p_rsp_snd_data_in <= (others => '0');
     p2p_rsp_snd_wrreq <= '0';
     p2p_req_rcv_rdreq <= '0';
+    -- Buffer control defaults; asserted only for targeted P2P handling
+    p2p_buf_write <= '0';
+    p2p_buf_pop <= '0';
+    p2p_buf_write_idx <= 0;
+    p2p_buf_write_x <= (others => '0');
+    p2p_buf_write_y <= (others => '0');
+    p2p_buf_write_len <= (others => '0');
+    p2p_buf_pop_idx <= 0;
+    p2p_dst_x_r_in <= p2p_dst_x_r;
+    p2p_dst_y_r_in <= p2p_dst_y_r;
 
     p2p_src_index_inc <= '0';
 
     continue_p2p := skip_wait_p2p_req;
     p2p_length_v := rcv_p2p_length;
+    -- Targeted store is single-dest P2P with a valid target index
+    targeted_store := '0';
+    if p2p_store = '1' and p2p_mcast_ndests = 0 and p2p_target_valid = '1' then
+      targeted_store := '1';
+    end if;
 
     preamble := get_preamble(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out_int);
     msg := get_msg_type(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & header_r);
@@ -809,7 +916,7 @@ begin  -- rtl
     else
       len := payload_length_r(31 downto 0);
     end if;
-    if burst_count = len or burst_count = rcv_p2p_length or ((burst_count_mcast = p2p_mcast_depth) and (p2p_mcast_packet = '1') and (msg = RSP_P2P)) then
+    if burst_count = len or burst_count = rcv_p2p_length then
       payload_data(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     else
       payload_data(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
@@ -960,7 +1067,7 @@ begin  -- rtl
         clear_acc_done <= '1';
         dma_next <= idle;
         p2p_length_v := (others => '0');
-
+        
       when config =>
         -- Set conf_done to start the accelerator.
         conf_done <= '1';
@@ -1022,13 +1129,35 @@ begin  -- rtl
         -- we skip the wait_req_p2p state and continue sending the next burst
         if skip_wait_p2p_req = '1' then
           dma_next <= send_header;
+        -- Targeted store: if a matching request is already buffered, serve it now
+        elsif targeted_store = '1' and p2p_buf_match = '1' then
+          p2p_buf_pop <= '1';
+          p2p_buf_pop_idx <= p2p_buf_match_idx;
+          p2p_length_v := p2p_buf_len(p2p_buf_match_idx);
+          p2p_dst_x_r_in <= p2p_buf_x(p2p_buf_match_idx);
+          p2p_dst_y_r_in <= p2p_buf_y(p2p_buf_match_idx);
+          dma_next <= serve_p2p_buf;
         elsif p2p_req_rcv_empty = '0' then
-          p2p_req_rcv_rdreq <= '1';
-          if count_n_dest = p2p_mcast_ndests then
-              sample_flits <= '1';
+          -- Targeted store: if buffer is full and requester is not the target, stall (no drop)
+          if targeted_store = '1' and p2p_buf_free = '0' and (p2p_dst_x /= p2p_target_x or p2p_dst_y /= p2p_target_y) then
+            dma_next <= wait_req_p2p;
+          else
+            p2p_req_rcv_rdreq <= '1';
+            -- Latch requester coordinates from the header flit
+            p2p_dst_x_r_in <= p2p_dst_x;
+            p2p_dst_y_r_in <= p2p_dst_y;
+            if count_n_dest = p2p_mcast_ndests then
+                sample_flits <= '1';
+            end if;
+            dma_next <= receive_p2p_length;
           end if;
-          dma_next <= receive_p2p_length;
         end if;
+
+      when serve_p2p_buf =>
+        burst <= '1';
+        -- Latch header using buffered destination, then send response
+        sample_flits <= '1';
+        dma_next <= send_header;
 
       when receive_p2p_length =>
         burst <= '1';
@@ -1038,12 +1167,33 @@ begin  -- rtl
           else
             p2p_length_v := p2p_req_rcv_data_out(31 downto 0);
           end if;
-          p2p_rsp_snd_data_in <= header_r;
           p2p_req_rcv_rdreq <= '1';
-          if count_n_dest = p2p_mcast_ndests then
-            dma_next <= send_header;
+          if targeted_store = '1' then
+            -- Targeted store: respond only if requester matches the target
+            if p2p_dst_x_r = p2p_target_x and p2p_dst_y_r = p2p_target_y then
+              p2p_rsp_snd_data_in <= header_r;
+              p2p_dst_x_r_in <= p2p_dst_x_r;
+              p2p_dst_y_r_in <= p2p_dst_y_r;
+              dma_next <= send_header;
+            else
+              -- Unmatched requester is buffered and served later
+              p2p_buf_write <= '1';
+              p2p_buf_write_idx <= p2p_buf_free_idx;
+              p2p_buf_write_x <= p2p_dst_x_r;
+              p2p_buf_write_y <= p2p_dst_y_r;
+              p2p_buf_write_len <= p2p_length_v;
+              dma_next <= wait_req_p2p;
+            end if;
           else
-            dma_next <= wait_req_p2p;
+            -- Non-targeted path: keep existing multicast/regular behavior
+            p2p_rsp_snd_data_in <= header_r;
+            p2p_dst_x_r_in <= p2p_dst_x_r;
+            p2p_dst_y_r_in <= p2p_dst_y_r;
+            if count_n_dest = p2p_mcast_ndests then
+              dma_next <= send_header;
+            else
+              dma_next <= wait_req_p2p;
+            end if;
           end if;
         end if;
 
@@ -1128,14 +1278,11 @@ begin  -- rtl
                 continue_p2p := '0';
                 clear_p2p_count <= '1';
               end if;
-	      if p2p_mcast_packet = '1' then
-	        clear_burst_count_mcast <= '1';
-	      end if;
               clear_burst_count <= '1';
               dma_tran_done <= '1';
               dma_next <= running;
             -- the amount request by the consumer has been sent, but the accelerator burst is not complete
-            elsif burst_count > conv_std_logic_vector(0, 32) and burst_count = rcv_p2p_length and msg = RSP_P2P  then
+            elsif burst_count > conv_std_logic_vector(0, 32) and burst_count = rcv_p2p_length and msg = RSP_P2P then
               continue_p2p := '0';
               if (p2p_count = len) then
                 --if burst completes, go back to idle
@@ -1151,15 +1298,6 @@ begin  -- rtl
             else
               increment_burst_count <= '1';
               increment_p2p_count <= '1';
-	      if p2p_mcast_packet = '1' then
-	        if burst_count_mcast = p2p_mcast_depth then
-		  clear_burst_count_mcast <= '1';
-		  dma_next <= send_header;
-		  continue_p2p := '1';
-	        else
-		  increment_burst_count_mcast <= '1';
-		end if;
-	      end if;
             end if;
           end if;
         end if;
@@ -1186,6 +1324,7 @@ begin  -- rtl
             clear_word_count <= '1';
             if preamble = PREAMBLE_TAIL and tlb_count = bankreg(PT_NCHUNK_REG) - 1 then
               clear_burst_count <= '1';
+              clear_p2p_count <= '1';
               clear_tlb_count <= '1';
               tlb_valid <= '1';
               dma_next <= idle;
@@ -1199,12 +1338,13 @@ begin  -- rtl
             increment_burst_count <= '1';
             if preamble = PREAMBLE_TAIL then
               --if producer sends less data than requested, then wait for another header
-              if msg = REQ_P2P and (burst_count < read_length) then
+              if msg = REQ_P2P and (burst_count < read_length - 1) then
                   dma_next <= reply_header;
               else
                 dma_tran_done <= '1';
                 dma_next <= running;
                 clear_burst_count <= '1';
+                clear_p2p_count <= '1';
               end if;
             end if;
           end if;
@@ -1256,13 +1396,40 @@ begin  -- rtl
       irq_state <= idle;
       skip_wait_p2p_req <= '0';
       rcv_p2p_length <= (others => '0');
+      -- Clear latched destination for buffered/matched responses
+      p2p_dst_x_r <= (others => '0');
+      p2p_dst_y_r <= (others => '0');
     elsif clk'event and clk = '1' then  -- rising clock edge
       dma_state <= dma_next;
       irq_state <= irq_next;
       skip_wait_p2p_req <= skip_wait_p2p_req_in;
       rcv_p2p_length <= rcv_p2p_length_in;
+      -- Latch destination used by response header
+      p2p_dst_x_r <= p2p_dst_x_r_in;
+      p2p_dst_y_r <= p2p_dst_y_r_in;
     end if;
   end process;
+
+  -- Buffer storage for unmatched P2P requests (one per requester)
+  p2p_req_buffer: process (clk, rst)
+  begin  -- process
+    if rst = '0' then                   -- asynchronous reset (active low)
+      p2p_buf_valid <= (others => '0');
+      p2p_buf_x <= (others => (others => '0'));
+      p2p_buf_y <= (others => (others => '0'));
+      p2p_buf_len <= (others => (others => '0'));
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      if p2p_buf_pop = '1' then
+        p2p_buf_valid(p2p_buf_pop_idx) <= '0';
+      end if;
+      if p2p_buf_write = '1' then
+        p2p_buf_valid(p2p_buf_write_idx) <= '1';
+        p2p_buf_x(p2p_buf_write_idx) <= p2p_buf_write_x;
+        p2p_buf_y(p2p_buf_write_idx) <= p2p_buf_write_y;
+        p2p_buf_len(p2p_buf_write_idx) <= p2p_buf_write_len;
+      end if;
+    end if;
+  end process p2p_req_buffer;
 
   process (clk, rst)
   begin  -- process
@@ -1376,9 +1543,9 @@ begin  -- rtl
           if rst = '0' then                   -- synchronous reset (active low)
             bankreg(i) <= bankdef(i);
           elsif i = YX_REG then
-            bankreg(i)(2 * YX_WIDTH - 1 downto 0) <= local_y & local_x;
+            bankreg(i)(7 downto 0) <= local_y & local_x;
             if sample(i) = '1' then
-              bankreg(i)(31 downto 2  * YX_WIDTH) <= bankin(i)(31 downto 2 * YX_WIDTH);
+              bankreg(i)(31 downto 6) <= bankin(i)(31 downto 6);
             end if;
           elsif sample(i) = '1' and rdonly_reg_mask(i) = '0' then
             bankreg(i) <= bankin(i);

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2024 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #include "dummy.hpp"
@@ -47,10 +47,10 @@ void dummy::load_input()
             uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
 #if (DMA_WORD_PER_BEAT == 0)
             dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE,
-                                source);
+                                source, 0);
 #else
             dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE,
-                                source);
+                                source, 0);
 #endif
             offset += len;
 
@@ -110,6 +110,7 @@ void dummy::store_output()
     uint32_t tokens;
     uint32_t batch;
     uint32_t ndests;
+    uint32_t target;
     {
         HLS_PROTO("store-config");
 
@@ -119,6 +120,7 @@ void dummy::store_output()
         tokens = config.tokens;
         batch  = config.batch;
         ndests = config.ndests;
+        target = config.target;
     }
 
     // Store
@@ -132,10 +134,10 @@ void dummy::store_output()
             uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
 #if (DMA_WORD_PER_BEAT == 0)
             dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE,
-                                ndests);
+                                ndests, target + n);
 #else
             dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE,
-                                ndests);
+                                ndests, target + n);
 #endif
             offset += len;
 

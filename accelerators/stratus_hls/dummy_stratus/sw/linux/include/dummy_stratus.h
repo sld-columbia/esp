@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2024 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #ifndef _DUMMY_STRATUS_H_
 #define _DUMMY_STRATUS_H_
@@ -23,6 +23,7 @@ struct dummy_stratus_access {
     unsigned batch;
     unsigned source;
     unsigned ndests;
+    unsigned target;
     unsigned src_offset;
     unsigned dst_offset;
 };

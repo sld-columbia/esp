@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2024 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef __DUMMY_CONF_INFO_HPP__
@@ -14,13 +14,14 @@ class conf_info_t {
     //
     // constructors
     //
-    conf_info_t() : tokens(0), batch(0), source(0), ndests(0) {}
+    conf_info_t() : tokens(0), batch(0), source(0), ndests(0), target(0) {}
 
     // equals operator
     inline bool operator==(const conf_info_t &rhs) const
     {
         return (tokens == rhs.tokens) && (batch == rhs.batch) && (source == rhs.source) &&
-            (ndests == rhs.ndests);
+            (ndests == rhs.ndests) &&
+            (target == rhs.target);
     }
 
     // assignment operator
@@ -30,6 +31,7 @@ class conf_info_t {
         batch  = other.batch;
         source = other.source;
         ndests = other.ndests;
+        target = other.target;
         return *this;
     }
 
@@ -40,7 +42,7 @@ class conf_info_t {
     friend ostream &operator<<(ostream &os, conf_info_t const &conf_info)
     {
         os << "{ tokens = " << conf_info.tokens << ", batch = " << conf_info.batch
-           << ", source = " << conf_info.source << ", ndests = " << conf_info.ndests << "}";
+           << ", source = " << conf_info.source << ", ndests = " << conf_info.ndests << ", target = " << conf_info.target << "}";
         return os;
     }
 
@@ -48,6 +50,7 @@ class conf_info_t {
     uint32_t batch;
     uint32_t source;
     uint32_t ndests;
+    uint32_t target;
 };
 
 #endif // __DUMMY_CONF_INFO_HPP__

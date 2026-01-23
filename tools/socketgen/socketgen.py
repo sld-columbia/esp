@@ -566,7 +566,7 @@ def write_acc_interface(
         f.write("\n")
         f.write(
             "      dma_write_ctrl_rsc_dat     : out std_logic_vector(" +
-            str(72) +
+            str(78) +
             " downto 0);\n")
         f.write("      dma_write_ctrl_rsc_vld     : out std_ulogic;\n")
         f.write("      dma_write_ctrl_rsc_rdy     : in  std_ulogic;\n")
@@ -607,7 +607,7 @@ def write_acc_interface(
         f.write("\n")
         f.write(
             "      dma_write_ctrl_msg         : out std_logic_vector(" +
-            str(72) +
+            str(78) +
             " downto 0);\n")
         f.write("      dma_write_ctrl_val         : out std_ulogic;\n")
         f.write("      dma_write_ctrl_rdy         : in  std_ulogic;\n")
@@ -701,6 +701,10 @@ def write_acc_interface(
             "      dma_read_ctrl_data_user    : out std_logic_vector(" +
             str(5) +
             " downto 0);\n")
+        f.write(
+            "      dma_read_ctrl_data_target  : out std_logic_vector(" +
+            str(5) +
+            " downto 0);\n")
         f.write("      dma_write_ctrl_valid       : out std_ulogic;\n")
         f.write("      dma_write_ctrl_ready       : in  std_ulogic;\n")
         f.write(
@@ -717,6 +721,10 @@ def write_acc_interface(
             " downto 0);\n")
         f.write(
             "      dma_write_ctrl_data_user   : out std_logic_vector(" +
+            str(5) +
+            " downto 0);\n")
+        f.write(
+            "      dma_write_ctrl_data_target : out std_logic_vector(" +
             str(5) +
             " downto 0);\n")
         f.write("      dma_read_chnl_valid        : in  std_ulogic;\n")
@@ -883,6 +891,7 @@ def write_acc_port_map(
         f.write("  dma_read_ctrl_data_length  <= dma_read_ctrl_data(63 downto 32);\n")
         f.write("  dma_read_ctrl_data_index   <= dma_read_ctrl_data(31 downto  0);\n")
         f.write("  dma_write_ctrl_data_user   <= dma_write_ctrl_data(101 downto 96);\n")
+        f.write("  dma_write_ctrl_data_target <= dma_write_ctrl_data(107 downto 102);\n")
         f.write("  dma_write_ctrl_data_size   <= dma_write_ctrl_data(66 downto 64);\n")
         f.write("  dma_write_ctrl_data_length <= dma_write_ctrl_data(63 downto 32);\n")
         f.write("  dma_write_ctrl_data_index  <= dma_write_ctrl_data(31 downto  0);\n")
@@ -927,6 +936,8 @@ def write_acc_port_map(
         f.write("      dma_read_ctrl_rsc_vld      => dma_read_ctrl_valid,\n")
         f.write("      dma_read_ctrl_rsc_rdy      => dma_read_ctrl_ready,\n")
         f.write("\n")
+        f.write(
+            "      dma_write_ctrl_rsc_dat(78 downto 73) => dma_write_ctrl_data_target,\n")
         f.write(
             "      dma_write_ctrl_rsc_dat(72 downto 67) => dma_write_ctrl_data_user,\n"),
         f.write(
@@ -988,6 +999,7 @@ def write_acc_port_map(
         f.write("      dma_read_ctrl_msg(31 downto 0)  => dma_read_ctrl_data_index,\n")
         f.write("      dma_write_ctrl_val         => dma_write_ctrl_valid,\n")
         f.write("      dma_write_ctrl_rdy         => dma_write_ctrl_ready,\n")
+        f.write("      dma_write_ctrl_msg(78 downto 73) => dma_write_ctrl_data_target,\n")
         f.write("      dma_write_ctrl_msg(72 downto 67) => dma_write_ctrl_data_user,\n")
         f.write("      dma_write_ctrl_msg(66 downto 64) => dma_write_ctrl_data_size,\n")
         f.write(
@@ -1042,12 +1054,14 @@ def write_acc_port_map(
         f.write("      dma_read_ctrl_data_length  => dma_read_ctrl_data_length,\n")
         f.write("      dma_read_ctrl_data_size    => dma_read_ctrl_data_size,\n")
         f.write("      dma_read_ctrl_data_user    => dma_read_ctrl_data_user,\n")
+        f.write("      dma_read_ctrl_data_target  => open,\n")
         f.write("      dma_write_ctrl_valid       => dma_write_ctrl_valid,\n")
         f.write("      dma_write_ctrl_ready       => dma_write_ctrl_ready,\n")
         f.write("      dma_write_ctrl_data_index  => dma_write_ctrl_data_index,\n")
         f.write("      dma_write_ctrl_data_length => dma_write_ctrl_data_length,\n")
         f.write("      dma_write_ctrl_data_size   => dma_write_ctrl_data_size,\n")
         f.write("      dma_write_ctrl_data_user   => dma_write_ctrl_data_user,\n")
+        f.write("      dma_write_ctrl_data_target => dma_write_ctrl_data_target,\n")
         f.write("      dma_read_chnl_valid        => dma_read_chnl_valid,\n")
         f.write("      dma_read_chnl_ready        => dma_read_chnl_ready,\n")
         f.write("      dma_read_chnl_data         => dma_read_chnl_data,\n")
