@@ -57,7 +57,7 @@ ACC_$(1)_TECH_DIR := $(ACC_TECH_ROOT)/$(1)
 ACC_$(1)_SRC_BASE := $(ESP_ROOT)/accelerators/rtl/$(1)
 ACC_$(1)_RTL_DIR := $(ACC_$(1)_SRC_BASE)
 
-ACC_$(1)_PKG_DIR := $(ACC_$(1)_TECH_DIR)/vlog_incdir
+ACC_$(1)_PKG_DIR := $(ACC_$(1)_SRC_BASE)/vlog_incdir_global
 ACC_$(1)_VENDOR_PKG_DIR := $(ESP_ROOT)/accelerators/rtl/$(1)/vlog_incdir
 endef
 $(foreach acc,$(ACC_TECH_PRESENT),$(eval $(call DEFINE_MODELSIM_ACC,$(acc))))
@@ -118,48 +118,32 @@ modelsim-accel-$(1): modelsim-libs $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIS
 	fi; \
 	vmap $$(ACC_$(1)_LIB) $(SIM_LIBDIR)/$$(ACC_$(1)_LIB); \
 	\
-	rm -f $$(ACC_$(1)_LIB).f; \
+	rm -f $$(ACC_$(1)_LIB).tech.f $$(ACC_$(1)_LIB).rtl.f; \
 	\
 	for opt in $(ACC_MODELSIM_DEFS) $(ACC_MODELSIM_VLOGOPT); do \
-		echo "$$$$opt" >> $$(ACC_$(1)_LIB).f; \
+		echo "$$$$opt" >> $$(ACC_$(1)_LIB).tech.f; \
+		echo "$$$$opt" >> $$(ACC_$(1)_LIB).rtl.f; \
 	done; \
 	\
+	# Tech compile: only vlog_incdir_global \
 	if test -d "$$(ACC_$(1)_PKG_DIR)"; then \
 		find -L "$$(ACC_$(1)_PKG_DIR)" -type d | sort | while read dir; do \
-			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).f; \
+			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).tech.f; \
 		done; \
+		find -L $$(ACC_$(1)_PKG_DIR) -type f -name "*.sv" >> $$(ACC_$(1)_LIB).tech.f; \
 	fi; \
-	if test -d "$$(ACC_$(1)_VENDOR_PKG_DIR)"; then \
-		find -L "$$(ACC_$(1)_VENDOR_PKG_DIR)" -type d | sort | while read dir; do \
-			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).f; \
-		done; \
-	fi; \
-	if test -d "$$(ACC_$(1)_TECH_DIR)"; then \
-		find -L "$$(ACC_$(1)_TECH_DIR)" -type d -name "include" | sort | while read dir; do \
-			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).f; \
-		done; \
-	fi; \
-	if test -d "$$(ACC_$(1)_RTL_DIR)"; then \
-		find -L "$$(ACC_$(1)_RTL_DIR)" -type d -name "include" | sort | while read dir; do \
-			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).f; \
-		done; \
-		find -L "$$(ACC_$(1)_RTL_DIR)" -name "*.svh" -exec dirname {} \; | sort -u | while read dir; do \
-			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).f; \
-		done; \
-	fi; \
-	\
-	if test -d "$$(ACC_$(1)_PKG_DIR)"; then \
-		find -L $$(ACC_$(1)_PKG_DIR) -type f -name "*.sv" >> $$(ACC_$(1)_LIB).f; \
-	fi; \
-	if test -d "$$(ACC_$(1)_VENDOR_PKG_DIR)"; then \
-		find -L $$(ACC_$(1)_VENDOR_PKG_DIR) -type f -name "*.sv" >> $$(ACC_$(1)_LIB).f; \
-	fi; \
-	\
 	if test -d $$(ACC_$(1)_TECH_DIR); then \
 		find -L $$(ACC_$(1)_TECH_DIR) -type f \( -name "*.sv" -o -name "*.v" \) \
-			! -path "*/vlog_incdir/*" >> $$(ACC_$(1)_LIB).f; \
+			! -path "*/vlog_incdir/*" >> $$(ACC_$(1)_LIB).tech.f; \
 	fi; \
 	\
+	# Accelerator compile: only vlog_incdir \
+	if test -d "$$(ACC_$(1)_VENDOR_PKG_DIR)"; then \
+		find -L "$$(ACC_$(1)_VENDOR_PKG_DIR)" -type d | sort | while read dir; do \
+			echo "+incdir+$$$$dir" >> $$(ACC_$(1)_LIB).rtl.f; \
+		done; \
+		find -L $$(ACC_$(1)_VENDOR_PKG_DIR) -type f -name "*.sv" >> $$(ACC_$(1)_LIB).rtl.f; \
+	fi; \
 	DIR="$(ACC_$(1)_SRC_BASE)"; \
 	VENDOR_DIR="$$$$DIR/vendor/"; \
 	FILES=$$$$(ls $$$$DIR/*.sverilog $$$$DIR/*.verilog 2>/dev/null); \
@@ -170,15 +154,19 @@ modelsim-accel-$(1): modelsim-libs $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIS
 				/^[[:space:]]*$$$$/ { next } \
 				/^[[:space:]]*\/\// { next } \
 				/^[[:space:]]*#/ { next } \
-				/^\+incdir\+/ { sub(/^\+incdir\+/, "+incdir+" base); print; next } \
+				/^\+incdir\+/ { next } \
 				{ print base $$$$0 } \
-			' "$$$$fl" >> $$(ACC_$(1)_LIB).f; \
+			' "$$$$fl" >> $$(ACC_$(1)_LIB).rtl.f; \
 		done; \
 	fi; \
 	\
-	if test -s $$(ACC_$(1)_LIB).f; then \
-		echo $(SPACES)"vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(ACC_$(1)_LIB) -f $$(ACC_$(1)_LIB).f"; \
-		vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(ACC_$(1)_LIB) -f $$(ACC_$(1)_LIB).f || exit 1; \
+	if test -s $$(ACC_$(1)_LIB).tech.f; then \
+		echo $(SPACES)"vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(ACC_$(1)_LIB) -f $$(ACC_$(1)_LIB).tech.f"; \
+		vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(ACC_$(1)_LIB) -f $$(ACC_$(1)_LIB).tech.f || exit 1; \
+	fi; \
+	if test -s $$(ACC_$(1)_LIB).rtl.f; then \
+		echo $(SPACES)"vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(ACC_$(1)_LIB) -f $$(ACC_$(1)_LIB).rtl.f"; \
+		vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(ACC_$(1)_LIB) -f $$(ACC_$(1)_LIB).rtl.f || exit 1; \
 	fi
 endef
 $(foreach acc,$(ACC_TECH_PRESENT),$(eval $(call MODELSIM_ACC_LIB_RULE,$(acc))))

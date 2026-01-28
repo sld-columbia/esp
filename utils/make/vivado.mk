@@ -81,6 +81,7 @@ endif
 				accname=`basename "$$accdir"`; \
 				acclib=acc_`echo $$accname | sed 's/[^A-Za-z0-9_]/_/g'`; \
 				accsrc="$(ESP_ROOT)/accelerators/rtl/$$accname"; \
+				incroot_global="$$accsrc/vlog_incdir_global"; \
 				incroot="$$accsrc/vlog_incdir"; \
 				echo "# Accelerator $$accname (library $$acclib)" >> $@; \
 				vendbn=$$(mktemp); vendbn_u=$$(mktemp); vendcmds=$$(mktemp); \
@@ -133,6 +134,19 @@ endif
 				if test -d "$$incroot"; then \
 					echo "# SV packages and helpers from vlog_incdir (skip duplicates provided by vendor filelists)" >> $@; \
 					for pkg in `find "$$incroot" -type f -name "*.sv" | sort`; do \
+						bn=$$(basename "$$pkg"); \
+						if test -s $$vendbn_u && grep -qx "$$bn" $$vendbn_u; then \
+							continue; \
+						fi; \
+						echo "read_verilog -library $$acclib -sv $$pkg" >> $@; \
+					done; \
+				fi; \
+				if test -d "$$incroot_global"; then \
+					incdirs_global=`find "$$incroot_global" -type d`; \
+					echo "set_property include_dirs [concat {$$incdirs_global} [get_property include_dirs [get_filesets sources_1]]] [get_filesets sources_1]" >> $@; \
+					echo "set_property include_dirs [concat {$$incdirs_global} [get_property include_dirs [get_filesets sim_1]]] [get_filesets sim_1]" >> $@; \
+					echo "# SV packages and helpers from vlog_incdir_global (skip duplicates provided by vendor filelists)" >> $@; \
+					for pkg in `find "$$incroot_global" -type f -name "*.sv" | sort`; do \
 						bn=$$(basename "$$pkg"); \
 						if test -s $$vendbn_u && grep -qx "$$bn" $$vendbn_u; then \
 							continue; \
