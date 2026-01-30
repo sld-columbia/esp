@@ -993,6 +993,7 @@ def write_acc_port_map(
         f.write("\n")
         f.write("      dma_read_ctrl_val          => dma_read_ctrl_valid,\n")
         f.write("      dma_read_ctrl_rdy          => dma_read_ctrl_ready,\n")
+        f.write("      dma_read_ctrl_msg(78 downto 73) => dma_read_ctrl_data_target,\n")
         f.write("      dma_read_ctrl_msg(72 downto 67) => dma_read_ctrl_data_user,\n")
         f.write("      dma_read_ctrl_msg(66 downto 64) => dma_read_ctrl_data_size,\n")
         f.write("      dma_read_ctrl_msg(63 downto 32) => dma_read_ctrl_data_length,\n")
