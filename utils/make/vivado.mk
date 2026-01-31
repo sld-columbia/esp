@@ -18,8 +18,9 @@ endif
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 
 ACC_TECH_DIR   := $(ESP_ROOT)/tech/$(TECHLIB)/acc
-ACC_VHDL_SRCS  := $(filter $(ACC_TECH_DIR)/%,$(VHDL_SRCS))
-ACC_VLOG_SRCS  := $(filter $(ACC_TECH_DIR)/%,$(VLOG_SRCS))
+ACC_TECH_PRESENT := $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_DIR)/*)),$(RTL_ACC)))
+ACC_VHDL_SRCS  := $(filter $(foreach acc,$(ACC_TECH_PRESENT),$(ACC_TECH_DIR)/$(acc)/%),$(VHDL_SRCS))
+ACC_VLOG_SRCS  := $(filter $(foreach acc,$(ACC_TECH_PRESENT),$(ACC_TECH_DIR)/$(acc)/%),$(VLOG_SRCS))
 BASE_VHDL_SRCS := $(filter-out $(ACC_VHDL_SRCS),$(VHDL_SRCS))
 BASE_VLOG_SRCS := $(filter-out $(ACC_VLOG_SRCS),$(VLOG_SRCS))
 
@@ -79,6 +80,7 @@ endif
 		for accdir in $(ACC_TECH_DIR)/*; do \
 			if test -d "$$accdir"; then \
 				accname=`basename "$$accdir"`; \
+				case " $(RTL_ACC) " in *" $$accname "*) ;; *) continue ;; esac; \
 				acclib=acc_`echo $$accname | sed 's/[^A-Za-z0-9_]/_/g'`; \
 				accsrc="$(ESP_ROOT)/accelerators/rtl/$$accname"; \
 				incroot="$$accsrc/vlog_incdir"; \
