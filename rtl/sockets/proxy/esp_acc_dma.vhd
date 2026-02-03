@@ -1141,7 +1141,8 @@ begin  -- rtl
           -- Targeted store: if buffer is full and requester is not the target, stall (no drop)
           if targeted_store = '1' and p2p_buf_free = '0' and (p2p_dst_x /= p2p_target_x or p2p_dst_y /= p2p_target_y) then
             dma_next <= wait_req_p2p;
-          else
+          else 
+            -- This covers the case we have a targeted store but no match in buffer,
             p2p_req_rcv_rdreq <= '1';
             -- Latch requester coordinates from the header flit
             p2p_dst_x_r_in <= p2p_dst_x;
@@ -1169,14 +1170,15 @@ begin  -- rtl
           end if;
           p2p_req_rcv_rdreq <= '1';
           if targeted_store = '1' then
-            -- Targeted store: respond only if requester matches the target
+            --if we have a targeted store but have not matched it with anything in the buffer
+            --then we either: 
             if p2p_dst_x_r = p2p_target_x and p2p_dst_y_r = p2p_target_y then
+            --receive an incoming consumer request matching the current producer target (but we already checked this above right ?)
               p2p_rsp_snd_data_in <= header_r;
-              p2p_dst_x_r_in <= p2p_dst_x_r;
-              p2p_dst_y_r_in <= p2p_dst_y_r;
               dma_next <= send_header;
             else
-              -- Unmatched requester is buffered and served later
+            -- or we receive an incoming consumer request not matching the current producer target and
+            -- therefore we buffer it for later service
               p2p_buf_write <= '1';
               p2p_buf_write_idx <= p2p_buf_free_idx;
               p2p_buf_write_x <= p2p_dst_x_r;
@@ -1187,8 +1189,6 @@ begin  -- rtl
           else
             -- Non-targeted path: keep existing multicast/regular behavior
             p2p_rsp_snd_data_in <= header_r;
-            p2p_dst_x_r_in <= p2p_dst_x_r;
-            p2p_dst_y_r_in <= p2p_dst_y_r;
             if count_n_dest = p2p_mcast_ndests then
               dma_next <= send_header;
             else
