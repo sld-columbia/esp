@@ -131,7 +131,7 @@ class NoC():
 
     rows = 0
     cols = 0
-    top = ""
+    top = None
 
     topology = []
 
