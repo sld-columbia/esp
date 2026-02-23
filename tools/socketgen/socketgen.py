@@ -2154,6 +2154,8 @@ def gen_tech_indep_impl(
                     f.write("use ieee.std_logic_1164.all;\n")
                     f.write("use work.sld_devices.all;\n")
                     f.write("use work.allacc.all;\n")
+                    if acc.hls_tool == 'rtl':
+                        f.write("library " + acc.name + ";\n")
                     f.write("\n")
                     f.write("entity " + acc.name + "_rtl is\n\n")
                     f.write("    generic (\n")
@@ -2184,13 +2186,28 @@ def gen_tech_indep_impl(
                             "_" +
                             impl.name.upper() +
                             " generate\n")
-                        if acc.hls_tool == 'stratus_hls' or acc.hls_tool == 'rtl':
+                        if acc.hls_tool == 'stratus_hls':
                             f.write(
                                 "    " +
                                 acc.name +
                                 "_" +
                                 impl.name +
                                 "_i: " +
+                                acc.name +
+                                "_" +
+                                impl.name +
+                                "\n")
+                            write_acc_port_map(
+                                f, acc, noc_width, impl.datatype, "rst", False, False, False, False)
+                        elif acc.hls_tool == 'rtl':
+                            f.write(
+                                "    " +
+                                acc.name +
+                                "_" +
+                                impl.name +
+                                "_i: entity " +
+                                acc.name +
+                                "." +
                                 acc.name +
                                 "_" +
                                 impl.name +

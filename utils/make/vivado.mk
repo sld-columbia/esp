@@ -81,7 +81,7 @@ endif
 			if test -d "$$accdir"; then \
 				accname=`basename "$$accdir"`; \
 				case " $(RTL_ACC) " in *" $$accname "*) ;; *) continue ;; esac; \
-				acclib=acc_`echo $$accname | sed 's/[^A-Za-z0-9_]/_/g'`; \
+				acclib=$$accname; \
 				accsrc="$(ESP_ROOT)/accelerators/rtl/$$accname"; \
 				incroot="$$accsrc/vlog_incdir"; \
 				echo "# Accelerator $$accname (library $$acclib)" >> $@; \
