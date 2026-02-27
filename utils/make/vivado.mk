@@ -17,12 +17,12 @@ endif
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 
-ACC_TECH_DIR   := $(ESP_ROOT)/tech/$(TECHLIB)/acc
-ACC_TECH_PRESENT := $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_DIR)/*)),$(RTL_ACC)))
-ACC_VHDL_SRCS  := $(filter $(foreach acc,$(ACC_TECH_PRESENT),$(ACC_TECH_DIR)/$(acc)/%),$(VHDL_SRCS))
-ACC_VLOG_SRCS  := $(filter $(foreach acc,$(ACC_TECH_PRESENT),$(ACC_TECH_DIR)/$(acc)/%),$(VLOG_SRCS))
-BASE_VHDL_SRCS := $(filter-out $(ACC_VHDL_SRCS),$(VHDL_SRCS))
-BASE_VLOG_SRCS := $(filter-out $(ACC_VLOG_SRCS),$(VLOG_SRCS))
+ACC_TECH_DIR   = $(ESP_ROOT)/tech/$(TECHLIB)/acc
+ACC_TECH_PRESENT = $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_DIR)/*)),$(RTL_ACC)))
+ACC_VHDL_SRCS  = $(filter $(foreach acc,$(ACC_TECH_PRESENT),$(ACC_TECH_DIR)/$(acc)/%),$(VHDL_SRCS))
+ACC_VLOG_SRCS  = $(filter $(foreach acc,$(ACC_TECH_PRESENT),$(ACC_TECH_DIR)/$(acc)/%),$(VLOG_SRCS))
+BASE_VHDL_SRCS = $(filter-out $(ACC_VHDL_SRCS),$(VHDL_SRCS))
+BASE_VLOG_SRCS = $(filter-out $(ACC_VLOG_SRCS),$(VLOG_SRCS))
 
 XDC   = $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX).xdc
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mig-pins.xdc
