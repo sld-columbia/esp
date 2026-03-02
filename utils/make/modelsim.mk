@@ -32,8 +32,7 @@ SIM_LIBDIR ?= $(abspath $(RTL_CFG_BUILD)/sim_libs)
 ACC_TECH_ROOT := $(ESP_ROOT)/tech/$(TECHLIB)/acc
 ACC_TECH_PRESENT := $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_ROOT)/*)),$(RTL_ACC)))
 ACC_LIBS := $(ACC_TECH_PRESENT)
-ACC_LIB_ALIASES := $(addsuffix _lib,$(ACC_TECH_PRESENT))
-ACC_LIB_OPT := $(foreach lib,$(ACC_LIBS) $(ACC_LIB_ALIASES),-L $(lib))
+ACC_LIB_OPT := $(foreach lib,$(ACC_LIBS),-L $(lib))
 
 SIM_VLOG_SRCS_ALL := $(SIM_VLOG_SRCS)
 
@@ -51,7 +50,6 @@ VSIMOPT += -L work $(ACC_LIB_OPT)
 define DEFINE_MODELSIM_ACC
 ACC_$(1)_NAME := $(1)
 ACC_$(1)_LIB := $(1)
-ACC_$(1)_LIB_ALIAS := $(1)_lib
 ACC_$(1)_SRC_BASE := $(ESP_ROOT)/accelerators/rtl/$(1)
 ACC_$(1)_TECH_DIR := $(ACC_TECH_ROOT)/$(1)
 ACC_$(1)_VENDOR_PKG_DIR := $$(ACC_$(1)_SRC_BASE)/vlog_incdir
@@ -97,15 +95,6 @@ modelsim-libs: modelsim/modelsim.ini $(SIM_LIBDIR)
 			vmap $$lib $(SIM_LIBDIR)/$$lib; \
 		fi; \
 	done
-	@cd modelsim; \
-	for lib in $(ACC_LIB_ALIASES); do \
-		if test -n "$$lib"; then \
-			base=$${lib%_lib}; \
-			if test -e $(SIM_LIBDIR)/$$base; then \
-				vmap $$lib $(SIM_LIBDIR)/$$base; \
-			fi; \
-		fi; \
-	done
 
 define MODELSIM_ACC_LIB_RULE
 modelsim-accel-$(1): modelsim-libs $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST)
@@ -114,9 +103,6 @@ modelsim-accel-$(1): modelsim-libs $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIS
 		vlib -type directory $(SIM_LIBDIR)/$$(ACC_$(1)_LIB); \
 	fi; \
 	vmap $$(ACC_$(1)_LIB) $(SIM_LIBDIR)/$$(ACC_$(1)_LIB); \
-	if test -n "$$(ACC_$(1)_LIB_ALIAS)"; then \
-		vmap $$(ACC_$(1)_LIB_ALIAS) $(SIM_LIBDIR)/$$(ACC_$(1)_LIB); \
-	fi; \
 	\
 	rm -f $$(ACC_$(1)_LIB).rtl.f; \
 	for opt in $(ACC_MODELSIM_DEFS) $(ACC_MODELSIM_VLOGOPT); do \
