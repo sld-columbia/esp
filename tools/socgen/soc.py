@@ -343,7 +343,7 @@ class SoC_Config():
         has_dvfs = False
         fp.write("CPU_ARCH = " + self.CPU_ARCH.get() + "\n")
         fp.write("NCPU_TILE = " + str(self.noc.get_cpu_num(self)) + "\n")
-        if self.transfers.get() == "Big physical area":
+        if self.transfers.get() == "Scatter/Gather":
             fp.write("CONFIG_HAS_SG = y\n")
         else:
             fp.write("#CONFIG_HAS_SG is not set\n")

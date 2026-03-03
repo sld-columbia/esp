@@ -726,7 +726,7 @@ class NoCConfigFrame:
         self.queue_size_value_frame.grid(row=7, column=1, pady=5, padx=15)
         self.queue_size_value_menu = StyledComponents.OptionMenu(
             self.queue_size_value_frame,
-            variable=self.noc.max_mcast_dests,
+            variable=self.noc.queue_size,
             values=self.queue_size_choices,
             width=100,
             font=(
