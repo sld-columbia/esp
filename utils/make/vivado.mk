@@ -74,6 +74,11 @@ endif
 		echo "read_vhdl $$rtl" >> $@; \
 	done;
 	@for rtl in $(BASE_VLOG_SRCS); do \
+		case "$$rtl" in \
+			$(ACC_TECH_DIR)/*) \
+				accname=$$(printf "%s\n" "$$rtl" | awk -F/ '{for(i=1;i<=NF;i++) if($$i=="acc"){print $$(i+1); exit}}'); \
+				case " $(RTL_ACC) " in *" $$accname "*) continue ;; esac ;; \
+		esac; \
 		echo "read_verilog -sv $$rtl" >> $@; \
 	done;
 	@if test -d $(ACC_TECH_DIR); then \
