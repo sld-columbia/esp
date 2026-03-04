@@ -915,7 +915,7 @@ begin
         local_y 	=> this_local_y,
         local_x 	=> this_local_x,
         --AR Channel
-        AR_ID 		=> mst0_out.ar.id,
+        AR_ID 		=> mst0_out.ar.id(1 downto 0),
         AR_ADDR 	=> mst0_out.ar.addr,
         AR_LEN 		=> mst0_out.ar.len,
         AR_SIZE 	=> mst0_out.ar.size,
@@ -925,14 +925,14 @@ begin
         AR_VALID 	=> mst0_out.ar.valid,
         AR_READY 	=> mst0_in.ar.ready,
         --R Channel
-        R_ID    	=> mst0_in.r.id,
+        R_ID    	=> mst0_in.r.id(1 downto 0),
         R_DATA  	=> mst0_in.r.data,
         R_RESP  	=> mst0_in.r.resp,
         R_LAST  	=> mst0_in.r.last,
         R_VALID 	=> mst0_in.r.valid,
         R_READY 	=> mst0_out.r.ready,
         --AW Channel
-        AW_ID 		=> mst0_out.aw.id,
+        AW_ID 		=> mst0_out.aw.id(1 downto 0),
         AW_ADDR 	=> mst0_out.aw.addr,
         AW_LEN 		=> mst0_out.aw.len,
         AW_SIZE 	=> mst0_out.aw.size,
@@ -948,7 +948,7 @@ begin
         W_VALID 	=> mst0_out.w.valid,
         W_READY 	=> mst0_in.w.ready,
         --B Channel
-        B_ID 		=> mst0_in.b.id,
+        B_ID 		=> mst0_in.b.id(1 downto 0),
         B_RESP 		=> mst0_in.b.resp,
         B_VALID 	=> mst0_in.b.valid,
         B_READY 	=> mst0_out.b.ready,
@@ -1005,7 +1005,7 @@ begin
         local_x       => this_local_x,
         pconfig       => this_llc_pconfig,
         --AR Channel
-        AR_ID 		=> mst2_out.ar.id,
+        AR_ID 		=> mst2_out.ar.id(1 downto 0),
         AR_ADDR 	=> mst2_out.ar.addr,
         AR_LEN 		=> mst2_out.ar.len,
         AR_SIZE 	=> mst2_out.ar.size,
@@ -1015,14 +1015,14 @@ begin
         AR_VALID 	=> mst2_out.ar.valid,
         AR_READY 	=> mst2_in.ar.ready,
         --R Channel
-        R_ID 		=> mst2_in.r.id,
+        R_ID 		=> mst2_in.r.id(1 downto 0),
         R_DATA 		=> mst2_in.r.data,
         R_RESP 		=> mst2_in.r.resp,
         R_LAST 		=> mst2_in.r.last,
         R_VALID 	=> mst2_in.r.valid,
         R_READY 	=> mst2_out.r.ready,
         --AW Channel
-        AW_ID 		=> mst2_out.aw.id,
+        AW_ID 		=> mst2_out.aw.id(1 downto 0),
         AW_ADDR 	=> mst2_out.aw.addr,
         AW_LEN 		=> mst2_out.aw.len,
         AW_SIZE 	=> mst2_out.aw.size,
@@ -1038,7 +1038,7 @@ begin
         W_VALID 	=> mst2_out.w.valid,
         W_READY 	=> mst2_in.w.ready,
         --B Channel
-        B_ID 		=> mst2_in.b.id,
+        B_ID 		=> mst2_in.b.id(1 downto 0),
         B_RESP 		=> mst2_in.b.resp,
         B_VALID 	=> mst2_in.b.valid,
         B_READY 	=> mst2_out.b.ready,
@@ -1147,7 +1147,7 @@ begin
         local_y 	=> this_local_y,
         local_x 	=> this_local_x,
         --AR Channel
-        AR_ID 		=> mst1_out.ar.id,
+        AR_ID 		=> mst1_out.ar.id(1 downto 0),
         AR_ADDR 	=> mst1_out.ar.addr,
         AR_LEN 		=> mst1_out.ar.len,
         AR_SIZE 	=> mst1_out.ar.size,
@@ -1157,14 +1157,14 @@ begin
         AR_VALID 	=> mst1_out.ar.valid,
         AR_READY 	=> mst1_in.ar.ready,
         --R Channel
-        R_ID 		=> mst1_in.r.id,
+        R_ID 		=> mst1_in.r.id(1 downto 0),
         R_DATA 		=> mst1_in.r.data,
         R_RESP 		=> mst1_in.r.resp,
         R_LAST 		=> mst1_in.r.last,
         R_VALID 	=> mst1_in.r.valid,
         R_READY 	=> mst1_out.r.ready,
         --AW Channel
-        AW_ID 		=> mst1_out.aw.id,
+        AW_ID 		=> mst1_out.aw.id(1 downto 0),
         AW_ADDR 	=> mst1_out.aw.addr,
         AW_LEN 		=> mst1_out.aw.len,
         AW_SIZE 	=> mst1_out.aw.size,
@@ -1180,7 +1180,7 @@ begin
         W_VALID 	=> mst1_out.w.valid,
         W_READY 	=> mst1_in.w.ready,
         --B Channel
-        B_ID 		=> mst1_in.b.id,
+        B_ID 		=> mst1_in.b.id(1 downto 0),
         B_RESP 		=> mst1_in.b.resp,
         B_VALID 	=> mst1_in.b.valid,
         B_READY 	=> mst1_out.b.ready,
