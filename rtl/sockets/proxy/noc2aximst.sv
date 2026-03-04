@@ -793,22 +793,24 @@ module noc2aximst
                     w_last_comb  = (cs.word_rem == 0);
                 end
             end
- 
+            
             DMA_WRITE_DATA_ETH: begin
-                if (cs.sample_flag == 2'b10) begin
+                if (dma_rcv_empty == 1'b0) begin
                     w_valid_comb = 1'b1;
-                    w_last_comb = 1'b1;
-                    w_data_comb = cs.w_data;
-                end
-                else if (cs.sample_flag == 2'b01) begin
-                    if (cs.word_cnt != 1 && dma_rcv_empty == 1'b0) begin
-                        w_valid_comb = 1'b1;
-                        w_last_comb = 1'b1;
-                        w_data_comb = {cs.w_data[63:32], dma_rcv_data_out[31:0]};
-                    end else if (cs.word_cnt == 1) begin
-                        w_valid_comb = 1'b1;
-                        w_last_comb = 1'b1;
-                        w_data_comb = cs.w_data;
+                    w_last_comb  = 1'b1;
+
+                    if (ARCH_BITS == 64) begin
+                        if (cs.aw_addr[2] == 1'b0) begin
+                            w_data_comb = {dma_rcv_data_out[31:0], 32'b0};
+                            w_strb_comb = 8'b11110000;
+                        end else begin
+                            w_data_comb = {32'b0, dma_rcv_data_out[31:0]};
+                            w_strb_comb = 8'b00001111;
+                        end
+                    end else begin
+                        // 32-bit architecture fallback
+                        w_data_comb = dma_rcv_data_out[AXIDW-1:0];
+                        w_strb_comb = {AW{1'b1}};
                     end
                 end
             end
