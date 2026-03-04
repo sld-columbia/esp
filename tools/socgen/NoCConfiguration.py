@@ -6,6 +6,7 @@
 import customtkinter as ctk
 from tkinter import *
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter.ttk import Separator
 from thirdparty import *
 import Pmw
@@ -244,9 +245,8 @@ class Tile():
 
     def update_tile(self, soc):
         selection = self.ip_type.get()
-        self.ip_list.forget()
         self.ip_list.configure(values=soc.list_of_ips)
-        self.ip_list.pack(pady=10)
+    
         if soc.IPs.PROCESSORS.count(selection):
             self.frame.configure(fg_color="#ef6865")
         elif soc.IPs.MISC.count(selection):
@@ -258,26 +258,57 @@ class Tile():
         elif soc.IPs.ACCELERATORS.count(selection):
             self.frame.configure(fg_color="#78cbbb")
             self.point_label.configure(text_color="black")
+            try:
+                self.point_label.grid()
+                self.impl_slot.grid()
+            except Exception:
+                pass
             self.vendor = soc.IPs.VENDOR[selection]
             dma_width = str(soc.noc.dma_noc_width.get())
-            display_points = [
-                point for point in soc.IPs.POINTS[selection] if "dma" +
-                str(dma_width) in point]
-            self.point_select.configure(values=display_points)
-            point = self.point.get()
-            self.point_select.set("")
-            for p in display_points:
-                if point == p:
-                    self.point_select.set(point)
-                    break
-                else:
-                    self.point_select.set(str(display_points[0]))
-            self.point_select.configure(state="normal")
-        else:
-            self.frame.configure(fg_color='white')
-            if self.ip_type.get() != "empty":
-                self.ip_type.set("empty")
+            display_points = [p for p in soc.IPs.POINTS[selection] if "dma"+str(dma_width) in p]
 
+            if not self.point_select.winfo_manager():
+                self.point_select.pack(fill="x")    # hide label for non-accelerators
+
+            self.point_select.configure(values=display_points)
+            if display_points:
+                cur = self.point.get()
+                if cur in display_points:
+                    self.point_select.set(cur)
+                else:
+                    self.point.set(display_points[0])
+                    self.point_select.set(display_points[0])
+                self.point_select.configure(state="normal")
+            else:
+                self.point.set("")
+                self.point_select.set("")
+                self.point_select.configure(state="disabled")
+        else:
+            self.frame.configure(fg_color="white")
+            self.vendor = ""
+            self.point.set("")
+            self.point_select.configure(values=[], state="disabled")
+            for fn in (getattr(self.point_select, "pack_forget", None),
+                    getattr(self.point_select, "grid_remove", None),
+                    getattr(self.point_select, "place_forget", None)):
+                try:
+                    if callable(fn):
+                        fn()
+                except Exception:
+                    pass
+            try:
+                if self.point_label.winfo_ismapped():
+                    self.point_label.grid_remove()
+                if self.impl_slot.winfo_ismapped():
+                    self.impl_slot.grid_remove()
+            except Exception:
+                pass
+            try:
+                lbl = getattr(self.point_select, "_text_label", None)
+                if lbl is not None:
+                    lbl.configure(text="")
+            except Exception:
+                pass
         try:
             if soc.IPs.ACCELERATORS.count(selection) and soc.cache_en.get(
             ) == 1 and soc.noc.dma_noc_width.get() == soc.ARCH_BITS:
@@ -474,73 +505,140 @@ class NoCConfigFrame:
 
     def update_frame(self):
         if self.noc.cols > 0 and self.noc.rows > 0:
+            self.COLS.delete(0, END)
             self.COLS.insert(0, str(self.noc.cols))
+            self.ROWS.delete(0, END)
             self.ROWS.insert(0, str(self.noc.rows))
         self.create_noc()
         self.changed()
 
+    def _tile_checkbox(self, parent, text, variable, cmd):
+        return ctk.CTkCheckBox(
+            parent,
+            text=text,
+            variable=variable,
+            command=cmd,
+            font=("Arial", 10),       # previous font
+            fg_color="green",
+            border_color="grey",
+            corner_radius=0,
+            checkbox_width=18,
+            checkbox_height=18,
+            hover=False
+        )
+
+    def _ellipsize(self, text, font_obj, max_px):
+        if not text:
+            return ""
+        if font_obj.measure(text) <= max_px:
+            return text
+        ell = "…"
+        # Binary-ish shrink until it fits
+        lo, hi = 0, len(text)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            candidate = text[:mid] + ell
+            if font_obj.measure(candidate) <= max_px:
+                lo = mid + 1
+            else:
+                hi = mid
+        mid = max(0, lo - 1)
+        return (text[:mid] + ell) if mid < len(text) else text
+
+    def _bind_trunc(self, optionmenu, var, max_px):
+        lbl = getattr(optionmenu, "_text_label", None)
+        if lbl is None:
+            return  # fallback: do nothing if CTk internals change
+    
+        f = tkfont.Font(font=lbl.cget("font"))
+    
+        def apply(*_):
+            full = var.get()
+            lbl.configure(text=self._ellipsize(full, f, max_px))
+    
+        apply()
+        try:
+            var.trace_add("write", apply)
+        except Exception:
+            var.trace("w", lambda *args: apply())
+
+    def _fixed_slot(self, parent, w, h=28):
+        slot = ctk.CTkFrame(parent, width=w, height=h, fg_color="transparent")
+        slot.pack_propagate(False)
+        return slot
+
     def create_tile(self, frame, tile):
-        # computing the width of the widget
-        list_items = self.soc.list_of_ips
-        width = 0
-        for x in range(0, len(list_items)):
-            if len(list_items[x]) > width:
-                width = len(list_items[x])
         tile.frame = frame
+        BTN_W = 120 # same for both dropdowns
+        PADDED_TEXT_MAX = BTN_W - 24 # room for padding & arrow;
 
-        # creating tile
-        tile.type_frame = ctk.CTkFrame(frame, fg_color="#e8e8e8")
-        tile.type_frame.pack(anchor="center", pady=(15, 0))
+        # Content Wrapper
+        OUTSET = 8  # thickness of the colored border
+        R_OUT, R_IN = 10, 8 # outer/inner corner radii
 
-        impl_frame = ctk.CTkFrame(frame, width=0, height=0, fg_color="#e8e8e8")
-        impl_frame.pack(anchor="center")
+        # the inner card that guarantees straight edges
+        content = ctk.CTkFrame(frame, fg_color="#e8e8e8", corner_radius=R_IN)
+        content.pack(fill="both", expand=True, padx=OUTSET, pady=OUTSET)
 
-        config_frame = ctk.CTkFrame(frame, fg_color="#e8e8e8")
-        config_frame.pack(anchor="center", padx=15, pady=(0, 15))
+        content.grid_columnconfigure(0, weight=1, minsize=100)   # text column grows
+        content.grid_columnconfigure(1, weight=0, minsize=BTN_W)   # dropdown column fixed
 
-        tile_type_label = StyledComponents.LabelPack(
-            tile.type_frame, text="Tile", font=(
-                "Arial", 11), text_color="black")
+        # header row
+        header_lbl = ctk.CTkLabel(content, text="Tile", font=("Arial", 11))
+        header_lbl.grid(row=0, column=0, sticky="w", padx=8, pady=(8, 4))
+
+        ip_slot = self._fixed_slot(content, BTN_W)
+        ip_slot.grid(row=0, column=1, sticky="e", padx=8, pady=(8, 4))
+
         tile.ip_list = StyledComponents.OptionMenu(
-            tile.type_frame,
+            ip_slot,
             variable=tile.ip_type,
-            values=list_items,
-            command=self.changed)
-        tile.ip_list.pack(side="right", padx=20, pady=10)
+            values=self.soc.list_of_ips,
+            width=BTN_W,           # fixed so the card width never changes
+            anchor="w",
+            command=self.changed,
+        )
+        tile.ip_list.pack(fill="x") # inside fixed slot
+        self._bind_trunc(tile.ip_list, tile.ip_type, PADDED_TEXT_MAX)
+    
+        # ---- implementation row -------------------------------------------------
+        tile.point_label = ctk.CTkLabel(
+            content, text="Impl.", font=("Arial", 10), text_color="grey"
+        )
+        tile.point_label.grid(row=1, column=0, sticky="w", padx=8, pady=4)
+    
+        impl_slot = self._fixed_slot(content, BTN_W)
+        impl_slot.grid(row=1, column=1, sticky="e", padx=8, pady=4)
 
-        tile.point_label = StyledComponents.LabelPack(
-            impl_frame, text="Impl.", font=(
-                "Arial", 10), text_color="grey", side="left", padx=(
-                12, 0), pady=10)
+        tile.impl_slot = impl_slot
         tile.point_select = StyledComponents.OptionMenu(
-            impl_frame,
+            impl_slot,
             variable=tile.point,
             values=[],
+            width=BTN_W,            # same fixed width as header dropdown
             state="disabled",
-            command=self.changed)
-        tile.point_select.pack(side="right", padx=(18, 1), pady=10)
-
-        tile.has_l2_selection = StyledComponents.CheckBox(
-            config_frame,
-            variable=tile.has_l2,
-            text="Cache",
-            row=0,
-            column=0,
-            command=self.changed)
-        tile.has_ddr_selection = StyledComponents.CheckBox(
-            config_frame,
-            variable=tile.has_ddr,
-            text="DDR",
-            row=0,
-            column=1,
-            command=self.changed)
-        tile.has_tdvfs_selection = StyledComponents.CheckBox(
-            config_frame,
-            variable=tile.has_tdvfs,
-            text="DVFS",
-            row=1,
-            column=0,
-            command=self.changed)
+            anchor="w",
+            command=self.changed,
+        )
+        #tile.point_select.pack(fill="x")
+        #tile.point_select.grid(row=1, column=1, sticky="e", padx=8, pady=4)
+        tile.point_label.grid_remove()
+        tile.impl_slot.grid_remove()
+        self._bind_trunc(tile.point_select, tile.point, PADDED_TEXT_MAX)
+         
+        # ---- config row (checkboxes) -------------------------------------------
+        cfg = ctk.CTkFrame(content, fg_color="transparent")
+        cfg.grid(row=2, column=0, columnspan=2, sticky="ew", padx=8, pady=(6, 8))
+        
+        # two columns inside for neat alignment
+        cfg.grid_columnconfigure(0, weight=1, uniform="cfg")
+        cfg.grid_columnconfigure(1, weight=1, uniform="cfg")
+        tile.cb_cache = self._tile_checkbox(cfg, "Cache", tile.has_l2, self.changed)
+        tile.cb_cache.grid(row=0, column=0, sticky="w", padx=(0, 16), pady=(4, 4))
+        tile.cb_ddr = self._tile_checkbox(cfg, "DDR", tile.has_ddr, self.changed)
+        tile.cb_ddr.grid(row=0, column=1, sticky="w", padx=(0, 0), pady=(4, 4))
+        tile.cb_dvfs = self._tile_checkbox(cfg, "DVFS", tile.has_tdvfs, self.changed)
+        tile.cb_dvfs.grid(row=1, column=0, sticky="w", padx=(0, 16), pady=(4, 8))
 
     def __init__(self, soc, left_panel, right_panel):
         self.soc = soc
@@ -560,7 +658,7 @@ class NoCConfigFrame:
                 "Arial", 10), row=1, column=0, padx=20, pady=20, sticky="e")
         self.noc_rows = StyledComponents.Entry(self.noc_select_frame)
         self.ROWS = self.noc_rows
-        self.noc_rows.insert(0, "2")
+        self.noc_rows.insert(0, str(self.noc.rows or 2))    # use saved, fallback to 2
         self.noc_rows.grid(row=1, column=1, padx=5, pady=20)
 
         self.noc_columns_label = StyledComponents.LabelGrid(
@@ -568,7 +666,7 @@ class NoCConfigFrame:
                 "Arial", 10), row=1, column=2, padx=20, pady=20, sticky="e")
         self.noc_columns = StyledComponents.Entry(self.noc_select_frame)
         self.COLS = self.noc_columns
-        self.noc_columns.insert(0, "2")
+        self.noc_columns.insert(0, str(self.noc.cols or 2)) # use saved, fallback to 2
         self.noc_columns.grid(row=1, column=3, padx=5, pady=20)
 
         self.update_noc_button = StyledComponents.Button(
@@ -973,7 +1071,6 @@ class NoCConfigFrame:
         self.gen_soc_config = gen_soc_config
 
     def create_noc(self):
-        # self.pack(side=LEFT,fill=BOTH,expand=YES)
         if isInt(self.ROWS.get()) == False or isInt(self.COLS.get()) == False:
             return
         # destroy current topology
@@ -987,15 +1084,17 @@ class NoCConfigFrame:
             self.right_panel, int(
                 self.ROWS.get()), int(
                 self.COLS.get()))
+        TILE_W, TILE_H = 280, 170
         for y in range(0, int(self.ROWS.get())):
             self.row_frames.append(ctk.CTkFrame(self.right_panel))
             self.row_frames[y].pack(side=TOP)
             self.noc_tiles.append([])
             for x in range(0, int(self.COLS.get())):
-                self.noc_tiles[y].append(ctk.CTkFrame(self.row_frames[y]))
-                self.noc_tiles[y][x].pack(side=LEFT)
-                # Label(self.noc_tiles[y][x], text="("+str(y)+","+str(x)+")").pack()
-                self.create_tile(self.noc_tiles[y][x], self.noc.topology[y][x])
+                f = ctk.CTkFrame(self.row_frames[y], width=TILE_W, height=TILE_H, corner_radius=10)
+                f.pack(side=LEFT, padx=10, pady=10)
+                f.pack_propagate(False)  # freeze outer size so the inner card can’t warp it
+                self.noc_tiles[y].append(f)
+                self.create_tile(f, self.noc.topology[y][x])
                 if len(self.noc.topology[y][x].ip_type.get()) == 0:
                     self.noc.topology[y][x].ip_type.set(
                         "empty")  # default value
@@ -1003,7 +1102,6 @@ class NoCConfigFrame:
         for y in range(0, int(self.ROWS.get())):
             for x in range(0, int(self.COLS.get())):
                 tile = self.noc.topology[y][x]
-                # tile.ip_type.trace('w', self.changed)
         self.soc.IPs = Components(
             self.soc.TECH,
             self.noc.dma_noc_width.get(),

@@ -466,19 +466,19 @@ class CachesConfigFrame:
 
         self.l2_label = ctk.CTkLabel(
             self.caches_frame,
-            text="L2 Properties",
+            text="L2 Sets, Ways",
             font=(
                 "Arial",
                 10))
         self.llc_label = ctk.CTkLabel(
             self.caches_frame,
-            text="LLC Properties",
+            text="LLC Sets, Ways",
             font=(
                 "Arial",
                 10))
         self.acc_l2_label = ctk.CTkLabel(
             self.caches_frame,
-            text="Acc L2 Properties",
+            text="Acc L2 Sets, Ways",
             font=(
                 "Arial",
                 10))
@@ -489,17 +489,8 @@ class CachesConfigFrame:
             row=7, column=0, padx=20, pady=(
                 10, 5), sticky="w")
 
-        self.l2_ways_frame = ctk.CTkFrame(self.caches_frame)
-        self.l2_ways_frame.grid(row=5, column=0, padx=20, pady=5)
-        self.l2_ways_dd = StyledComponents.OptionMenu(
-            self.l2_ways_frame,
-            self.soc.l2_ways,
-            self.l2_ways_choices,
-            width=165,
-            command=main_frame.update_noc_config)
-
         self.l2_sets_frame = ctk.CTkFrame(self.caches_frame)
-        self.l2_sets_frame.grid(row=6, column=0, padx=20, pady=5)
+        self.l2_sets_frame.grid(row=5, column=0, padx=20, pady=5)
         self.l2_sets_dd = StyledComponents.OptionMenu(
             self.l2_sets_frame,
             self.soc.l2_sets,
@@ -507,8 +498,26 @@ class CachesConfigFrame:
             width=165,
             command=main_frame.update_noc_config)
 
+        self.l2_ways_frame = ctk.CTkFrame(self.caches_frame)
+        self.l2_ways_frame.grid(row=6, column=0, padx=20, pady=5)
+        self.l2_ways_dd = StyledComponents.OptionMenu(
+            self.l2_ways_frame,
+            self.soc.l2_ways,
+            self.l2_ways_choices,
+            width=165,
+            command=main_frame.update_noc_config)
+
+        self.llc_sets_frame = ctk.CTkFrame(self.caches_frame)
+        self.llc_sets_frame.grid(row=5, column=1, padx=20, pady=5)
+        self.llc_sets_dd = StyledComponents.OptionMenu(
+            self.llc_sets_frame,
+            self.soc.llc_sets,
+            self.sets_choices,
+            width=165,
+            command=main_frame.update_noc_config)
+       
         self.llc_ways_frame = ctk.CTkFrame(self.caches_frame)
-        self.llc_ways_frame.grid(row=5, column=1, padx=20, pady=5)
+        self.llc_ways_frame.grid(row=6, column=1, padx=20, pady=5)
         self.llc_ways_dd = StyledComponents.OptionMenu(
             self.llc_ways_frame,
             self.soc.llc_ways,
@@ -516,26 +525,8 @@ class CachesConfigFrame:
             width=165,
             command=main_frame.update_noc_config)
 
-        self.llc_sets_frame = ctk.CTkFrame(self.caches_frame)
-        self.llc_sets_frame.grid(row=6, column=1, padx=20, pady=5)
-        self.llc_sets_dd = StyledComponents.OptionMenu(
-            self.llc_sets_frame,
-            self.soc.llc_sets,
-            self.sets_choices,
-            width=165,
-            command=main_frame.update_noc_config)
-
-        self.acc_l2_ways_frame = ctk.CTkFrame(self.caches_frame)
-        self.acc_l2_ways_frame.grid(row=8, column=0, padx=20, pady=5)
-        self.acc_l2_ways_dd = StyledComponents.OptionMenu(
-            self.acc_l2_ways_frame,
-            self.soc.acc_l2_ways,
-            self.l2_ways_choices,
-            width=165,
-            command=main_frame.update_noc_config)
-
         self.acc_l2_sets_frame = ctk.CTkFrame(self.caches_frame)
-        self.acc_l2_sets_frame.grid(row=9, column=0, padx=20, pady=5)
+        self.acc_l2_sets_frame.grid(row=8, column=0, padx=20, pady=5)
         self.acc_l2_sets_dd = StyledComponents.OptionMenu(
             self.acc_l2_sets_frame,
             self.soc.acc_l2_sets,
@@ -543,6 +534,14 @@ class CachesConfigFrame:
             width=165,
             command=main_frame.update_noc_config)
 
+        self.acc_l2_ways_frame = ctk.CTkFrame(self.caches_frame)
+        self.acc_l2_ways_frame.grid(row=9, column=0, padx=20, pady=5)
+        self.acc_l2_ways_dd = StyledComponents.OptionMenu(
+            self.acc_l2_ways_frame,
+            self.soc.acc_l2_ways,
+            self.l2_ways_choices,
+            width=165,
+            command=main_frame.update_noc_config)
 
 class AdvancedConfigFrame:
     def __init__(self, soc, left_panel, main_frame):
@@ -621,7 +620,7 @@ class EspCreator:
 
         # Scrollable left panel
         self.left_panel = ctk.CTkScrollableFrame(
-            self.main_frame, width=440, height=680)
+            self.main_frame, width=525, height=680)
         self.left_panel.grid(row=0, column=0, sticky="ns", padx=10, pady=10)
 
         # Canvas for right panel with both horizontal and vertical scrolling
@@ -696,7 +695,8 @@ class EspCreator:
 
         self.noc_config_frame.set_message(
             self.message, self.soc_config_frame, self.gen_soc_config)
-        self.noc_config_frame.create_noc()
+        #self.noc_config_frame.create_noc()
+        self.noc_config_frame.update_frame()
 
     def update_noc_config(self, *args):
         if soc.CPU_ARCH.get() == "ariane":
