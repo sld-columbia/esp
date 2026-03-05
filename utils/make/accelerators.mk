@@ -69,7 +69,7 @@ THIRDPARTY_PATH = $(ESP_ROOT)/accelerators/third-party
 ifdef CPU_ARCH
 THIRDPARTY_ACC  = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell if grep -q $(CONFIG_DMA_NOC_WIDTH) $(THIRDPARTY_PATH)/$(acc)/$(acc).dma_widths; then echo $(acc); fi))
 else
-THIRDPARTY_ACC  = ""
+THIRDPARTY_ACC  =
 endif
 THIRDPARTY_ACC-clean     = $(addsuffix -clean, $(THIRDPARTY_ACC))
 THIRDPARTY_ACC-distclean = $(addsuffix -distclean, $(THIRDPARTY_ACC))

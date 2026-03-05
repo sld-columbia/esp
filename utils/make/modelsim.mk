@@ -31,7 +31,7 @@ SIM_LIBDIR ?= $(abspath $(RTL_CFG_BUILD)/sim_libs)
 
 ACC_TECH_ROOT := $(ESP_ROOT)/tech/$(TECHLIB)/acc
 ACC_TECH_PRESENT := $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_ROOT)/*)),$(RTL_ACC)))
-THIRDPARTY_LIBS := $(THIRDPARTY_ACC)
+THIRDPARTY_LIBS = $(THIRDPARTY_ACC)
 ACC_LIBS := $(ACC_TECH_PRESENT) $(THIRDPARTY_LIBS)
 ACC_LIB_OPT := $(foreach lib,$(ACC_LIBS),-L $(lib))
 THIRDPARTY_SIM_VHDL_PKGS := $(filter $(THIRDPARTY_PATH)/%,$(SIM_VHDL_PKGS))
