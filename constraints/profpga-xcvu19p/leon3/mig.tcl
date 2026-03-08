@@ -9,7 +9,8 @@ set_property -dict [list \
                         CONFIG.C0.DDR4_TimePeriod {1600} \
                         CONFIG.C0.DDR4_AxiSelection {true} \
                         CONFIG.C0.DDR4_AxiDataWidth {32} \
-                        CONFIG.C0.DDR4_AxiIDWidth {8} \
+                        CONFIG.C0.DDR4_AxiIDWidth {10} \
+                        CONFIG.ADDN_UI_CLKOUT1_FREQ_HZ {78} \
                         CONFIG.C0.DDR4_InputClockPeriod {11200} \
                         CONFIG.C0.DDR4_MemoryPart {EB-PDS-DDR4-R5_MT40A2G8FSE-083E} \
                         CONFIG.C0.DDR4_DataWidth {72} \
