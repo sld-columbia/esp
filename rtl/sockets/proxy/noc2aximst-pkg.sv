@@ -69,7 +69,6 @@ typedef enum logic [1:0] {
 
 typedef struct {
     logic [DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH-1 : 0] dma_noc_data;
-    logic [COH_NOC_WIDTH+`PREAMBLE_WIDTH-1 : 0]		coh_flit;
     logic [DMA_NOC_FLIT_SIZE-1 : 0]					dma_flit;
     logic [2 : 0]									ax_prot;
     logic [$clog2(DMA_NOC_WIDTH/ARCH_BITS) : 0]		word_cnt;
