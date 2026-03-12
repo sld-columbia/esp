@@ -1,0 +1,48 @@
+--- a/libfakeroot.c
++++ b/libfakeroot.c
+@@ -59,6 +59,16 @@
+ #include "config.h"
+ #include "communicate.h"
+
++#ifndef _STAT_VER
++#if defined(__aarch64__) || defined(__riscv)
++#define _STAT_VER 0
++#elif defined(__x86_64__)
++#define _STAT_VER 1
++#else
++#define _STAT_VER 3
++#endif
++#endif
++
+ #ifdef STUPID_ALPHA_HACK
+ #define SEND_STAT(a,b,c) send_stat(a,b,c)
+ #define SEND_STAT64(a,b,c) send_stat64(a,b,c)
+--- a/communicate.c
++++ b/communicate.c
+@@ -28,6 +28,24 @@
+
+ #include "communicate.h"
+
++#ifndef _STAT_VER
++#if defined(__aarch64__) || defined(__riscv)
++#define _STAT_VER 0
++#elif defined(__x86_64__)
++#define _STAT_VER 1
++#else
++#define _STAT_VER 3
++#endif
++#endif
++
++#ifndef _STAT_VER_KERNEL
++#define _STAT_VER_KERNEL 0
++#endif
++
++#ifndef _STAT_VER_GLIBC2
++#define _STAT_VER_GLIBC2 1
++#endif
++
++#ifndef _STAT_VER_GLIBC2_1
++#define _STAT_VER_GLIBC2_1 1
++#endif
++
+ const char *env_var_set(const char *env){

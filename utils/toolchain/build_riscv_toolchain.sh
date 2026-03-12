@@ -188,13 +188,51 @@ if [[ "$python_en" -eq 1 ]]; then       # python enable
     git submodule update --init --recursive
     git apply ${BUILDROOT_PATCH}
     make distclean
+    touch output/.br-external.mk
     make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_python_defconfig
+    make -j ${NTHREADS} || true
+    # Apply glibc >= 2.33 compatibility patches for host tools
+    if [ -d output/build/host-fakeroot-*/  ]; then
+        for d in output/build/host-fakeroot-*/; do
+            patch -N -d "$d" -p1 < ${SCRIPT_PATH}/patches/host-fakeroot-glibc-compat.patch || true
+        done
+    fi
+    if [ -d output/build/host-m4-*/  ]; then
+        for d in output/build/host-m4-*/; do
+            patch -N -d "$d" -p1 < ${SCRIPT_PATH}/patches/host-m4-sigstksz.patch || true
+        done
+    fi
+    # Use system fakeroot if the buildroot-compiled one is broken (glibc >= 2.33)
+    if [ -x /usr/bin/fakeroot ] && ! output/host/bin/fakeroot -- true 2>/dev/null; then
+        echo "*** Replacing broken buildroot fakeroot with system fakeroot ***"
+        mv output/host/bin/fakeroot output/host/bin/fakeroot.broken
+        ln -s /usr/bin/fakeroot output/host/bin/fakeroot
+    fi
     make -j ${NTHREADS}
 else                                    # default
     git reset --hard ${BUILDROOT_SHA}
     git submodule update --init --recursive
     make distclean
+    touch output/.br-external.mk
     make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_defconfig
+    make -j ${NTHREADS} || true
+    # Apply glibc >= 2.33 compatibility patches for host tools
+    if [ -d output/build/host-fakeroot-*/  ]; then
+        for d in output/build/host-fakeroot-*/; do
+            patch -N -d "$d" -p1 < ${SCRIPT_PATH}/patches/host-fakeroot-glibc-compat.patch || true
+        done
+    fi
+    if [ -d output/build/host-m4-*/  ]; then
+        for d in output/build/host-m4-*/; do
+            patch -N -d "$d" -p1 < ${SCRIPT_PATH}/patches/host-m4-sigstksz.patch || true
+        done
+    fi
+    # Use system fakeroot if the buildroot-compiled one is broken (glibc >= 2.33)
+    if [ -x /usr/bin/fakeroot ] && ! output/host/bin/fakeroot -- true 2>/dev/null; then
+        echo "*** Replacing broken buildroot fakeroot with system fakeroot ***"
+        mv output/host/bin/fakeroot output/host/bin/fakeroot.broken
+        ln -s /usr/bin/fakeroot output/host/bin/fakeroot
+    fi
     make -j ${NTHREADS}
 fi
 
