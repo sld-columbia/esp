@@ -22,16 +22,18 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define DEV_NAME "sld,mac_sysc_catapult"
 
 /* <<--params-->> */
-const int32_t mac_n = 1;
-const int32_t mac_vec = 8;
-const int32_t mac_len = 16;
+const int32_t vec_len = 16;
+const int32_t batch = 1;
+const int32_t row = 8;
+const int32_t addrA = 0;
+const int32_t addrB = 0;
+const int32_t addrO = 0;
 
-static unsigned in_words_adj;
-static unsigned out_words_adj;
-static unsigned in_len;
+static unsigned in_a_len, in_b_len;
 static unsigned out_len;
-static unsigned in_size;
+static unsigned in_a_size, in_b_size;
 static unsigned out_size;
+static unsigned in_a_offset, in_b_offset;
 static unsigned out_offset;
 static unsigned mem_size;
 
@@ -54,6 +56,7 @@ static int validate_buffer(token_t *out, token_t *gold)
 {
 	int i;
 	int j;
+	int k;
 	unsigned errors = 0;
 
 	for (i=0; i<batch; i++){
@@ -67,7 +70,7 @@ static int validate_buffer(token_t *out, token_t *gold)
 	return errors;
 }
 
-static void init_buffer(token_t *in token_t * gold)
+static void init_buffer(token_t *in, token_t * gold)
 {
 
 	int i;
@@ -99,7 +102,7 @@ static void init_buffer(token_t *in token_t * gold)
 				float data_a = fixed32_to_float(in[(row*vec_len)*i + vec_len*j + k], 16);
 				float data_b = fixed32_to_float(in[in_a_len + (row*vec_len)*i + vec_len*j + k], 16);
 				
-				out_gold = data1*data2;
+				out_gold = data_a*data_b;
 
 				if (out_gold < 0){
 					out_gold *= 0.5;
@@ -126,13 +129,13 @@ int main(int argc, char * argv[])
 	unsigned coherence;
 
 	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
-		in_a_len        = batch*(row*VEC_LEN);
-		in_b_len        = batch*(row*VEC_LEN);
-		out_len         = batch*(row*VEC_LEN);
+		in_a_len        = batch*(row*vec_len);
+		in_b_len        = batch*(row*vec_len);
+		out_len         = batch*(row*vec_len);
 	} else {
-		in_a_len        = round_up(batch*(row*VEC_LEN), DMA_WORD_PER_BEAT(sizeof(token_t)));
-		in_b_len        = round_up(batch*(row*VEC_LEN), DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_len         = round_up(batch*(row*VEC_LEN), DMA_WORD_PER_BEAT(sizeof(token_t)));
+		in_a_len        = round_up(batch*(row*vec_len), DMA_WORD_PER_BEAT(sizeof(token_t)));
+		in_b_len        = round_up(batch*(row*vec_len), DMA_WORD_PER_BEAT(sizeof(token_t)));
+		out_len         = round_up(batch*(row*vec_len), DMA_WORD_PER_BEAT(sizeof(token_t)));
 	}
 
 	in_a_size = in_a_len * sizeof(token_t);
@@ -192,11 +195,10 @@ int main(int argc, char * argv[])
 #endif
 			printf("  --------------------\n");
 			printf("  Generate input...\n");
-			init_buf(mem, gold);
+			init_buffer(mem, gold);
 
 			// Pass common configuration parameters
 
-			iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
 			iowrite32(dev, COHERENCE_REG, coherence);
 
 #ifndef __sparc
@@ -238,7 +240,7 @@ int main(int argc, char * argv[])
 			printf("  validating...\n");
 
 			/* Validation */
-			errors = validate_buf(&mem[out_offset], gold);
+			errors = validate_buffer(&mem[out_offset], gold);
 			if (errors)
 				printf("  ... FAIL\n");
 			else
