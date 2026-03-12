@@ -15,12 +15,14 @@ static unsigned out_size;
 static unsigned in_a_offset;
 static unsigned in_b_offset;
 static unsigned out_offset;
+static unsigned size;
 
 /* User-defined code */
 static int validate_buffer(token_t *out, token_t *gold)
 {
 	int i;
 	int j;
+	int k;
 	unsigned errors = 0;
 
 	for (i=0; i<batch; i++){
@@ -36,7 +38,7 @@ static int validate_buffer(token_t *out, token_t *gold)
 
 
 /* User-defined code */
-static void init_buffer(token_t *in token_t * gold)
+static void init_buffer(token_t *in, token_t * gold)
 {
 
 	int i;
@@ -68,7 +70,7 @@ static void init_buffer(token_t *in token_t * gold)
 				float data_a = fixed32_to_float(in[(row*vec_len)*i + vec_len*j + k], 16);
 				float data_b = fixed32_to_float(in[in_a_len + (row*vec_len)*i + vec_len*j + k], 16);
 				
-				out_gold = data1*data2;
+				out_gold = data_a*data_b;
 
 				if (out_gold < 0){
 					out_gold *= 0.5;
@@ -84,13 +86,13 @@ static void init_buffer(token_t *in token_t * gold)
 static void init_parameters()
 {
 	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
-		in_a_len        = batch*(row*VEC_LEN);
-		in_b_len        = batch*(row*VEC_LEN);
-		out_len         = batch*(row*VEC_LEN);
+		in_a_len        = batch*(row*vec_len);
+		in_b_len        = batch*(row*vec_len);
+		out_len         = batch*(row*vec_len);
 	} else {
-		in_a_len        = round_up(batch*(row*VEC_LEN), DMA_WORD_PER_BEAT(sizeof(token_t)));
-		in_b_len        = round_up(batch*(row*VEC_LEN), DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_len         = round_up(batch*(row*VEC_LEN), DMA_WORD_PER_BEAT(sizeof(token_t)));
+		in_a_len        = round_up(batch*(row*vec_len), DMA_WORD_PER_BEAT(sizeof(token_t)));
+		in_b_len        = round_up(batch*(row*vec_len), DMA_WORD_PER_BEAT(sizeof(token_t)));
+		out_len         = round_up(batch*(row*vec_len), DMA_WORD_PER_BEAT(sizeof(token_t)));
 	}
 
 	in_a_size = in_a_len * sizeof(token_t);
@@ -121,9 +123,6 @@ int main(int argc, char **argv)
 
 	printf("\n====== %s ======\n\n", cfg_000[0].devname);
 	/* <<--print-params-->> */
-	printf("  .mac_n = %d\n", mac_n);
-	printf("  .mac_vec = %d\n", mac_vec);
-	printf("  .mac_len = %d\n", mac_len);
 	printf("  .batch = %d\n", batch);
 	printf("  .row = %d\n", row);
 	printf("  .addrA = %d\n", in_a_offset);
@@ -131,7 +130,7 @@ int main(int argc, char **argv)
 	printf("  .addrO = %d\n", out_offset);
 	printf("\n  ** START **\n");
 
-	esp_run(cfg_000, NACC);
+	esp_run(cfg_000, 1);
 
 	printf("\n  ** DONE **\n");
 
