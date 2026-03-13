@@ -201,16 +201,46 @@ if [ $(noyes "Skip Linux toolchain") == "n" ]; then
 	git checkout .
 	git pull
     else
-    	git clone git://git.buildroot.net/buildroot
+    	git clone https://github.com/buildroot/buildroot.git
 	cd $src
     fi
 
     git reset --hard ${BUILDROOT_SHA}
     git submodule update --init --recursive
 
+    mkdir -p output && touch output/.br-external.mk
     make distclean
+    mkdir -p output && touch output/.br-external.mk
     make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/leon3_buildroot_toolchain_defconfig
-    make toolchain -j ${NTHREADS}
+    # Retry loop: each iteration patches newly-extracted packages that fail on modern glibc
+    for attempt in 1 2 3 4 5; do
+        # Apply glibc >= 2.33 compatibility patches for host tools
+        if [ -d output/build/host-fakeroot-*/  ]; then
+            for d in output/build/host-fakeroot-*/; do
+                patch -N -d "$d" -p1 < ${SCRIPT_PATH}/patches/host-fakeroot-glibc-compat.patch || true
+            done
+        fi
+        for f in output/build/host-m4-*/lib/c-stack.c; do
+            if [ -f "$f" ] && grep -q '#elif.*SIGSTKSZ' "$f"; then
+                sed -i 's/^#elif HAVE_LIBSIGSEGV && SIGSTKSZ < 16384/#elif 0 \/* SIGSTKSZ not constant on glibc >= 2.34 *\//' "$f"
+            fi
+        done
+        # Fix GCC 5.5.0: bool++ forbidden in C++17 — change bool to char in reload.h
+        for f in output/build/host-gcc-initial-*/gcc/reload.h output/build/host-gcc-final-*/gcc/reload.h; do
+            if [ -f "$f" ] && grep -q 'bool x_spill_indirect_levels' "$f"; then
+                sed -i 's/bool x_spill_indirect_levels/char x_spill_indirect_levels/' "$f"
+                # Remove stale object file so make rebuilds
+                rm -f "$(dirname "$f")/../build/gcc/reload1.o" 2>/dev/null
+            fi
+        done
+        # Use system fakeroot if the buildroot-compiled one is broken (glibc >= 2.33)
+        if [ -x /usr/bin/fakeroot ] && [ -x output/host/bin/fakeroot ] && ! output/host/bin/fakeroot -- true 2>/dev/null; then
+            echo "*** Replacing broken buildroot fakeroot with system fakeroot ***"
+            mv output/host/bin/fakeroot output/host/bin/fakeroot.broken
+            ln -s /usr/bin/fakeroot output/host/bin/fakeroot
+        fi
+        make toolchain -j ${NTHREADS} && break || echo "*** Attempt $attempt failed, retrying with patches... ***"
+    done
 fi
 cd $TMP
 
@@ -230,16 +260,38 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
 	git checkout .
 	git pull
     else
-    	git clone git://git.buildroot.net/buildroot
+    	git clone https://github.com/buildroot/buildroot.git
 	cd $src
     fi
 
     git reset --hard ${BUILDROOT_SHA}
     git submodule update --init --recursive
 
+    mkdir -p output && touch output/.br-external.mk
     make distclean
+    mkdir -p output && touch output/.br-external.mk
     make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/leon3_buildroot_defconfig
-    make -j ${NTHREADS}
+    # Retry loop: each iteration patches newly-extracted packages that fail on modern glibc
+    for attempt in 1 2 3 4 5; do
+        # Apply glibc >= 2.33 compatibility patches for host tools
+        if [ -d output/build/host-fakeroot-*/  ]; then
+            for d in output/build/host-fakeroot-*/; do
+                patch -N -d "$d" -p1 < ${SCRIPT_PATH}/patches/host-fakeroot-glibc-compat.patch || true
+            done
+        fi
+        for f in output/build/host-m4-*/lib/c-stack.c; do
+            if [ -f "$f" ] && grep -q '#elif.*SIGSTKSZ' "$f"; then
+                sed -i 's/^#elif HAVE_LIBSIGSEGV && SIGSTKSZ < 16384/#elif 0 \/* SIGSTKSZ not constant on glibc >= 2.34 *\//' "$f"
+            fi
+        done
+        # Use system fakeroot if the buildroot-compiled one is broken (glibc >= 2.33)
+        if [ -x /usr/bin/fakeroot ] && [ -x output/host/bin/fakeroot ] && ! output/host/bin/fakeroot -- true 2>/dev/null; then
+            echo "*** Replacing broken buildroot fakeroot with system fakeroot ***"
+            mv output/host/bin/fakeroot output/host/bin/fakeroot.broken
+            ln -s /usr/bin/fakeroot output/host/bin/fakeroot
+        fi
+        make -j ${NTHREADS} && break || echo "*** Attempt $attempt failed, retrying with patches... ***"
+    done
 
     # Populate repository sysroot overlay w/ generated files (git ignores them)
     rm output/target/THIS_IS_NOT_YOUR_ROOT_FILESYSTEM
