@@ -17,7 +17,7 @@ hls:
 .PHONY: hls
 
 clean:
-	rm -rf $(TARGET_NAME)*
+	rm -rf Catapult*
 	rm -rf catapult_cache*
 	rm -f catapult.pinfo
 	rm -f trace.vcd
