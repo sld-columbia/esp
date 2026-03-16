@@ -2154,6 +2154,8 @@ def gen_tech_indep_impl(
                     f.write("use ieee.std_logic_1164.all;\n")
                     f.write("use work.sld_devices.all;\n")
                     f.write("use work.allacc.all;\n")
+                    if acc.hls_tool == 'rtl':
+                        f.write("library " + acc.name + ";\n")
                     f.write("\n")
                     f.write("entity " + acc.name + "_rtl is\n\n")
                     f.write("    generic (\n")
@@ -2184,13 +2186,28 @@ def gen_tech_indep_impl(
                             "_" +
                             impl.name.upper() +
                             " generate\n")
-                        if acc.hls_tool == 'stratus_hls' or acc.hls_tool == 'rtl':
+                        if acc.hls_tool == 'stratus_hls':
                             f.write(
                                 "    " +
                                 acc.name +
                                 "_" +
                                 impl.name +
                                 "_i: " +
+                                acc.name +
+                                "_" +
+                                impl.name +
+                                "\n")
+                            write_acc_port_map(
+                                f, acc, noc_width, impl.datatype, "rst", False, False, False, False)
+                        elif acc.hls_tool == 'rtl':
+                            f.write(
+                                "    " +
+                                acc.name +
+                                "_" +
+                                impl.name +
+                                "_i: entity " +
+                                acc.name +
+                                "." +
                                 acc.name +
                                 "_" +
                                 impl.name +
@@ -2476,7 +2493,10 @@ def gen_noc_interface(acc, noc_width, template_dir, out_dir, is_axi):
 
     with open(template_file, 'r') as ftemplate:
         for tline in ftemplate:
-            if tline.find("-- <<entity>>") >= 0:
+            if is_axi and tline.find("library ieee;") >= 0:
+                f.write(tline)
+                f.write("library " + acc.name + ";\n")
+            elif tline.find("-- <<entity>>") >= 0:
                 f.write("entity noc" + "_" + acc.name + " is\n")
             elif tline.find("-- <<architecture>>") >= 0:
                 f.write("architecture rtl of noc" + "_" + acc.name + " is\n")
@@ -2542,12 +2562,12 @@ def gen_noc_interface(acc, noc_width, template_dir, out_dir, is_axi):
             elif tline.find("-- <<axi_unused>>") >= 0:
                 tie_unused_axi(f, acc, noc_width)
             elif tline.find("-- <<accelerator_instance>>") >= 0:
-                f.write("  " + acc.name + "_rtl_i: " + acc.name)
+                f.write("  " + acc.name + "_rtl_i: ")
                 if is_axi:
-                    f.write("_wrapper\n")
+                    f.write("entity " + acc.name + "." + acc.name + "_wrapper\n")
                     write_axi_acc_port_map(f, acc, noc_width)
                 else:
-                    f.write("_rtl\n")
+                    f.write(acc.name + "_rtl\n")
                     f.write("    generic map (\n")
                     f.write("      hls_conf => hls_conf\n")
                     f.write("    )\n")

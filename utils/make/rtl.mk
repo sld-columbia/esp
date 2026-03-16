@@ -185,7 +185,7 @@ check_all_rtl_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.
 	@echo $(VLOG_SRCS) >> $@.new;
 	@echo $(IP_XCI_SRCS) >> $@.new;
 	@echo $(DAT_SRCS) >> $@.new;
-	@if test -f $@.old; then \
+	@if test -f $(RTL_CFG_BUILD)/$@.old; then \
 		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \
 		if [ $$? -eq 0 ]; then \
 			rm $@.new; \
