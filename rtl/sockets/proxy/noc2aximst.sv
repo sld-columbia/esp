@@ -327,13 +327,13 @@ module noc2aximst #(
 
             WRITE_DATA: begin
                 if (coherence_req_empty == 1'b0) begin
-                    ns.preamble_flag    = preamble;
+                    ns.preamble_flag = preamble;
                     if (W_READY == 1'b1) begin
                         coherence_req_rdreq = 1'b1;
-                        next_state = WRITE_RESPONSE_WAIT;
+                        next_state          = WRITE_RESPONSE_WAIT;
                     end
                 end
-            end 
+            end
 
             WRITE_RESPONSE_WAIT: begin
                 if (B_VALID == 1'b1) begin
@@ -557,7 +557,7 @@ module noc2aximst #(
                                 next_state = RECEIVE_HEADER;
                             end else begin
                                 ns.aw_valid = 1'b1;
-                                next_state = DMA_WRITE_REQUEST;
+                                next_state  = DMA_WRITE_REQUEST;
                                 // Start next burst logic
                                 if (cs.count > 255) begin
                                     ns.aw_len   = 255;
@@ -610,7 +610,7 @@ module noc2aximst #(
                                 next_state = RECEIVE_HEADER;
                             end else begin
                                 ns.aw_valid = 1'b1;
-                                next_state = DMA_WRITE_REQUEST;
+                                next_state  = DMA_WRITE_REQUEST;
                                 // Start next burst logic
                                 if (cs.count > 255) begin
                                     ns.aw_len   = 255;
@@ -644,8 +644,8 @@ module noc2aximst #(
                         if (cs.sample_flag == 2'b10) next_state = RECEIVE_HEADER;
                         else begin
                             ns.aw_valid = 1'b1;
-                            next_state = DMA_WRITE_REQUEST;
-                            ns.aw_addr = cs.aw_addr + ((cs.aw_len + 1) << cs.aw_size);
+                            next_state  = DMA_WRITE_REQUEST;
+                            ns.aw_addr  = cs.aw_addr + ((cs.aw_len + 1) << cs.aw_size);
                         end
                     end
 
@@ -663,8 +663,8 @@ module noc2aximst #(
                         if (dma_preamble == PREAMBLE_TAIL) next_state = RECEIVE_HEADER;
                         else begin
                             ns.aw_valid = 1'b1;
-                            next_state = DMA_WRITE_REQUEST;
-                            ns.aw_addr = cs.aw_addr + ((cs.aw_len + 1) << cs.aw_size);
+                            next_state  = DMA_WRITE_REQUEST;
+                            ns.aw_addr  = cs.aw_addr + ((cs.aw_len + 1) << cs.aw_size);
                         end
                     end
                 end

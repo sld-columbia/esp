@@ -50,6 +50,7 @@ peripherals/ddr/ahb2mig_7series_profpga.vhd
 peripherals/ddr/ahb2mig_ebddr4r5.vhd
 peripherals/ddr/ahb2bsg_dmc.vhd
 peripherals/ddr/axi2mig_7series.vhd
+peripherals/ddr/axi2mig_7series_profpga.vhd
 peripherals/ddr/axi2mig_up.vhd
 peripherals/ddr/axi2mig_ebddr4r5.vhd
 caches/l2_wrapper.vhd
