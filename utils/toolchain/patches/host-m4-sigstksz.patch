@@ -1,6 +1,6 @@
 --- a/lib/c-stack.c
 +++ b/lib/c-stack.c
-@@ -50,13 +50,8 @@
+@@ -50,15 +50,11 @@
  #if ! HAVE_STACK_T && ! defined stack_t
  typedef struct sigaltstack stack_t;
  #endif
@@ -14,7 +14,10 @@
 -# define SIGSTKSZ 16384
 -#endif
 +/* On glibc >= 2.34, SIGSTKSZ may be a function call rather than a
-+   compile-time constant, which breaks the #elif comparison below.
++   compile-time constant, which breaks the #elif preprocessor check.
 +   Unconditionally use 16384 to avoid the issue. */
 +#undef SIGSTKSZ
 +#define SIGSTKSZ 16384
+
+ #include <stdlib.h>
+ #include <string.h>

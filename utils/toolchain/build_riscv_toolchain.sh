@@ -179,64 +179,59 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
     	git checkout .
     	git pull
     else
-    	git clone https://git.buildroot.net/buildroot
+    	git clone https://github.com/buildroot/buildroot.git
     	cd $src
     fi
 
-if [[ "$python_en" -eq 1 ]]; then       # python enable
     git reset --hard ${BUILDROOT_SHA}
     git submodule update --init --recursive
-    git apply ${BUILDROOT_PATCH}
+
+    if [[ "$python_en" -eq 1 ]]; then
+        git apply ${BUILDROOT_PATCH}
+    fi
+
     mkdir -p output && touch output/.br-external.mk
     make distclean
     mkdir -p output && touch output/.br-external.mk
-    make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_python_defconfig
-    make -j ${NTHREADS} || true
-    # Apply glibc >= 2.33 compatibility patches for host tools
-    if [ -d output/build/host-fakeroot-*/  ]; then
-        for d in output/build/host-fakeroot-*/; do
-            patch -N -d "$d" -p1 < ${SCRIPT_PATH}/patches/host-fakeroot-glibc-compat.patch || true
-        done
+
+    # Install glibc >= 2.34 compatibility patches into buildroot package
+    # directories so they are applied automatically during source extraction.
+    # These patches are harmless on older glibc (guarded by #ifndef/#undef).
+    #
+    # - host-m4-sigstksz: glibc 2.34+ changed SIGSTKSZ from a compile-time
+    #   constant to sysconf(), breaking preprocessor checks in m4-1.4.18.
+    # - host-fakeroot-glibc-compat: glibc 2.33+ removed _STAT_VER and related
+    #   macros used by fakeroot-1.20.2.
+    cp ${SCRIPT_PATH}/patches/host-m4-sigstksz.patch \
+        package/m4/0003-fix-sigstksz-glibc-2.34.patch
+    cp ${SCRIPT_PATH}/patches/host-fakeroot-glibc-compat.patch \
+        package/fakeroot/0003-fix-stat-ver-glibc-2.33.patch
+
+    if [[ "$python_en" -eq 1 ]]; then
+        make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_python_defconfig
+    else
+        make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_defconfig
     fi
-    if [ -d output/build/host-m4-*/  ]; then
-        for d in output/build/host-m4-*/; do
-            patch -N -d "$d" -p1 < ${SCRIPT_PATH}/patches/host-m4-sigstksz.patch || true
-        done
-    fi
-    # Use system fakeroot if the buildroot-compiled one is broken (glibc >= 2.33)
-    if [ -x /usr/bin/fakeroot ] && [ -x output/host/bin/fakeroot ] && ! output/host/bin/fakeroot -- true 2>/dev/null; then
-        echo "*** Replacing broken buildroot fakeroot with system fakeroot ***"
-        mv output/host/bin/fakeroot output/host/bin/fakeroot.broken
-        ln -s /usr/bin/fakeroot output/host/bin/fakeroot
-    fi
-    make -j ${NTHREADS}
-else                                    # default
-    git reset --hard ${BUILDROOT_SHA}
-    git submodule update --init --recursive
-    mkdir -p output && touch output/.br-external.mk
-    make distclean
-    mkdir -p output && touch output/.br-external.mk
-    make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_defconfig
-    make -j ${NTHREADS} || true
-    # Apply glibc >= 2.33 compatibility patches for host tools
-    if [ -d output/build/host-fakeroot-*/  ]; then
-        for d in output/build/host-fakeroot-*/; do
-            patch -N -d "$d" -p1 < ${SCRIPT_PATH}/patches/host-fakeroot-glibc-compat.patch || true
-        done
-    fi
-    if [ -d output/build/host-m4-*/  ]; then
-        for d in output/build/host-m4-*/; do
-            patch -N -d "$d" -p1 < ${SCRIPT_PATH}/patches/host-m4-sigstksz.patch || true
-        done
-    fi
-    # Use system fakeroot if the buildroot-compiled one is broken (glibc >= 2.33)
-    if [ -x /usr/bin/fakeroot ] && [ -x output/host/bin/fakeroot ] && ! output/host/bin/fakeroot -- true 2>/dev/null; then
-        echo "*** Replacing broken buildroot fakeroot with system fakeroot ***"
-        mv output/host/bin/fakeroot output/host/bin/fakeroot.broken
-        ln -s /usr/bin/fakeroot output/host/bin/fakeroot
-    fi
-    make -j ${NTHREADS}
-fi
+
+    make -j ${NTHREADS} || {
+        # On glibc >= 2.33, buildroot's fakeroot may compile but fail at
+        # runtime because glibc no longer exports __xstat(). If the system
+        # has a newer fakeroot, use that instead and retry.
+        if [ -x /usr/bin/fakeroot ] && [ -x output/host/bin/fakeroot ] \
+            && ! output/host/bin/fakeroot -- true 2>/dev/null; then
+            echo ""
+            echo "*** Buildroot fakeroot is incompatible with this system's glibc ***"
+            echo "*** Replacing with system fakeroot and retrying build ***"
+            echo ""
+            mv output/host/bin/fakeroot output/host/bin/fakeroot.broken
+            ln -s /usr/bin/fakeroot output/host/bin/fakeroot
+            make -j ${NTHREADS}
+        else
+            echo ""
+            echo "*** Buildroot build failed. See errors above. ***"
+            exit 1
+        fi
+    }
 
     # Populate repository sysroot overlay w/ generated files (git ignores them)
     rm output/target/THIS_IS_NOT_YOUR_ROOT_FILESYSTEM
