@@ -187,8 +187,9 @@ if [[ "$python_en" -eq 1 ]]; then       # python enable
     git reset --hard ${BUILDROOT_SHA}
     git submodule update --init --recursive
     git apply ${BUILDROOT_PATCH}
+    mkdir -p output && touch output/.br-external.mk
     make distclean
-    touch output/.br-external.mk
+    mkdir -p output && touch output/.br-external.mk
     make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_python_defconfig
     make -j ${NTHREADS} || true
     # Apply glibc >= 2.33 compatibility patches for host tools
@@ -203,7 +204,7 @@ if [[ "$python_en" -eq 1 ]]; then       # python enable
         done
     fi
     # Use system fakeroot if the buildroot-compiled one is broken (glibc >= 2.33)
-    if [ -x /usr/bin/fakeroot ] && ! output/host/bin/fakeroot -- true 2>/dev/null; then
+    if [ -x /usr/bin/fakeroot ] && [ -x output/host/bin/fakeroot ] && ! output/host/bin/fakeroot -- true 2>/dev/null; then
         echo "*** Replacing broken buildroot fakeroot with system fakeroot ***"
         mv output/host/bin/fakeroot output/host/bin/fakeroot.broken
         ln -s /usr/bin/fakeroot output/host/bin/fakeroot
@@ -212,8 +213,9 @@ if [[ "$python_en" -eq 1 ]]; then       # python enable
 else                                    # default
     git reset --hard ${BUILDROOT_SHA}
     git submodule update --init --recursive
+    mkdir -p output && touch output/.br-external.mk
     make distclean
-    touch output/.br-external.mk
+    mkdir -p output && touch output/.br-external.mk
     make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_defconfig
     make -j ${NTHREADS} || true
     # Apply glibc >= 2.33 compatibility patches for host tools
@@ -228,7 +230,7 @@ else                                    # default
         done
     fi
     # Use system fakeroot if the buildroot-compiled one is broken (glibc >= 2.33)
-    if [ -x /usr/bin/fakeroot ] && ! output/host/bin/fakeroot -- true 2>/dev/null; then
+    if [ -x /usr/bin/fakeroot ] && [ -x output/host/bin/fakeroot ] && ! output/host/bin/fakeroot -- true 2>/dev/null; then
         echo "*** Replacing broken buildroot fakeroot with system fakeroot ***"
         mv output/host/bin/fakeroot output/host/bin/fakeroot.broken
         ln -s /usr/bin/fakeroot output/host/bin/fakeroot
