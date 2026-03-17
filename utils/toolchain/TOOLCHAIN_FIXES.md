@@ -5,6 +5,24 @@ The Buildroot version (`d6fa6a45e1`) used by `build_riscv_toolchain.sh` and
 glibc >= 2.33 (Ubuntu 22.04+, etc.). The following issues were identified and
 fixed.
 
+## Supported Platforms
+
+The RISC-V toolchain build script has been tested on:
+- **Ubuntu 18.04** (glibc 2.27) — no patches needed, all fixes are harmless no-ops
+- **Ubuntu 22.04** (glibc 2.35) — all patches and fakeroot swap applied automatically
+- **RHEL 7/8** (glibc 2.17/2.28) — no patches needed
+- **RHEL 9** (glibc 2.34) — all patches and fakeroot swap applied automatically
+
+### Prerequisites on glibc >= 2.33 systems
+
+On Ubuntu 22.04+, RHEL 9, or any system with glibc >= 2.33, the `fakeroot`
+system package must be installed. The script detects this and exits with
+install instructions if it is missing:
+```
+Ubuntu/Debian: sudo apt-get install fakeroot
+RHEL/CentOS:   sudo yum install fakeroot  (requires EPEL)
+```
+
 ## Shared Issues (RISC-V and Leon3)
 
 ### Issue 1: Buildroot `.br-external.mk` missing after `make distclean`
@@ -41,7 +59,10 @@ macros. fakeroot 1.20.2 relies on these to wrap stat/mknod syscalls.
 
 **Fix:**
 Patch `libfakeroot.c` and `communicate.c` with fallback `#ifndef` definitions
-for the removed macros. See `patches/host-fakeroot-glibc-compat.patch`.
+for the removed macros. The patch file `patches/host-fakeroot-glibc-compat.patch`
+is copied into `package/fakeroot/0003-fix-stat-ver-glibc-2.33.patch` in the
+buildroot tree before `make`, so buildroot applies it automatically during
+source extraction.
 
 ### Issue 3: `host-m4-1.4.18` — `SIGSTKSZ` not a compile-time constant
 
@@ -58,7 +79,9 @@ in m4's `c-stack.c` cannot evaluate a function call.
 
 **RISC-V fix:**
 Unconditionally `#undef SIGSTKSZ` and `#define SIGSTKSZ 16384`.
-See `patches/host-m4-sigstksz.patch`.
+The patch file `patches/host-m4-sigstksz.patch` is copied into
+`package/m4/0003-fix-sigstksz-glibc-2.34.patch` in the buildroot tree before
+`make`, so buildroot applies it automatically during source extraction.
 
 **Leon3 fix:**
 The patch file does not apply cleanly to the Leon3 buildroot's version of
@@ -81,34 +104,27 @@ Even after patching fakeroot to compile, the `__xmknod` wrapper that fakeroot
 uses to intercept `mknod()` calls no longer exists in glibc >= 2.33. The
 compiled fakeroot reports `uid=0` but cannot actually fake device node creation.
 
-**Fix:**
-Detect the broken fakeroot at build time and replace it with the system-installed
-`/usr/bin/fakeroot` (which is a newer version that uses different interception
-mechanisms):
+**Fix (RISC-V):**
+The script detects the glibc version at build time. On glibc >= 2.33, it builds
+fakeroot first (`make host-fakeroot`), then replaces it with the system-installed
+`/usr/bin/fakeroot` (a newer version that uses different interception mechanisms)
+before continuing the full build:
 ```bash
-if [ -x /usr/bin/fakeroot ] && [ -x output/host/bin/fakeroot ] && ! output/host/bin/fakeroot -- true 2>/dev/null; then
-    mv output/host/bin/fakeroot output/host/bin/fakeroot.broken
+GLIBC_VER=$(ldd --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+$')
+if [ "$(printf '%s\n' "2.33" "$GLIBC_VER" | sort -V | head -1)" = "2.33" ]; then
+    make host-fakeroot -j ${NTHREADS}
+    mv output/host/bin/fakeroot output/host/bin/fakeroot.buildroot
     ln -s /usr/bin/fakeroot output/host/bin/fakeroot
 fi
+make -j ${NTHREADS}
 ```
+This approach is deterministic — no retry loops or error detection needed.
+If the system `fakeroot` is not installed, the script exits with clear
+install instructions.
 
-### Cascading build failures — the retry loop
-
-Buildroot extracts host packages at different stages during the build. On the
-first `make` attempt, `host-fakeroot` and `host-m4` may be extracted but
-`host-gcc-initial` is not yet. On the second attempt, `host-gcc-initial` is
-extracted but `host-gcc-final` is not. A single patch-then-build cycle cannot
-catch all failures.
-
-Both scripts now use a retry loop that applies all known patches before each
-`make` attempt:
-```bash
-for attempt in 1 2 3 4 5; do
-    # Apply all patches (fakeroot, m4, gcc, system fakeroot fallback)
-    ...
-    make toolchain -j ${NTHREADS} && break || echo "*** Attempt $attempt failed ***"
-done
-```
+**Fix (Leon3):**
+The Leon3 script uses a retry loop with runtime detection as its buildroot
+version differs.
 
 ---
 
@@ -156,7 +172,8 @@ The original Leon3 script cloned from `git.buildroot.net`, which is
 intermittently unreachable. The RISC-V script already used the GitHub mirror.
 
 **Fix:**
-Changed clone URL to `https://github.com/buildroot/buildroot.git`.
+Changed clone URL to `https://github.com/buildroot/buildroot.git` in both
+the Leon3 and RISC-V scripts.
 
 ---
 
@@ -165,15 +182,28 @@ Changed clone URL to `https://github.com/buildroot/buildroot.git`.
 | # | Issue | RISC-V | Leon3 | Fix method |
 |---|-------|:------:|:-----:|------------|
 | 1 | `.br-external.mk` missing | Yes | Yes | `touch` before/after distclean |
-| 2 | fakeroot `_STAT_VER` compile | Yes | Yes | Patch file |
-| 3 | m4 `SIGSTKSZ` compile | Yes | Yes | Patch file (RISC-V) / sed (Leon3) |
-| 4 | fakeroot runtime `mknod` | Yes | Yes | System fakeroot fallback |
+| 2 | fakeroot `_STAT_VER` compile | Yes | Yes | Buildroot native patch (RISC-V) / patch command (Leon3) |
+| 3 | m4 `SIGSTKSZ` compile | Yes | Yes | Buildroot native patch (RISC-V) / sed (Leon3) |
+| 4 | fakeroot runtime `mknod` | Yes | Yes | glibc detection + preemptive system fakeroot swap (RISC-V) / retry loop (Leon3) |
 | 5 | GCC 5.5.0 `bool++` C++17 | No | Yes | sed `bool` to `char` in `reload.h` |
-| 6 | Clone URL timeout | No | Yes | Switch to GitHub mirror |
+| 6 | Clone URL timeout | Yes | Yes | Switch to GitHub mirror |
+
+## How Patches Are Applied (RISC-V)
+
+The RISC-V script copies patch files into buildroot's own `package/` directories
+**before** running `make`. This way buildroot applies them natively during source
+extraction — no fail-retry logic needed:
+
+```
+patches/host-m4-sigstksz.patch        → package/m4/0003-fix-sigstksz-glibc-2.34.patch
+patches/host-fakeroot-glibc-compat.patch → package/fakeroot/0003-fix-stat-ver-glibc-2.33.patch
+```
+
+The patches are harmless on older glibc (guarded by `#ifndef` / `#undef`).
 
 ## Files Changed
 
-- `utils/toolchain/build_riscv_toolchain.sh` — Fixes 1-4 applied.
+- `utils/toolchain/build_riscv_toolchain.sh` — Fixes 1-4, 6 applied.
 - `utils/toolchain/build_leon3_toolchain.sh` — All 6 fixes applied.
 - `utils/toolchain/patches/host-fakeroot-glibc-compat.patch` — Shared patch file.
 - `utils/toolchain/patches/host-m4-sigstksz.patch` — Used by RISC-V build.
