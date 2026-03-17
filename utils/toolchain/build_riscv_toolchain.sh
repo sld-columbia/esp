@@ -213,25 +213,33 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
         make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_defconfig
     fi
 
-    make -j ${NTHREADS} || {
-        # On glibc >= 2.33, buildroot's fakeroot may compile but fail at
-        # runtime because glibc no longer exports __xstat(). If the system
-        # has a newer fakeroot, use that instead and retry.
-        if [ -x /usr/bin/fakeroot ] && [ -x output/host/bin/fakeroot ] \
-            && ! output/host/bin/fakeroot -- true 2>/dev/null; then
+    # On glibc >= 2.33, buildroot's fakeroot 1.20.2 compiles (thanks to the
+    # _STAT_VER patch) but cannot intercept mknod() at runtime because glibc
+    # removed __xmknod(). We must swap it with the system fakeroot BEFORE the
+    # rootfs step. To do this: build fakeroot first, swap if needed, then
+    # continue the full build.
+    GLIBC_VER=$(ldd --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+$')
+    if [ "$(printf '%s\n' "2.33" "$GLIBC_VER" | sort -V | head -1)" = "2.33" ]; then
+        # glibc >= 2.33: build fakeroot, then swap before full build
+        make host-fakeroot -j ${NTHREADS}
+        if [ -x /usr/bin/fakeroot ]; then
             echo ""
-            echo "*** Buildroot fakeroot is incompatible with this system's glibc ***"
-            echo "*** Replacing with system fakeroot and retrying build ***"
+            echo "*** glibc ${GLIBC_VER} detected: replacing buildroot fakeroot with system fakeroot ***"
             echo ""
-            mv output/host/bin/fakeroot output/host/bin/fakeroot.broken
+            mv output/host/bin/fakeroot output/host/bin/fakeroot.buildroot
             ln -s /usr/bin/fakeroot output/host/bin/fakeroot
-            make -j ${NTHREADS}
         else
             echo ""
-            echo "*** Buildroot build failed. See errors above. ***"
+            echo "*** glibc ${GLIBC_VER} detected but no system fakeroot found.   ***"
+            echo "*** Buildroot's fakeroot 1.20.2 cannot intercept mknod() on     ***"
+            echo "*** glibc >= 2.33. Please install fakeroot and re-run:          ***"
+            echo "***   Ubuntu/Debian: sudo apt-get install fakeroot              ***"
+            echo "***   RHEL/CentOS:   sudo yum install fakeroot (requires EPEL) ***"
             exit 1
         fi
-    }
+    fi
+
+    make -j ${NTHREADS}
 
     # Populate repository sysroot overlay w/ generated files (git ignores them)
     rm output/target/THIS_IS_NOT_YOUR_ROOT_FILESYSTEM
