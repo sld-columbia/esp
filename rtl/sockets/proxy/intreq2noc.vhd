@@ -55,6 +55,11 @@ end intreq2noc;
 architecture rtl of intreq2noc is
 
   constant IRQ_FIFO_DEPTH : integer := 8;
+  -- gp_arbiter exposes a power-of-two request bus, so odd CPU counts such as
+  -- 3 or 5 need an extra padded request width even though only ncpu entries
+  -- correspond to real cores.
+  constant NCPU_ARB_BITS  : integer := ncpu_log(ncpu);
+  constant NCPU_ARB_WIDTH : integer := 2**NCPU_ARB_BITS;
  
   type irq_snd_fsm is (idle, irq_snd_header, irq_snd_payload_1, irq_snd_payload_2);
   type irq_rcv_fsm is (idle, irq_ack_rcv);
@@ -87,10 +92,12 @@ architecture rtl of intreq2noc is
   signal fifo_empty : std_logic_vector(ncpu-1 downto 0);
   signal overflow   : std_logic_vector(ncpu-1 downto 0);
 
-  signal priority          : std_logic_vector(ncpu_log(ncpu)-1 downto 0);
-  signal forwarding        : std_logic_vector(ncpu_log(ncpu)-1 downto 0);
-  signal forwarding_req    : std_logic_vector(ncpu-1 downto 0);
-  signal sample_forwarding : std_ulogic;
+  signal priority           : std_logic_vector(NCPU_ARB_BITS-1 downto 0);
+  signal forwarding         : std_logic_vector(NCPU_ARB_BITS-1 downto 0);
+  signal forwarding_req     : std_logic_vector(ncpu-1 downto 0);
+  -- Upper bits stay at '0' when ncpu is not a power of two.
+  signal forwarding_req_arb : std_logic_vector(NCPU_ARB_WIDTH-1 downto 0);
+  signal sample_forwarding  : std_ulogic;
 
   signal sample_irq : std_logic_vector(ncpu-1 downto 0);
 
@@ -319,6 +326,13 @@ begin  -- rtl
 
 
   arbitration_gen : if ncpu > 1 generate
+    pad_forwarding_req : process (forwarding_req) is
+    begin
+      -- Keep phantom arbiter slots inactive so only real CPU queues can win.
+      forwarding_req_arb <= (others => '0');
+      forwarding_req_arb(ncpu - 1 downto 0) <= forwarding_req;
+    end process pad_forwarding_req;
+
     -- Sample CPUID of IRQ being currenlty forwarded
     sample_current_cpuid : process (clk, rst) is
     begin  -- process update_priority
@@ -335,11 +349,11 @@ begin  -- rtl
     forwarding_req <= not fifo_empty;
     gp_arbiter_1 : gp_arbiter
       generic map (
-        log2n => log2(ncpu))
+        log2n => NCPU_ARB_BITS)
       port map (
         clk         => clk,
         rst         => rst,
-        req_i       => forwarding_req,
+        req_i       => forwarding_req_arb,
         req_valid_i => sample_forwarding,
         gnt_o       => open,
         priority_o  => priority);
