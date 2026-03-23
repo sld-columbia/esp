@@ -42,10 +42,11 @@ adheres to [Calendar Versioning](https://calver.org/) with format
   - Corrected NoC credit accounting bugs for async logic inside iolink2ahbm
   - Fixed large cache-line issue in ASIC flow
   - Properly cleared P2P transaction flags
-  - Fixed bug to enable non-power-of-two CPU instances
+  - Fixed bug to enable non-power-of-two CPU instances 
 
   **Software**
   - Fixed bugs inside the LeakyReLU accelerator software release (#288)
+  - Improved accelerator compilation for RTL and Third-party flow 
 
   **Infrastructure**
   - Removed Vivado warning regressions
