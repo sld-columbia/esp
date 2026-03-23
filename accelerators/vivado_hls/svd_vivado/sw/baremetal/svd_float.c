@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2025 Columbia University, System Level Design Group */
+/* Copyright (c) 2011-2026 Columbia University, System Level Design Group */
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /* This version of the svd accelerator is for if it was implemented with float datatype. The defulat

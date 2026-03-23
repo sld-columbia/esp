@@ -7,6 +7,54 @@ Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Calendar Versioning](https://calver.org/) with format
 `YYYY.MINOR.MICRO`.
 
+# Changelog
+
+## [2026.1.0]
+
+### Added
+
+- **Architecture**
+  - Switched main memory access from AHB to AXI (#284) with improved AXI-NoC burst transfers (#287)
+  - Made FPGA memory-link width configurable
+  - Enabled dual memory tiles on VCU118 FPGA
+
+- **Infrastructure**
+  - Rolled out an improved GUI (#266)
+
+## Improved
+
+- **Architecture**  
+  - Accelerator Design Flows
+  - Refined Catapult SystemC flow (#264)
+  - General Catapult HLS flow update (#271)
+
+- **Infrastructure**
+  - Expanded AXI support for all supported FPGA boards
+  - Polished GUI behavior and usability (#272)
+  - Updated ASIC build scripts
+  - Synced Blitzcoin with current ESP
+  - Fixed bare-metal link ordering (#277)
+
+## Fixed
+
+- **Architecture**
+  - Fixed async FIFO reset in iolink2ahbm
+  - Corrected NoC credit accounting bugs for async logic inside iolink2ahbm
+  - Fixed large cache-line issue in ASIC flow
+  - Properly cleared P2P transaction flags
+  - Fixed bug to enable non-power-of-two CPU instances
+
+  **Software**
+  - Fixed bugs inside the LeakyReLU accelerator software release (#288)
+
+  **Infrastructure**
+  - Removed Vivado warning regressions
+  - Restored EDCL build compatibility with GCC >= 8
+  - Fixed tile parameter wiring in esp\_asic\_generic
+  - Corrected GUI scatter-gather toggle and NoC FIFO-depth binding
+  - Cleaned up configuration typos
+
+
 ## [2025.1.0]
 
 ### Added

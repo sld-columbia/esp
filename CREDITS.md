@@ -11,11 +11,13 @@ repository, including co-authors of portions of code from the first commit.
  - Kuan-lin Chiu
  - Guy Eichler
  - Kevin Lee
- - Biruk Seyoum
+ - Biruk Seyoum  (project lead)
  - Gabriele Tombesi
  - Pei-Huan Tsai
  - Je Yang
- - Joseph Zuckerman (project lead)
+ - Joseph Zuckerman
+ - William Baisi
+ - Eugenio Muscinelli
 
 ### Former Team Members
 
@@ -44,5 +46,8 @@ contribution. Current affiliation may be different.
  - Ajay Vanamali (Columbia University)
  - Manish Shankar (Columbia University)
  - Marian Abuhazi (Columbia University)
+ - Francesco Poluzzi (EPFL)
+ - Michael Lippe (Columbia University)
+ - Michael Greico (Columbia University)
 
 ### [Contacts](https://esp.cs.columbia.edu/contact/)
