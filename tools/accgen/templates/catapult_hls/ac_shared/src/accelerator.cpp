@@ -91,11 +91,9 @@ void acc_full_name::load()
                         dataBv.set_slc(k * DMA_WIDTH, data_m);
                     }
 
-                    if (ping_pong)
-                        plm_in_ping[0][i] = dataBv;
+                    if (ping_pong) plm_in_ping[0][i] = dataBv;
                     else
                         plm_in_pong[0][i] = dataBv;
-
                 }
 #else
     #pragma hls_pipeline_init_interval 1
@@ -104,16 +102,13 @@ void acc_full_name::load()
                     // DMA_WORD dataBv;
                     DMA_WORD dataBv = dma_read_chnl.Pop();
 
-
     #pragma hls_unroll yes
                     for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++) {
                         ac_int<DATA_WIDTH> dataBv_int = dataBv.slc<DATA_WIDTH>(k * DATA_WIDTH);
 
-                        if (ping_pong)
-                            plm_in_ping[k][i/DMA_WORD_PER_BEAT] = dataBv_int;
+                        if (ping_pong) plm_in_ping[k][i / DMA_WORD_PER_BEAT] = dataBv_int;
                         else
-                            plm_in_pong[k][i/DMA_WORD_PER_BEAT] = dataBv_int;
-
+                            plm_in_pong[k][i / DMA_WORD_PER_BEAT] = dataBv_int;
                     }
                 }
 #endif
@@ -127,7 +122,7 @@ void acc_full_name::load()
 void acc_full_name::compute()
 {
 
-    bool ping_pong = false;
+    bool ping_pong     = false;
     bool out_ping_pong = false;
     sync12.reset_sync_in();
     sync23.reset_sync_out();
@@ -151,7 +146,6 @@ void acc_full_name::compute()
 
             uint32_t in_length = /* <<--data_in_size-->> */;
 
-
             // Chunking
             for (int in_rem = in_length; in_rem > 0; in_rem -= PLM_IN_WORD) {
 
@@ -160,42 +154,36 @@ void acc_full_name::compute()
                 sync12.sync_in();
 
                 // Compute Kernel
-                uint32_t vec_num=0;
-                uint32_t vec_idx=0;
+                uint32_t vec_num = 0;
+                uint32_t vec_idx = 0;
 
-
-                for (uint32_t i=0; i < in_len; i+=1) {
+                for (uint32_t i = 0; i < in_len; i += 1) {
 
                     FPDATA_WORD op;
 
 #if (DMA_WORD_PER_BEAT <= 1)
-                    if (ping_pong)
-                        op=plm_in_ping[0][i];
+                    if (ping_pong) op = plm_in_ping[0][i];
                     else
-                        op=plm_in_pong[0][i];
+                        op = plm_in_pong[0][i];
 
                     if (i < mac_vec)
-                        if (out_ping_pong)
-                            plm_out_ping[0][i] = op;
+                        if (out_ping_pong) plm_out_ping[0][i] = op;
                         else
                             plm_out_pong[0][i] = op;
 #else //(DMA_WORD_PER_BEAT == 2)
 
-                    if (ping_pong)
-                        op=plm_in_ping[vec_idx][vec_num];
+                    if (ping_pong) op = plm_in_ping[vec_idx][vec_num];
                     else
-                        op=plm_in_pong[vec_idx][vec_num];
+                        op = plm_in_pong[vec_idx][vec_num];
 
-                    if (vec_num < /* <<--data_out_size-->> */ /DMA_WORD_PER_BEAT)
-                        if (out_ping_pong)
-                            plm_out_ping[vec_idx][vec_num] = op;
+                    if (vec_num < /* <<--data_out_size-->> */ / DMA_WORD_PER_BEAT)
+                        if (out_ping_pong) plm_out_ping[vec_idx][vec_num] = op;
                         else
                             plm_out_pong[vec_idx][vec_num] = op;
 
-                    vec_idx = (vec_idx+1) % DMA_WORD_PER_BEAT;
-                    vec_num = vec_idx==0 ? vec_num+1 : vec_num;
+                    vec_idx = (vec_idx + 1) % DMA_WORD_PER_BEAT;
+                    vec_num = vec_idx == 0 ? vec_num + 1 : vec_num;
 #endif
-
                 }
                 // End Compute Kernel
 
@@ -233,10 +221,11 @@ void acc_full_name::store()
         /* <<--local-params-->> */
 
 #if (DMA_WORD_PER_BEAT == 0)
-        uint32_t store_offset = /* <<--data_in_size-->> */ */* <<--number of transfers-->> */;
-        uint32_t length = /* <<--data_out_size-->> */;
+        uint32_t store_offset = /* <<--data_in_size-->> */ * /* <<--number of transfers-->> */;
+        uint32_t length       = /* <<--data_out_size-->> */;
 #else
-        uint32_t store_offset = round_up(/* <<--data_in_size-->> */, DMA_WORD_PER_BEAT) */* <<--number of transfers-->> */;
+        uint32_t store_offset = round_up(/* <<--data_in_size-->> */,
+                                         DMA_WORD_PER_BEAT) * /* <<--number of transfers-->> */;
         uint32_t length = round_up(/* <<--data_out_size-->> */, DMA_WORD_PER_BEAT);
 #endif
 
@@ -269,8 +258,7 @@ void acc_full_name::store()
                 for (uint32_t i = 0; i < len; i++) {
                     FPDATA_WORD dataBv;
 
-                    if (ping_pong)
-                        dataBv = plm_out_ping[0][i];
+                    if (ping_pong) dataBv = plm_out_ping[0][i];
                     else
                         dataBv = plm_out_pong[0][i];
 
@@ -282,16 +270,15 @@ void acc_full_name::store()
                 }
 
 #else
-#pragma hls_pipeline_init_interval 1
-#pragma pipeline_stall_mode stall
-                uint32_t out_idx=0;
+    #pragma hls_pipeline_init_interval 1
+    #pragma pipeline_stall_mode stall
+                uint32_t out_idx = 0;
                 for (uint32_t i = 0; i < len; i += DMA_WORD_PER_BEAT) {
                     FPDATA_WORD dataBv_int;
                     DMA_WORD dataBv;
 
                     for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++) {
-                        if (ping_pong)
-                            dataBv_int = plm_out_ping[k][out_idx];
+                        if (ping_pong) dataBv_int = plm_out_ping[k][out_idx];
                         else
                             dataBv_int = plm_out_pong[k][out_idx];
 

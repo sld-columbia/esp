@@ -20,14 +20,14 @@
 
 #define DMA_BEAT_PER_WORD MAX(1, (DATA_WIDTH / DMA_WIDTH))
 #define DMA_WORD_PER_BEAT (DMA_WIDTH / DATA_WIDTH)
-#define PLM_IN_WP MAX(1, DMA_WORD_PER_BEAT)
-#define PLM_OUT_RP MAX(1, DMA_WORD_PER_BEAT)
+#define PLM_IN_WP         MAX(1, DMA_WORD_PER_BEAT)
+#define PLM_OUT_RP        MAX(1, DMA_WORD_PER_BEAT)
 
 #define PLM_IN_RP  1
 #define PLM_OUT_WP 1
 
-#define IN_BKS MAX(PLM_IN_WP,PLM_IN_RP)
-#define OUT_BKS MAX(PLM_OUT_WP,PLM_OUT_RP)
+#define IN_BKS  MAX(PLM_IN_WP, PLM_IN_RP)
+#define OUT_BKS MAX(PLM_OUT_WP, PLM_OUT_RP)
 
 const unsigned int inwp    = PLM_IN_WP;
 const unsigned int inrp    = PLM_IN_RP;

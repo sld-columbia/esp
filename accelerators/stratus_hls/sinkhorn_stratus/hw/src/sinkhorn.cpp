@@ -28,12 +28,12 @@ void sinkhorn::load_input()
         accel_ready.ack.reset_ack();
 
         // User-defined reset code for the registers
-        p_rows  = 0;
-        q_cols  = 0;
-        m_rows  = 0;
-        gamma   = 0;
-        maxiter = 0;
-        p2p_in = 0;      // Expect input to come directly from P2P
+        p_rows      = 0;
+        q_cols      = 0;
+        m_rows      = 0;
+        gamma       = 0;
+        maxiter     = 0;
+        p2p_in      = 0; // Expect input to come directly from P2P
         p2p_out     = 0; // Expect output to be sent in P2P
         p2p_iter    = 1; // How many iterations of P2P
         store_state = 0;
