@@ -17,6 +17,7 @@ BUILDROOT_SHA_PYTHON=fbff7d7289cc95db991184f890f4ca1fcf8a101e
 
 # A patch for buildroot RISCV64 with numpy enabled
 BUILDROOT_PATCH=${ESP_ROOT}/utils/toolchain/python-patches/python-numpy.patch
+RISCV_NEWLIB_CMODEL=medany
 
 DEFAULT_TARGET_DIR="/home/${USER}/riscv"
 TMP=${ESP_ROOT}/_riscv_build
@@ -125,6 +126,7 @@ cd $TMP
 # Bare-metal compiler
 src=riscv-gnu-toolchain
 echo "*** Installing baremetal newlib tool chain... ***"
+echo "*** Configuring baremetal newlib with --with-cmodel=${RISCV_NEWLIB_CMODEL} for Ariane/ESP baremetal apps ***"
 if [ $(noyes "Skip ${src}") == "n" ]; then
     if test -e $src; then
 	cd $src
@@ -136,7 +138,7 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
 
     git reset --hard ${RISCV_GNU_TOOLCHAIN_SHA}
     git submodule update --init --recursive
-    ./configure --prefix=${TARGET_DIR} --disable-gdb
+    ./configure --prefix=${TARGET_DIR} --disable-gdb --with-cmodel=${RISCV_NEWLIB_CMODEL}
     cmd="make -j ${NTHREADS}"
     runsudo ${TARGET_DIR} "$cmd"
 
