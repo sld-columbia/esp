@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -14,6 +14,7 @@ XMLOGOPT += -linedebug
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 XMLOGOPT += -DEFINE XILINX_FPGA
 endif
+XMLOGOPT += $(GT_VORTEX_XCELIUM_DEFINES)
 XMLOGOPT += $(INCDIR_XCELIUM)
 
 XMELABOPT += -nowarn DLCPT
@@ -137,4 +138,3 @@ xmsim-distclean: xmsim-clean
 	$(QUIET_CLEAN) $(RM) xcelium INCA_libs xcelium.d
 
 .PHONY: xmsim xmsim-gui xmsim-compile xmsim-clean xmsim-distclean
-

@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2026 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 ------------------------------------------------------------------------------
@@ -185,6 +185,17 @@ architecture rtl of top is
       return n;
     end if;
   end set_ddr_index;
+
+  function bank0_sim_kbytes (
+    constant base_kbytes : integer)
+    return integer is
+  begin
+    if MEM_ID_RANGE_MSB = 0 then
+      return base_kbytes * 4;
+    else
+      return base_kbytes;
+    end if;
+  end bank0_sim_kbytes;
 
   constant this_ddr_index : attribute_vector(0 to 3) := (
     0 => set_ddr_index(0),
@@ -1103,4 +1114,3 @@ begin
   end generate no_profpga_mmi64_gen;
 
 end;
-

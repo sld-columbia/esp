@@ -1,0 +1,1 @@
+../vortex/hw/rtl/VX_config.vh

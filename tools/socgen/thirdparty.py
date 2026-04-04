@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 from collections import defaultdict
@@ -15,6 +15,10 @@ THIRDPARTY_IRQ_TYPE = dict()  # IRQ line types: 0 (edge-sensitive), 1
 # NVDLA
 THIRDPARTY_COMPATIBLE["nv_nvdla"] = "nv_small"
 THIRDPARTY_IRQ_TYPE["nv_nvdla"] = "1"
+
+# GT_VORTEX
+THIRDPARTY_COMPATIBLE["gt_vortex"] = "gt_vortex"
+THIRDPARTY_IRQ_TYPE["gt_vortex"]   = "1"
 
 #
 ######

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 import customtkinter as ctk
@@ -359,7 +359,7 @@ class NoC():
 
     rows = 0
     cols = 0
-    top = ""
+    top = None
 
     topology = []
 

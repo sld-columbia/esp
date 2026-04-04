@@ -54,3 +54,7 @@
 [submodule "soft/common/drivers/common/utils/eigen"]
 	path = soft/common/drivers/common/utils/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "accelerators/third-party/GT_VORTEX/vortex"]
+	path = accelerators/third-party/GT_VORTEX/vortex
+	url = https://github.com/ShinyMiraidon/vortex
+	branch = esp-development
