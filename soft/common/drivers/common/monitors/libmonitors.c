@@ -108,8 +108,8 @@ unsigned int esp_monitor(esp_monitor_args_t args, esp_monitor_vals_t *vals)
         // llc stats
         for (t = 0; t < SOC_NMEM; t++) {
             tile                        = mem_locs[t].row * SOC_COLS + mem_locs[t].col;
-            vals->l2_stats[tile].hits   = read_monitor(tile, MON_LLC_HIT_INDEX);
-            vals->l2_stats[tile].misses = read_monitor(tile, MON_LLC_MISS_INDEX);
+            vals->llc_stats[tile].hits   = read_monitor(tile, MON_LLC_HIT_INDEX);
+            vals->llc_stats[tile].misses = read_monitor(tile, MON_LLC_MISS_INDEX);
         }
 
         // acc stats
@@ -200,8 +200,8 @@ unsigned int esp_monitor(esp_monitor_args_t args, esp_monitor_vals_t *vals)
         if (args.read_mask & (1 << ESP_MON_READ_LLC_STATS))
             for (t = 0; t < SOC_NMEM; t++) {
                 tile                        = mem_locs[t].row * SOC_COLS + mem_locs[t].col;
-                vals->l2_stats[tile].hits   = read_monitor(tile, MON_LLC_HIT_INDEX);
-                vals->l2_stats[tile].misses = read_monitor(tile, MON_LLC_MISS_INDEX);
+                vals->llc_stats[tile].hits   = read_monitor(tile, MON_LLC_HIT_INDEX);
+                vals->llc_stats[tile].misses = read_monitor(tile, MON_LLC_MISS_INDEX);
             }
 
             // acc stats
@@ -321,10 +321,10 @@ esp_monitor_vals_t esp_monitor_diff(esp_monitor_vals_t vals_start, esp_monitor_v
     // llc stats
     for (t = 0; t < SOC_NMEM; t++) {
         tile = mem_locs[t].row * SOC_COLS + mem_locs[t].col;
-        vals_diff.l2_stats[tile].hits =
-            sub_monitor_vals(vals_start.l2_stats[tile].hits, vals_end.l2_stats[tile].hits);
-        vals_diff.l2_stats[tile].misses =
-            sub_monitor_vals(vals_start.l2_stats[tile].misses, vals_end.l2_stats[tile].misses);
+        vals_diff.llc_stats[tile].hits =
+            sub_monitor_vals(vals_start.llc_stats[tile].hits, vals_end.llc_stats[tile].hits);
+        vals_diff.llc_stats[tile].misses =
+            sub_monitor_vals(vals_start.llc_stats[tile].misses, vals_end.llc_stats[tile].misses);
     }
 
     // acc stats
@@ -442,8 +442,8 @@ void esp_monitor_print(esp_monitor_args_t args, esp_monitor_vals_t vals)
     if (args.read_mode == ESP_MON_READ_ALL || (args.read_mask & (1 << ESP_MON_READ_LLC_STATS)))
         for (t = 0; t < SOC_NMEM; t++) {
             tile = mem_locs[t].row * SOC_COLS + mem_locs[t].col;
-            print_mon("Hits at LLC %d: %d\n", t, vals.l2_stats[tile].hits);
-            print_mon("Misses at LLC %d: %d\n", t, vals.l2_stats[tile].misses);
+            print_mon("Hits at LLC %d: %d\n", t, vals.llc_stats[tile].hits);
+            print_mon("Misses at LLC %d: %d\n", t, vals.llc_stats[tile].misses);
         }
 
     print_mon("\n****************ACCELERATOR STATS******************\n");
