@@ -55,7 +55,10 @@ module lookahead_router #(
     parameter int unsigned DataWidth = 32,
     parameter int unsigned PortWidth = DataWidth + $bits(noc::preamble_t),
     parameter bit [4:0] Ports = noc::AllPorts,
-    parameter integer QUEUE_SIZE = 4
+    parameter integer QUEUE_SIZE = 4,
+    parameter bit RingEn = 1'b0,
+    parameter int unsigned XLen = 2,
+    parameter int unsigned YLen = 2
 ) (
     input  logic clk,
     input  logic rst,
@@ -236,13 +239,26 @@ module lookahead_router #(
             assign stop_out[g_i] =  FifoBypassEnable ? full[g_i] :
                                 ~(rd_fifo_or[g_i] & ~in_unvalid_flit[g_i]);
 
-            lookahead_routing lookahead_routing_i (
-                .clk,
-                .position,
-                .destination(fifo_head[g_i].header.info.destination),
-                .current_routing(fifo_head[g_i].header.routing),
-                .next_routing(next_hop_routing[g_i])
-            );
+            if (RingEn) begin : gen_ring_routing
+                lookahead_routing_ring #(
+                    .XLen(XLen),
+                    .YLen(YLen)
+                ) lookahead_routing_i (
+                    .clk,
+                    .position,
+                    .destination(fifo_head[g_i].header.info.destination),
+                    .current_routing(fifo_head[g_i].header.routing),
+                    .next_routing(next_hop_routing[g_i])
+                );
+            end else begin : gen_mesh_routing
+                lookahead_routing lookahead_routing_i (
+                    .clk,
+                    .position,
+                    .destination(fifo_head[g_i].header.info.destination),
+                    .current_routing(fifo_head[g_i].header.routing),
+                    .next_routing(next_hop_routing[g_i])
+                );
+            end
 
         end else begin : gen_input_port_disabled
 

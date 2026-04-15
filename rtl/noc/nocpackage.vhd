@@ -23,6 +23,9 @@ package nocpackage is
 -------------------------------------------------------------------------------
 
 
+  -- NoC topology selection: 0 = Mesh (XY), 1 = Ring
+  constant NOC_RING_EN : integer range 0 to 1 := 1;
+
   -- Header fields
   --
   -- Let W be the global constant ARCH_BITS
@@ -307,7 +310,10 @@ package nocpackage is
   component sync_noc_set
     generic (
       PORTS     : std_logic_vector(4 downto 0);
-      HAS_SYNC  : integer range 0 to 1 := 0);
+      HAS_SYNC  : integer range 0 to 1 := 0;
+      RING_EN   : integer range 0 to 1 := 0;
+      XLEN      : integer := 2;
+      YLEN      : integer := 2);
     port (
       clk                : in  std_logic;
       clk_tile           : in  std_logic;
@@ -546,6 +552,12 @@ package nocpackage is
     constant local_x  : local_yx;
     constant local_y  : local_yx)
     return ports_vec;
+
+  -- Ring port override: returns "11100" (Local+East+West) for ring, or original ports for mesh
+  function ring_ports_override (
+    constant ring_en : integer;
+    constant ports   : std_logic_vector(4 downto 0))
+    return std_logic_vector;
 
   -- IRQ snd packet (Header + 2 flits):
   -- Payload 1
@@ -1081,5 +1093,18 @@ function create_header_mcast (
     end if;
     return ports;
   end set_router_ports;
+
+  function ring_ports_override (
+    constant ring_en : integer;
+    constant ports   : std_logic_vector(4 downto 0))
+    return std_logic_vector is
+  begin
+    if ring_en = 1 then
+      -- Ring topology: only Local(4), East(3), West(2) ports are used
+      return "11100";
+    else
+      return ports;
+    end if;
+  end ring_ports_override;
 
 end nocpackage;

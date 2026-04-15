@@ -229,6 +229,7 @@ begin
   -- NOC CONNECTIONS
   -----------------------------------------------------------------------------
 
+  mesh_noc_gen: if NOC_RING_EN = 0 generate
   meshgen_y: for i in 0 to CFG_YLEN-1 generate
     meshgen_x: for j in 0 to CFG_XLEN-1 generate
 
@@ -410,6 +411,148 @@ begin
 
     end generate meshgen_x;
   end generate meshgen_y;
+  end generate mesh_noc_gen;
+
+  -----------------------------------------------------------------------------
+  -- RING NOC CONNECTIONS
+  -- Tiles are chained in row-major order using West/East ports.
+  -- North and South ports are disconnected.
+  -- Ring: tile k's East_out -> tile (k+1 mod N)'s West_in
+  --       tile k's West_out -> tile (k-1 mod N)'s East_in
+  -----------------------------------------------------------------------------
+  ring_noc_gen: if NOC_RING_EN = 1 generate
+    ringgen: for k in 0 to CFG_TILES_NUM-1 generate
+
+      -- North port disconnected
+      noc1_data_n_in(k) <= (others => '0');
+      noc1_data_void_in(k)(0) <= '1';
+      noc1_stop_in(k)(0) <= '0';
+      noc2_data_n_in(k) <= (others => '0');
+      noc2_data_void_in(k)(0) <= '1';
+      noc2_stop_in(k)(0) <= '0';
+      noc3_data_n_in(k) <= (others => '0');
+      noc3_data_void_in(k)(0) <= '1';
+      noc3_stop_in(k)(0) <= '0';
+      noc4_data_n_in(k) <= (others => '0');
+      noc4_data_void_in(k)(0) <= '1';
+      noc4_stop_in(k)(0) <= '0';
+      noc5_data_n_in(k) <= (others => '0');
+      noc5_data_void_in(k)(0) <= '1';
+      noc5_stop_in(k)(0) <= '0';
+      noc6_data_n_in(k) <= (others => '0');
+      noc6_data_void_in(k)(0) <= '1';
+      noc6_stop_in(k)(0) <= '0';
+
+      -- South port disconnected
+      noc1_data_s_in(k) <= (others => '0');
+      noc1_data_void_in(k)(1) <= '1';
+      noc1_stop_in(k)(1) <= '0';
+      noc2_data_s_in(k) <= (others => '0');
+      noc2_data_void_in(k)(1) <= '1';
+      noc2_stop_in(k)(1) <= '0';
+      noc3_data_s_in(k) <= (others => '0');
+      noc3_data_void_in(k)(1) <= '1';
+      noc3_stop_in(k)(1) <= '0';
+      noc4_data_s_in(k) <= (others => '0');
+      noc4_data_void_in(k)(1) <= '1';
+      noc4_stop_in(k)(1) <= '0';
+      noc5_data_s_in(k) <= (others => '0');
+      noc5_data_void_in(k)(1) <= '1';
+      noc5_stop_in(k)(1) <= '0';
+      noc6_data_s_in(k) <= (others => '0');
+      noc6_data_void_in(k)(1) <= '1';
+      noc6_stop_in(k)(1) <= '0';
+
+      -- West port: from previous tile's East output (counterclockwise neighbor)
+      ring_w_first: if k = 0 generate
+        -- Wrap: tile 0's West <- tile N-1's East
+        noc1_data_w_in(0) <= noc1_data_e_out(CFG_TILES_NUM-1);
+        noc1_data_void_in(0)(2) <= noc1_data_void_out(CFG_TILES_NUM-1)(3);
+        noc1_stop_in(0)(2) <= noc1_stop_out(CFG_TILES_NUM-1)(3);
+        noc2_data_w_in(0) <= noc2_data_e_out(CFG_TILES_NUM-1);
+        noc2_data_void_in(0)(2) <= noc2_data_void_out(CFG_TILES_NUM-1)(3);
+        noc2_stop_in(0)(2) <= noc2_stop_out(CFG_TILES_NUM-1)(3);
+        noc3_data_w_in(0) <= noc3_data_e_out(CFG_TILES_NUM-1);
+        noc3_data_void_in(0)(2) <= noc3_data_void_out(CFG_TILES_NUM-1)(3);
+        noc3_stop_in(0)(2) <= noc3_stop_out(CFG_TILES_NUM-1)(3);
+        noc4_data_w_in(0) <= noc4_data_e_out(CFG_TILES_NUM-1);
+        noc4_data_void_in(0)(2) <= noc4_data_void_out(CFG_TILES_NUM-1)(3);
+        noc4_stop_in(0)(2) <= noc4_stop_out(CFG_TILES_NUM-1)(3);
+        noc5_data_w_in(0) <= noc5_data_e_out(CFG_TILES_NUM-1);
+        noc5_data_void_in(0)(2) <= noc5_data_void_out(CFG_TILES_NUM-1)(3);
+        noc5_stop_in(0)(2) <= noc5_stop_out(CFG_TILES_NUM-1)(3);
+        noc6_data_w_in(0) <= noc6_data_e_out(CFG_TILES_NUM-1);
+        noc6_data_void_in(0)(2) <= noc6_data_void_out(CFG_TILES_NUM-1)(3);
+        noc6_stop_in(0)(2) <= noc6_stop_out(CFG_TILES_NUM-1)(3);
+      end generate ring_w_first;
+
+      ring_w_other: if k /= 0 generate
+        noc1_data_w_in(k) <= noc1_data_e_out(k-1);
+        noc1_data_void_in(k)(2) <= noc1_data_void_out(k-1)(3);
+        noc1_stop_in(k)(2) <= noc1_stop_out(k-1)(3);
+        noc2_data_w_in(k) <= noc2_data_e_out(k-1);
+        noc2_data_void_in(k)(2) <= noc2_data_void_out(k-1)(3);
+        noc2_stop_in(k)(2) <= noc2_stop_out(k-1)(3);
+        noc3_data_w_in(k) <= noc3_data_e_out(k-1);
+        noc3_data_void_in(k)(2) <= noc3_data_void_out(k-1)(3);
+        noc3_stop_in(k)(2) <= noc3_stop_out(k-1)(3);
+        noc4_data_w_in(k) <= noc4_data_e_out(k-1);
+        noc4_data_void_in(k)(2) <= noc4_data_void_out(k-1)(3);
+        noc4_stop_in(k)(2) <= noc4_stop_out(k-1)(3);
+        noc5_data_w_in(k) <= noc5_data_e_out(k-1);
+        noc5_data_void_in(k)(2) <= noc5_data_void_out(k-1)(3);
+        noc5_stop_in(k)(2) <= noc5_stop_out(k-1)(3);
+        noc6_data_w_in(k) <= noc6_data_e_out(k-1);
+        noc6_data_void_in(k)(2) <= noc6_data_void_out(k-1)(3);
+        noc6_stop_in(k)(2) <= noc6_stop_out(k-1)(3);
+      end generate ring_w_other;
+
+      -- East port: from next tile's West output (clockwise neighbor)
+      ring_e_last: if k = CFG_TILES_NUM-1 generate
+        -- Wrap: tile N-1's East <- tile 0's West
+        noc1_data_e_in(CFG_TILES_NUM-1) <= noc1_data_w_out(0);
+        noc1_data_void_in(CFG_TILES_NUM-1)(3) <= noc1_data_void_out(0)(2);
+        noc1_stop_in(CFG_TILES_NUM-1)(3) <= noc1_stop_out(0)(2);
+        noc2_data_e_in(CFG_TILES_NUM-1) <= noc2_data_w_out(0);
+        noc2_data_void_in(CFG_TILES_NUM-1)(3) <= noc2_data_void_out(0)(2);
+        noc2_stop_in(CFG_TILES_NUM-1)(3) <= noc2_stop_out(0)(2);
+        noc3_data_e_in(CFG_TILES_NUM-1) <= noc3_data_w_out(0);
+        noc3_data_void_in(CFG_TILES_NUM-1)(3) <= noc3_data_void_out(0)(2);
+        noc3_stop_in(CFG_TILES_NUM-1)(3) <= noc3_stop_out(0)(2);
+        noc4_data_e_in(CFG_TILES_NUM-1) <= noc4_data_w_out(0);
+        noc4_data_void_in(CFG_TILES_NUM-1)(3) <= noc4_data_void_out(0)(2);
+        noc4_stop_in(CFG_TILES_NUM-1)(3) <= noc4_stop_out(0)(2);
+        noc5_data_e_in(CFG_TILES_NUM-1) <= noc5_data_w_out(0);
+        noc5_data_void_in(CFG_TILES_NUM-1)(3) <= noc5_data_void_out(0)(2);
+        noc5_stop_in(CFG_TILES_NUM-1)(3) <= noc5_stop_out(0)(2);
+        noc6_data_e_in(CFG_TILES_NUM-1) <= noc6_data_w_out(0);
+        noc6_data_void_in(CFG_TILES_NUM-1)(3) <= noc6_data_void_out(0)(2);
+        noc6_stop_in(CFG_TILES_NUM-1)(3) <= noc6_stop_out(0)(2);
+      end generate ring_e_last;
+
+      ring_e_other: if k /= CFG_TILES_NUM-1 generate
+        noc1_data_e_in(k) <= noc1_data_w_out(k+1);
+        noc1_data_void_in(k)(3) <= noc1_data_void_out(k+1)(2);
+        noc1_stop_in(k)(3) <= noc1_stop_out(k+1)(2);
+        noc2_data_e_in(k) <= noc2_data_w_out(k+1);
+        noc2_data_void_in(k)(3) <= noc2_data_void_out(k+1)(2);
+        noc2_stop_in(k)(3) <= noc2_stop_out(k+1)(2);
+        noc3_data_e_in(k) <= noc3_data_w_out(k+1);
+        noc3_data_void_in(k)(3) <= noc3_data_void_out(k+1)(2);
+        noc3_stop_in(k)(3) <= noc3_stop_out(k+1)(2);
+        noc4_data_e_in(k) <= noc4_data_w_out(k+1);
+        noc4_data_void_in(k)(3) <= noc4_data_void_out(k+1)(2);
+        noc4_stop_in(k)(3) <= noc4_stop_out(k+1)(2);
+        noc5_data_e_in(k) <= noc5_data_w_out(k+1);
+        noc5_data_void_in(k)(3) <= noc5_data_void_out(k+1)(2);
+        noc5_stop_in(k)(3) <= noc5_stop_out(k+1)(2);
+        noc6_data_e_in(k) <= noc6_data_w_out(k+1);
+        noc6_data_void_in(k)(3) <= noc6_data_void_out(k+1)(2);
+        noc6_stop_in(k)(3) <= noc6_stop_out(k+1)(2);
+      end generate ring_e_other;
+
+    end generate ringgen;
+  end generate ring_noc_gen;
 
 
   router_gen : for i in 0 to CFG_TILES_NUM - 1 generate
@@ -419,7 +562,10 @@ begin
         is_tile_io        => is_io_tile(i),
         SIMULATION        => SIMULATION,
         ROUTER_PORTS      => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-        HAS_SYNC          => 1)
+        HAS_SYNC          => 1,
+        RING_EN           => NOC_RING_EN,
+        XLEN              => CFG_XLEN,
+        YLEN              => CFG_YLEN)
       port map (
         rst                     => rst_inv,
         noc_clk_lock            => '1',

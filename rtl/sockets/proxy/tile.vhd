@@ -1110,7 +1110,10 @@ package tile is
       SIMULATION        : boolean              := false;
       ROUTER_PORTS      : ports_vec            := "11111";
       HAS_SYNC          : integer range 0 to 1 := 1;
-      is_asic           : boolean              := false);
+      is_asic           : boolean              := false;
+      RING_EN           : integer range 0 to 1 := 0;
+      XLEN              : integer              := 2;
+      YLEN              : integer              := 2);
     port (
       rst                : in  std_ulogic;
       noc_clk_lock       : in  std_ulogic;

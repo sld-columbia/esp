@@ -3,7 +3,10 @@ module lookahead_router_wrapper #(
     parameter int unsigned Width = 32,
     parameter bit [4:0] Ports = noc::AllPorts,
     parameter int unsigned DEST_SIZE = 1,
-    parameter int unsigned QUEUE_SIZE = 4
+    parameter int unsigned QUEUE_SIZE = 4,
+    parameter bit RingEn = 1'b0,
+    parameter int unsigned XLen = 2,
+    parameter int unsigned YLen = 2
 ) (
     input  logic clk,
     input  logic rst,
@@ -38,7 +41,10 @@ module lookahead_router_wrapper #(
                 .FlowControl(FlowControl),
                 .DataWidth(Width - $bits(noc::preamble_t)),
                 .Ports(Ports),
-                .QUEUE_SIZE(QUEUE_SIZE)
+                .QUEUE_SIZE(QUEUE_SIZE),
+                .RingEn(RingEn),
+                .XLen(XLen),
+                .YLen(YLen)
             ) router_impl_i (
                 .clk,
                 .rst(~rst),
