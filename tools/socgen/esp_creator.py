@@ -544,6 +544,11 @@ class CachesConfigFrame:
             command=main_frame.update_noc_config)
 
 class AdvancedConfigFrame:
+    def on_clock_strategy_change(self, selected_label):
+        # Map GUI label -> numeric config value expected by soc.py/socmap_gen.py
+        self.soc.clk_str.set(self.clk_strategy_to_id.get(selected_label, 0))
+        self.main_frame.update_noc_config()
+
     def __init__(self, soc, left_panel, main_frame):
         self.soc = soc
         self.left_panel = left_panel
@@ -553,52 +558,52 @@ class AdvancedConfigFrame:
         self.adv_frame.pack(padx=(8, 3), pady=(10, 20), fill="x")
         self.title_label = StyledComponents.Header(
             self.adv_frame, "Advanced Settings", 0, 0)
-        # self.title_label.grid(row=0, column=0, columnspan=2, pady=10)
 
         self.clk_label = ctk.CTkLabel(
             self.adv_frame,
             text="Clock Strategy",
-            font=(
-                "Arial",
-                10))
+            font=("Arial", 10))
         self.clk_label.grid(row=1, column=0, sticky="w", pady=5, padx=(20, 40))
         self.clk_value_frame = ctk.CTkFrame(self.adv_frame)
         self.clk_value_frame.grid(row=1, column=1, pady=5, padx=20)
 
+        self.clk_strategy_labels = ["Dual external", "Multi DCO", "Single DCO"]
+        self.clk_strategy_to_id = {
+            "Dual external": 0,
+            "Multi DCO": 1,
+            "Single DCO": 2
+        }
+
+        # Initialize menu label from existing numeric config value.
+        current_id = self.soc.clk_str.get()
+        if current_id < 0 or current_id >= len(self.clk_strategy_labels):
+            current_id = 0
+        self.clk_str_label = StringVar(value=self.clk_strategy_labels[current_id])
+
         if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
             self.clk_value_menu = ctk.CTkOptionMenu(
                 self.clk_value_frame,
-                variable=self.soc.clk_str,
-                values=[
-                    "Dual external",
-                    "Multi DCO",
-                    "Single DCO"],
+                variable=self.clk_str_label,
+                values=self.clk_strategy_labels,
                 fg_color="white",
                 bg_color="#e8e8e8",
                 button_color="#e8e8e8",
                 width=200,
                 text_color="black",
-                font=(
-                    "Arial",
-                    10),
+                font=("Arial", 10),
                 button_hover_color="lightgrey",
                 anchor="center",
                 dropdown_fg_color="white",
-                dropdown_font=(
-                    "Arial",
-                    10),
+                dropdown_font=("Arial", 10),
                 dropdown_hover_color="#e8e8e8",
-                command=main_frame.update_noc_config)
+                command=self.on_clock_strategy_change)
             self.clk_value_menu.pack(anchor="center", padx=3, pady=3)
         else:
             self.clk_value = ctk.CTkLabel(
                 self.clk_value_frame,
-                text="Dual external clocks",
+                text="Dual external",
                 width=200,
-                font=(
-                    "Arial",
-                    10,
-                    "bold"))
+                font=("Arial", 10, "bold"))
             self.clk_value.pack(anchor="center", padx=3, pady=3)
 
 
