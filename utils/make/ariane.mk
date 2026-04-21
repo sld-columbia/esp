@@ -8,7 +8,7 @@ RISCV_TESTS = $(SOFT)/riscv-tests
 RISCV_PK = $(SOFT)/riscv-pk
 OPENSBI = $(SOFT)/opensbi
 
-soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/ram.vhx
+soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin
 
 soft-clean:
 	$(QUIET_CLEAN)$(RM)		 	\
@@ -21,8 +21,7 @@ soft-clean:
 		$(SOFT_BUILD)/startup.o		\
 		$(SOFT_BUILD)/main.o		\
 		$(SOFT_BUILD)/uart.o		\
-		$(SOFT_BUILD)/systest.bin	\
-		$(SOFT_BUILD)/ram.vhx8
+		$(SOFT_BUILD)/systest.bin
 
 soft-distclean: soft-clean
 
@@ -89,7 +88,6 @@ RISCV_CFLAGS += -static
 RISCV_CFLAGS += -std=gnu99
 RISCV_CFLAGS += -O2
 RISCV_CFLAGS += -ffast-math
-RISCV_CFLAGS += -fno-common
 RISCV_CFLAGS += -fno-builtin-printf
 RISCV_CFLAGS += -nostdlib
 RISCV_CFLAGS += -nostartfiles -lm -lgcc
@@ -114,10 +112,6 @@ $(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
 		python3 $(ESP_ROOT)/utils/scripts/srec/modify_srec.py $@ $(SIM_DATA_FILES) $(START_ADDRS);\
 	fi
 
-$(SOFT_BUILD)/ram.vhx: $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/vhx.bin
-
-$(SOFT_BUILD)/vhx.bin: $(TEST_PROGRAM)
-	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt_vhx.py 64 ariane
 
 $(SOFT_BUILD)/sysroot:
 	@mkdir -p $(SOFT_BUILD)
@@ -144,7 +138,7 @@ $(SOFT_BUILD)/linux-build/.config: $(LINUXSRC)/arch/$(ARCH)/configs/$(LINUX_CONF
 
 
 $(SOFT_BUILD)/linux-build/vmlinux: $(SOFT_BUILD)/sysroot.cpio $(SOFT_BUILD)/linux-build/.config
-	$(QUIET_MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(SOFT_BUILD)/linux-build
+	$(QUIET_MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(SOFT_BUILD)/linux-build KCFLAGS="-fcommon" HOSTCFLAGS="-fcommon"
 
 
 $(SOFT_BUILD)/pk-build:
@@ -232,4 +226,3 @@ VERILOG_ARIANE += $(foreach f, $(shell strings $(FLISTS)/ariane_fpga_vlog.flist)
 endif
 THIRDPARTY_VLOG += $(VERILOG_ARIANE)
 endif
-
