@@ -15,7 +15,11 @@ pads = dict()
 with open(filepath) as fp:
     line = fp.readline()
     while line:
-        line.strip()
+        line = line.split('#', 1)[0].strip()
+        if not line:
+            line = fp.readline()
+            continue
+
         items = line.split()
         name = items[0]
         index = int(items[1])
@@ -30,6 +34,9 @@ with open(filepath) as fp:
         line = fp.readline()
 
 fp = open('pads_loc.vhd', 'w+')
+
+fp.write("-- Copyright (c) 2011-2026 Columbia University, System Level Design Group\n")
+fp.write("-- SPDX-License-Identifier: Apache-2.0\n\n")
 
 fp.write("library ieee;\n")
 fp.write("use ieee.std_logic_1164.all;\n\n")
