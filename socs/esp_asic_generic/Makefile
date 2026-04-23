@@ -1,3 +1,5 @@
+# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
 ##########################
 ### ESP Local Makefile ###
 ##########################
@@ -31,7 +33,7 @@ TECHLIB = $(OVR_TECHLIB)
 TECH_TYPE = fpga
 endif
 
-### Chip-specific configuration ####
+### Chip-specific configuration ###
 GRLIB_DEFCONFIG = $(DESIGN_PATH)/grlib_defconfig
 ESP_DEFCONFIG = $(DESIGN_PATH)/esp_defconfig
 
@@ -88,6 +90,9 @@ FPGA_HOST ?= localhost
 XIL_HW_SERVER_PORT ?= 3121
 
 
+### Network configuration ###
+
+
 # IP address or host name of the host connected to the FPGA
 UART_IP ?=
 UART_PORT ?=
@@ -106,6 +111,13 @@ ESPLINK_PORT ?= 46392
 
 ### Include global Makefile ###
 include $(ESP_ROOT)/utils/Makefile
+
+### Uncomment this part when running ASIC flow
+# exist := $(wildcard ../esp_eda/esp/make/asicrun.mk)
+# ifneq ($(strip $(exist)),)
+#   include ../esp_eda/esp/make/tools.mk
+#   include ../esp_eda/esp/make/asicrun.mk
+# endif
 
 # Force socmap.vhd regeneration w/ FPGA emulation target technology
 ifneq ("$(OVR_TECHLIB)", "")
