@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2026 Columbia University, System Level Design Group
+ * Copyright (c) 2011-2025 Columbia University, System Level Design Group
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -72,7 +72,7 @@
         #define DEVNAME_LLC_CACHE "sld,llc_cache"
     #endif
 
-    #define DEVNAME_MAX_LEN 32
+    #define DEVNAME_MAX_LEN 64
 
 struct esp_device {
     unsigned vendor;

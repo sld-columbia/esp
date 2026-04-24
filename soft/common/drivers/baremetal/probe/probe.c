@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2026 Columbia University, System Level Design Group
+ * Copyright (c) 2011-2025 Columbia University, System Level Design Group
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -200,6 +200,7 @@ int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const ch
 #elif __riscv
 
 static unsigned ndev = 0;
+static const char *probe_target_name = NULL;
 
 static void esp_open(const struct fdt_scan_node *node, void *extra) {}
 
@@ -207,10 +208,14 @@ static void esp_prop(const struct fdt_scan_prop *prop, void *extra)
 {
     // Get pointer to last entry in espdevs. This has not been discovered yet.
     struct esp_device **espdevs = (struct esp_device **)extra;
-    const char *name            = (*espdevs)[0].name;
+    const char *name            = probe_target_name ? probe_target_name : "";
 
-    if (!strcmp(prop->name, "compatible") && !strcmp((const char *)prop->value, name))
-        (*espdevs)[ndev].compat = 1;
+    if (!strcmp(prop->name, "compatible")) {
+        const int match = (fdt_string_list_index(prop, name) >= 0);
+	
+	if (match) 
+	   (*espdevs)[ndev].compat = 1;
+    }
     else if (!strcmp(prop->name, "reg"))
         fdt_get_address(prop->node->parent, prop->value, (uint64_t *)&(*espdevs)[ndev].addr);
     else if (!strcmp(prop->name, "interrupts"))
@@ -221,7 +226,7 @@ static void esp_prop(const struct fdt_scan_prop *prop, void *extra)
 static void esp_done(const struct fdt_scan_node *node, void *extra)
 {
     struct esp_device **espdevs = (struct esp_device **)extra;
-    const char *name            = (*espdevs)[0].name;
+    const char *name            = probe_target_name ? probe_target_name : "";
 
     if ((*espdevs)[ndev].compat != 0) {
         printf("[probe] %s.%d registered\n", name, ndev);
@@ -242,6 +247,7 @@ int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const ch
 {
     struct fdt_cb cb;
     ndev = 0;
+    probe_target_name = name;
 
     // Initialize first entry of the device structure (may not be discovered!)
     (*espdevs) = (struct esp_device *)aligned_malloc(NACC_MAX * sizeof(struct esp_device));
