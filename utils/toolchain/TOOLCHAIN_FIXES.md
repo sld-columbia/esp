@@ -177,6 +177,40 @@ the Leon3 and RISC-V scripts.
 
 ---
 
+## Kernel Build Fixes (Ariane)
+
+These are not toolchain-build issues — they affect the Linux kernel build
+itself (`make linux` for Ariane). They live alongside the toolchain patches
+because they share the same root cause family (newer host toolchain breaking
+older vendored sources), and `utils/make/ariane.mk` applies them on demand
+before the kernel build starts.
+
+### Issue 7: kernel `dtc` fails to link on GCC >= 10
+
+**Symptom:**
+```
+ld: scripts/dtc/dtc-parser.tab.o:(.bss+0x0): multiple definition of `yyloc';
+    scripts/dtc/dtc-lexer.lex.o:(.bss+0x0): first defined here
+```
+when running `make linux` on Ubuntu 22.04, RHEL 9, or any host with GCC 10+.
+
+**Root cause:**
+GCC 10 changed the default for tentative definitions from `-fcommon` to
+`-fno-common`. The Ariane Linux kernel ships an older in-tree `dtc` whose
+lex/yacc-generated globals (`yyloc`, etc.) rely on the old behaviour. Upstream
+fixed this in v5.7+, but the vendored kernel here predates the fix.
+
+**Fix:**
+`patches/linux-dtc-fcommon.patch` adds `-fcommon` to `HOSTCFLAGS_dtc-lexer.lex.o`
+and `HOSTCFLAGS_dtc-parser.tab.o` in `scripts/dtc/Makefile`. The patch is
+applied by the `linux-patches` make target in `utils/make/ariane.mk`, which
+runs as an order-only prerequisite of the kernel `.config` step. The rule is
+idempotent — it greps for `-fcommon` and skips if already present, so it is
+safe to run on any host (no-op on GCC < 10 builds where the patch has already
+been merged into the working tree, or on resubmodule-init).
+
+---
+
 ## Summary
 
 | # | Issue | RISC-V | Leon3 | Fix method |
@@ -187,6 +221,7 @@ the Leon3 and RISC-V scripts.
 | 4 | fakeroot runtime `mknod` | Yes | Yes | glibc detection + preemptive system fakeroot swap (RISC-V) / retry loop (Leon3) |
 | 5 | GCC 5.5.0 `bool++` C++17 | No | Yes | sed `bool` to `char` in `reload.h` |
 | 6 | Clone URL timeout | Yes | Yes | Switch to GitHub mirror |
+| 7 | kernel dtc `-fno-common` link | Ariane | n/a | Idempotent `patch -p1` via `linux-patches` make target |
 
 ## How Patches Are Applied (RISC-V)
 
@@ -207,4 +242,6 @@ The patches are harmless on older glibc (guarded by `#ifndef` / `#undef`).
 - `utils/toolchain/build_leon3_toolchain.sh` — All 6 fixes applied.
 - `utils/toolchain/patches/host-fakeroot-glibc-compat.patch` — Shared patch file.
 - `utils/toolchain/patches/host-m4-sigstksz.patch` — Used by RISC-V build.
+- `utils/toolchain/patches/linux-dtc-fcommon.patch` — Applied to Ariane kernel source by `utils/make/ariane.mk`.
+- `utils/make/ariane.mk` — `linux-patches` target applies kernel-side patches before `.config`.
 - `utils/toolchain/TOOLCHAIN_FIXES.md` — This report.

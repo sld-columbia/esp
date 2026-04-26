@@ -138,7 +138,21 @@ $(SOFT_BUILD)/sysroot.cpio: $(SOFT_BUILD)/sysroot.files
 	$(QUIET_BUILD)${LINUXSRC}/usr/gen_init_cpio $< > $@
 
 
-$(SOFT_BUILD)/linux-build/.config: $(LINUXSRC)/arch/$(ARCH)/configs/$(LINUX_CONFIG)
+# Patch the kernel source tree before any build step touches it.
+# Idempotent: each rule short-circuits if the change is already in place.
+# Currently applies:
+#   - linux-dtc-fcommon.patch: forces -fcommon for the in-tree dtc on
+#     GCC >= 10 (Ubuntu 22.04+, RHEL 9+), where -fno-common is the default
+#     and breaks the older lex/yacc-generated host objects.
+.PHONY: linux-patches
+linux-patches:
+	@if grep -q -- '-fcommon' $(LINUXSRC)/scripts/dtc/Makefile; then :; \
+	else \
+		echo "  PATCH    linux-dtc-fcommon.patch"; \
+		patch -p1 -s -d $(LINUXSRC) -i $(ESP_ROOT)/utils/toolchain/patches/linux-dtc-fcommon.patch; \
+	fi
+
+$(SOFT_BUILD)/linux-build/.config: $(LINUXSRC)/arch/$(ARCH)/configs/$(LINUX_CONFIG) | linux-patches
 	@$(MAKE) $(SOFT_BUILD)/linux-build
 	$(QUIET_MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE)  O=$(SOFT_BUILD)/linux-build -C ${LINUXSRC} $(LINUX_CONFIG)
 
