@@ -56,5 +56,5 @@
 	url = https://gitlab.com/libeigen/eigen.git
 [submodule "accelerators/third-party/GT_VORTEX/vortex"]
 	path = accelerators/third-party/GT_VORTEX/vortex
-	url = https://github.com/ShinyMiraidon/vortex
+	url = https://github.com/sld-columbia/vortex.git
 	branch = esp-development
