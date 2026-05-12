@@ -11,7 +11,7 @@ PROJ_DIR_PATH=$(realpath ../$PROJECT_NAME)
 ASIC_PADGEN = $(ESP_ROOT)/tools/asicgen/asic_padgen.py
 ASIC_PADGEN_OUT = ../$(DIRTECH_NAME)/pad_wrappers
 
-ASIC_PADLOC = $(ESP_ROOT)/utils/scripts/asic/pad_vh_loc.py
+ASIC_PADLOC = $(ESP_ROOT)/utils/scripts/asic/pads_vh_loc.py
 
 ASIC_MEMGEN = $(ESP_ROOT)/tools/asicgen/asic_memgen.py
 ASIC_MEMGEN_OUT = ../$(DIRTECH_NAME)/mem_wrappers
@@ -26,7 +26,7 @@ mem_wrapper:
 pad_wrapper:
 	$(ASIC_PADGEN) $(ASIC_PADGEN_OUT) | tee $(ASIC_PADGEN_OUT)/asic_padgen.log
 
-pad_location:
+pads_location:
 	$(ASIC_PADLOC)
 
 mem_slmgen: socgen/esp/slm_memgen.txt $(MEMGEN)

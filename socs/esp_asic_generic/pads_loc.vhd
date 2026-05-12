@@ -1,3 +1,6 @@
+-- Copyright (c) 2011-2026 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: Apache-2.0
+
 library ieee;
 use ieee.std_logic_1164.all;
 use work.esp_global.all;
@@ -19,13 +22,18 @@ package pads_loc is
   constant fpga_data_pad_loc : std_logic_vector(CFG_MEM_LINK_BITS downto 0) := (others => '0');
   constant fpga_valid_in_pad_loc : std_logic := '0';
   constant fpga_valid_out_pad_loc : std_logic := '0';
-  constant iolink_clk_in_pad_loc : std_logic := '0';
-  constant iolink_clk_out_pad_loc : std_logic := '0';
-  constant iolink_credit_in_pad_loc : std_logic := '0';
-  constant iolink_credit_out_pad_loc : std_logic := '0';
-  constant iolink_data_pad_loc : std_logic_vector(15 downto 0) := "1111111111111111";
-  constant iolink_valid_in_pad_loc : std_logic := '0';
-  constant iolink_valid_out_pad_loc : std_logic := '0';
+
+  ---------------------------------------------------------------------
+  -- WARNING! IOLINK is temporarily disabled for ASIC implementation --
+  ---------------------------------------------------------------------
+  -- constant iolink_clk_in_pad_loc : std_logic := '0';
+  -- constant iolink_clk_out_pad_loc : std_logic := '0';
+  -- constant iolink_credit_in_pad_loc : std_logic := '0';
+  -- constant iolink_credit_out_pad_loc : std_logic := '0';
+  -- constant iolink_data_pad_loc : std_logic_vector(15 downto 0) := "1111111111111111";
+  -- constant iolink_valid_in_pad_loc : std_logic := '0';
+  -- constant iolink_valid_out_pad_loc : std_logic := '0';
+
   constant reset_pad_loc : std_logic := '0';
   constant reset_o2_pad_loc : std_logic := '0';
   constant tclk_pad_loc : std_logic := '0';

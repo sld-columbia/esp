@@ -1,3 +1,6 @@
+###########################################################################
+# WARNING! IOLINK is temporarily disabled for ASIC implementation         #
+###########################################################################
 dummy 0 0
 erx_clk 0 0
 erxd 0 0
@@ -77,7 +80,7 @@ fpga_data 60 1
 fpga_data 61 1
 fpga_data 62 1
 fpga_data 63 1
-ffpga_valid_in 0 0
+fpga_valid_in 0 0
 fpga_valid_out 0 0
 reset 0 0
 reset_o2 0 0
