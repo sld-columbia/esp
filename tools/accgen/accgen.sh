@@ -3,8 +3,6 @@
 # Copyright (c) 2011-2026 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-set -e
-
 ### Default
 NAME_DEFAULT="dummy"
 ESP_ROOT_DEFAULT=${PWD}
@@ -362,6 +360,11 @@ for d in $dirs; do
         rename accelerator $LOWER */*
 	rename acc_full $LOWERFULL */*
     elif cat /etc/os-release | grep -q -i rhel; then
+        rename accelerator $LOWER *
+	rename acc_full $LOWERFULL *
+        rename accelerator $LOWER */*
+	rename acc_full $LOWERFULL */*
+    else
         rename accelerator $LOWER *
 	rename acc_full $LOWERFULL *
         rename accelerator $LOWER */*
@@ -744,6 +747,9 @@ for d in $dirs; do
 	rename acc_full $LOWERFULL *
     elif cat /etc/os-release | grep -q -i rhel; then
 	rename accelerator $LOWER *
+	rename acc_full $LOWERFULL *
+    else
+    rename accelerator $LOWER *
 	rename acc_full $LOWERFULL *
     fi
 
