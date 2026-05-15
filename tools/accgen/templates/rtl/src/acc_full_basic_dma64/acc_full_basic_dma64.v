@@ -36,7 +36,7 @@ module acc_full_name_basic_dma64 (
     output [31:0] dma_read_ctrl_data_index;
     output [31:0] dma_read_ctrl_data_length;
     output [2:0] dma_read_ctrl_data_size;
-    output [4:0] dma_read_ctrl_data_user;
+    output [5:0] dma_read_ctrl_data_user;
 
     output dma_read_chnl_ready;
     input dma_read_chnl_valid;
