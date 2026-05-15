@@ -47,7 +47,7 @@ module acc_full_name_basic_dma32 (
     output [31:0] dma_write_ctrl_data_index;
     output [31:0] dma_write_ctrl_data_length;
     output [2:0] dma_write_ctrl_data_size;
-    output [4:0] dma_write_ctrl_data_user;
+    output [5:0] dma_write_ctrl_data_user;
 
     input dma_write_chnl_ready;
     output dma_write_chnl_valid;
