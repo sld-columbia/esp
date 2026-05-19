@@ -847,8 +847,8 @@ module noc2aximst #(
     logic [    `MSG_TYPE_WIDTH-1 : 0] input_msg_type;
     logic [    `MSG_TYPE_WIDTH-1 : 0] msg_type;
     logic [ this_coh_flit_size-1 : 0] header_v;
-    logic [                    2 : 0] origin_y;
-    logic [                    2 : 0] origin_x;
+    logic [     GLOB_PHYS_ADDR_BITS-1 : 0] origin_y;
+    logic [     GLOB_PHYS_ADDR_BITS-1 : 0] origin_x;
     logic [`NEXT_ROUTING_WIDTH-1 : 0] go_right;
     logic [`NEXT_ROUTING_WIDTH-1 : 0] go_left;
 
@@ -859,8 +859,8 @@ module noc2aximst #(
         if (input_msg_type == AHB_RD) msg_type = RSP_AHB_RD;
         else msg_type = RSP_DATA;
 
-        origin_y = pad_coherence_req_data_out[  this_coh_flit_size - `PREAMBLE_WIDTH - GLOB_YX_WIDTH + 2 :   this_coh_flit_size - `PREAMBLE_WIDTH - GLOB_YX_WIDTH];
-        origin_x = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH + 2 : this_coh_flit_size - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH];
+        origin_y = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - 1 : this_coh_flit_size - `PREAMBLE_WIDTH - GLOB_YX_WIDTH];
+        origin_x = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - GLOB_YX_WIDTH - 1 : this_coh_flit_size - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH];
         header_v = 0;
         header_v[this_coh_flit_size-1 : this_coh_flit_size-`PREAMBLE_WIDTH] = PREAMBLE_HEADER;
         header_v[this_coh_flit_size - `PREAMBLE_WIDTH - 1 : this_coh_flit_size - `PREAMBLE_WIDTH - GLOB_YX_WIDTH] = local_y;
@@ -890,8 +890,8 @@ module noc2aximst #(
     logic [    `MSG_TYPE_WIDTH-1 : 0] input_msg_type_dma;
     logic [    `MSG_TYPE_WIDTH-1 : 0] msg_type_dma;
     logic [  DMA_NOC_FLIT_SIZE-1 : 0] header_v_dma;
-    logic [                    2 : 0] origin_y_dma;
-    logic [                    2 : 0] origin_x_dma;
+    logic [      GLOB_YX_WIDTH-1 : 0] origin_y_dma;
+    logic [      GLOB_YX_WIDTH-1 : 0] origin_x_dma;
     logic [`NEXT_ROUTING_WIDTH-1 : 0] go_right_dma;
     logic [`NEXT_ROUTING_WIDTH-1 : 0] go_left_dma;
 
@@ -904,8 +904,8 @@ module noc2aximst #(
         else msg_type_dma = DMA_TO_DEV;
 
         //reserved_resp_dma = 0;
-        origin_y_dma = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - GLOB_YX_WIDTH + 2:DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - GLOB_YX_WIDTH];
-        origin_x_dma = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH + 2:DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH];
+        origin_y_dma = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 1 : DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - GLOB_YX_WIDTH];
+        origin_x_dma = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - GLOB_YX_WIDTH - 1 : DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH];
         header_v_dma = 0;
         header_v_dma[DMA_NOC_FLIT_SIZE-1 : DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH] = PREAMBLE_HEADER;
         header_v_dma[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 1 : DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - GLOB_YX_WIDTH] = local_y;
