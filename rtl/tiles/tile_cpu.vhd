@@ -21,8 +21,6 @@ use work.ibex_esp_pkg.all;
 use work.misc.all;
 -- pragma translate_off
 use work.sim.all;
-library unisim;
-use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
 use work.esp_csr_pkg.all;
@@ -247,6 +245,19 @@ architecture rtl of tile_cpu is
   constant disas : integer := CFG_DISAS;
   constant pclow : integer := CFG_PCLOW;
 
+  function leon3_memtech_from_fabtech(fabtech : integer) return integer is
+  begin
+    if fabtech = stratix10 then
+      -- GRLIB has no Stratix 10 syncram_2p implementation, so infer the LEON3
+      -- register-file and cache memories for Intel FPGA targets.
+      return inferred;
+    end if;
+
+    return fabtech;
+  end function leon3_memtech_from_fabtech;
+
+  constant leon3_memtech : integer := leon3_memtech_from_fabtech(CFG_FABTECH);
+
   -- Soft reset
   signal srst : std_ulogic;
 
@@ -283,6 +294,18 @@ architecture rtl of tile_cpu is
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask_cpu;
 
   constant ariane_cacheable_len : integer := (1 + CFG_L2_ENABLE) * 16#20000000#;
+
+  function set_ariane_slmddr_len
+    return std_logic_vector is
+  begin
+    if CFG_NSLMDDR_TILE = 0 then
+      return X"0000_0000_0000_0000";
+    else
+      return X"0000_0000_4000_0000";
+    end if;
+  end function;
+
+  constant ariane_slmddr_len : std_logic_vector(63 downto 0) := set_ariane_slmddr_len;
 
   attribute mark_debug : string;
 
@@ -604,7 +627,7 @@ begin
   leon3_cpu_gen: if GLOB_CPU_ARCH = leon3 generate
 
   leon3_0 : leon3s
-    generic map (0, CFG_FABTECH, CFG_FABTECH, CFG_NWIN, CFG_DSU, CFG_FPU, CFG_V8,
+    generic map (0, CFG_FABTECH, leon3_memtech, CFG_NWIN, CFG_DSU, CFG_FPU, CFG_V8,
                  0, CFG_MAC, pclow, CFG_NOTAG, CFG_NWP, CFG_ICEN, CFG_IREPL, CFG_ISETS, CFG_ILINE,
                  CFG_ISETSZ, CFG_ILOCK, CFG_DCEN, CFG_DREPL, CFG_DSETS, CFG_DLINE, CFG_DSETSZ,
                  CFG_DLOCK, CFG_DSNOOP, CFG_ILRAMEN, CFG_ILRAMSZ, CFG_ILRAMADDR, CFG_DLRAMEN,
@@ -670,7 +693,7 @@ begin
         SLMBase          => X"0000_0000_0400_0000",
         SLMLength        => X"0000_0000_0400_0000",  -- Reserving up to 64MB; devtree can set less
         SLMDDRBase       => X"0000_0000_C000_0000",
-        SLMDDRLength     => X"0000_0000_4000_0000",  -- Reserving up to 1GB; devtree can set less
+        SLMDDRLength     => ariane_slmddr_len,  -- Reserving up to 1GB; disabled when no SLMDDR tile exists
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
         DRAMLength       => X"0000_0000_4000_0000",
         DRAMCachedLength => conv_std_logic_vector(ariane_cacheable_len, 64))  -- TODO: length set automatically to match devtree

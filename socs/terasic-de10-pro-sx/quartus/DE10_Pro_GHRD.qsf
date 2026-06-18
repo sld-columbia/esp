@@ -1,0 +1,1728 @@
+#============================================================
+# Build by Terasic V2.0.0
+#============================================================
+
+set_global_assignment -name FAMILY "Stratix 10"
+set_global_assignment -name DEVICE 1SX280HU2F50E1VG
+set_global_assignment -name TOP_LEVEL_ENTITY ghrd_s10_top
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 18.0.0
+set_global_assignment -name LAST_QUARTUS_VERSION "19.1.0 SP0.03 Pro Edition"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "Wed Jan 31 14:15:58 2018"
+set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
+#============================================================
+# CLOCK
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to CLK_100_B3I
+set_instance_assignment -name IO_STANDARD "1.2 V" -to CLK_50_B2C
+set_instance_assignment -name IO_STANDARD "1.2 V" -to CLK_50_B2L
+set_instance_assignment -name IO_STANDARD "1.2 V" -to CLK_50_B3C
+set_instance_assignment -name IO_STANDARD "1.8 V" -to CLK_50_B3I
+set_instance_assignment -name IO_STANDARD "1.2 V" -to CLK_50_B3L
+set_location_assignment PIN_U24 -to CLK_100_B3I
+set_location_assignment PIN_AW38 -to CLK_50_B2C
+set_location_assignment PIN_J25 -to CLK_50_B2L
+set_location_assignment PIN_BF21 -to CLK_50_B3C
+set_location_assignment PIN_M24 -to CLK_50_B3I
+set_location_assignment PIN_J20 -to CLK_50_B3L
+
+#============================================================
+# Buttons
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to CPU_RESET_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to BUTTON[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to BUTTON[1]
+set_location_assignment PIN_BF27 -to CPU_RESET_n
+set_location_assignment PIN_D24 -to BUTTON[0]
+set_location_assignment PIN_D23 -to BUTTON[1]
+
+#============================================================
+# FPGA
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FPGA_PR_DONE
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FPGA_PR_ERROR
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FPGA_PR_REQUEST
+set_location_assignment PIN_AY27 -to FPGA_PR_DONE
+set_location_assignment PIN_BD28 -to FPGA_PR_ERROR
+set_location_assignment PIN_BC28 -to FPGA_PR_REQUEST
+
+#============================================================
+# Swtiches
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SW[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SW[1]
+set_location_assignment PIN_C23 -to SW[0]
+set_location_assignment PIN_B23 -to SW[1]
+
+#============================================================
+# LED
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to LED[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to LED[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to LED[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to LED[3]
+set_location_assignment PIN_B24 -to LED[0]
+set_location_assignment PIN_A24 -to LED[1]
+set_location_assignment PIN_A25 -to LED[2]
+set_location_assignment PIN_A26 -to LED[3]
+
+#============================================================
+# FLASH
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[4]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[5]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[6]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[7]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[8]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[9]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[10]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[11]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[12]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[13]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[14]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[15]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[16]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[17]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[18]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[19]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[20]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[21]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[22]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[23]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[24]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[25]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[26]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_A[27]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[4]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[5]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[6]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[7]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[8]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[9]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[10]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[11]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[12]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[13]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[14]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_D[15]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_CE_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_WE_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_OE_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_ADV_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_RESET_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FLASH_RDY_BSY_n
+set_location_assignment PIN_U23 -to FLASH_CLK
+set_location_assignment PIN_V22 -to FLASH_A[1]
+set_location_assignment PIN_P23 -to FLASH_A[2]
+set_location_assignment PIN_K22 -to FLASH_A[3]
+set_location_assignment PIN_R21 -to FLASH_A[4]
+set_location_assignment PIN_K24 -to FLASH_A[5]
+set_location_assignment PIN_K23 -to FLASH_A[6]
+set_location_assignment PIN_R24 -to FLASH_A[7]
+set_location_assignment PIN_AR28 -to FLASH_A[8]
+set_location_assignment PIN_AR27 -to FLASH_A[9]
+set_location_assignment PIN_AN26 -to FLASH_A[10]
+set_location_assignment PIN_AP26 -to FLASH_A[11]
+set_location_assignment PIN_AN25 -to FLASH_A[12]
+set_location_assignment PIN_AU27 -to FLASH_A[13]
+set_location_assignment PIN_AP28 -to FLASH_A[14]
+set_location_assignment PIN_AT27 -to FLASH_A[15]
+set_location_assignment PIN_AY28 -to FLASH_A[16]
+set_location_assignment PIN_AY26 -to FLASH_A[17]
+set_location_assignment PIN_AP30 -to FLASH_A[18]
+set_location_assignment PIN_AW25 -to FLASH_A[19]
+set_location_assignment PIN_BB27 -to FLASH_A[20]
+set_location_assignment PIN_AT26 -to FLASH_A[21]
+set_location_assignment PIN_AP31 -to FLASH_A[22]
+set_location_assignment PIN_P24 -to FLASH_A[23]
+set_location_assignment PIN_AV26 -to FLASH_A[24]
+set_location_assignment PIN_AV27 -to FLASH_A[25]
+set_location_assignment PIN_AP29 -to FLASH_A[26]
+set_location_assignment PIN_N22 -to FLASH_A[27]
+set_location_assignment PIN_N23 -to FLASH_D[0]
+set_location_assignment PIN_R22 -to FLASH_D[1]
+set_location_assignment PIN_U20 -to FLASH_D[2]
+set_location_assignment PIN_L22 -to FLASH_D[3]
+set_location_assignment PIN_J23 -to FLASH_D[4]
+set_location_assignment PIN_U22 -to FLASH_D[5]
+set_location_assignment PIN_V23 -to FLASH_D[6]
+set_location_assignment PIN_V21 -to FLASH_D[7]
+set_location_assignment PIN_M23 -to FLASH_D[8]
+set_location_assignment PIN_R23 -to FLASH_D[9]
+set_location_assignment PIN_T20 -to FLASH_D[10]
+set_location_assignment PIN_V24 -to FLASH_D[11]
+set_location_assignment PIN_M22 -to FLASH_D[12]
+set_location_assignment PIN_T22 -to FLASH_D[13]
+set_location_assignment PIN_T21 -to FLASH_D[14]
+set_location_assignment PIN_J24 -to FLASH_D[15]
+set_location_assignment PIN_AR26 -to FLASH_CE_n
+set_location_assignment PIN_AT25 -to FLASH_WE_n
+set_location_assignment PIN_AV25 -to FLASH_OE_n
+set_location_assignment PIN_AU25 -to FLASH_ADV_n
+set_location_assignment PIN_AP25 -to FLASH_RESET_n
+set_location_assignment PIN_AW26 -to FLASH_RDY_BSY_n
+
+#============================================================
+# DDR4A
+#============================================================
+set_instance_assignment -name IO_STANDARD "LVDS" -to DDR4A_REFCLK_p
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[1]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[2]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[3]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[4]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[5]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[6]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[7]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[8]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[9]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[10]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[11]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[12]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[13]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[14]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[15]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_A[16]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_BA[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_BA[1]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_BG[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_BG[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V SSTL" -to DDR4A_CK
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V SSTL" -to DDR4A_CK_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_CKE
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS[0]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS[2]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS[3]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS[4]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS[5]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS[6]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS[7]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS[8]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS_n[0]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS_n[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS_n[2]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS_n[3]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS_n[4]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS_n[5]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS_n[6]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS_n[7]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4A_DQS_n[8]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[0]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[1]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[2]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[3]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[4]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[5]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[6]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[7]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[8]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[9]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[10]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[11]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[12]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[13]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[14]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[15]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[16]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[17]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[18]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[19]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[20]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[21]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[22]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[23]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[24]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[25]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[26]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[27]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[28]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[29]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[30]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[31]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[32]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[33]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[34]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[35]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[36]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[37]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[38]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[39]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[40]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[41]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[42]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[43]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[44]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[45]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[46]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[47]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[48]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[49]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[50]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[51]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[52]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[53]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[54]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[55]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[56]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[57]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[58]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[59]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[60]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[61]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[62]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[63]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[64]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[65]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[66]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[67]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[68]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[69]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[70]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DQ[71]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DBI_n[0]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DBI_n[1]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DBI_n[2]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DBI_n[3]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DBI_n[4]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DBI_n[5]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DBI_n[6]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DBI_n[7]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4A_DBI_n[8]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_CS_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4A_RESET_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_ODT
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_PAR
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4A_ALERT_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4A_ACT_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4A_EVENT_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to DDR4A_SCL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to DDR4A_SDA
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4A_RZQ
+set_location_assignment PIN_M35 -to DDR4A_REFCLK_p
+set_location_assignment PIN_K38 -to DDR4A_A[0]
+set_location_assignment PIN_L37 -to DDR4A_A[1]
+set_location_assignment PIN_M37 -to DDR4A_A[2]
+set_location_assignment PIN_M38 -to DDR4A_A[3]
+set_location_assignment PIN_J39 -to DDR4A_A[4]
+set_location_assignment PIN_J38 -to DDR4A_A[5]
+set_location_assignment PIN_K39 -to DDR4A_A[6]
+set_location_assignment PIN_L39 -to DDR4A_A[7]
+set_location_assignment PIN_P37 -to DDR4A_A[8]
+set_location_assignment PIN_R37 -to DDR4A_A[9]
+set_location_assignment PIN_N37 -to DDR4A_A[10]
+set_location_assignment PIN_P38 -to DDR4A_A[11]
+set_location_assignment PIN_P35 -to DDR4A_A[12]
+set_location_assignment PIN_K36 -to DDR4A_A[13]
+set_location_assignment PIN_K37 -to DDR4A_A[14]
+set_location_assignment PIN_N36 -to DDR4A_A[15]
+set_location_assignment PIN_P36 -to DDR4A_A[16]
+set_location_assignment PIN_L36 -to DDR4A_BA[0]
+set_location_assignment PIN_T35 -to DDR4A_BA[1]
+set_location_assignment PIN_R36 -to DDR4A_BG[0]
+set_location_assignment PIN_D40 -to DDR4A_BG[1]
+set_location_assignment PIN_F39 -to DDR4A_CK
+set_location_assignment PIN_G39 -to DDR4A_CK_n
+set_location_assignment PIN_L40 -to DDR4A_CKE
+set_location_assignment PIN_A36 -to DDR4A_DQS[0]
+set_location_assignment PIN_E36 -to DDR4A_DQS[1]
+set_location_assignment PIN_G33 -to DDR4A_DQS[2]
+set_location_assignment PIN_L32 -to DDR4A_DQS[3]
+set_location_assignment PIN_T26 -to DDR4A_DQS[4]
+set_location_assignment PIN_V28 -to DDR4A_DQS[5]
+set_location_assignment PIN_J26 -to DDR4A_DQS[6]
+set_location_assignment PIN_E26 -to DDR4A_DQS[7]
+set_location_assignment PIN_R32 -to DDR4A_DQS[8]
+set_location_assignment PIN_A35 -to DDR4A_DQS_n[0]
+set_location_assignment PIN_F36 -to DDR4A_DQS_n[1]
+set_location_assignment PIN_G34 -to DDR4A_DQS_n[2]
+set_location_assignment PIN_L31 -to DDR4A_DQS_n[3]
+set_location_assignment PIN_R27 -to DDR4A_DQS_n[4]
+set_location_assignment PIN_V27 -to DDR4A_DQS_n[5]
+set_location_assignment PIN_K26 -to DDR4A_DQS_n[6]
+set_location_assignment PIN_F26 -to DDR4A_DQS_n[7]
+set_location_assignment PIN_T32 -to DDR4A_DQS_n[8]
+set_location_assignment PIN_A37 -to DDR4A_DQ[0]
+set_location_assignment PIN_B37 -to DDR4A_DQ[1]
+set_location_assignment PIN_B35 -to DDR4A_DQ[2]
+set_location_assignment PIN_C37 -to DDR4A_DQ[3]
+set_location_assignment PIN_B38 -to DDR4A_DQ[4]
+set_location_assignment PIN_C38 -to DDR4A_DQ[5]
+set_location_assignment PIN_C35 -to DDR4A_DQ[6]
+set_location_assignment PIN_D36 -to DDR4A_DQ[7]
+set_location_assignment PIN_H37 -to DDR4A_DQ[8]
+set_location_assignment PIN_E39 -to DDR4A_DQ[9]
+set_location_assignment PIN_E37 -to DDR4A_DQ[10]
+set_location_assignment PIN_D35 -to DDR4A_DQ[11]
+set_location_assignment PIN_E38 -to DDR4A_DQ[12]
+set_location_assignment PIN_D38 -to DDR4A_DQ[13]
+set_location_assignment PIN_D34 -to DDR4A_DQ[14]
+set_location_assignment PIN_F37 -to DDR4A_DQ[15]
+set_location_assignment PIN_F35 -to DDR4A_DQ[16]
+set_location_assignment PIN_J36 -to DDR4A_DQ[17]
+set_location_assignment PIN_J35 -to DDR4A_DQ[18]
+set_location_assignment PIN_E34 -to DDR4A_DQ[19]
+set_location_assignment PIN_G35 -to DDR4A_DQ[20]
+set_location_assignment PIN_H36 -to DDR4A_DQ[21]
+set_location_assignment PIN_H35 -to DDR4A_DQ[22]
+set_location_assignment PIN_H33 -to DDR4A_DQ[23]
+set_location_assignment PIN_N32 -to DDR4A_DQ[24]
+set_location_assignment PIN_M33 -to DDR4A_DQ[25]
+set_location_assignment PIN_K34 -to DDR4A_DQ[26]
+set_location_assignment PIN_M34 -to DDR4A_DQ[27]
+set_location_assignment PIN_N33 -to DDR4A_DQ[28]
+set_location_assignment PIN_N31 -to DDR4A_DQ[29]
+set_location_assignment PIN_K33 -to DDR4A_DQ[30]
+set_location_assignment PIN_K32 -to DDR4A_DQ[31]
+set_location_assignment PIN_M25 -to DDR4A_DQ[32]
+set_location_assignment PIN_P25 -to DDR4A_DQ[33]
+set_location_assignment PIN_T25 -to DDR4A_DQ[34]
+set_location_assignment PIN_R26 -to DDR4A_DQ[35]
+set_location_assignment PIN_L25 -to DDR4A_DQ[36]
+set_location_assignment PIN_N27 -to DDR4A_DQ[37]
+set_location_assignment PIN_U25 -to DDR4A_DQ[38]
+set_location_assignment PIN_P26 -to DDR4A_DQ[39]
+set_location_assignment PIN_U27 -to DDR4A_DQ[40]
+set_location_assignment PIN_T29 -to DDR4A_DQ[41]
+set_location_assignment PIN_V25 -to DDR4A_DQ[42]
+set_location_assignment PIN_U29 -to DDR4A_DQ[43]
+set_location_assignment PIN_U28 -to DDR4A_DQ[44]
+set_location_assignment PIN_T30 -to DDR4A_DQ[45]
+set_location_assignment PIN_V26 -to DDR4A_DQ[46]
+set_location_assignment PIN_U30 -to DDR4A_DQ[47]
+set_location_assignment PIN_F25 -to DDR4A_DQ[48]
+set_location_assignment PIN_K27 -to DDR4A_DQ[49]
+set_location_assignment PIN_L27 -to DDR4A_DQ[50]
+set_location_assignment PIN_H26 -to DDR4A_DQ[51]
+set_location_assignment PIN_H25 -to DDR4A_DQ[52]
+set_location_assignment PIN_H27 -to DDR4A_DQ[53]
+set_location_assignment PIN_M27 -to DDR4A_DQ[54]
+set_location_assignment PIN_G25 -to DDR4A_DQ[55]
+set_location_assignment PIN_D26 -to DDR4A_DQ[56]
+set_location_assignment PIN_B27 -to DDR4A_DQ[57]
+set_location_assignment PIN_G27 -to DDR4A_DQ[58]
+set_location_assignment PIN_B25 -to DDR4A_DQ[59]
+set_location_assignment PIN_C27 -to DDR4A_DQ[60]
+set_location_assignment PIN_C26 -to DDR4A_DQ[61]
+set_location_assignment PIN_F27 -to DDR4A_DQ[62]
+set_location_assignment PIN_D25 -to DDR4A_DQ[63]
+set_location_assignment PIN_R31 -to DDR4A_DQ[64]
+set_location_assignment PIN_T34 -to DDR4A_DQ[65]
+set_location_assignment PIN_R34 -to DDR4A_DQ[66]
+set_location_assignment PIN_P33 -to DDR4A_DQ[67]
+set_location_assignment PIN_T31 -to DDR4A_DQ[68]
+set_location_assignment PIN_U33 -to DDR4A_DQ[69]
+set_location_assignment PIN_V32 -to DDR4A_DQ[70]
+set_location_assignment PIN_U32 -to DDR4A_DQ[71]
+set_location_assignment PIN_C36 -to DDR4A_DBI_n[0]
+set_location_assignment PIN_D39 -to DDR4A_DBI_n[1]
+set_location_assignment PIN_F34 -to DDR4A_DBI_n[2]
+set_location_assignment PIN_J34 -to DDR4A_DBI_n[3]
+set_location_assignment PIN_N25 -to DDR4A_DBI_n[4]
+set_location_assignment PIN_V30 -to DDR4A_DBI_n[5]
+set_location_assignment PIN_L26 -to DDR4A_DBI_n[6]
+set_location_assignment PIN_E27 -to DDR4A_DBI_n[7]
+set_location_assignment PIN_U34 -to DDR4A_DBI_n[8]
+set_location_assignment PIN_G38 -to DDR4A_CS_n
+set_location_assignment PIN_E40 -to DDR4A_RESET_n
+set_location_assignment PIN_G40 -to DDR4A_ODT
+set_location_assignment PIN_H40 -to DDR4A_PAR
+set_location_assignment PIN_A38 -to DDR4A_ALERT_n
+set_location_assignment PIN_H38 -to DDR4A_ACT_n
+set_location_assignment PIN_J33 -to DDR4A_EVENT_n
+set_location_assignment PIN_L24 -to DDR4A_SCL
+set_location_assignment PIN_T24 -to DDR4A_SDA
+set_location_assignment PIN_P34 -to DDR4A_RZQ
+
+#============================================================
+# DDR4B
+#============================================================
+set_instance_assignment -name IO_STANDARD "LVDS" -to DDR4B_REFCLK_p
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[1]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[2]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[3]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[4]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[5]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[6]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[7]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[8]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[9]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[10]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[11]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[12]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[13]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[14]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[15]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_A[16]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_BA[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_BA[1]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_BG[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_BG[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V SSTL" -to DDR4B_CK
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V SSTL" -to DDR4B_CK_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_CKE
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS[0]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS[2]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS[3]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS[4]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS[5]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS[6]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS[7]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS[8]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS_n[0]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS_n[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS_n[2]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS_n[3]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS_n[4]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS_n[5]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS_n[6]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS_n[7]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4B_DQS_n[8]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[0]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[1]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[2]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[3]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[4]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[5]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[6]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[7]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[8]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[9]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[10]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[11]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[12]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[13]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[14]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[15]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[16]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[17]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[18]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[19]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[20]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[21]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[22]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[23]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[24]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[25]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[26]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[27]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[28]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[29]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[30]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[31]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[32]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[33]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[34]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[35]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[36]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[37]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[38]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[39]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[40]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[41]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[42]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[43]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[44]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[45]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[46]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[47]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[48]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[49]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[50]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[51]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[52]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[53]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[54]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[55]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[56]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[57]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[58]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[59]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[60]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[61]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[62]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[63]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[64]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[65]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[66]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[67]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[68]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[69]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[70]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DQ[71]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DBI_n[0]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DBI_n[1]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DBI_n[2]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DBI_n[3]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DBI_n[4]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DBI_n[5]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DBI_n[6]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DBI_n[7]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4B_DBI_n[8]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_CS_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4B_RESET_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_ODT
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_PAR
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4B_ALERT_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4B_ACT_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4B_EVENT_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4B_SCL
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4B_SDA
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4B_RZQ
+set_location_assignment PIN_J16 -to DDR4B_REFCLK_p
+set_location_assignment PIN_C16 -to DDR4B_A[0]
+set_location_assignment PIN_D16 -to DDR4B_A[1]
+set_location_assignment PIN_A14 -to DDR4B_A[2]
+set_location_assignment PIN_A15 -to DDR4B_A[3]
+set_location_assignment PIN_B14 -to DDR4B_A[4]
+set_location_assignment PIN_B13 -to DDR4B_A[5]
+set_location_assignment PIN_A16 -to DDR4B_A[6]
+set_location_assignment PIN_B15 -to DDR4B_A[7]
+set_location_assignment PIN_C15 -to DDR4B_A[8]
+set_location_assignment PIN_D15 -to DDR4B_A[9]
+set_location_assignment PIN_E16 -to DDR4B_A[10]
+set_location_assignment PIN_F16 -to DDR4B_A[11]
+set_location_assignment PIN_L14 -to DDR4B_A[12]
+set_location_assignment PIN_H15 -to DDR4B_A[13]
+set_location_assignment PIN_J15 -to DDR4B_A[14]
+set_location_assignment PIN_G15 -to DDR4B_A[15]
+set_location_assignment PIN_F15 -to DDR4B_A[16]
+set_location_assignment PIN_H17 -to DDR4B_BA[0]
+set_location_assignment PIN_K14 -to DDR4B_BA[1]
+set_location_assignment PIN_J14 -to DDR4B_BG[0]
+set_location_assignment PIN_G13 -to DDR4B_BG[1]
+set_location_assignment PIN_E14 -to DDR4B_CK
+set_location_assignment PIN_D14 -to DDR4B_CK_n
+set_location_assignment PIN_C13 -to DDR4B_CKE
+set_location_assignment PIN_U17 -to DDR4B_DQS[0]
+set_location_assignment PIN_P12 -to DDR4B_DQS[1]
+set_location_assignment PIN_L12 -to DDR4B_DQS[2]
+set_location_assignment PIN_H12 -to DDR4B_DQS[3]
+set_location_assignment PIN_M20 -to DDR4B_DQS[4]
+set_location_assignment PIN_F20 -to DDR4B_DQS[5]
+set_location_assignment PIN_D20 -to DDR4B_DQS[6]
+set_location_assignment PIN_C17 -to DDR4B_DQS[7]
+set_location_assignment PIN_L17 -to DDR4B_DQS[8]
+set_location_assignment PIN_T17 -to DDR4B_DQS_n[0]
+set_location_assignment PIN_P13 -to DDR4B_DQS_n[1]
+set_location_assignment PIN_M12 -to DDR4B_DQS_n[2]
+set_location_assignment PIN_G12 -to DDR4B_DQS_n[3]
+set_location_assignment PIN_L20 -to DDR4B_DQS_n[4]
+set_location_assignment PIN_F21 -to DDR4B_DQS_n[5]
+set_location_assignment PIN_C20 -to DDR4B_DQS_n[6]
+set_location_assignment PIN_C18 -to DDR4B_DQS_n[7]
+set_location_assignment PIN_K17 -to DDR4B_DQS_n[8]
+set_location_assignment PIN_T16 -to DDR4B_DQ[0]
+set_location_assignment PIN_V18 -to DDR4B_DQ[1]
+set_location_assignment PIN_R19 -to DDR4B_DQ[2]
+set_location_assignment PIN_U18 -to DDR4B_DQ[3]
+set_location_assignment PIN_U19 -to DDR4B_DQ[4]
+set_location_assignment PIN_W18 -to DDR4B_DQ[5]
+set_location_assignment PIN_R18 -to DDR4B_DQ[6]
+set_location_assignment PIN_V17 -to DDR4B_DQ[7]
+set_location_assignment PIN_P16 -to DDR4B_DQ[8]
+set_location_assignment PIN_P14 -to DDR4B_DQ[9]
+set_location_assignment PIN_P15 -to DDR4B_DQ[10]
+set_location_assignment PIN_R13 -to DDR4B_DQ[11]
+set_location_assignment PIN_R17 -to DDR4B_DQ[12]
+set_location_assignment PIN_N13 -to DDR4B_DQ[13]
+set_location_assignment PIN_R14 -to DDR4B_DQ[14]
+set_location_assignment PIN_M13 -to DDR4B_DQ[15]
+set_location_assignment PIN_J11 -to DDR4B_DQ[16]
+set_location_assignment PIN_K10 -to DDR4B_DQ[17]
+set_location_assignment PIN_K11 -to DDR4B_DQ[18]
+set_location_assignment PIN_J13 -to DDR4B_DQ[19]
+set_location_assignment PIN_K13 -to DDR4B_DQ[20]
+set_location_assignment PIN_L10 -to DDR4B_DQ[21]
+set_location_assignment PIN_K12 -to DDR4B_DQ[22]
+set_location_assignment PIN_H11 -to DDR4B_DQ[23]
+set_location_assignment PIN_F10 -to DDR4B_DQ[24]
+set_location_assignment PIN_E10 -to DDR4B_DQ[25]
+set_location_assignment PIN_H10 -to DDR4B_DQ[26]
+set_location_assignment PIN_F12 -to DDR4B_DQ[27]
+set_location_assignment PIN_G10 -to DDR4B_DQ[28]
+set_location_assignment PIN_F11 -to DDR4B_DQ[29]
+set_location_assignment PIN_E11 -to DDR4B_DQ[30]
+set_location_assignment PIN_E12 -to DDR4B_DQ[31]
+set_location_assignment PIN_N20 -to DDR4B_DQ[32]
+set_location_assignment PIN_H21 -to DDR4B_DQ[33]
+set_location_assignment PIN_P21 -to DDR4B_DQ[34]
+set_location_assignment PIN_K19 -to DDR4B_DQ[35]
+set_location_assignment PIN_K21 -to DDR4B_DQ[36]
+set_location_assignment PIN_J21 -to DDR4B_DQ[37]
+set_location_assignment PIN_N21 -to DDR4B_DQ[38]
+set_location_assignment PIN_L19 -to DDR4B_DQ[39]
+set_location_assignment PIN_H18 -to DDR4B_DQ[40]
+set_location_assignment PIN_G19 -to DDR4B_DQ[41]
+set_location_assignment PIN_J18 -to DDR4B_DQ[42]
+set_location_assignment PIN_G20 -to DDR4B_DQ[43]
+set_location_assignment PIN_G18 -to DDR4B_DQ[44]
+set_location_assignment PIN_F19 -to DDR4B_DQ[45]
+set_location_assignment PIN_K18 -to DDR4B_DQ[46]
+set_location_assignment PIN_H20 -to DDR4B_DQ[47]
+set_location_assignment PIN_E17 -to DDR4B_DQ[48]
+set_location_assignment PIN_D21 -to DDR4B_DQ[49]
+set_location_assignment PIN_E18 -to DDR4B_DQ[50]
+set_location_assignment PIN_C22 -to DDR4B_DQ[51]
+set_location_assignment PIN_D19 -to DDR4B_DQ[52]
+set_location_assignment PIN_F17 -to DDR4B_DQ[53]
+set_location_assignment PIN_D18 -to DDR4B_DQ[54]
+set_location_assignment PIN_C21 -to DDR4B_DQ[55]
+set_location_assignment PIN_B20 -to DDR4B_DQ[56]
+set_location_assignment PIN_B18 -to DDR4B_DQ[57]
+set_location_assignment PIN_B22 -to DDR4B_DQ[58]
+set_location_assignment PIN_A17 -to DDR4B_DQ[59]
+set_location_assignment PIN_B19 -to DDR4B_DQ[60]
+set_location_assignment PIN_A20 -to DDR4B_DQ[61]
+set_location_assignment PIN_A22 -to DDR4B_DQ[62]
+set_location_assignment PIN_A19 -to DDR4B_DQ[63]
+set_location_assignment PIN_P18 -to DDR4B_DQ[64]
+set_location_assignment PIN_K16 -to DDR4B_DQ[65]
+set_location_assignment PIN_M15 -to DDR4B_DQ[66]
+set_location_assignment PIN_M18 -to DDR4B_DQ[67]
+set_location_assignment PIN_N16 -to DDR4B_DQ[68]
+set_location_assignment PIN_L16 -to DDR4B_DQ[69]
+set_location_assignment PIN_N18 -to DDR4B_DQ[70]
+set_location_assignment PIN_M17 -to DDR4B_DQ[71]
+set_location_assignment PIN_T19 -to DDR4B_DBI_n[0]
+set_location_assignment PIN_M14 -to DDR4B_DBI_n[1]
+set_location_assignment PIN_J10 -to DDR4B_DBI_n[2]
+set_location_assignment PIN_D11 -to DDR4B_DBI_n[3]
+set_location_assignment PIN_L21 -to DDR4B_DBI_n[4]
+set_location_assignment PIN_J19 -to DDR4B_DBI_n[5]
+set_location_assignment PIN_E19 -to DDR4B_DBI_n[6]
+set_location_assignment PIN_A21 -to DDR4B_DBI_n[7]
+set_location_assignment PIN_N15 -to DDR4B_DBI_n[8]
+set_location_assignment PIN_E13 -to DDR4B_CS_n
+set_location_assignment PIN_H13 -to DDR4B_RESET_n
+set_location_assignment PIN_G14 -to DDR4B_ODT
+set_location_assignment PIN_A12 -to DDR4B_PAR
+set_location_assignment PIN_T15 -to DDR4B_ALERT_n
+set_location_assignment PIN_D13 -to DDR4B_ACT_n
+set_location_assignment PIN_L11 -to DDR4B_EVENT_n
+set_location_assignment PIN_D10 -to DDR4B_SCL
+set_location_assignment PIN_P20 -to DDR4B_SDA
+set_location_assignment PIN_L15 -to DDR4B_RZQ
+
+#============================================================
+# DDR4C
+#============================================================
+set_instance_assignment -name IO_STANDARD "LVDS" -to DDR4C_REFCLK_p
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[1]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[2]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[3]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[4]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[5]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[6]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[7]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[8]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[9]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[10]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[11]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[12]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[13]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[14]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[15]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_A[16]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_BA[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_BA[1]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_BG[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_BG[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V SSTL" -to DDR4C_CK
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V SSTL" -to DDR4C_CK_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_CKE
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS[0]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS[2]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS[3]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS[4]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS[5]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS[6]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS[7]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS[8]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS_n[0]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS_n[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS_n[2]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS_n[3]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS_n[4]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS_n[5]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS_n[6]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS_n[7]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4C_DQS_n[8]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[0]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[1]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[2]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[3]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[4]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[5]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[6]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[7]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[8]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[9]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[10]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[11]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[12]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[13]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[14]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[15]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[16]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[17]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[18]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[19]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[20]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[21]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[22]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[23]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[24]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[25]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[26]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[27]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[28]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[29]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[30]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[31]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[32]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[33]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[34]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[35]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[36]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[37]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[38]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[39]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[40]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[41]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[42]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[43]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[44]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[45]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[46]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[47]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[48]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[49]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[50]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[51]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[52]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[53]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[54]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[55]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[56]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[57]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[58]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[59]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[60]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[61]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[62]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[63]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[64]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[65]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[66]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[67]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[68]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[69]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[70]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DQ[71]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DBI_n[0]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DBI_n[1]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DBI_n[2]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DBI_n[3]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DBI_n[4]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DBI_n[5]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DBI_n[6]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DBI_n[7]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4C_DBI_n[8]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_CS_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4C_RESET_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_ODT
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_PAR
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4C_ALERT_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4C_ACT_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4C_EVENT_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4C_SCL
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4C_SDA
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4C_RZQ
+set_location_assignment PIN_BH33 -to DDR4C_REFCLK_p
+set_location_assignment PIN_AY34 -to DDR4C_A[0]
+set_location_assignment PIN_BA34 -to DDR4C_A[1]
+set_location_assignment PIN_BA36 -to DDR4C_A[2]
+set_location_assignment PIN_AY36 -to DDR4C_A[3]
+set_location_assignment PIN_AW34 -to DDR4C_A[4]
+set_location_assignment PIN_AW35 -to DDR4C_A[5]
+set_location_assignment PIN_BB35 -to DDR4C_A[6]
+set_location_assignment PIN_BA35 -to DDR4C_A[7]
+set_location_assignment PIN_AW33 -to DDR4C_A[8]
+set_location_assignment PIN_AY33 -to DDR4C_A[9]
+set_location_assignment PIN_AW36 -to DDR4C_A[10]
+set_location_assignment PIN_AV36 -to DDR4C_A[11]
+set_location_assignment PIN_BJ36 -to DDR4C_A[12]
+set_location_assignment PIN_BE33 -to DDR4C_A[13]
+set_location_assignment PIN_BE34 -to DDR4C_A[14]
+set_location_assignment PIN_BH35 -to DDR4C_A[15]
+set_location_assignment PIN_BG35 -to DDR4C_A[16]
+set_location_assignment PIN_BJ34 -to DDR4C_BA[0]
+set_location_assignment PIN_BG34 -to DDR4C_BA[1]
+set_location_assignment PIN_BF34 -to DDR4C_BG[0]
+set_location_assignment PIN_AU34 -to DDR4C_BG[1]
+set_location_assignment PIN_AV33 -to DDR4C_CK
+set_location_assignment PIN_AV32 -to DDR4C_CK_n
+set_location_assignment PIN_AT35 -to DDR4C_CKE
+set_location_assignment PIN_AT37 -to DDR4C_DQS[0]
+set_location_assignment PIN_AY38 -to DDR4C_DQS[1]
+set_location_assignment PIN_BF37 -to DDR4C_DQS[2]
+set_location_assignment PIN_BD39 -to DDR4C_DQS[3]
+set_location_assignment PIN_BH31 -to DDR4C_DQS[4]
+set_location_assignment PIN_BC30 -to DDR4C_DQS[5]
+set_location_assignment PIN_BA32 -to DDR4C_DQS[6]
+set_location_assignment PIN_AW28 -to DDR4C_DQS[7]
+set_location_assignment PIN_BD34 -to DDR4C_DQS[8]
+set_location_assignment PIN_AT36 -to DDR4C_DQS_n[0]
+set_location_assignment PIN_AY39 -to DDR4C_DQS_n[1]
+set_location_assignment PIN_BE37 -to DDR4C_DQS_n[2]
+set_location_assignment PIN_BD38 -to DDR4C_DQS_n[3]
+set_location_assignment PIN_BJ31 -to DDR4C_DQS_n[4]
+set_location_assignment PIN_BD30 -to DDR4C_DQS_n[5]
+set_location_assignment PIN_BB32 -to DDR4C_DQS_n[6]
+set_location_assignment PIN_AV28 -to DDR4C_DQS_n[7]
+set_location_assignment PIN_BD35 -to DDR4C_DQS_n[8]
+set_location_assignment PIN_AP35 -to DDR4C_DQ[0]
+set_location_assignment PIN_AT38 -to DDR4C_DQ[1]
+set_location_assignment PIN_AP36 -to DDR4C_DQ[2]
+set_location_assignment PIN_AR33 -to DDR4C_DQ[3]
+set_location_assignment PIN_AN33 -to DDR4C_DQ[4]
+set_location_assignment PIN_AR37 -to DDR4C_DQ[5]
+set_location_assignment PIN_AR36 -to DDR4C_DQ[6]
+set_location_assignment PIN_AR34 -to DDR4C_DQ[7]
+set_location_assignment PIN_AU38 -to DDR4C_DQ[8]
+set_location_assignment PIN_AV40 -to DDR4C_DQ[9]
+set_location_assignment PIN_AW40 -to DDR4C_DQ[10]
+set_location_assignment PIN_AV37 -to DDR4C_DQ[11]
+set_location_assignment PIN_AU37 -to DDR4C_DQ[12]
+set_location_assignment PIN_AW39 -to DDR4C_DQ[13]
+set_location_assignment PIN_AV38 -to DDR4C_DQ[14]
+set_location_assignment PIN_BA37 -to DDR4C_DQ[15]
+set_location_assignment PIN_BD40 -to DDR4C_DQ[16]
+set_location_assignment PIN_BF39 -to DDR4C_DQ[17]
+set_location_assignment PIN_BG38 -to DDR4C_DQ[18]
+set_location_assignment PIN_BH36 -to DDR4C_DQ[19]
+set_location_assignment PIN_BE38 -to DDR4C_DQ[20]
+set_location_assignment PIN_BE39 -to DDR4C_DQ[21]
+set_location_assignment PIN_BG37 -to DDR4C_DQ[22]
+set_location_assignment PIN_BH37 -to DDR4C_DQ[23]
+set_location_assignment PIN_BB38 -to DDR4C_DQ[24]
+set_location_assignment PIN_BB39 -to DDR4C_DQ[25]
+set_location_assignment PIN_BC38 -to DDR4C_DQ[26]
+set_location_assignment PIN_BC37 -to DDR4C_DQ[27]
+set_location_assignment PIN_BA40 -to DDR4C_DQ[28]
+set_location_assignment PIN_AY40 -to DDR4C_DQ[29]
+set_location_assignment PIN_BC40 -to DDR4C_DQ[30]
+set_location_assignment PIN_BB37 -to DDR4C_DQ[31]
+set_location_assignment PIN_BF29 -to DDR4C_DQ[32]
+set_location_assignment PIN_BE28 -to DDR4C_DQ[33]
+set_location_assignment PIN_BJ28 -to DDR4C_DQ[34]
+set_location_assignment PIN_BJ30 -to DDR4C_DQ[35]
+set_location_assignment PIN_BE32 -to DDR4C_DQ[36]
+set_location_assignment PIN_BG32 -to DDR4C_DQ[37]
+set_location_assignment PIN_BH28 -to DDR4C_DQ[38]
+set_location_assignment PIN_BJ29 -to DDR4C_DQ[39]
+set_location_assignment PIN_BE31 -to DDR4C_DQ[40]
+set_location_assignment PIN_BD29 -to DDR4C_DQ[41]
+set_location_assignment PIN_BF31 -to DDR4C_DQ[42]
+set_location_assignment PIN_BG30 -to DDR4C_DQ[43]
+set_location_assignment PIN_BF30 -to DDR4C_DQ[44]
+set_location_assignment PIN_BE29 -to DDR4C_DQ[45]
+set_location_assignment PIN_BG29 -to DDR4C_DQ[46]
+set_location_assignment PIN_BH30 -to DDR4C_DQ[47]
+set_location_assignment PIN_BA31 -to DDR4C_DQ[48]
+set_location_assignment PIN_BC32 -to DDR4C_DQ[49]
+set_location_assignment PIN_BB30 -to DDR4C_DQ[50]
+set_location_assignment PIN_AW31 -to DDR4C_DQ[51]
+set_location_assignment PIN_BC31 -to DDR4C_DQ[52]
+set_location_assignment PIN_AY32 -to DDR4C_DQ[53]
+set_location_assignment PIN_BB29 -to DDR4C_DQ[54]
+set_location_assignment PIN_BA30 -to DDR4C_DQ[55]
+set_location_assignment PIN_AU28 -to DDR4C_DQ[56]
+set_location_assignment PIN_AT29 -to DDR4C_DQ[57]
+set_location_assignment PIN_AW29 -to DDR4C_DQ[58]
+set_location_assignment PIN_AY29 -to DDR4C_DQ[59]
+set_location_assignment PIN_AT30 -to DDR4C_DQ[60]
+set_location_assignment PIN_AU29 -to DDR4C_DQ[61]
+set_location_assignment PIN_AU30 -to DDR4C_DQ[62]
+set_location_assignment PIN_BA29 -to DDR4C_DQ[63]
+set_location_assignment PIN_BD36 -to DDR4C_DQ[64]
+set_location_assignment PIN_BF35 -to DDR4C_DQ[65]
+set_location_assignment PIN_BC36 -to DDR4C_DQ[66]
+set_location_assignment PIN_BD33 -to DDR4C_DQ[67]
+set_location_assignment PIN_BE36 -to DDR4C_DQ[68]
+set_location_assignment PIN_BF36 -to DDR4C_DQ[69]
+set_location_assignment PIN_BB34 -to DDR4C_DQ[70]
+set_location_assignment PIN_BB33 -to DDR4C_DQ[71]
+set_location_assignment PIN_AP33 -to DDR4C_DBI_n[0]
+set_location_assignment PIN_AY37 -to DDR4C_DBI_n[1]
+set_location_assignment PIN_BE40 -to DDR4C_DBI_n[2]
+set_location_assignment PIN_BB40 -to DDR4C_DBI_n[3]
+set_location_assignment PIN_BF32 -to DDR4C_DBI_n[4]
+set_location_assignment PIN_BD31 -to DDR4C_DBI_n[5]
+set_location_assignment PIN_AW30 -to DDR4C_DBI_n[6]
+set_location_assignment PIN_AV30 -to DDR4C_DBI_n[7]
+set_location_assignment PIN_BC35 -to DDR4C_DBI_n[8]
+set_location_assignment PIN_AV35 -to DDR4C_CS_n
+set_location_assignment PIN_AU33 -to DDR4C_RESET_n
+set_location_assignment PIN_AR32 -to DDR4C_ODT
+set_location_assignment PIN_AT32 -to DDR4C_PAR
+set_location_assignment PIN_AP34 -to DDR4C_ALERT_n
+set_location_assignment PIN_AU35 -to DDR4C_ACT_n
+set_location_assignment PIN_AY31 -to DDR4C_EVENT_n
+set_location_assignment PIN_BB28 -to DDR4C_SCL
+set_location_assignment PIN_BH32 -to DDR4C_SDA
+set_location_assignment PIN_BJ35 -to DDR4C_RZQ
+
+#============================================================
+# DDR4D
+#============================================================
+set_instance_assignment -name IO_STANDARD "LVDS" -to DDR4D_REFCLK_p
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[1]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[2]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[3]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[4]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[5]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[6]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[7]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[8]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[9]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[10]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[11]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[12]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[13]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[14]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[15]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_A[16]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_BA[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_BA[1]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_BG[0]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_BG[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V SSTL" -to DDR4D_CK
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V SSTL" -to DDR4D_CK_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_CKE
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS[0]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS[2]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS[3]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS[4]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS[5]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS[6]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS[7]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS[8]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS_n[0]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS_n[1]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS_n[2]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS_n[3]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS_n[4]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS_n[5]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS_n[6]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS_n[7]
+set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.2-V POD" -to DDR4D_DQS_n[8]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[0]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[1]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[2]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[3]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[4]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[5]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[6]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[7]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[8]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[9]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[10]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[11]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[12]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[13]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[14]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[15]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[16]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[17]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[18]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[19]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[20]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[21]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[22]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[23]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[24]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[25]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[26]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[27]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[28]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[29]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[30]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[31]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[32]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[33]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[34]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[35]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[36]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[37]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[38]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[39]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[40]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[41]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[42]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[43]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[44]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[45]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[46]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[47]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[48]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[49]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[50]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[51]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[52]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[53]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[54]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[55]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[56]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[57]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[58]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[59]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[60]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[61]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[62]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[63]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[64]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[65]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[66]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[67]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[68]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[69]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[70]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DQ[71]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DBI_n[0]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DBI_n[1]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DBI_n[2]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DBI_n[3]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DBI_n[4]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DBI_n[5]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DBI_n[6]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DBI_n[7]
+set_instance_assignment -name IO_STANDARD "1.2-V POD" -to DDR4D_DBI_n[8]
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_CS_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4D_RESET_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_ODT
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_PAR
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4D_ALERT_n
+set_instance_assignment -name IO_STANDARD "SSTL-12" -to DDR4D_ACT_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4D_EVENT_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4D_SCL
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4D_SDA
+set_instance_assignment -name IO_STANDARD "1.2 V" -to DDR4D_RZQ
+set_location_assignment PIN_AT17 -to DDR4D_REFCLK_p
+set_location_assignment PIN_AY11 -to DDR4D_A[0]
+set_location_assignment PIN_AW11 -to DDR4D_A[1]
+set_location_assignment PIN_BA10 -to DDR4D_A[2]
+set_location_assignment PIN_BA11 -to DDR4D_A[3]
+set_location_assignment PIN_BA12 -to DDR4D_A[4]
+set_location_assignment PIN_AY12 -to DDR4D_A[5]
+set_location_assignment PIN_AV11 -to DDR4D_A[6]
+set_location_assignment PIN_AV12 -to DDR4D_A[7]
+set_location_assignment PIN_AW13 -to DDR4D_A[8]
+set_location_assignment PIN_AY13 -to DDR4D_A[9]
+set_location_assignment PIN_AW10 -to DDR4D_A[10]
+set_location_assignment PIN_AV10 -to DDR4D_A[11]
+set_location_assignment PIN_AN18 -to DDR4D_A[12]
+set_location_assignment PIN_AR17 -to DDR4D_A[13]
+set_location_assignment PIN_AR16 -to DDR4D_A[14]
+set_location_assignment PIN_AT15 -to DDR4D_A[15]
+set_location_assignment PIN_AT16 -to DDR4D_A[16]
+set_location_assignment PIN_AU14 -to DDR4D_BA[0]
+set_location_assignment PIN_AP18 -to DDR4D_BA[1]
+set_location_assignment PIN_AR18 -to DDR4D_BG[0]
+set_location_assignment PIN_BF11 -to DDR4D_BG[1]
+set_location_assignment PIN_BC12 -to DDR4D_CK
+set_location_assignment PIN_BB12 -to DDR4D_CK_n
+set_location_assignment PIN_BC10 -to DDR4D_CKE
+set_location_assignment PIN_BJ19 -to DDR4D_DQS[0]
+set_location_assignment PIN_BE19 -to DDR4D_DQS[1]
+set_location_assignment PIN_AN21 -to DDR4D_DQS[2]
+set_location_assignment PIN_AW21 -to DDR4D_DQS[3]
+set_location_assignment PIN_AW18 -to DDR4D_DQS[4]
+set_location_assignment PIN_BA14 -to DDR4D_DQS[5]
+set_location_assignment PIN_BJ15 -to DDR4D_DQS[6]
+set_location_assignment PIN_BF16 -to DDR4D_DQS[7]
+set_location_assignment PIN_AP12 -to DDR4D_DQS[8]
+set_location_assignment PIN_BJ20 -to DDR4D_DQS_n[0]
+set_location_assignment PIN_BF19 -to DDR4D_DQS_n[1]
+set_location_assignment PIN_AP21 -to DDR4D_DQS_n[2]
+set_location_assignment PIN_AY21 -to DDR4D_DQS_n[3]
+set_location_assignment PIN_AV18 -to DDR4D_DQS_n[4]
+set_location_assignment PIN_BB14 -to DDR4D_DQS_n[5]
+set_location_assignment PIN_BH15 -to DDR4D_DQS_n[6]
+set_location_assignment PIN_BE16 -to DDR4D_DQS_n[7]
+set_location_assignment PIN_AR13 -to DDR4D_DQS_n[8]
+set_location_assignment PIN_BF17 -to DDR4D_DQ[0]
+set_location_assignment PIN_BG19 -to DDR4D_DQ[1]
+set_location_assignment PIN_BH20 -to DDR4D_DQ[2]
+set_location_assignment PIN_BG17 -to DDR4D_DQ[3]
+set_location_assignment PIN_BG18 -to DDR4D_DQ[4]
+set_location_assignment PIN_BH17 -to DDR4D_DQ[5]
+set_location_assignment PIN_BH21 -to DDR4D_DQ[6]
+set_location_assignment PIN_BJ18 -to DDR4D_DQ[7]
+set_location_assignment PIN_BD20 -to DDR4D_DQ[8]
+set_location_assignment PIN_BB18 -to DDR4D_DQ[9]
+set_location_assignment PIN_BD19 -to DDR4D_DQ[10]
+set_location_assignment PIN_BE18 -to DDR4D_DQ[11]
+set_location_assignment PIN_BE21 -to DDR4D_DQ[12]
+set_location_assignment PIN_BC18 -to DDR4D_DQ[13]
+set_location_assignment PIN_BD18 -to DDR4D_DQ[14]
+set_location_assignment PIN_BG20 -to DDR4D_DQ[15]
+set_location_assignment PIN_AT19 -to DDR4D_DQ[16]
+set_location_assignment PIN_AR21 -to DDR4D_DQ[17]
+set_location_assignment PIN_AU20 -to DDR4D_DQ[18]
+set_location_assignment PIN_AV20 -to DDR4D_DQ[19]
+set_location_assignment PIN_AR19 -to DDR4D_DQ[20]
+set_location_assignment PIN_AT21 -to DDR4D_DQ[21]
+set_location_assignment PIN_AT20 -to DDR4D_DQ[22]
+set_location_assignment PIN_AP20 -to DDR4D_DQ[23]
+set_location_assignment PIN_BC20 -to DDR4D_DQ[24]
+set_location_assignment PIN_BD21 -to DDR4D_DQ[25]
+set_location_assignment PIN_BA21 -to DDR4D_DQ[26]
+set_location_assignment PIN_BA19 -to DDR4D_DQ[27]
+set_location_assignment PIN_AW19 -to DDR4D_DQ[28]
+set_location_assignment PIN_AW20 -to DDR4D_DQ[29]
+set_location_assignment PIN_BA20 -to DDR4D_DQ[30]
+set_location_assignment PIN_BB19 -to DDR4D_DQ[31]
+set_location_assignment PIN_AY16 -to DDR4D_DQ[32]
+set_location_assignment PIN_AV17 -to DDR4D_DQ[33]
+set_location_assignment PIN_BB17 -to DDR4D_DQ[34]
+set_location_assignment PIN_AY17 -to DDR4D_DQ[35]
+set_location_assignment PIN_AV16 -to DDR4D_DQ[36]
+set_location_assignment PIN_AW16 -to DDR4D_DQ[37]
+set_location_assignment PIN_BC17 -to DDR4D_DQ[38]
+set_location_assignment PIN_BA17 -to DDR4D_DQ[39]
+set_location_assignment PIN_BC15 -to DDR4D_DQ[40]
+set_location_assignment PIN_BA16 -to DDR4D_DQ[41]
+set_location_assignment PIN_AV15 -to DDR4D_DQ[42]
+set_location_assignment PIN_BC13 -to DDR4D_DQ[43]
+set_location_assignment PIN_AW14 -to DDR4D_DQ[44]
+set_location_assignment PIN_BA15 -to DDR4D_DQ[45]
+set_location_assignment PIN_AW15 -to DDR4D_DQ[46]
+set_location_assignment PIN_BB13 -to DDR4D_DQ[47]
+set_location_assignment PIN_BJ16 -to DDR4D_DQ[48]
+set_location_assignment PIN_BH12 -to DDR4D_DQ[49]
+set_location_assignment PIN_BJ14 -to DDR4D_DQ[50]
+set_location_assignment PIN_BF12 -to DDR4D_DQ[51]
+set_location_assignment PIN_BG13 -to DDR4D_DQ[52]
+set_location_assignment PIN_BH16 -to DDR4D_DQ[53]
+set_location_assignment PIN_BJ13 -to DDR4D_DQ[54]
+set_location_assignment PIN_BG12 -to DDR4D_DQ[55]
+set_location_assignment PIN_BF14 -to DDR4D_DQ[56]
+set_location_assignment PIN_BD15 -to DDR4D_DQ[57]
+set_location_assignment PIN_BD16 -to DDR4D_DQ[58]
+set_location_assignment PIN_BC16 -to DDR4D_DQ[59]
+set_location_assignment PIN_BD14 -to DDR4D_DQ[60]
+set_location_assignment PIN_BF15 -to DDR4D_DQ[61]
+set_location_assignment PIN_BE13 -to DDR4D_DQ[62]
+set_location_assignment PIN_BG15 -to DDR4D_DQ[63]
+set_location_assignment PIN_AT12 -to DDR4D_DQ[64]
+set_location_assignment PIN_AP15 -to DDR4D_DQ[65]
+set_location_assignment PIN_AT14 -to DDR4D_DQ[66]
+set_location_assignment PIN_AR14 -to DDR4D_DQ[67]
+set_location_assignment PIN_AP13 -to DDR4D_DQ[68]
+set_location_assignment PIN_AP16 -to DDR4D_DQ[69]
+set_location_assignment PIN_AU12 -to DDR4D_DQ[70]
+set_location_assignment PIN_AV13 -to DDR4D_DQ[71]
+set_location_assignment PIN_BE17 -to DDR4D_DBI_n[0]
+set_location_assignment PIN_BF20 -to DDR4D_DBI_n[1]
+set_location_assignment PIN_AN20 -to DDR4D_DBI_n[2]
+set_location_assignment PIN_BC21 -to DDR4D_DBI_n[3]
+set_location_assignment PIN_AY18 -to DDR4D_DBI_n[4]
+set_location_assignment PIN_AY14 -to DDR4D_DBI_n[5]
+set_location_assignment PIN_BG14 -to DDR4D_DBI_n[6]
+set_location_assignment PIN_BD13 -to DDR4D_DBI_n[7]
+set_location_assignment PIN_AU13 -to DDR4D_DBI_n[8]
+set_location_assignment PIN_BE10 -to DDR4D_CS_n
+set_location_assignment PIN_BF10 -to DDR4D_RESET_n
+set_location_assignment PIN_BE12 -to DDR4D_ODT
+set_location_assignment PIN_BC11 -to DDR4D_PAR
+set_location_assignment PIN_BH18 -to DDR4D_ALERT_n
+set_location_assignment PIN_BD10 -to DDR4D_ACT_n
+set_location_assignment PIN_BH13 -to DDR4D_EVENT_n
+set_location_assignment PIN_BE14 -to DDR4D_SCL
+set_location_assignment PIN_AY19 -to DDR4D_SDA
+set_location_assignment PIN_AN17 -to DDR4D_RZQ
+
+#============================================================
+# SI5340A0
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SI5340A0_I2C_SCL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SI5340A0_I2C_SDA
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SI5340A0_INTR
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SI5340A0_OE_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SI5340A0_RST_n
+set_location_assignment PIN_BJ25 -to SI5340A0_I2C_SCL
+set_location_assignment PIN_BJ26 -to SI5340A0_I2C_SDA
+set_location_assignment PIN_BH26 -to SI5340A0_INTR
+set_location_assignment PIN_BH25 -to SI5340A0_OE_n
+set_location_assignment PIN_BH27 -to SI5340A0_RST_n
+
+#============================================================
+# SI5340A1
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SI5340A1_I2C_SCL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SI5340A1_I2C_SDA
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SI5340A1_INTR
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SI5340A1_OE_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SI5340A1_RST_n
+set_location_assignment PIN_G22 -to SI5340A1_I2C_SCL
+set_location_assignment PIN_H22 -to SI5340A1_I2C_SDA
+set_location_assignment PIN_H23 -to SI5340A1_INTR
+set_location_assignment PIN_G23 -to SI5340A1_OE_n
+set_location_assignment PIN_G24 -to SI5340A1_RST_n
+
+#============================================================
+# I2Cs
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FAN_I2C_SCL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FAN_I2C_SDA
+set_instance_assignment -name IO_STANDARD "1.8 V" -to FAN_ALERT_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to POWER_MONITOR_I2C_SCL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to POWER_MONITOR_I2C_SDA
+set_instance_assignment -name IO_STANDARD "1.8 V" -to POWER_MONITOR_ALERT_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to TEMP_I2C_SCL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to TEMP_I2C_SDA
+set_location_assignment PIN_BD26 -to FAN_I2C_SCL
+set_location_assignment PIN_BE27 -to FAN_I2C_SDA
+set_location_assignment PIN_BE26 -to FAN_ALERT_n
+set_location_assignment PIN_F24 -to POWER_MONITOR_I2C_SCL
+set_location_assignment PIN_F22 -to POWER_MONITOR_I2C_SDA
+set_location_assignment PIN_E24 -to POWER_MONITOR_ALERT_n
+set_location_assignment PIN_E22 -to TEMP_I2C_SCL
+set_location_assignment PIN_E23 -to TEMP_I2C_SDA
+
+#============================================================
+# GPIO
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to GPIO_CLK[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to GPIO_CLK[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to GPIO_P[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to GPIO_P[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to GPIO_P[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to GPIO_P[3]
+set_location_assignment PIN_BA27 -to GPIO_CLK[0]
+set_location_assignment PIN_BA26 -to GPIO_CLK[1]
+set_location_assignment PIN_BB25 -to GPIO_P[0]
+set_location_assignment PIN_BC26 -to GPIO_P[1]
+set_location_assignment PIN_BC25 -to GPIO_P[2]
+set_location_assignment PIN_BA25 -to GPIO_P[3]
+
+#============================================================
+# PCIE
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.2 V" -to PCIE_SMBCLK
+set_instance_assignment -name IO_STANDARD "1.2 V" -to PCIE_SMBDAT
+set_instance_assignment -name IO_STANDARD "HCSL" -to PCIE_REFCLK_p
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[0]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[1]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[2]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[3]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[4]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[5]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[6]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[7]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[8]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[9]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[10]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[11]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[12]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[13]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[14]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to PCIE_TX_p[15]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[0]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[1]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[2]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[3]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[4]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[5]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[6]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[7]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[8]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[9]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[10]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[11]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[12]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[13]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[14]
+set_instance_assignment -name IO_STANDARD "CURRENT MODE LOGIC (CML)" -to PCIE_RX_p[15]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to PCIE_PERST_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to PCIE_WAKE_n
+set_location_assignment PIN_BA39 -to PCIE_SMBCLK
+set_location_assignment PIN_BF40 -to PCIE_SMBDAT
+set_location_assignment PIN_AM41 -to PCIE_REFCLK_p
+set_location_assignment PIN_BJ46 -to PCIE_TX_p[0]
+set_location_assignment PIN_BF45 -to PCIE_TX_p[1]
+set_location_assignment PIN_BG47 -to PCIE_TX_p[2]
+set_location_assignment PIN_BE47 -to PCIE_TX_p[3]
+set_location_assignment PIN_BF49 -to PCIE_TX_p[4]
+set_location_assignment PIN_BC47 -to PCIE_TX_p[5]
+set_location_assignment PIN_BD49 -to PCIE_TX_p[6]
+set_location_assignment PIN_BA47 -to PCIE_TX_p[7]
+set_location_assignment PIN_BB49 -to PCIE_TX_p[8]
+set_location_assignment PIN_AW47 -to PCIE_TX_p[9]
+set_location_assignment PIN_AY49 -to PCIE_TX_p[10]
+set_location_assignment PIN_AU47 -to PCIE_TX_p[11]
+set_location_assignment PIN_AV49 -to PCIE_TX_p[12]
+set_location_assignment PIN_AR47 -to PCIE_TX_p[13]
+set_location_assignment PIN_AT49 -to PCIE_TX_p[14]
+set_location_assignment PIN_AP49 -to PCIE_TX_p[15]
+set_location_assignment PIN_BH41 -to PCIE_RX_p[0]
+set_location_assignment PIN_BJ43 -to PCIE_RX_p[1]
+set_location_assignment PIN_BG43 -to PCIE_RX_p[2]
+set_location_assignment PIN_BE43 -to PCIE_RX_p[3]
+set_location_assignment PIN_BC43 -to PCIE_RX_p[4]
+set_location_assignment PIN_BD45 -to PCIE_RX_p[5]
+set_location_assignment PIN_BA43 -to PCIE_RX_p[6]
+set_location_assignment PIN_BB45 -to PCIE_RX_p[7]
+set_location_assignment PIN_AW43 -to PCIE_RX_p[8]
+set_location_assignment PIN_AY45 -to PCIE_RX_p[9]
+set_location_assignment PIN_AU43 -to PCIE_RX_p[10]
+set_location_assignment PIN_AV45 -to PCIE_RX_p[11]
+set_location_assignment PIN_AR43 -to PCIE_RX_p[12]
+set_location_assignment PIN_AT45 -to PCIE_RX_p[13]
+set_location_assignment PIN_AP45 -to PCIE_RX_p[14]
+set_location_assignment PIN_AN43 -to PCIE_RX_p[15]
+set_location_assignment PIN_AJ34 -to PCIE_PERST_n
+set_location_assignment PIN_BC33 -to PCIE_WAKE_n
+
+#============================================================
+# QSFP28A
+#============================================================
+set_instance_assignment -name IO_STANDARD "LVDS" -to QSFP28A_REFCLK_p
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28A_TX_p[0]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28A_TX_p[1]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28A_TX_p[2]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28A_TX_p[3]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28A_RX_p[0]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28A_RX_p[1]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28A_RX_p[2]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28A_RX_p[3]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28A_INTERRUPT_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28A_LP_MODE
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28A_MOD_PRS_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28A_MOD_SEL_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28A_RST_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28A_SCL
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28A_SDA
+set_location_assignment PIN_T41  -to QSFP28A_REFCLK_p
+set_location_assignment PIN_F49  -to QSFP28A_TX_p[0]
+set_location_assignment PIN_G47  -to QSFP28A_TX_p[1]
+set_location_assignment PIN_E47  -to QSFP28A_TX_p[2]
+set_location_assignment PIN_C47  -to QSFP28A_TX_p[3]
+set_location_assignment PIN_G43  -to QSFP28A_RX_p[0]
+set_location_assignment PIN_D45  -to QSFP28A_RX_p[1]
+set_location_assignment PIN_C43  -to QSFP28A_RX_p[2]
+set_location_assignment PIN_A43  -to QSFP28A_RX_p[3]
+set_location_assignment PIN_AB35 -to QSFP28A_INTERRUPT_n
+set_location_assignment PIN_AB36 -to QSFP28A_LP_MODE
+set_location_assignment PIN_AB34 -to QSFP28A_MOD_PRS_n
+set_location_assignment PIN_AD35 -to QSFP28A_MOD_SEL_n
+set_location_assignment PIN_AC33 -to QSFP28A_RST_n
+set_location_assignment PIN_AC36 -to QSFP28A_SCL
+set_location_assignment PIN_AC35 -to QSFP28A_SDA
+
+#============================================================
+# QSFP28B
+#============================================================
+set_instance_assignment -name IO_STANDARD "LVDS" -to QSFP28B_REFCLK_p
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28B_TX_p[0]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28B_TX_p[1]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28B_TX_p[2]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28B_TX_p[3]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28B_RX_p[0]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28B_RX_p[1]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28B_RX_p[2]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28B_RX_p[3]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28B_INTERRUPT_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28B_LP_MODE
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28B_MOD_PRS_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28B_MOD_SEL_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28B_RST_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28B_SCL
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28B_SDA
+set_location_assignment PIN_AM38 -to QSFP28B_REFCLK_p
+set_location_assignment PIN_AK49 -to QSFP28B_TX_p[0]
+set_location_assignment PIN_AL47 -to QSFP28B_TX_p[1]
+set_location_assignment PIN_AJ47 -to QSFP28B_TX_p[2]
+set_location_assignment PIN_AF49 -to QSFP28B_TX_p[3]
+set_location_assignment PIN_AL43 -to QSFP28B_RX_p[0]
+set_location_assignment PIN_AH45 -to QSFP28B_RX_p[1]
+set_location_assignment PIN_AF45 -to QSFP28B_RX_p[2]
+set_location_assignment PIN_AG43 -to QSFP28B_RX_p[3]
+set_location_assignment PIN_AF17 -to QSFP28B_INTERRUPT_n
+set_location_assignment PIN_AF34 -to QSFP28B_LP_MODE
+set_location_assignment PIN_AH17 -to QSFP28B_MOD_PRS_n
+set_location_assignment PIN_AJ33 -to QSFP28B_MOD_SEL_n
+set_location_assignment PIN_AG34 -to QSFP28B_RST_n
+set_location_assignment PIN_AH32 -to QSFP28B_SCL
+set_location_assignment PIN_AE36 -to QSFP28B_SDA
+
+#============================================================
+# QSFP28C
+#============================================================
+set_instance_assignment -name IO_STANDARD "LVDS" -to QSFP28C_REFCLK_p
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28C_TX_p[0]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28C_TX_p[1]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28C_TX_p[2]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28C_TX_p[3]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28C_RX_p[0]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28C_RX_p[1]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28C_RX_p[2]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28C_RX_p[3]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28C_INTERRUPT_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28C_LP_MODE
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28C_MOD_PRS_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28C_MOD_SEL_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28C_RST_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28C_SCL
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28C_SDA
+set_location_assignment PIN_AM12 -to QSFP28C_REFCLK_p
+set_location_assignment PIN_AK1  -to QSFP28C_TX_p[0]
+set_location_assignment PIN_AL3  -to QSFP28C_TX_p[1]
+set_location_assignment PIN_AJ3  -to QSFP28C_TX_p[2]
+set_location_assignment PIN_AF1  -to QSFP28C_TX_p[3]
+set_location_assignment PIN_AL7  -to QSFP28C_RX_p[0]
+set_location_assignment PIN_AH5  -to QSFP28C_RX_p[1]
+set_location_assignment PIN_AF5  -to QSFP28C_RX_p[2]
+set_location_assignment PIN_AG7  -to QSFP28C_RX_p[3]
+set_location_assignment PIN_AF16 -to QSFP28C_INTERRUPT_n
+set_location_assignment PIN_AE16 -to QSFP28C_LP_MODE
+set_location_assignment PIN_AH16 -to QSFP28C_MOD_PRS_n
+set_location_assignment PIN_AE14 -to QSFP28C_MOD_SEL_n
+set_location_assignment PIN_AD15 -to QSFP28C_RST_n
+set_location_assignment PIN_AD16 -to QSFP28C_SCL
+set_location_assignment PIN_AF15 -to QSFP28C_SDA
+
+#============================================================
+# QSFP28D
+#============================================================
+set_instance_assignment -name IO_STANDARD "LVDS" -to QSFP28D_REFCLK_p
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28D_TX_p[0]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28D_TX_p[1]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28D_TX_p[2]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28D_TX_p[3]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28D_RX_p[0]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28D_RX_p[1]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28D_RX_p[2]
+set_instance_assignment -name IO_STANDARD "HSSI DIFFERENTIAL I/O" -to QSFP28D_RX_p[3]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28D_INTERRUPT_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28D_LP_MODE
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28D_MOD_PRS_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28D_MOD_SEL_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28D_RST_n
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28D_SCL
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to QSFP28D_SDA
+set_location_assignment PIN_T9   -to QSFP28D_REFCLK_p
+set_location_assignment PIN_F1   -to QSFP28D_TX_p[0]
+set_location_assignment PIN_G3   -to QSFP28D_TX_p[1]
+set_location_assignment PIN_E3   -to QSFP28D_TX_p[2]
+set_location_assignment PIN_C3   -to QSFP28D_TX_p[3]
+set_location_assignment PIN_G7   -to QSFP28D_RX_p[0]
+set_location_assignment PIN_D5   -to QSFP28D_RX_p[1]
+set_location_assignment PIN_C7   -to QSFP28D_RX_p[2]
+set_location_assignment PIN_A7   -to QSFP28D_RX_p[3]
+set_location_assignment PIN_AD14 -to QSFP28D_INTERRUPT_n
+set_location_assignment PIN_AB15 -to QSFP28D_LP_MODE
+set_location_assignment PIN_AC15 -to QSFP28D_MOD_PRS_n
+set_location_assignment PIN_AB12 -to QSFP28D_MOD_SEL_n
+set_location_assignment PIN_AB13 -to QSFP28D_RST_n
+set_location_assignment PIN_AB14 -to QSFP28D_SCL
+set_location_assignment PIN_AC14 -to QSFP28D_SDA
+
+#============================================================
+# EXP
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to EXP_EN
+set_location_assignment PIN_BG25 -to EXP_EN
+
+#============================================================
+# M5S10
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.2 V" -to M5S10_R[0]
+set_instance_assignment -name IO_STANDARD "1.2 V" -to M5S10_R[1]
+set_instance_assignment -name IO_STANDARD "1.2 V" -to M5S10_R[2]
+set_instance_assignment -name IO_STANDARD "1.2 V" -to M5S10_R[3]
+set_location_assignment PIN_B17  -to M5S10_R[0]
+set_location_assignment PIN_E21  -to M5S10_R[1]
+set_location_assignment PIN_R16  -to M5S10_R[2]
+set_location_assignment PIN_N17  -to M5S10_R[3]
+
+#============================================================
+# UFL
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to UFL_CLKIN_p
+set_instance_assignment -name IO_STANDARD "1.8 V" -to UFL_CLKIN_n
+set_location_assignment PIN_AN27 -to UFL_CLKIN_p
+set_location_assignment PIN_AN28 -to UFL_CLKIN_n
+
+
+#============================================================
+# HPS
+#============================================================
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_SD_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_SD_CMD
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_SD_DATA[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_SD_DATA[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_SD_DATA[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_SD_DATA[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_OSC_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_STP
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_DIR
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_NXT
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_DATA[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_DATA[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_DATA[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_DATA[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_DATA[4]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_DATA[5]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_DATA[6]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_USB0_DATA[7]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_TX_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_TX_CTL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_RX_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_RX_CTL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_RXD[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_TXD[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_RXD[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_TXD[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_RXD[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_TXD[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_RXD[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_TXD[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_LED
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_KEY
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_UART0_TX
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_UART0_RX
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_FPGA_UART1_TX
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_FPGA_UART1_RX
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_JTAG_TCK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_JTAG_TMS
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_JTAG_TDO
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_JTAG_TDI
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_CARD_PRSNT_n
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_MDIO
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_EMAC0_MDC
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_SD_CLK
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_SD_CMD
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_SD_DATA[0]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_SD_DATA[1]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_SD_DATA[2]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_SD_DATA[3]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_USB0_STP
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_USB0_DATA[0]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_USB0_DATA[1]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_USB0_DATA[2]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_USB0_DATA[3]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_USB0_DATA[4]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_USB0_DATA[5]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_USB0_DATA[6]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_USB0_DATA[7]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HPS_EMAC0_TX_CLK
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_EMAC0_TX_CTL
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_EMAC0_TXD[0]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_EMAC0_TXD[1]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_EMAC0_TXD[2]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_EMAC0_TXD[3]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HPS_LED
+set_instance_assignment -name CURRENT_STRENGTH_NEW 2MA -to HPS_KEY
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HPS_UART0_TX
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HPS_FPGA_UART1_TX
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HPS_JTAG_TDO
+set_instance_assignment -name CURRENT_STRENGTH_NEW 2MA -to HPS_CARD_PRSNT_n
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HPS_EMAC0_MDIO
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HPS_EMAC0_MDC
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_SD_CMD
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_SD_DATA[0] -entity ghrd_s10_top
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_SD_DATA[1] -entity ghrd_s10_top
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_SD_DATA[2] -entity ghrd_s10_top
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_SD_DATA[3] -entity ghrd_s10_top
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_USB0_CLK
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_USB0_DIR
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_USB0_NXT
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_USB0_DATA[0]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_USB0_DATA[1]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_USB0_DATA[2]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_USB0_DATA[3]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_USB0_DATA[4]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_USB0_DATA[5]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_USB0_DATA[6]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_USB0_DATA[7]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_EMAC0_RX_CLK
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_EMAC0_RX_CTL
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_EMAC0_RXD[0]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_EMAC0_RXD[1]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_EMAC0_RXD[2]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_EMAC0_RXD[3]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_UART0_RX
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_LED
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_KEY
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_JTAG_TCK
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_JTAG_TMS
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_JTAG_TDI
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_CARD_PRSNT_n
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to HPS_EMAC0_MDIO
+set_instance_assignment -name AUTO_OPEN_DRAIN_PINS ON -to HPS_EMAC0_MDIO
+
+#============================================================
+# Configuration scheme/pin
+#============================================================
+#set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "AVST X8"
+set_global_assignment -name USE_CONF_DONE SDM_IO16
+#set_global_assignment -name DEVICE_INITIALIZATION_CLOCK OSC_CLK_1_125MHZ
+
+# for HPS
+set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL X4"
+set_global_assignment -name INI_VARS "ASM_ENABLE_ADVANCED_DEVICES=ON; hps_dump_handoff_data=on"
+set_global_assignment -name USE_HPS_COLD_RESET SDM_IO15
+set_global_assignment -name HPS_INITIALIZATION "AFTER INIT_DONE"
+set_global_assignment -name HPS_DAP_SPLIT_MODE "SDM PINS"
+
+
+#============================================================
+# VID Assignments
+#============================================================
+set_global_assignment -name USE_PWRMGT_SCL SDM_IO0
+set_global_assignment -name USE_PWRMGT_SDA SDM_IO12
+set_global_assignment -name VID_OPERATION_MODE "PMBUS MASTER"
+set_global_assignment -name PWRMGT_BUS_SPEED_MODE "400 KHZ"
+set_global_assignment -name PWRMGT_SLAVE_DEVICE_TYPE OTHER
+set_global_assignment -name PWRMGT_SLAVE_DEVICE0_ADDRESS 4F
+set_global_assignment -name PWRMGT_SLAVE_DEVICE1_ADDRESS 00
+set_global_assignment -name PWRMGT_SLAVE_DEVICE2_ADDRESS 00
+set_global_assignment -name PWRMGT_SLAVE_DEVICE3_ADDRESS 00
+set_global_assignment -name PWRMGT_SLAVE_DEVICE4_ADDRESS 00
+set_global_assignment -name PWRMGT_SLAVE_DEVICE5_ADDRESS 00
+set_global_assignment -name PWRMGT_SLAVE_DEVICE6_ADDRESS 00
+set_global_assignment -name PWRMGT_SLAVE_DEVICE7_ADDRESS 00
+set_global_assignment -name PWRMGT_PAGE_COMMAND_ENABLE ON
+set_global_assignment -name PWRMGT_VOLTAGE_OUTPUT_FORMAT "AUTO DISCOVERY"
+set_global_assignment -name PWRMGT_TRANSLATED_VOLTAGE_VALUE_UNIT VOLTS
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
+
+#============================================================
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name ENABLE_SIGNALTAP ON
+set_global_assignment -name VERILOG_FILE ghrd_s10_top.v
+set_global_assignment -name SDC_FILE ghrd_timing.sdc
+set_global_assignment -name IP_FILE ip/qsys_top/clk_100.ip
+set_global_assignment -name IP_FILE ip/qsys_top/rst_in.ip
+set_global_assignment -name IP_FILE ip/qsys_top/src_prb_rst.ip
+set_global_assignment -name IP_FILE ip/qsys_top/s10_hps.ip
+set_global_assignment -name IP_FILE ip/qsys_top/emif_hps.ip
+set_global_assignment -name QSYS_FILE qsys_top.qsys

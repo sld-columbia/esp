@@ -3,7 +3,8 @@
 
 include $(ESP_ROOT)/utils/make/leon3_sw.mk
 
-KCFLAGS = -Wno-error=attribute-alias
+LINUX_KCFLAGS = -Wno-error=attribute-alias -fcommon
+LINUX_HOSTCFLAGS = -fcommon
 
 soft: leon3-soft $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/ram.vhx
 
@@ -57,8 +58,8 @@ $(SOFT_BUILD)/prom.out: $(SOFT_BUILD)/dummy.exe $(SOFT_BUILD)/mkprom/mkprom2
 	@cd $(SOFT_BUILD); \
 	./mkprom/mkprom2 -leon3 -freq $(BASE_FREQ_MHZ) -nomsg -baud 38343 -stack $(LEON3_STACK) dummy.exe;
 
-$(SOFT_BUILD)/prom.bin: $(SOFT_BUILD)/prom.out
-	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary --change-addresses -0x40000000 $< $@
+$(SOFT_BUILD)/prom.bin: $(SOFT_BUILD)/prom.exe
+	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary $< $@
 
 ### Leon3 Linux ###
 
@@ -91,10 +92,10 @@ $(SOFT_BUILD)/sysroot.cpio: $(SOFT_BUILD)/sysroot.files
 
 $(SOFT_BUILD)/linux-build/.config: $(LINUXSRC)/arch/sparc/configs/$(LINUX_CONFIG)
 	@$(MAKE) $(SOFT_BUILD)/linux-build
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE)  O=$(SOFT_BUILD)/linux-build -C ${LINUXSRC} $(LINUX_CONFIG) $(KCFLAGS)
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE)  O=$(SOFT_BUILD)/linux-build -C ${LINUXSRC} $(LINUX_CONFIG) KCFLAGS="$(LINUX_KCFLAGS)" HOSTCFLAGS="$(LINUX_HOSTCFLAGS)"
 
 $(SOFT_BUILD)/linux-build/vmlinux: $(SOFT_BUILD)/sysroot.cpio $(SOFT_BUILD)/linux-build/.config
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(SOFT_BUILD)/linux-build $(KCFLAGS)
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(SOFT_BUILD)/linux-build KCFLAGS="$(LINUX_KCFLAGS)" HOSTCFLAGS="$(LINUX_HOSTCFLAGS)"
 
 $(SOFT_BUILD)/linux.dsu: sysroot-update
 	$(QUIET_BUILD)mklinuximg -ethmac $(LINUX_MAC) $(SOFT_BUILD)/linux-build/vmlinux $@

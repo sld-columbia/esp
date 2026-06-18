@@ -135,12 +135,14 @@ architecture mesh of noc32_xy is
       width        : integer;
       depth        : integer;
       ports        : std_logic_vector(4 downto 0);
-      localx       : std_logic_vector(YX_WIDTH-1 downto 0);
-      localy       : std_logic_vector(YX_WIDTH-1 downto 0));
+      DEST_SIZE    : integer;
+      QUEUE_SIZE   : integer);
 
     port (
       clk           : in  std_logic;
       rst           : in  std_logic;
+      CONST_localx  : in  std_logic_vector(YX_WIDTH-1 downto 0);
+      CONST_localy  : in  std_logic_vector(YX_WIDTH-1 downto 0);
       data_n_in     : in  std_logic_vector(width-1 downto 0);
       data_s_in     : in  std_logic_vector(width-1 downto 0);
       data_w_in     : in  std_logic_vector(width-1 downto 0);
@@ -254,11 +256,13 @@ begin  -- mesh
           width        => MISC_NOC_FLIT_SIZE,
           depth        => ROUTER_DEPTH,
           ports        => ROUTER_PORTS(k),
-          localx        => localx(k),
-          localy        => localy(k))
+          DEST_SIZE    => 1,
+          QUEUE_SIZE   => ROUTER_DEPTH)
       port map (
           clk           => clk,
           rst           => rst,
+          CONST_localx  => localx(k),
+          CONST_localy  => localy(k),
           data_n_in     => data_n_in(k),
           data_s_in     => data_s_in(k),
           data_w_in     => data_w_in(k),

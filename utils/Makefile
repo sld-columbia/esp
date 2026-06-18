@@ -29,6 +29,10 @@ LOGS = logs
 HLS_LOGS = $(LOGS)/hls
 VIVADO_LOGS = $(LOGS)/vivado
 
+# Read optional filelists without failing during make expansion.
+safe_strings = $(strip $(shell if test -r "$(1)"; then strings "$(1)"; fi))
+safe_find = $(strip $(shell if test -d "$(1)"; then find -L "$(1)" $(2); fi))
+
 ### Quick help ###
 include $(ESP_ROOT)/utils/make/help.mk
 
@@ -123,6 +127,10 @@ include $(ESP_ROOT)/utils/make/vivado.mk
 include $(ESP_ROOT)/utils/make/zynq.mk
 
 
+# ### Quartus targets ###
+include $(ESP_ROOT)/utils/make/quartus.mk
+
+
 ### Modelsim targets ###
 include $(ESP_ROOT)/utils/make/modelsim.mk
 
@@ -183,6 +191,7 @@ clean: 		soft-clean		\
 		esp-config-clean	\
 		grlib-config-clean	\
 		vivado-clean		\
+		quartus-clean		\
 		zynq-clean		\
 		genus-clean		\
 		socketgen-clean		\
@@ -204,6 +213,7 @@ distclean:	check_srcs-distclean     	\
 		xmsim-distclean			\
 		config-distclean		\
 		vivado-distclean		\
+		quartus-distclean		\
 		zynq-distclean			\
 		genus-distclean			\
 		socketgen-distclean		\

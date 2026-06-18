@@ -944,7 +944,7 @@ begin  -- architecture rtl
           aw_valid <= '1';
 
           if (aw_ready = '1') then
-            reg.state := load_line;
+            reg.state := store_line;
           end if;
 
         -- LOAD LINE
