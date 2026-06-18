@@ -3,7 +3,9 @@
 
 ### Supported technology libraries ###
 #ASICLIBS = inferred gf12 sky130
-FPGALIBS = virtex7 virtexu virtexup
+XIL_FPGALIBS = virtex7 virtexu virtexup
+INTEL_FPGALIBS = stratix10
+FPGALIBS = $(XIL_FPGALIBS) $(INTEL_FPGALIBS)
 
 
 ### Check for technology library definition ###
@@ -11,8 +13,10 @@ ifeq ("$(TECHLIB)","")
 $(error technology library not specified)
 endif
 
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 ifeq ("$(XILINX_VIVADO)","")
 $(error XILINX_VIVADO path not specified)
+endif
 endif
 
 ifneq ($(findstring profpga, $(BOARD)),)
@@ -35,7 +39,11 @@ ifeq ($(TECH_TYPE),asic)
 DEVICE = ASIC-$(TECHLIB)
 else ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 include $(ESP_ROOT)/constraints/$(BOARD)/Makefile.inc
+ifneq ("$(QUARTUS_DEVICE)","")
+DEVICE = $(QUARTUS_DEVICE)
+else
 DEVICE = $(PART)-$(PACKAGE)-$(SPEED)
+endif
 TECH_TYPE = fpga
 #else ifneq ($(filter $(TECHLIB),$(ASICLIBS)),)
 #DEVICE = ASIC-$(TECHLIB)
@@ -46,7 +54,7 @@ endif
 
 
 ### Simulate BRAMs ###
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 EXTRA_SIMTOP  = glbl
 else
 EXTRA_SIMTOP  =
@@ -225,7 +233,7 @@ TOP_VLOG_RTL_SRCS += $(DESIGN_PATH)/cache_def_mem_asic.sv
 endif
 endif
 
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 TOP_VLOG_SIM_SRCS += $(XILINX_VIVADO)/data/verilog/src/glbl.v
 endif
 

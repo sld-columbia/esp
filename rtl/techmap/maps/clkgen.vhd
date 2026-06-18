@@ -93,5 +93,9 @@ begin
     generic map (clk_mul, clk_div, freq)
     port map (clkin, clk, clkn, clk2x ,cgi, cgo);
   end generate;
+  str10 : if (tech = stratix10) generate
+    v : clkgen_stratix10
+    generic map (clk_mul, clk_div, sdramen, noclkfb, pcien, pcidll, pcisysclk, freq, clk2xen)
+    port map (clkin, pciclkin, clk, clkn, clk2x, sdclk, pciclk, cgi, cgo);
+  end generate;
 end;
-

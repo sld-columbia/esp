@@ -75,11 +75,11 @@ THIRDPARTY_ACC-clean     = $(addsuffix -clean, $(THIRDPARTY_ACC))
 THIRDPARTY_ACC-distclean = $(addsuffix -distclean, $(THIRDPARTY_ACC))
 
 THIRDPARTY_VLOG       = $(foreach acc, $(THIRDPARTY_ACC), $(shell f=$(THIRDPARTY_PATH)/$(acc)/out; l=$$(readlink $$f); if test -e $(THIRDPARTY_PATH)/$(acc)/$$l; then echo $(THIRDPARTY_PATH)/$(acc)/$(acc)_wrapper.v; fi))
-THIRDPARTY_VLOG      += $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).verilog),  $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+THIRDPARTY_VLOG      += $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(call safe_strings,$(THIRDPARTY_PATH)/$(acc)/$(acc).verilog),  $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
 THIRDPARTY_INCDIR     = $(foreach acc, $(THIRDPARTY_ACC), $(shell if test -r $(THIRDPARTY_PATH)/$(acc)/vlog_incdir; then echo -n $(THIRDPARTY_PATH)/$(acc)/vlog_incdir; else echo -n ""; fi))
-THIRDPARTY_SVLOG      = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).sverilog), $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
-THIRDPARTY_VHDL_PKGS  = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).pkgs),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
-THIRDPARTY_VHDL       = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).vhdl),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+THIRDPARTY_SVLOG      = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(call safe_strings,$(THIRDPARTY_PATH)/$(acc)/$(acc).sverilog), $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+THIRDPARTY_VHDL_PKGS  = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(call safe_strings,$(THIRDPARTY_PATH)/$(acc)/$(acc).pkgs),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+THIRDPARTY_VHDL       = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(call safe_strings,$(THIRDPARTY_PATH)/$(acc)/$(acc).vhdl),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
 
 ACC_PATHS = $(STRATUSHLS_ACC_PATHS) $(VIVADOHLS_ACC_PATHS) $(CATAPULTHLS_ACC_PATHS) $(HLS4ML_ACC_PATHS) $(CHISEL_ACC_PATHS) $(RTL_ACC_PATHS)
 

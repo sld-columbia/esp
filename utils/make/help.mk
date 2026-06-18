@@ -55,7 +55,7 @@ help:
 	@echo "                                          available for accelerators designed in SystemC and it still requires"
 	@echo "                                          access to some of the libraries from the HLS tool vendor."
 	@echo " make <accelerator>-plot                : run all simulations defined for <accelerator> and plot"
-	@echo "                                          results on a latency vs area chard; HLS may start if the"
+	@echo "                                          results on a latency vs area chart; HLS may start if the"
 	@echo "                                          RTL is out-of-date."
 	@echo " make <accelerator>-clean               : clean HLS working directory, or the SBT build folder, but keep"
 	@echo "                                          the generated RTL for <accelerator>; HLS cache is not deleted."
@@ -72,7 +72,7 @@ help:
 	@echo " make thirdparty-acc-distclean          : make <accelerator>-distclean for all available third-party accelerators."
 	@echo " make socketgen                         : generate RTL wrappers for scheduled acc; this"
 	@echo "                                          target is always called as a dependency before ESP"
-	@echo "                                          simulaiton and synthesis."
+	@echo "                                          simulation and synthesis."
 	@echo
 	@echo
 	@echo " === SoC Flow ==="
@@ -96,13 +96,23 @@ help:
 	@echo " make vivado-syn                       : generate a bitstream of ESP (requires Vivado in the environment)."
 	@echo "                                         Add VIVADO_ENABLE_ALL_OPTIMIZATIONS=1 to enable the shared"
 	@echo "                                         2023.2 timing-closure profile from utils/make/vivado.mk."
-	@echo " make vivado-update                    : run synthesis and implemenation without touching the current Vivado project setup"
+	@echo " make vivado-update                    : run synthesis and implementation without touching the current Vivado project setup"
 	@echo " make vivado-prog-fpga                 : load the generated bitstream to FPGA. This target requires"
 	@echo "                                         the environment variable FPGA_HOST set to the network ip of"
 	@echo "                                         the machine with FTDI or JTAG link to the FPGA. The FPGA_HOST"
 	@echo "                                         must run the hw_server daemon from a compatible Vivado install."
 	@echo "                                         XIL_HW_SERVER_PORT must be set to the port chosen for the"
 	@echo "                                         hw_server communication."
+	@echo " make quartus-syn                      : generate a SOF for Intel FPGA boards."
+	@echo " make quartus-gui                      : open the Quartus project GUI after refreshing ESP source assignments."
+	@echo " make quartus-syn-gui                  : alias for quartus-gui."
+	@echo " make quartus-jtag-list                : list Intel JTAG cables, after connecting to FPGA_HOST if remote."
+	@echo " make quartus-program                  : load the generated SOF to an attached Intel FPGA board."
+	@echo "                                         For remote Intel JTAG hosts, run jtagd/jtagconfig --enableremote"
+	@echo "                                         on the host and set FPGA_HOST to that JTAG server. Use"
+	@echo "                                         INTEL_JTAG_SERVER_PORT when the server is not on TCP port 1309."
+	@echo "                                         The Quartus server string is passed as FPGA_HOST:PORT. Use"
+	@echo "                                         BOARD_CABLE or BOARD_CABLE_MATCH when multiple boards are visible."
 	@echo " make profpga-prog-fpga                : load the generated bitstream to proFPGA system. The profpga.cfg"
 	@echo "                                         configuration file in the current SoC folder must match the"
 	@echo "                                         board setup, including network, USB, or PCIe link information."
@@ -111,15 +121,22 @@ help:
 	@echo " make espmon-run                       : open ESP monitor GUI interface (requires proFPGA system)"
 	@echo
 	@echo " make fpga-run                         : Run bare-metal program TEST_PROGRAM (default is systest.exe) on FPGA"
+ifeq ($(TECHLIB),stratix10)
+	@echo "                                         Use targets \"make quartus-syn\" and \"make soft\" first"
+	@echo " make fpga-run-linux                   : Run Linux on FPGA"
+	@echo "                                         Use targets \"make quartus-syn\", \"make soft\" and \"make linux\" first"
+	@echo "                                         Set INTEL_HPS_HOST or HPS_HOST to the DE10-Pro SX HPS Linux host."
+else
 	@echo "                                         Use targets \"make vivado-syn\" and \"make soft\" first"
 	@echo " make fpga-run-linux                   : Run Linux on FPGA"
 	@echo "                                         Use targets \"make vivado-syn\", \"make soft\" and \"make linux\" first"
+endif
 	@echo
 	@echo
 	@echo " === Software Flow ==="
 	@echo
 	@echo " make soft                             : compile the bare-metal program TEST_PROGRAM (default is systest.exe)."
-	@echo "                                         The target architecutre is selected based on the varialble CPU_ARCH."
+	@echo "                                         The target architecture is selected by CPU_ARCH."
 	@echo " make baremetal-all                        : compile the bare-metal device drivers for available accelerators and"
 	@echo "                                         for the digital-video interface (DVI). Executables (.exe) are placed to"
 	@echo "                                         \"baremetal\" and can be used in simulation by setting TEST_PROGRAM"

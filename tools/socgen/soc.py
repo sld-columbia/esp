@@ -331,9 +331,14 @@ class SoC_Config():
         item = line.split()
         self.noc.max_mcast_dests.set(int(item[2]))
         line = fp.readline()
-        item = line.split()
-        self.noc.queue_size.set(int(item[2]))
-        line = fp.readline()
+        if line.find("CONFIG_QUEUE_SIZE =") != -1:
+            item = line.split()
+            self.noc.queue_size.set(int(item[2]))
+            line = fp.readline()
+        else:
+            # Older defconfigs did not store the router FIFO depth explicitly.
+            # Keep the long-standing default and continue parsing the current line.
+            self.noc.queue_size.set(4)
         if line.find("CONFIG_CACHE_EN = y") != -1:
             self.cache_en.set(1)
         else:
