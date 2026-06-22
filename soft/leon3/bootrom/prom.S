@@ -167,8 +167,17 @@ _fsrxx:
 	st  %g2, [%g1]
 #endif
 
+1:
+	! Initialize APBUART before jumping to the payload.
+	set UART1_BASE, %g1
+	set UART1_SCALER_38400, %g2
+	st  %g2, [%g1+0x0c]
+	set 0x3, %g2
+	st  %g2, [%g1+0x08]
+	st  %g0, [%g1+0x04]
+
 	! %g3 = cpu index
-1:	set STACKSIZE, %g2
+	set STACKSIZE, %g2
         mov %g0, %g1
 2:	subcc %g3, 0, %g0
 	be 3f

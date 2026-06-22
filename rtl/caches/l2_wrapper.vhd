@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2026 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -1014,7 +1014,9 @@ begin  -- architecture rtl of l2_wrapper
     somi.r.last  <= '0';
     somi.r.user  <= (others => '0');
     somi.r.valid <= '0';
-    somi.r.data(ARCH_BITS - 1 downto 0) <= (others => '0');
+    unused_axi_rdata_gen: if ARCH_BITS > 32 generate
+      somi.r.data(ARCH_BITS - 1 downto 32) <= (others => '0');
+    end generate unused_axi_rdata_gen;
     somi.r.data(31 downto 0) <= x"dadecace";
     -- b
     somi.b.id    <= (others => '0');
@@ -2586,15 +2588,17 @@ end process fsm_fwd_out;
 
         if mosi.w.valid = '1' then
 
-          if mosi.w.last = '1' then
-            if reg.cpu_msg /= CPU_WRITE_ATOM then
-              somi.b.valid <= '1';
-            elsif (reg.cpu_msg = CPU_WRITE_ATOM and bresp_valid = '1') then
-              somi.b.valid <= '1';
-              if USE_SPANDEX = 0 then
-                somi.b.resp <= bresp_data;
-              else
-                somi.b.resp <= RBRESP_EXOKAY;
+          if cpu_req_ready = '1' then
+            if mosi.w.last = '1' then
+              if reg.cpu_msg /= CPU_WRITE_ATOM then
+                somi.b.valid <= '1';
+              elsif (reg.cpu_msg = CPU_WRITE_ATOM and bresp_valid = '1') then
+                somi.b.valid <= '1';
+                if USE_SPANDEX = 0 then
+                  somi.b.resp <= bresp_data;
+                else
+                  somi.b.resp <= RBRESP_EXOKAY;
+                end if;
               end if;
             end if;
           end if;

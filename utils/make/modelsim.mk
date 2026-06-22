@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -9,10 +9,22 @@ VCOMOPT += -suppress vcom-1491
 VLOGOPT += -suppress 2275
 VLOGOPT += -suppress 2583
 VLOGOPT += -suppress 2892
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 VLOGOPT += +define+XILINX_FPGA
+else ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
+VLOGOPT += +define+FPGA_TARGET_ALTERA
+VLOGOPT += +define+XILINX_FPGA
+VLOGOPT += +define+NVDLA_FPGA_TARGET
 endif
 VLOGOPT += $(INCDIR_MODELSIM)
+
+VLOGOPT += +define+FPU_FPNEW
+
+VLOGOPT += +define+SYNTHESIS
+
+VLOGOPT += +define+XLEN_64
+
+VLOGOPT += $(GT_VORTEX_MODELSIM_DEFINES)
 
 VSIMOPT += -suppress 3812
 VSIMOPT += -suppress 2697
@@ -20,7 +32,7 @@ VSIMOPT += -suppress 8617
 VSIMOPT += -suppress 151
 VSIMOPT += -suppress 143
 VSIMOPT += -suppress 8386
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 VSIMOPT += -L secureip_ver -L unisims_ver
 endif
 VSIMOPT += -uvmcontrol=disable -suppress 3009,2685,2718 -t fs
@@ -34,18 +46,12 @@ ACC_TECH_PRESENT := $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_
 THIRDPARTY_LIBS = $(THIRDPARTY_ACC)
 ACC_LIBS := $(ACC_TECH_PRESENT) $(THIRDPARTY_LIBS)
 ACC_LIB_OPT := $(foreach lib,$(ACC_LIBS),-L $(lib))
-THIRDPARTY_SIM_VHDL_PKGS := $(filter $(THIRDPARTY_PATH)/%,$(SIM_VHDL_PKGS))
-THIRDPARTY_SIM_VHDL_SRCS := $(filter $(THIRDPARTY_PATH)/%,$(SIM_VHDL_SRCS))
-THIRDPARTY_SIM_VLOG_SRCS := $(filter $(THIRDPARTY_PATH)/%,$(SIM_VLOG_SRCS))
-
-SIM_VHDL_PKGS_ALL := $(SIM_VHDL_PKGS)
-SIM_VHDL_SRCS_ALL := $(SIM_VHDL_SRCS)
-SIM_VLOG_SRCS_ALL := $(SIM_VLOG_SRCS)
-ifneq ($(ACC_TECH_PRESENT)$(THIRDPARTY_LIBS),)
-SIM_VHDL_PKGS := $(filter-out $(THIRDPARTY_SIM_VHDL_PKGS),$(SIM_VHDL_PKGS))
-SIM_VHDL_SRCS := $(filter-out $(THIRDPARTY_SIM_VHDL_SRCS),$(SIM_VHDL_SRCS))
-SIM_VLOG_SRCS := $(filter-out $(foreach acc,$(ACC_TECH_PRESENT),$(ACC_TECH_ROOT)/$(acc)/%) $(THIRDPARTY_SIM_VLOG_SRCS),$(SIM_VLOG_SRCS))
-endif
+THIRDPARTY_SIM_VHDL_PKGS = $(filter $(THIRDPARTY_PATH)/%,$(SIM_VHDL_PKGS))
+THIRDPARTY_SIM_VHDL_SRCS = $(filter $(THIRDPARTY_PATH)/%,$(SIM_VHDL_SRCS))
+THIRDPARTY_SIM_VLOG_SRCS = $(filter $(THIRDPARTY_PATH)/%,$(SIM_VLOG_SRCS))
+MODELSIM_WORK_VHDL_PKGS = $(if $(ACC_TECH_PRESENT)$(THIRDPARTY_LIBS),$(filter-out $(THIRDPARTY_SIM_VHDL_PKGS),$(SIM_VHDL_PKGS)),$(SIM_VHDL_PKGS))
+MODELSIM_WORK_VHDL_SRCS = $(if $(ACC_TECH_PRESENT)$(THIRDPARTY_LIBS),$(filter-out $(THIRDPARTY_SIM_VHDL_SRCS),$(SIM_VHDL_SRCS)),$(SIM_VHDL_SRCS))
+MODELSIM_WORK_VLOG_SRCS = $(if $(ACC_TECH_PRESENT)$(THIRDPARTY_LIBS),$(filter-out $(foreach acc,$(ACC_TECH_PRESENT),$(ACC_TECH_ROOT)/$(acc)/%) $(THIRDPARTY_SIM_VLOG_SRCS),$(SIM_VLOG_SRCS)),$(SIM_VLOG_SRCS))
 
 VLIB = vlib
 VCOM = vcom -quiet -93 $(VCOMOPT)
@@ -82,6 +88,9 @@ $(foreach acc,$(THIRDPARTY_LIBS),$(eval $(call DEFINE_MODELSIM_THIRDPARTY,$(acc)
 
 MODELSIM_ACC_LIB_TARGETS := $(foreach acc,$(ACC_TECH_PRESENT),modelsim-accel-$(acc))
 MODELSIM_THIRDPARTY_LIB_TARGETS := $(foreach acc,$(THIRDPARTY_LIBS),modelsim-thirdparty-$(acc))
+INTEL_MODELSIM_LIBDIR ?= $(ESP_ROOT)/.cache/modelsim/intel_lib
+INTEL_MODELSIM_INI := $(INTEL_MODELSIM_LIBDIR)/modelsim.ini
+INTEL_MODELSIM_TOOL ?= questasim
 
 ### Xilinx Simulation libs targets ###
 $(ESP_ROOT)/.cache/modelsim/xilinx_lib:
@@ -103,9 +112,55 @@ $(ESP_ROOT)/.cache/modelsim/xilinx_lib:
 	sed -i '/\[msg_system\]/a suppress = 8780,8891,1491,12110\nwarning = 8891' modelsim.ini; \
 	cd ../;
 
+ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
+$(INTEL_MODELSIM_INI):
+	$(QUIET_MKDIR)mkdir -p $(INTEL_MODELSIM_LIBDIR)
+	@tool_path=$$(command -v vlib 2>/dev/null); \
+	if test -z "$$tool_path"; then \
+		echo "$(SPACES)ERROR: ModelSim 'vlib' not found in PATH"; \
+		rm -rf "$(INTEL_MODELSIM_LIBDIR)"; \
+		exit 1; \
+	fi; \
+	tool_path=$$(cd "$$(dirname "$$tool_path")" && pwd)/; \
+	if ! command -v quartus_sh >/dev/null 2>&1; then \
+		echo "$(SPACES)ERROR: Quartus 'quartus_sh' not found in PATH"; \
+		rm -rf "$(INTEL_MODELSIM_LIBDIR)"; \
+		exit 1; \
+	fi; \
+	cd "$(INTEL_MODELSIM_LIBDIR)"; \
+	if ! quartus_sh --simlib_comp -tool $(INTEL_MODELSIM_TOOL) -language vhdl -tool_path "$$tool_path" -directory "$(INTEL_MODELSIM_LIBDIR)" -rtl_only; then \
+		echo "$(SPACES)ERROR: Intel library compilation failed!"; \
+		rm -rf "$(INTEL_MODELSIM_LIBDIR)"; \
+		exit 1; \
+	fi; \
+	sed -i 's/; Show_source = 1/Show_source = 1/g' modelsim.ini; \
+	sed -i 's/; Show_Warning3 = 0/Show_Warning3 = 0/g' modelsim.ini; \
+	sed -i 's/; Show_Warning5 = 0/Show_Warning5 = 0/g' modelsim.ini; \
+	sed -i 's/; StdArithNoWarnings = 1/StdArithNoWarnings = 1/g' modelsim.ini; \
+	sed -i 's/; NumericStdNoWarnings = 1/NumericStdNoWarnings = 1/g' modelsim.ini; \
+	sed -i 's/VoptFlow = 1/VoptFlow = 0/g' modelsim.ini; \
+	sed -i '/suppress = [0-9]\+/d' modelsim.ini; \
+	sed -i '/\[msg_system\]/a suppress = 8780,8891,1491,12110\nwarning = 8891' modelsim.ini;
+endif
+
 $(SIM_LIBDIR):
 	$(QUIET_MKDIR)mkdir -p $@
 
+ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
+modelsim-libs: modelsim/modelsim.ini $(SIM_LIBDIR)
+	@cd modelsim; \
+	if ! grep -q '^[[:space:]]*altera_mf[[:space:]]*=' modelsim.ini; then \
+		cp "$(INTEL_MODELSIM_INI)" modelsim.ini; \
+	fi; \
+	for lib in $(ACC_LIBS); do \
+		if test -n "$$lib"; then \
+			if ! test -e $(SIM_LIBDIR)/$$lib; then \
+				vlib -type directory $(SIM_LIBDIR)/$$lib; \
+			fi; \
+			vmap $$lib $(SIM_LIBDIR)/$$lib; \
+		fi; \
+	done
+else
 modelsim-libs: modelsim/modelsim.ini $(SIM_LIBDIR)
 	@cd modelsim; \
 	for lib in $(ACC_LIBS); do \
@@ -116,6 +171,7 @@ modelsim-libs: modelsim/modelsim.ini $(SIM_LIBDIR)
 			vmap $$lib $(SIM_LIBDIR)/$$lib; \
 		fi; \
 	done
+endif
 
 define MODELSIM_ACC_LIB_RULE
 modelsim-accel-$(1): modelsim-libs $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST)
@@ -192,9 +248,28 @@ modelsim-thirdparty-$(1): modelsim-libs $(RTL_CFG_BUILD)/check_all_srcs.old $(PK
 endef
 $(foreach acc,$(THIRDPARTY_LIBS),$(eval $(call MODELSIM_THIRDPARTY_LIB_RULE,$(acc))))
 
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 modelsim/modelsim.ini: $(ESP_ROOT)/.cache/modelsim/xilinx_lib
 	$(QUIET_MAKE)mkdir -p modelsim
 	@cp $(ESP_ROOT)/.cache/modelsim/modelsim.ini $@
+else ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
+modelsim/modelsim.ini: $(INTEL_MODELSIM_INI)
+	$(QUIET_MAKE)mkdir -p modelsim
+	@cp "$(INTEL_MODELSIM_INI)" $@
+else
+modelsim/modelsim.ini:
+	$(QUIET_MAKE)mkdir -p modelsim
+	@cd modelsim; \
+	if ! test -s modelsim.ini || ! grep -q '^[[:space:]]*std[[:space:]]*=' modelsim.ini; then \
+		if command -v vmap >/dev/null 2>&1; then \
+			rm -f modelsim.ini; \
+			vmap -c > /dev/null; \
+		else \
+			echo "$(SPACES)ERROR: ModelSim 'vmap' not found in PATH"; \
+			exit 1; \
+		fi; \
+	fi
+endif
 
 
 ### Compile simulation source files ###
@@ -227,17 +302,17 @@ endif
 		$(SPACING)vmap work work; \
 	fi; \
 	echo $(SPACES)"### Compile VHDL packages ###"; \
-	for rtl in $(SIM_VHDL_PKGS); do \
+	for rtl in $(MODELSIM_WORK_VHDL_PKGS); do \
 		echo $(SPACES)"$(VCOM) -work work $$rtl"; \
 		$(VCOM) -work work $$rtl || exit; \
 	done; \
 	echo $(SPACES)"### Compile VHDL source files ###"; \
-		for rtl in $(SIM_VHDL_SRCS); do \
+		for rtl in $(MODELSIM_WORK_VHDL_SRCS); do \
 			echo $(SPACES)"$(VCOM) -work work $$rtl"; \
 			$(VCOM) -work work $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile Verilog source files ###"; \
-		for rtl in $(SIM_VLOG_SRCS); do \
+		for rtl in $(MODELSIM_WORK_VLOG_SRCS); do \
 			echo $(SPACES)"$(VLOG) -work work $$rtl"; \
 			$(VLOG) -work work $$rtl || exit; \
 		done;

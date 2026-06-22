@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2026 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -131,6 +131,24 @@ architecture rtl of ibex_ahb_wrap is
     haddr := addr(31 downto 2) & haddr_lsb;
   end;
 
+  procedure set_data_bus_control(
+    is_write   : in  std_ulogic;
+    byte_mask  : in  std_logic_vector(3 downto 0);
+    addr       : in  std_logic_vector(31 downto 0);
+    hsize      : out std_logic_vector(2 downto 0);
+    haddr      : out std_logic_vector(31 downto 0);
+    misaligned : out std_ulogic
+    ) is
+  begin
+    if is_write = '1' then
+      set_bus_control(byte_mask, addr, hsize, haddr, misaligned);
+    else
+      hsize      := HSIZE_WORD;
+      haddr      := addr(31 downto 2) & "00";
+      misaligned := '0';
+    end if;
+  end;
+
   procedure set_bus_data(
     byte_mask : in  std_logic_vector(3 downto 0);
     wdata     : in  std_logic_vector(31 downto 0);
@@ -197,7 +215,7 @@ begin  -- architecture rtl
         v.hbusreq := '0';
         v.htrans  := HTRANS_IDLE;
         if data_req_o = '1' then
-          set_bus_control(data_be_o, data_addr_o, v.hsize, v.haddr, v.misaligned);
+          set_data_bus_control(data_we_o, data_be_o, data_addr_o, v.hsize, v.haddr, v.misaligned);
           set_bus_data(data_be_o, data_wdata_o, v.hwdata);
           v.hbusreq := '1';
           v.htrans  := HTRANS_NONSEQ;
@@ -249,7 +267,7 @@ begin  -- architecture rtl
 
       when drd =>
         if ahbmi.hready = '1' then
-          set_bus_control(data_be_o, data_addr_o, v.hsize, v.haddr, v.misaligned);
+          set_data_bus_control(data_we_o, data_be_o, data_addr_o, v.hsize, v.haddr, v.misaligned);
           set_bus_data(data_be_o, data_wdata_o, v.hwdata);
 
           if data_req_o = '1' then
@@ -286,7 +304,7 @@ begin  -- architecture rtl
 
       when dwr =>
         if ahbmi.hready = '1' then
-          set_bus_control(data_be_o, data_addr_o, v.hsize, v.haddr, v.misaligned);
+          set_data_bus_control(data_we_o, data_be_o, data_addr_o, v.hsize, v.haddr, v.misaligned);
           set_bus_data(data_be_o, data_wdata_o, v.hwdata);
 
           if data_req_o = '1' then

@@ -1,9 +1,11 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ### Supported technology libraries ###
 #ASICLIBS = inferred gf12 sky130
-FPGALIBS = virtex7 virtexu virtexup
+XIL_FPGALIBS = virtex7 virtexu virtexup
+INTEL_FPGALIBS = stratix10
+FPGALIBS = $(XIL_FPGALIBS) $(INTEL_FPGALIBS)
 
 
 ### Check for technology library definition ###
@@ -11,8 +13,10 @@ ifeq ("$(TECHLIB)","")
 $(error technology library not specified)
 endif
 
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 ifeq ("$(XILINX_VIVADO)","")
 $(error XILINX_VIVADO path not specified)
+endif
 endif
 
 ifneq ($(findstring profpga, $(BOARD)),)
@@ -35,7 +39,11 @@ ifeq ($(TECH_TYPE),asic)
 DEVICE = ASIC-$(TECHLIB)
 else ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 include $(ESP_ROOT)/constraints/$(BOARD)/Makefile.inc
+ifneq ("$(QUARTUS_DEVICE)","")
+DEVICE = $(QUARTUS_DEVICE)
+else
 DEVICE = $(PART)-$(PACKAGE)-$(SPEED)
+endif
 TECH_TYPE = fpga
 #else ifneq ($(filter $(TECHLIB),$(ASICLIBS)),)
 #DEVICE = ASIC-$(TECHLIB)
@@ -46,7 +54,7 @@ endif
 
 
 ### Simulate BRAMs ###
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 EXTRA_SIMTOP  = glbl
 else
 EXTRA_SIMTOP  =
@@ -56,6 +64,105 @@ endif
 ### Include grlib and ESP configuration (remake may occur) ###
 -include $(GRLIB_CFG_BUILD)/.grlib_config
 -include $(ESP_CFG_BUILD)/.esp_config
+
+# GT_VORTEX tuning knobs exposed by ESP GUI. The GUI filters these to
+# combinations whose derived AXI ID width stays within ESP's 10-bit limit.
+GT_VORTEX_NUM_CORES ?= $(CONFIG_GT_VORTEX_NUM_CORES)
+GT_VORTEX_NUM_WARPS ?= $(CONFIG_GT_VORTEX_NUM_WARPS)
+GT_VORTEX_NUM_THREADS ?= $(CONFIG_GT_VORTEX_NUM_THREADS)
+GT_VORTEX_L2_EN ?= $(CONFIG_GT_VORTEX_L2_EN)
+GT_VORTEX_L3_EN ?= $(CONFIG_GT_VORTEX_L3_EN)
+GT_VORTEX_ENABLE_MARK_DEBUG ?=
+
+gt_vortex_is_posint = $(shell printf '%s\n' "$(strip $(1))" | grep -Eq '^[1-9][0-9]*$$' && echo y)
+gt_vortex_is_enabled = $(filter y Y 1 yes YES true TRUE,$(strip $(1)))
+
+ifeq ($(strip $(GT_VORTEX_NUM_CORES)),)
+GT_VORTEX_NUM_CORES := 1
+endif
+ifeq ($(call gt_vortex_is_posint,$(GT_VORTEX_NUM_CORES)),)
+GT_VORTEX_NUM_CORES := 1
+endif
+
+ifeq ($(strip $(GT_VORTEX_NUM_WARPS)),)
+GT_VORTEX_NUM_WARPS := 4
+endif
+ifeq ($(call gt_vortex_is_posint,$(GT_VORTEX_NUM_WARPS)),)
+GT_VORTEX_NUM_WARPS := 4
+endif
+
+ifeq ($(strip $(GT_VORTEX_NUM_THREADS)),)
+GT_VORTEX_NUM_THREADS := 4
+endif
+ifeq ($(call gt_vortex_is_posint,$(GT_VORTEX_NUM_THREADS)),)
+GT_VORTEX_NUM_THREADS := 4
+endif
+
+GT_VORTEX_L2_ENABLED := $(if $(call gt_vortex_is_enabled,$(GT_VORTEX_L2_EN)),1,0)
+GT_VORTEX_L3_ENABLED := $(if $(call gt_vortex_is_enabled,$(GT_VORTEX_L3_EN)),1,0)
+
+GT_VORTEX_CONFIGS := -DESP_GT_VORTEX_NUM_CORES=$(GT_VORTEX_NUM_CORES)
+GT_VORTEX_CONFIGS += -DESP_GT_VORTEX_NUM_WARPS=$(GT_VORTEX_NUM_WARPS)
+GT_VORTEX_CONFIGS += -DESP_GT_VORTEX_NUM_THREADS=$(GT_VORTEX_NUM_THREADS)
+ifneq ($(GT_VORTEX_L2_ENABLED),0)
+GT_VORTEX_CONFIGS += -DL2_ENABLE=1
+endif
+ifneq ($(GT_VORTEX_L3_ENABLED),0)
+GT_VORTEX_CONFIGS += -DL3_ENABLE=1
+endif
+
+GT_VORTEX_MODELSIM_DEFINES := +define+ESP_GT_VORTEX_NUM_CORES=$(GT_VORTEX_NUM_CORES)
+GT_VORTEX_MODELSIM_DEFINES += +define+ESP_GT_VORTEX_NUM_WARPS=$(GT_VORTEX_NUM_WARPS)
+GT_VORTEX_MODELSIM_DEFINES += +define+ESP_GT_VORTEX_NUM_THREADS=$(GT_VORTEX_NUM_THREADS)
+ifneq ($(GT_VORTEX_L2_ENABLED),0)
+GT_VORTEX_MODELSIM_DEFINES += +define+L2_ENABLE=1
+endif
+ifneq ($(GT_VORTEX_L3_ENABLED),0)
+GT_VORTEX_MODELSIM_DEFINES += +define+L3_ENABLE=1
+endif
+
+GT_VORTEX_XCELIUM_DEFINES := -DEFINE ESP_GT_VORTEX_NUM_CORES=$(GT_VORTEX_NUM_CORES)
+GT_VORTEX_XCELIUM_DEFINES += -DEFINE ESP_GT_VORTEX_NUM_WARPS=$(GT_VORTEX_NUM_WARPS)
+GT_VORTEX_XCELIUM_DEFINES += -DEFINE ESP_GT_VORTEX_NUM_THREADS=$(GT_VORTEX_NUM_THREADS)
+ifneq ($(GT_VORTEX_L2_ENABLED),0)
+GT_VORTEX_XCELIUM_DEFINES += -DEFINE L2_ENABLE=1
+endif
+ifneq ($(GT_VORTEX_L3_ENABLED),0)
+GT_VORTEX_XCELIUM_DEFINES += -DEFINE L3_ENABLE=1
+endif
+
+GT_VORTEX_VIVADO_DEFINES := ESP_GT_VORTEX_NUM_CORES=$(GT_VORTEX_NUM_CORES)
+GT_VORTEX_VIVADO_DEFINES += ESP_GT_VORTEX_NUM_WARPS=$(GT_VORTEX_NUM_WARPS)
+GT_VORTEX_VIVADO_DEFINES += ESP_GT_VORTEX_NUM_THREADS=$(GT_VORTEX_NUM_THREADS)
+ifneq ($(GT_VORTEX_L2_ENABLED),0)
+GT_VORTEX_VIVADO_DEFINES += L2_ENABLE=1
+endif
+ifneq ($(GT_VORTEX_L3_ENABLED),0)
+GT_VORTEX_VIVADO_DEFINES += L3_ENABLE=1
+endif
+ifneq ($(strip $(GT_VORTEX_ENABLE_MARK_DEBUG)),)
+GT_VORTEX_VIVADO_DEFINES += GT_VORTEX_ENABLE_MARK_DEBUG=$(GT_VORTEX_ENABLE_MARK_DEBUG)
+endif
+
+GT_VORTEX_QUARTUS_DEFINES := ESP_GT_VORTEX_NUM_CORES=$(GT_VORTEX_NUM_CORES)
+GT_VORTEX_QUARTUS_DEFINES += ESP_GT_VORTEX_NUM_WARPS=$(GT_VORTEX_NUM_WARPS)
+GT_VORTEX_QUARTUS_DEFINES += ESP_GT_VORTEX_NUM_THREADS=$(GT_VORTEX_NUM_THREADS)
+ifneq ($(GT_VORTEX_L2_ENABLED),0)
+GT_VORTEX_QUARTUS_DEFINES += L2_ENABLE=1
+endif
+ifneq ($(GT_VORTEX_L3_ENABLED),0)
+GT_VORTEX_QUARTUS_DEFINES += L3_ENABLE=1
+endif
+
+GT_VORTEX_GENUS_DEFINES := -define ESP_GT_VORTEX_NUM_CORES=$(GT_VORTEX_NUM_CORES)
+GT_VORTEX_GENUS_DEFINES += -define ESP_GT_VORTEX_NUM_WARPS=$(GT_VORTEX_NUM_WARPS)
+GT_VORTEX_GENUS_DEFINES += -define ESP_GT_VORTEX_NUM_THREADS=$(GT_VORTEX_NUM_THREADS)
+ifneq ($(GT_VORTEX_L2_ENABLED),0)
+GT_VORTEX_GENUS_DEFINES += -define L2_ENABLE=1
+endif
+ifneq ($(GT_VORTEX_L3_ENABLED),0)
+GT_VORTEX_GENUS_DEFINES += -define L3_ENABLE=1
+endif
 
 
 ### Toolchain
@@ -136,7 +243,7 @@ TOP_VLOG_RTL_SRCS += $(DESIGN_PATH)/cache_def_mem_asic.sv
 endif
 endif
 
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 TOP_VLOG_SIM_SRCS += $(XILINX_VIVADO)/data/verilog/src/glbl.v
 endif
 

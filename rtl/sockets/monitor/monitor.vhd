@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2026 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -13,8 +13,6 @@ use work.allclkgen.all;
 
 --pragma translate off
 use std.textio.all;
-library unisim;
-use unisim.vcomponents.all;
 --pragma translate_on
 
 library profpga;

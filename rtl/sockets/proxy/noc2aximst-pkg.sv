@@ -76,27 +76,23 @@ typedef struct {
 	logic [`PREAMBLE_WIDTH-1 : 0]					preamble_flag;
     logic [GLOB_PHYS_ADDR_BITS-1 : 0]				aw_addr;
     logic [GLOB_PHYS_ADDR_BITS-1 : 0]				ar_addr;
-    logic [AXIDW-1 : 0]	w_data;
-    logic [7 : 0]		ar_len;
-    logic [2 : 0]		ar_size;
-    logic [2 : 0]		ar_prot;
-	logic				ar_valid;
-	logic				r_ready;
-    logic [7 : 0]		aw_len;
-    logic [7 : 0]		word_rem;
-    logic [2 : 0]		aw_size;
-    logic [2 : 0]		aw_prot;
-    logic [AW-1 : 0]	w_strb;
-    logic				aw_valid;
-    logic				w_last;
-    logic				w_valid;
-    logic				b_ready;
-	logic [31 : 0]		count;
-    logic [1 : 0]		sample_flag;
-    logic				burst_flag;
-    logic				coh_dma_flag;
-    logic				hsize_msb;
-} reg_type;
+    logic [7 : 0]                          ar_len;
+    logic [2 : 0]                          ar_size;
+    logic [2 : 0]                          ar_prot;
+    logic                                  ar_valid;
+    logic [7 : 0]                          aw_len;
+    logic [7 : 0]                          word_rem;
+    logic [2 : 0]                          aw_size;
+    logic [2 : 0]                          aw_prot;
+    logic [AW-1 : 0]                       w_strb;
+    logic                                  aw_valid;
+    logic [31 : 0]                         count;
+    logic [1 : 0]                          sample_flag;
+    logic                                  burst_flag;
+    logic                                  coh_dma_flag;
+    logic                                  hsize_msb;
+    logic                                  dma_size_valid;
+    logic [2 : 0]                          dma_size;
+  } reg_type;
 
 endpackage
-

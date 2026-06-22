@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 BSG_INCDIR += $(ESP_ROOT)/rtl/peripherals/bsg/bsg_misc/
@@ -16,7 +16,7 @@ BSG_VLOG_OPT += +define+sg5
 BSG_VLOG_OPT += +define+x16
 BSG_VLOG_OPT += +define+FULL_MEM
 
-BSG_VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/bsg_vlog.flist), $(ESP_ROOT)/rtl/$(f))
+BSG_VLOG_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/bsg_vlog.flist), $(ESP_ROOT)/rtl/$(f))
 
 BSG_VLOG_SIM_SRCS  = $(BSG_VLOG_SRCS)
 BSG_VLOG_SIM_SRCS += $(ESP_ROOT)/rtl/peripherals/bsg/testing/bsg_dmc/lpddr_verilog_model/mobile_ddr.v

@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ### Constaints ###
@@ -15,7 +15,7 @@ XDC_SUFFIX =
 endif
 
 
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 
 ACC_TECH_DIR   = $(ESP_ROOT)/tech/$(TECHLIB)/acc
 ACC_TECH_PRESENT = $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_DIR)/*)),$(RTL_ACC)))
@@ -50,6 +50,55 @@ endif
 
 ### Options for Vivado batch mode ###
 VIVADO_BATCH_OPT = -mode batch -quiet -notrace
+VIVADO_JOBS ?= 32
+VIVADO_TRUE_VALUES := true TRUE 1 yes YES
+VIVADO_ENABLE_ALL_OPTIMIZATIONS ?= 0
+VIVADO_SYNTH_RETIMING ?=
+VIVADO_SYNTH_GLOBAL_RETIMING ?= $(VIVADO_SYNTH_RETIMING)
+VIVADO_SYNTH_STRATEGY ?=
+VIVADO_IMPL_STRATEGY ?=
+VIVADO_OPT_DIRECTIVE ?=
+VIVADO_PLACE_DIRECTIVE ?=
+VIVADO_PHYS_OPT_DIRECTIVE ?=
+VIVADO_ROUTE_DIRECTIVE ?=
+VIVADO_POST_ROUTE_PHYS_OPT_ENABLE ?=
+VIVADO_POST_ROUTE_PHYS_OPT_DIRECTIVE ?=
+
+# Full Vivado timing-closure profile, tuned for Vivado 2023.2.
+ifneq ($(filter $(VIVADO_TRUE_VALUES),$(strip $(VIVADO_ENABLE_ALL_OPTIMIZATIONS))),)
+ifeq ($(strip $(VIVADO_SYNTH_GLOBAL_RETIMING)),)
+VIVADO_SYNTH_GLOBAL_RETIMING := true
+endif
+ifeq ($(strip $(VIVADO_SYNTH_STRATEGY)),)
+VIVADO_SYNTH_STRATEGY := Flow_PerfOptimized_high
+endif
+ifeq ($(strip $(VIVADO_IMPL_STRATEGY)),)
+VIVADO_IMPL_STRATEGY := Performance_Explore
+endif
+ifeq ($(strip $(VIVADO_OPT_DIRECTIVE)),)
+VIVADO_OPT_DIRECTIVE := Explore
+endif
+ifeq ($(strip $(VIVADO_PLACE_DIRECTIVE)),)
+VIVADO_PLACE_DIRECTIVE := ExtraNetDelay_high
+endif
+ifeq ($(strip $(VIVADO_PHYS_OPT_DIRECTIVE)),)
+VIVADO_PHYS_OPT_DIRECTIVE := AggressiveExplore
+endif
+ifeq ($(strip $(VIVADO_ROUTE_DIRECTIVE)),)
+VIVADO_ROUTE_DIRECTIVE := AggressiveExplore
+endif
+ifeq ($(strip $(VIVADO_POST_ROUTE_PHYS_OPT_ENABLE)),)
+VIVADO_POST_ROUTE_PHYS_OPT_ENABLE := true
+endif
+ifeq ($(strip $(VIVADO_POST_ROUTE_PHYS_OPT_DIRECTIVE)),)
+VIVADO_POST_ROUTE_PHYS_OPT_DIRECTIVE := AggressiveExplore
+endif
+ifeq ($(strip $(VIVADO_ENABLE_EXTRA_TIMING_REPORTS)),)
+VIVADO_ENABLE_EXTRA_TIMING_REPORTS := 1
+endif
+endif
+
+VIVADO_ENABLE_EXTRA_TIMING_REPORTS ?= 0
 
 $(VIVADO_LOGS):
 	$(QUIET_MKDIR)mkdir -p $(VIVADO_LOGS)
@@ -57,7 +106,7 @@ $(VIVADO_LOGS):
 vivado: $(VIVADO_LOGS)
 	$(QUIET_MKDIR)mkdir -p vivado
 
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 
 vivado/srcs.tcl: vivado check_all_rtl_srcs $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 	$(QUIET_INFO)echo "generating source list for Vivado"
@@ -237,9 +286,9 @@ vivado/setup.tcl: vivado $(BOARD_FILES)
 	@echo "set_property target_language verilog [current_project]" >> $@
 	@echo "set_property include_dirs {$(INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
 ifeq ("$(CPU_ARCH)","ibex")
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx $(GT_VORTEX_VIVADO_DEFINES)} [get_filesets {sim_1 sources_1}]" >> $@
 else
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 FPU_FPNEW=1 SYNTHESIS=1 XLEN_64=1 $(GT_VORTEX_VIVADO_DEFINES)} [get_filesets {sim_1 sources_1}]" >> $@
 endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
@@ -320,6 +369,33 @@ endif
           fi; \
 	done;
 	@echo "set_property top $(TOP) [current_fileset]" >> $@
+ifneq ($(strip $(VIVADO_SYNTH_STRATEGY)),)
+	@echo "set_property strategy $(VIVADO_SYNTH_STRATEGY) [get_runs synth_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_IMPL_STRATEGY)),)
+	@echo "set_property strategy $(VIVADO_IMPL_STRATEGY) [get_runs impl_1]" >> $@
+endif
+ifneq ($(filter $(VIVADO_TRUE_VALUES),$(strip $(VIVADO_SYNTH_GLOBAL_RETIMING))),)
+	@echo "set_property STEPS.SYNTH_DESIGN.ARGS.RETIMING true [get_runs synth_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_OPT_DIRECTIVE)),)
+	@echo "set_property STEPS.OPT_DESIGN.ARGS.DIRECTIVE $(VIVADO_OPT_DIRECTIVE) [get_runs impl_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_PLACE_DIRECTIVE)),)
+	@echo "set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE $(VIVADO_PLACE_DIRECTIVE) [get_runs impl_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_PHYS_OPT_DIRECTIVE)),)
+	@echo "set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE $(VIVADO_PHYS_OPT_DIRECTIVE) [get_runs impl_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_ROUTE_DIRECTIVE)),)
+	@echo "set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE $(VIVADO_ROUTE_DIRECTIVE) [get_runs impl_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_POST_ROUTE_PHYS_OPT_ENABLE)),)
+	@echo "set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED $(VIVADO_POST_ROUTE_PHYS_OPT_ENABLE) [get_runs impl_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_POST_ROUTE_PHYS_OPT_DIRECTIVE)),)
+	@echo "set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE $(VIVADO_POST_ROUTE_PHYS_OPT_DIRECTIVE) [get_runs impl_1]" >> $@
+endif
 
 
 vivado/setup_emu.tcl: vivado $(BOARD_FILES)
@@ -329,9 +405,9 @@ vivado/setup_emu.tcl: vivado $(BOARD_FILES)
 	@echo "set_property target_language verilog [current_project]" >> $@
 	@echo "set_property include_dirs {$(INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
 ifeq ("$(CPU_ARCH)","ibex")
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx $(GT_VORTEX_VIVADO_DEFINES)} [get_filesets {sim_1 sources_1}]" >> $@
 else
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 $(GT_VORTEX_VIVADO_DEFINES)} [get_filesets {sim_1 sources_1}]" >> $@
 endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
@@ -347,6 +423,33 @@ endif
 	@echo "set_property top chip_emu_top [get_filesets {sim_1 sources_1}]" >> $@
 	@echo "update_compile_order -fileset sources_1" >> $@
 	@echo "update_compile_order -fileset sim_1" >> $@
+ifneq ($(strip $(VIVADO_SYNTH_STRATEGY)),)
+	@echo "set_property strategy $(VIVADO_SYNTH_STRATEGY) [get_runs synth_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_IMPL_STRATEGY)),)
+	@echo "set_property strategy $(VIVADO_IMPL_STRATEGY) [get_runs impl_1]" >> $@
+endif
+ifneq ($(filter $(VIVADO_TRUE_VALUES),$(strip $(VIVADO_SYNTH_GLOBAL_RETIMING))),)
+	@echo "set_property STEPS.SYNTH_DESIGN.ARGS.RETIMING true [get_runs synth_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_OPT_DIRECTIVE)),)
+	@echo "set_property STEPS.OPT_DESIGN.ARGS.DIRECTIVE $(VIVADO_OPT_DIRECTIVE) [get_runs impl_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_PLACE_DIRECTIVE)),)
+	@echo "set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE $(VIVADO_PLACE_DIRECTIVE) [get_runs impl_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_PHYS_OPT_DIRECTIVE)),)
+	@echo "set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE $(VIVADO_PHYS_OPT_DIRECTIVE) [get_runs impl_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_ROUTE_DIRECTIVE)),)
+	@echo "set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE $(VIVADO_ROUTE_DIRECTIVE) [get_runs impl_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_POST_ROUTE_PHYS_OPT_ENABLE)),)
+	@echo "set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED $(VIVADO_POST_ROUTE_PHYS_OPT_ENABLE) [get_runs impl_1]" >> $@
+endif
+ifneq ($(strip $(VIVADO_POST_ROUTE_PHYS_OPT_DIRECTIVE)),)
+	@echo "set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE $(VIVADO_POST_ROUTE_PHYS_OPT_DIRECTIVE) [get_runs impl_1]" >> $@
+endif
 
 
 vivado/syn.tcl: vivado
@@ -355,19 +458,28 @@ vivado/syn.tcl: vivado
 	@echo "open_project $(DESIGN).xpr" > $@
 	@echo "update_ip_catalog" >> $@
 	@echo "update_compile_order -fileset sources_1" >> $@
+	@echo "set_param general.maxThreads $(VIVADO_JOBS)" >> $@
 	@echo "reset_run impl_1" >> $@
 	@echo "reset_run synth_1" >> $@
 #	@echo "synth_design -rtl -name rtl_1" >> $@
 #	@echo "synth_design -directive runtimeoptimize -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
 #	@echo "synth_design -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
-	@echo "launch_runs synth_1 -jobs 12" >> $@
+	@echo "launch_runs synth_1 -jobs $(VIVADO_JOBS)" >> $@
 	@echo "get_ips" >> $@
 	@echo "wait_on_run -timeout 720 synth_1" >> $@
 	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
-	@echo "launch_runs impl_1 -jobs 12" >> $@
+	@echo "launch_runs impl_1 -jobs $(VIVADO_JOBS)" >> $@
 	@echo "wait_on_run -timeout 720 impl_1" >> $@
 	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
 	@echo "wait_on_run -timeout 60 impl_1" >> $@
+ifneq ($(strip $(VIVADO_ENABLE_EXTRA_TIMING_REPORTS)),0)
+	@echo "open_run synth_1" >> $@
+	@echo "check_timing -verbose -file top_check_timing_synth.rpt" >> $@
+	@echo "report_timing -max_paths 20 -nworst 20 -delay_type max -sort_by slack -file top_timing_worst_20_synth.rpt" >> $@
+	@echo "open_run impl_1" >> $@
+	@echo "report_qor_suggestions -file top_qor_suggestions_impl.rpt" >> $@
+	@echo "report_high_fanout_nets -fanout_greater_than 64 -max_nets 200 -file top_high_fanout_nets_impl.rpt" >> $@
+endif
 
 vivado/syn_emu.tcl: vivado
 	$(QUIET_INFO)echo "generating synthesis script for Vivado"
@@ -375,16 +487,17 @@ vivado/syn_emu.tcl: vivado
 	@echo "open_project $(DESIGN)-chip-emu.xpr" > $@
 	@echo "update_ip_catalog" >> $@
 	@echo "update_compile_order -fileset sources_1" >> $@
+	@echo "set_param general.maxThreads $(VIVADO_JOBS)" >> $@
 	@echo "reset_run impl_1" >> $@
 	@echo "reset_run synth_1" >> $@
 #	@echo "synth_design -rtl -name rtl_1" >> $@
 #	@echo "synth_design -directive runtimeoptimize -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
 #	@echo "synth_design -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
-	@echo "launch_runs synth_1 -jobs 12" >> $@
+	@echo "launch_runs synth_1 -jobs $(VIVADO_JOBS)" >> $@
 	@echo "get_ips" >> $@
 	@echo "wait_on_run -timeout 720 synth_1" >> $@
 	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
-	@echo "launch_runs impl_1 -jobs 12" >> $@
+	@echo "launch_runs impl_1 -jobs $(VIVADO_JOBS)" >> $@
 	@echo "wait_on_run -timeout 720 impl_1" >> $@
 	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
 	@echo "wait_on_run -timeout 60 impl_1" >> $@
@@ -544,7 +657,7 @@ vivado-update-emu: vivado vivado/syn_emu.tcl
 		fi; \
 	fi;
 
-endif # ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+endif # ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 
 vivado-prog-fpga: vivado/program.tcl
 	@cd vivado; \

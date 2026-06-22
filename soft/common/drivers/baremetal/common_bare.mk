@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 CPU_SOFT_PATH := $(DRIVERS)/../../../$(CPU_ARCH)
 
@@ -24,7 +24,7 @@ CFLAGS += -fno-builtin-printf
 CFLAGS += -nostartfiles
 LDFLAGS += -lgcc
 LDFLAGS_RISCV = $(COMMON)/syscalls.c
-LDFLAGS_RISCV += $(RISCV_TESTS)/benchmarks/common/crt.S
+LDFLAGS_RISCV += $(DRIVERS)/esp_crt.S
 LDFLAGS_RISCV += -T $(RISCV_TESTS)/benchmarks/common/test.ld
 OBJCPFLAGS :=
 ifeq ("$(CPU_ARCH)", "ariane")

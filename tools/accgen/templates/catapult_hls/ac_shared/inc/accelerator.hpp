@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2026 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef __TOP_HPP__
@@ -10,6 +10,7 @@
 #include "accelerator_name_specs.hpp"
 #include "accelerator_name_conf_info.hpp"
 #include "ac_shared_bank_array.h"
+
 
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
@@ -50,6 +51,7 @@ SC_MODULE(acc_full_name)
         SC_THREAD(store);
         sensitive << clk.pos();
         async_reset_signal_is(rst, false);
+
     }
 
     Connections::SyncChannel CCS_INIT_S1(sync12);
@@ -63,13 +65,14 @@ SC_MODULE(acc_full_name)
     Connections::Combinational<conf_info_t> CCS_INIT_S1(conf2);
     Connections::Combinational<conf_info_t> CCS_INIT_S1(conf3);
 
+
     ac_shared_bank_array_2D<FPDATA_WORD, inbks, inebks> plm_in_ping;
     ac_shared_bank_array_2D<FPDATA_WORD, inbks, inebks> plm_in_pong;
 
     ac_shared_bank_array_2D<FPDATA_WORD, outbks, outebks> plm_out_ping;
     ac_shared_bank_array_2D<FPDATA_WORD, outbks, outebks> plm_out_pong;
 
-    //
+//
 };
 
 #endif
