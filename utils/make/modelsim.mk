@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -17,6 +17,14 @@ VLOGOPT += +define+XILINX_FPGA
 VLOGOPT += +define+NVDLA_FPGA_TARGET
 endif
 VLOGOPT += $(INCDIR_MODELSIM)
+
+VLOGOPT += +define+FPU_FPNEW
+
+VLOGOPT += +define+SYNTHESIS
+
+VLOGOPT += +define+XLEN_64
+
+VLOGOPT += $(GT_VORTEX_MODELSIM_DEFINES)
 
 VSIMOPT += -suppress 3812
 VSIMOPT += -suppress 2697

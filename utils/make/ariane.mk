@@ -105,7 +105,6 @@ RISCV_CFLAGS += -static
 RISCV_CFLAGS += -std=gnu99
 RISCV_CFLAGS += -O2
 RISCV_CFLAGS += -ffast-math
-RISCV_CFLAGS += -fno-common
 RISCV_CFLAGS += -fno-builtin-printf
 RISCV_CFLAGS += -nostdlib
 RISCV_CFLAGS += -nostartfiles -lm -lgcc

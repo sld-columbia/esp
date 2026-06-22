@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 STRATUSHLS_ACC_PATH      = $(ESP_ROOT)/accelerators/stratus_hls
@@ -146,7 +146,7 @@ $(THIRDPARTY_ACC): $(BAREMETAL_BIN)
 		$(MAKE) TECH_TYPE=$(TECH_TYPE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build hw; \
 	fi;
 	@cd $(THIRDPARTY_PATH)/$@; \
-	$(MAKE) ESP_ROOT=$(ESP_ROOT) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) CPU_ARCH=$(CPU_ARCH) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build sw;
+	$(MAKE) ESP_ROOT=$(ESP_ROOT) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) CPU_ARCH=$(CPU_ARCH) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build SOFT_BUILD=$(SOFT_BUILD) DRIVERS=$(DRIVERS) GT_VORTEX_CONFIGS="$(GT_VORTEX_CONFIGS)" sw;
 	@for f in $$(cat $(THIRDPARTY_PATH)/$@/$@.kmd); do \
 		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f $(SOFT_BUILD)/sysroot/opt/drivers/; \
 	done;
@@ -422,7 +422,7 @@ SOCKETGEN_DEPS += $(ESP_CFG_BUILD)/socmap.vhd $(ESP_CFG_BUILD)/esp_global.vhd $(
 ### ESP Wrappers ###
 socketgen: $(SOCKETGEN_DEPS)
 	$(QUIET_MKDIR) $(RM) $@; mkdir -p $@
-	$(QUIET_RUN)$(ESP_ROOT)/tools/socketgen/socketgen.py $(ARCH_BITS) $(CPU_ARCH) $(CONFIG_CACHE_LINE_SIZE) $(CONFIG_DMA_NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/accelerators/third-party $(ESP_ROOT)/tools/socketgen/templates ./socketgen
+	$(QUIET_RUN)GT_VORTEX_NUM_CORES=$(GT_VORTEX_NUM_CORES) GT_VORTEX_NUM_WARPS=$(GT_VORTEX_NUM_WARPS) GT_VORTEX_NUM_THREADS=$(GT_VORTEX_NUM_THREADS) GT_VORTEX_L2_ENABLED=$(GT_VORTEX_L2_ENABLED) GT_VORTEX_L3_ENABLED=$(GT_VORTEX_L3_ENABLED) $(ESP_ROOT)/tools/socketgen/socketgen.py $(ARCH_BITS) $(CPU_ARCH) $(CONFIG_CACHE_LINE_SIZE) $(CONFIG_DMA_NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/accelerators/third-party $(ESP_ROOT)/tools/socketgen/templates ./socketgen
 	@touch $@
 
 socketgen-clean:
@@ -456,11 +456,11 @@ $(ACC-driver-clean):
 $(ACC-app): $(SOFT_BUILD)/sysroot soft-build
 	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-app=)/linux/app; \
 	ACC_PATH=$(filter %/$(@:-app=), $(ACC_PATHS)); \
-	if [ `ls -1 $$ACC_PATH/sw/linux/app/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
+	if test -e $$ACC_PATH/sw/linux/app/Makefile || [ `ls -1 $$ACC_PATH/sw/linux/app/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
 		mkdir -p $(SOFT_BUILD)/sysroot/applications/test/; \
 		mkdir -p $$BUILD_PATH; \
-		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $$ACC_PATH/sw/linux/app; \
+		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH GT_VORTEX_CONFIGS="$(GT_VORTEX_CONFIGS)" $(MAKE) -C $$ACC_PATH/sw/linux/app; \
 		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
 			if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -eq 1 ]; then \
 				echo '   ' CP $@; cp  $$BUILD_PATH/*.exe $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=).exe ; \

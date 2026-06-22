@@ -1,14 +1,14 @@
--- Copyright (c) 2011-2026 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
---pragma translate_off
+-- pragma translate_off
 use STD.textio.all;
 use ieee.std_logic_textio.all;
---pragma translate_on
+-- pragma translate_on
 
 use work.esp_global.all;
 
@@ -33,10 +33,10 @@ entity noc2ahbmst is
     narrow_noc          : integer range 0 to 1 := 0;
     cacheline           : integer;
     l2_cache_en         : integer;
-    this_coh_flit_size  : integer); --The coherence queues of this proxy are used for different purposes,
-                                    --including coherence messages, CPU DMA in SLM, and remote AHB
-                                    --transactions on NoC5. This parameter enables different instances
-                                    --of this proxy to interface with NoCs of different widths
+    -- Coherence queues in this proxy carry multiple traffic classes:
+    -- coherence messages, CPU DMA in SLM, and remote AHB traffic on NoC5.
+    -- This parameter allows instances to connect to NoCs with different widths.
+    this_coh_flit_size  : integer);
   port (
     rst   : in  std_ulogic;
     clk   : in  std_ulogic;
@@ -45,23 +45,23 @@ entity noc2ahbmst is
     ahbmi : in  ahb_mst_in_type;
     ahbmo : out ahb_mst_out_type;
 
-    -- NoC1->tile
+    -- NoC1 -> tile.
     coherence_req_rdreq       : out std_ulogic;
     coherence_req_data_out    : in  std_logic_vector(this_coh_flit_size - 1 downto 0);
     coherence_req_empty       : in  std_ulogic;
-    -- tile->NoC2
+    -- Tile -> NoC2.
     coherence_fwd_wrreq       : out std_ulogic;
     coherence_fwd_data_in     : out std_logic_vector(this_coh_flit_size - 1 downto 0);
     coherence_fwd_full        : in  std_ulogic;
-    -- tile->NoC3
+    -- Tile -> NoC3.
     coherence_rsp_snd_wrreq   : out std_ulogic;
     coherence_rsp_snd_data_in : out std_logic_vector(this_coh_flit_size - 1 downto 0);
     coherence_rsp_snd_full    : in  std_ulogic;
-    -- NoC4->tile
+    -- NoC4 -> tile.
     dma_rcv_rdreq             : out std_ulogic;
     dma_rcv_data_out          : in  dma_noc_flit_type;
     dma_rcv_empty             : in  std_ulogic;
-    -- tile->NoC4
+    -- Tile -> NoC4.
     dma_snd_wrreq             : out std_ulogic;
     dma_snd_data_in           : out dma_noc_flit_type;
     dma_snd_full              : in  std_ulogic;
@@ -72,11 +72,20 @@ end noc2ahbmst;
 
 architecture rtl of noc2ahbmst is
 
+  -- This version complements the WSTRB-aware `axislv2noc` implementation.
+  -- When `axislv2noc` splits a DMA beat into subword packets, it annotates the
+  -- DMA header reserved field with a size override that is decoded here and
+  -- applied to AHB HSIZE and burst behavior.
+  -- Delay impact in this block:
+  -- - No new FSM states are introduced for WSTRB support.
+  -- - Decode is combinational and does not add pipeline stages.
+  -- - Extra latency comes indirectly from handling more, smaller DMA packets.
+
   constant hconfig : ahb_config_type := (
     0      => ahb_device_reg (VENDOR_SLD, SLD_MST_PROXY, 0, 0, 0),
     others => zero32);
 
-  -- Default address increment
+  -- Default address increment.
   constant default_incr : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0) := conv_std_logic_vector(GLOB_ADDR_INCR, GLOB_PHYS_ADDR_BITS);
 
   constant this_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - this_coh_flit_size downto 0) := (others => '0');
@@ -125,12 +134,46 @@ architecture rtl of noc2ahbmst is
     end if;
   end target_dma_word_hsize;
 
+  -- Decode the optional DMA size override encoded by `axislv2noc` when partial
+  -- WSTRB causes a beat to be split into subword DMA packets.
+  -- Encoding matches `nocpackage` DMA_HDR_SIZE_*:
+  -- 00=byte, 01=halfword, 10=word, 11=dword.
+  function dma_code_to_hsize (
+    code : std_logic_vector(1 downto 0))
+    return std_logic_vector is
+  begin
+    case code is
+      when "00" => return HSIZE_BYTE;
+      when "01" => return HSIZE_HWORD;
+      when "10" => return HSIZE_WORD;
+      when others => return HSIZE_DWORD;
+    end case;
+  end dma_code_to_hsize;
 
-  -- If length is not received, then use fix length of cacheline words.
-  -- The accelerators and masters on AXI will always provide a length.
-  -- Protection info is in the reserved field of the header
-  -- determine the destination tile for the response based on the header origin
-  -- x and y info
+
+  -- Length handling summary:
+  -- - If an AXI-side request supplies length, use it directly.
+  -- - If no length flit is provided on coherence traffic, fall back to
+  --   cacheline length.
+  -- - Protection info is carried in the header reserved field.
+  -- - Response destination tile is derived from header origin X/Y.
+  --
+  -- `ahbm_fsm` groups:
+  -- - `receive_*` / `rd_request` / `send_*`: coherence-plane reads.
+  -- - `dma_receive_*` / `dma_rd_request` / `dma_send_*`: DMA reads.
+  -- - `wr_request` / `write_*`: coherence-plane writes.
+  -- - `dma_wr_request` / `dma_write_*`: DMA writes, including WSTRB
+  --   size-override compatibility added in this file.
+  --
+  -- `ahbm_fsm` state guide:
+  -- - `receive_header/address/length`: parse incoming request metadata.
+  -- - `rd_request`, `wr_request`: arbitrate AHB and issue first access phase.
+  -- - `send_header/address/data`: return coherence read responses.
+  -- - `dma_receive_address/rdlength/wrlength`: parse DMA request packet shape.
+  -- - `dma_rd_request + dma_send_*`: service DMA reads and emit DMA response data.
+  -- - `dma_wr_request + dma_write_* + write_last_data`: service DMA writes.
+  -- - `write_data/write_busy/write_complete`: service coherence writes.
+  -- - `send_put_ack/send_put_ack_address`: emit PUT-ack packets.
   type ahbm_fsm is (receive_header, receive_length,
                     receive_address, rd_request, send_header,
                     send_address, send_data, wr_request, write_data,
@@ -140,22 +183,26 @@ architecture rtl of noc2ahbmst is
                     dma_receive_rdlength, dma_receive_wrlength, dma_send_busy, dma_wait_busy,
                     dma_write_busy, write_busy, send_put_ack, send_put_ack_address);
 
-  -- RSP_DATA
+  -- Coherence response header path.
   signal header         : std_logic_vector(this_coh_flit_size - 1 downto 0);
   signal header_reg     : std_logic_vector(this_coh_flit_size - 1 downto 0);
   signal sample_header  : std_ulogic;
 
-  -- DMA_TO_DEV
+  -- DMA response header path.
   signal dma_header         : dma_noc_flit_type;
   signal dma_header_reg     : dma_noc_flit_type;
   signal sample_dma_header  : std_ulogic;
 
-  -- common
+  -- Common request/response state.
   type reg_type is record
     msg     : noc_msg_type;
     hprot   : std_logic_vector(3 downto 0);
     hsize_msb : std_ulogic;
     hsize   : std_logic_vector(2 downto 0);
+    -- Optional per-packet size override for DMA writes/reads.
+    -- When set, treat this request as one AHB word per DMA flit.
+    dma_size_valid : std_ulogic;
+    dma_hsize : std_logic_vector(2 downto 0);
     grant   : std_ulogic;
     ready   : std_ulogic;
     resp    : std_logic_vector(1 downto 0);
@@ -183,6 +230,8 @@ architecture rtl of noc2ahbmst is
     hprot   => "0011",
     hsize_msb => '0',
     hsize   => target_word_hsize,
+    dma_size_valid => '0',
+    dma_hsize => target_dma_word_hsize,
     grant   => '0',
     ready   => '0',
     resp    => HRESP_OKAY,
@@ -225,21 +274,22 @@ architecture rtl of noc2ahbmst is
   signal rsp_buf_reg : std_logic_vector(this_coh_flit_size - 1 downto 0);
   signal rsp_buf_valid : std_ulogic;
 
-  --attribute mark_debug : string;
-  --attribute mark_debug of dma_rcv_data_out : signal is "true";
-  --attribute mark_debug of dma_rcv_rdreq : signal is "true";
-  --attribute mark_debug of dma_rcv_empty : signal is"true";
-  --attribute mark_debug of dma_snd_data_in : signal is "true";
-  --attribute mark_debug of dma_snd_wrreq : signal is "true";
-  --attribute mark_debug of dma_snd_full : signal is"true";
-  --attribute mark_debug of r : signal is"true";
-  --attribute mark_debug of ahbmi : signal is"true";
-  --attribute mark_debug of ahbmo : signal is"true";
+  -- Optional debug attributes (disabled by default).
+  -- attribute mark_debug : string;
+  -- attribute mark_debug of dma_rcv_data_out : signal is "true";
+  -- attribute mark_debug of dma_rcv_rdreq : signal is "true";
+  -- attribute mark_debug of dma_rcv_empty : signal is "true";
+  -- attribute mark_debug of dma_snd_data_in : signal is "true";
+  -- attribute mark_debug of dma_snd_wrreq : signal is "true";
+  -- attribute mark_debug of dma_snd_full : signal is "true";
+  -- attribute mark_debug of r : signal is "true";
+  -- attribute mark_debug of ahbmi : signal is "true";
+  -- attribute mark_debug of ahbmo : signal is "true";
 
 begin  -- rtl
 
   -----------------------------------------------------------------------------
-  -- Create packet for response messages to GETS
+  -- Build response packet for GETS-family requests.
   -----------------------------------------------------------------------------
   make_rsp_snd_packet : process (narrow_coherence_req_data_out, local_y, local_x)
     variable input_msg_type     : noc_msg_type;
@@ -248,22 +298,22 @@ begin  -- rtl
     variable header_v           : std_logic_vector(this_coh_flit_size - 1 downto 0);
     variable reserved           : reserved_field_type;
     variable origin_y, origin_x : local_yx;
-  begin  -- process make_packet
+  begin  -- process make_rsp_snd_packet
     input_msg_type := get_msg_type(this_coh_flit_size, this_noc_flit_pad & narrow_coherence_req_data_out);
     if input_msg_type = AHB_RD then
-      -- Uncached request from generic master
+      -- Uncached request from a generic master.
       msg_type := RSP_AHB_RD;
     elsif l2_cache_en = 1 then
-      -- L2 cache enabled, but no LLC present
+      -- L2 cache enabled, but no LLC present.
       if input_msg_type = REQ_PUTS or input_msg_type = REQ_PUTM then
-        msg_type := FWD_PUT_ACK;        -- TODO: send on FWD plane
+        msg_type := FWD_PUT_ACK;        -- TODO: Send on FWD plane.
       elsif input_msg_type = REQ_GETS_W then
         msg_type := RSP_EDATA;
       else
         msg_type := RSP_DATA;
       end if;
     else
-      -- no L2 cache; request is from write-through L1
+      -- No L2 cache; request comes from write-through L1.
       msg_type := RSP_DATA;
     end if;
 
@@ -275,7 +325,7 @@ begin  -- rtl
     header   <= header_v;
   end process make_rsp_snd_packet;
   -----------------------------------------------------------------------------
-  -- Create packet for DMA response message
+  -- Build response packet for DMA traffic.
   -----------------------------------------------------------------------------
   make_dma_packet : process (dma_rcv_data_out, local_y, local_x)
     variable msg_type_req       : noc_msg_type;
@@ -283,7 +333,7 @@ begin  -- rtl
     variable header_v           : dma_noc_flit_type;
     variable reserved           : reserved_field_type;
     variable origin_y, origin_x : local_yx;
-  begin  -- process make_packet
+  begin  -- process make_dma_packet
     msg_type_req := get_msg_type(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
     if msg_type_req = REQ_DMA_READ then
       msg_type_rsp := RSP_DATA_DMA;
@@ -301,14 +351,14 @@ begin  -- rtl
 
 
   -----------------------------------------------------------------------------
-  -- Registers
+  -- Header-register sampling.
   -----------------------------------------------------------------------------
   process (clk, rst)
   begin  -- process
-    if rst = '0' then                   -- asynchronous reset (active low)
+    if rst = '0' then                   -- Asynchronous reset (active low).
       header_reg        <= (others => '0');
       dma_header_reg    <= (others => '0');
-    elsif clk'event and clk = '1' then  -- rising clock edge
+    elsif clk'event and clk = '1' then  -- Rising clock edge.
       if sample_header = '1' then
         header_reg      <= header;
       end if;
@@ -319,11 +369,11 @@ begin  -- rtl
   end process;
 
   -----------------------------------------------------------------------------
-  -- AHB handling
+  -- AHB handling.
   -----------------------------------------------------------------------------
 
-  --TODO: handle other services
-  -- so far coherence_req_, coherence_rsp_snd_full are handled
+  -- TODO: Handle additional services.
+  -- Currently, coherence_req_* and coherence_rsp_snd_full are handled.
   ahb_roundtrip : process (ahbmi, r,
                            narrow_coherence_req_empty, narrow_coherence_req_data_out,
                            narrow_coherence_rsp_snd_full,
@@ -336,12 +386,23 @@ begin  -- rtl
     variable preamble, dma_preamble : noc_preamble_type;
     variable hwdata_be : std_logic_vector(ARCH_BITS - 1 downto 0);
     variable word_rem               : integer;
+    variable dma_words_per_flit     : integer;
   begin  -- process ahb_roundtrip
-    -- Default ahbmo assignment
+    -- Default AHB-master shadow-state assignment.
     v       := r;
     v.grant := ahbmi.hgrant(hindex);
     v.ready := ahbmi.hready;
     v.resp  := ahbmi.hresp;
+
+    -- Default packing uses the architectural DMA flit width.
+    -- If size override is active, each DMA packet generated by `axislv2noc`
+    -- carries only one logical AHB word (possibly byte/halfword/word).
+    -- This does not insert new internal cycles here, but can reduce effective
+    -- throughput because more packet boundaries imply more AHB burst restarts.
+    dma_words_per_flit := DMA_NOC_WIDTH / ARCH_BITS;
+    if r.dma_size_valid = '1' then
+      dma_words_per_flit := 1;
+    end if;
 
     reserved     := (others => '0');
     preamble     := get_preamble(this_coh_flit_size, this_noc_flit_pad & narrow_coherence_req_data_out);
@@ -363,11 +424,12 @@ begin  -- rtl
 
     case r.state is
       when receive_header =>
+        -- Header-decode entry point for both coherence and DMA planes.
         v.coh_noc_data := (others => '0');
         v.dma_noc_data := (others => '0');
         if narrow_coherence_req_empty = '0' then
           narrow_coherence_req_rdreq <= '1';
-          -- Sample request info
+          -- Sample coherence request info.
           v.msg               := get_msg_type(this_coh_flit_size, this_noc_flit_pad & narrow_coherence_req_data_out);
           reserved            := get_reserved_field(this_coh_flit_size, this_noc_flit_pad & narrow_coherence_req_data_out);
           if axitran = 0 then
@@ -377,14 +439,28 @@ begin  -- rtl
             v.hprot             := '0' & reserved(2 downto 0);
             v.hsize_msb         := reserved(3);
           end if;
+          -- Coherence-plane headers do not carry DMA size-override metadata.
+          v.dma_size_valid    := '0';
+          v.dma_hsize         := target_dma_word_hsize;
           sample_header       <= '1';
           v.state             := receive_address;
         elsif dma_rcv_empty = '0' then
           dma_rcv_rdreq     <= '1';
-          -- Sample DMA request
+          -- Sample DMA request info.
           v.msg             := get_msg_type(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
           reserved          := get_reserved_field(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & dma_rcv_data_out);
           v.hprot           := reserved(3 downto 0);
+          -- WSTRB support handshake:
+          -- `axislv2noc` sets `reserved(DMA_HDR_SIZE_VALID_BIT)` and size bits when
+          -- it emits partial-WSTRB DMA segments. Decode and carry into request states.
+          -- Decode itself is immediate; timing impact appears later as smaller
+          -- DMA write/read units on the AHB side.
+          v.dma_size_valid  := reserved(DMA_HDR_SIZE_VALID_BIT);
+          if reserved(DMA_HDR_SIZE_VALID_BIT) = '1' then
+            v.dma_hsize := dma_code_to_hsize(reserved(DMA_HDR_SIZE_MSB downto DMA_HDR_SIZE_LSB));
+          else
+            v.dma_hsize := target_dma_word_hsize;
+          end if;
           sample_dma_header <= '1';
           v.state           := dma_receive_address;
         end if;
@@ -396,29 +472,23 @@ begin  -- rtl
           if (r.msg = REQ_GETS_W or r.msg = REQ_GETS_HW or r.msg = REQ_GETS_B or r.msg = AHB_RD)
             or ((r.msg = REQ_GETM_W) and (l2_cache_en /= 0)) then
             if axitran = 0 then
-              -- If master is on AHB, we don't know the lenght of a read transaction
-              -- Use default size: cacheline
+              -- For AHB masters, read length is unknown here; use cacheline length.
               v.count := cacheline;
             end if;
             if l2_cache_en = 0 then
-              -- NB: when the L2 cache is not enabled, we first initiate the
-              -- bus handover to access memory and wait until the address bus
-              -- is granted. Then we overlap the data bus handover with the
-              -- send_header state.
+              -- With L2 disabled, first acquire the address bus for memory access.
+              -- Then overlap data-bus handover with `send_header`.
               if axitran = 0 then
                 v.state := rd_request;
               else
                 v.state := receive_length;
               end if;
             else
-              -- NB: when L2 cache is enabled, but LLC is not, this proxy
-              -- handles L2 requests, which imply read requests must return the
-              -- address before the data. In this case we send the header right
-              -- away and defer the bus handover to the next state (i.e. send_address).
-              -- As a result we traverse send_header first and
-              -- rd_request right after. We move to send_address when
-              -- the address bus is acquired overlapping the data bus handover
-              -- with this new state.
+              -- With L2 enabled (and no LLC), this proxy handles L2 requests.
+              -- Read responses must return address before data, so send header
+              -- first and defer bus handover to `send_address`.
+              -- Flow is `send_header -> rd_request`, then to `send_address`
+              -- once address-bus ownership is acquired.
               if axitran = 0 then
                 v.state := send_header;
               else
@@ -426,7 +496,7 @@ begin  -- rtl
               end if;
             end if;
           elsif ((r.msg = REQ_GETM_W or r.msg = REQ_GETM_HW or r.msg = REQ_GETM_B) and (l2_cache_en = 0)) or (r.msg = AHB_WR) then
-            -- Writes don't need size. Stop when tail appears.
+            -- Writes do not need length here; stop when TAIL appears.
             v.state := wr_request;
           elsif r.msg = REQ_PUTS or r.msg = REQ_PUTM then
             v.state := send_put_ack;
@@ -436,7 +506,7 @@ begin  -- rtl
         end if;
 
       when receive_length =>
-        -- If master is on AXI, we know the length of the read transaction
+        -- For AXI masters, read length is explicitly provided.
         if narrow_coherence_req_empty = '0' then
           narrow_coherence_req_rdreq <= '1';
           v.count := to_integer(unsigned(narrow_coherence_req_data_out(11 downto 0)));
@@ -448,35 +518,40 @@ begin  -- rtl
         end if;
 
       when dma_receive_address =>
+        -- DMA request address phase. Message type determines whether a separate
+        -- length flit follows (non-coherent write/read) or tail marks completion.
         if dma_rcv_empty = '0' then
           dma_rcv_rdreq <= '1';
           v.addr        := dma_rcv_data_out(GLOB_PHYS_ADDR_BITS - 1 downto 0);
           if r.msg = DMA_TO_DEV or r.msg = REQ_DMA_READ then
             v.state := dma_receive_rdlength;
           elsif r.msg = DMA_FROM_DEV then
-            -- Note: in order to support ESP instances withouth DDR controller,
-            -- non coherent DMA is sending the transaction length to work with FPGA-based
-            -- memory proxy (mem2ext) for which the lenght of the payload must be known
-            -- when the transaction begins. The external link can only handle
+            -- Note: to support ESP instances without a DDR controller,
+            -- non-coherent DMA sends transaction length for the FPGA-based
+            -- `mem2ext` memory proxy, where payload length must be known
+            -- at transaction start. The external link can only handle
             -- non-coherent DMA and LLC requests (i.e. it assumes LLC is present),
             -- therefore coherent DMA requests do not send the transaction
-            -- lenght to reduce the NoC packet overhead.
+            -- length to reduce NoC packet overhead.
             v.state := dma_receive_wrlength;
           else
-            -- Coherent writes do not send length. Stop when tail appears.
+            -- Coherent writes do not send length; stop when TAIL appears.
             v.state := dma_wr_request;
           end if;
         end if;
 
       when dma_receive_wrlength =>
+        -- Non-coherent DMA write-length flit is consumed for protocol alignment.
+        -- This proxy does not need the value itself for internal counting here.
         if dma_rcv_empty = '0' then
-          -- Ignore lenght. DMA Length is only required for the
-          -- mem2ext proxy (see commet above)
+          -- Ignore length. DMA length is only required by the
+          -- `mem2ext` proxy (see note above).
           dma_rcv_rdreq <= '1';
           v.state := dma_wr_request;
         end if;
 
       when dma_receive_rdlength =>
+        -- DMA read length is used to size the AHB burst/read response stream.
         if dma_rcv_empty = '0' then
           dma_rcv_rdreq <= '1';
           v.count       := to_integer(unsigned(dma_rcv_data_out(31 downto 0)));
@@ -496,9 +571,7 @@ begin  -- rtl
         if narrow_coherence_rsp_snd_full = '0' then
           if ((r.count = 1) and (v.grant = '1')
               and (v.ready = '1')) then
-            -- Owning already address
-            -- Single word transfer: no request
-            -- Send header
+            -- Address bus already owned; single-word transfer.
             v.hburst := HBURST_SINGLE;
             v.htrans := HTRANS_NONSEQ;
             if l2_cache_en = 0 then
@@ -507,9 +580,7 @@ begin  -- rtl
               v.state := send_address;
             end if;
           elsif ((v.grant = '1') and (v.ready = '1')) then
-            -- Owning already address
-            -- More than one element burst
-            -- Send header
+            -- Address bus already owned; multi-word burst transfer.
             v.hbusreq := '1';
             v.hburst  := HBURST_INCR;
             v.htrans  := HTRANS_NONSEQ;
@@ -519,7 +590,7 @@ begin  -- rtl
               v.state := send_address;
             end if;
           else
-            -- Need to get ownership of the bus
+            -- Need to acquire bus ownership.
             if r.count = 1 then
               v.hburst := HBURST_SINGLE;
             else
@@ -531,26 +602,27 @@ begin  -- rtl
         end if;
 
       when dma_rd_request =>
+        -- DMA read request issue. Override HSIZE when packet explicitly asks for it.
+        -- If override is not set, this path is timing-equivalent to the original.
         v.hsize := target_dma_word_hsize;
+        if r.dma_size_valid = '1' then
+          v.hsize := r.dma_hsize;
+        end if;
         if dma_snd_atleast_4slots = '1' then
           if ((r.count = 1) and (v.grant = '1')
               and (v.ready = '1')) then
-            -- Owning already address
-            -- Single word transfer: no request
-            -- Send header
+            -- Address bus already owned; single-word transfer.
             v.hburst := HBURST_SINGLE;
             v.htrans := HTRANS_NONSEQ;
             v.state  := dma_send_header;
           elsif ((v.grant = '1') and (v.ready = '1')) then
-            -- Owning already address
-            -- More than one element burst
-            -- Send header
+            -- Address bus already owned; multi-word burst transfer.
             v.hbusreq := '1';
             v.hburst  := HBURST_INCR;
             v.htrans  := HTRANS_NONSEQ;
             v.state   := dma_send_header;
           else
-            -- Need to get ownership of the bus
+            -- Need to acquire bus ownership.
             if r.count = 1 then
               v.hburst := HBURST_SINGLE;
             else
@@ -564,16 +636,15 @@ begin  -- rtl
       when send_header =>
         if l2_cache_en = 0 then
           if (v.ready = '1') then
-            -- Data bus granted
-            -- Send header
+            -- Data bus granted; send response header.
             narrow_coherence_rsp_snd_data_in <= header_reg;
             narrow_coherence_rsp_snd_wrreq   <= '1';
-            -- Updated address and control bus
+            -- Update address and control bus.
             if r.hsize = HSIZE_WORD then
-              -- EDCL always requests 32-bits bursts
+              -- EDCL always requests 32-bit bursts.
               v.addr := r.addr + 4;
             else
-              -- Processors will only request bursts for hsize euqual to data width
+              -- Processors request bursts only when HSIZE equals data width.
               v.addr := r.addr + default_incr;
             end if;
             v.count                   := r.count - 1;
@@ -617,12 +688,11 @@ begin  -- rtl
 
       when dma_send_header =>
         if (v.ready = '1') then
-          -- Data bus granted
-          -- Send header
+          -- Data bus granted; send DMA response header.
           dma_snd_data_in <= dma_header_reg;
           dma_snd_wrreq   <= '1';
-          -- Accelerators work with data widht equal to the selected processor,
-          -- however, non-coherent Ethernet DMA makes 32-bits bursts
+          -- Accelerators use data width equal to the selected processor.
+          -- Non-coherent Ethernet DMA uses 32-bit bursts.
           v.addr          := r.addr + target_dma_incr;
           v.count         := r.count - 1;
           word_rem := r.count;
@@ -644,7 +714,7 @@ begin  -- rtl
           narrow_coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= r.addr;
           narrow_coherence_rsp_snd_wrreq   <= '1';
           v.count                   := r.count - 1;
-          -- L2 cache alwasy uses hsize equal to data widht. So use deafult incr
+          -- L2 cache always uses HSIZE equal to data width, so use default increment.
           v.addr                    := r.addr + default_incr;
           v.state                   := send_data;
           v.htrans                  := HTRANS_SEQ;
@@ -655,19 +725,19 @@ begin  -- rtl
           if narrow_coherence_rsp_snd_full = '1' then
             v.htrans := HTRANS_BUSY;
           else
-            -- Send data to noc
+            -- Send data flit to NoC.
             narrow_coherence_rsp_snd_wrreq   <= '1';
             v.coh_noc_data(this_coh_flit_size -1 downto this_coh_flit_size - PREAMBLE_WIDTH) := PREAMBLE_BODY;
             for i in 1 to (this_coh_flit_size - PREAMBLE_WIDTH) / ARCH_BITS loop
                 v.coh_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
             end loop;
             narrow_coherence_rsp_snd_data_in <= v.coh_noc_data;
-            -- Update address and control bus
+            -- Update address and control bus.
             if r.hsize = HSIZE_WORD then
-              -- EDCL burst
+              -- EDCL burst.
               v.addr := r.addr + 4;
             else
-              -- Processor burst
+              -- Processor burst.
               v.addr := r.addr + default_incr;
             end if;
             v.count                   := r.count - 1;
@@ -692,15 +762,15 @@ begin  -- rtl
 
       when dma_send_data =>
         if (v.ready = '1') then
-          -- Send data to noc
+          -- Send DMA data flit to NoC.
           v.dma_noc_data(DMA_NOC_FLIT_SIZE -1 downto DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
           v.dma_noc_data(ARCH_BITS * (r.word_cnt + 1) - 1 downto ARCH_BITS * r.word_cnt) := fix_endian(ahbmi.hrdata);
           dma_snd_data_in <= v.dma_noc_data;
           word_rem := r.count;
           v.word_cnt := r.word_cnt + 1;
           v.count     := r.count - 1;
-          -- Accelerators work with data widht equal to the selected processor,
-          -- however, non-coherent Ethernet DMA makes 32-bits bursts
+          -- Accelerators use data width equal to the selected processor.
+          -- Non-coherent Ethernet DMA uses 32-bit bursts.
           v.addr          := r.addr + target_dma_incr;
           if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS or word_rem = 0 or eth_dma = 1 then
             v.word_cnt := 0;
@@ -759,9 +829,7 @@ begin  -- rtl
         if narrow_coherence_req_empty = '0' then
           if ((preamble = PREAMBLE_TAIL) and
               (v.grant = '1') and (v.ready = '1')) then
-            -- Owning already address bus
-            -- Single word transfer: no request
-            -- Prefetch
+            -- Address bus already owned; single-word transfer. Prefetch first data flit.
             narrow_coherence_req_rdreq <= '1';
             v.coh_flit          := narrow_coherence_req_data_out;
             v.hburst            := HBURST_SINGLE;
@@ -770,9 +838,7 @@ begin  -- rtl
             v.state             := write_last_data;
             v.is_dma            := '0';
           elsif ((v.grant = '1') and (v.ready = '1')) then
-            -- Owning already address bus
-            -- More than one element burst
-            -- Prefetch
+            -- Address bus already owned; burst transfer. Prefetch first data flit.
             narrow_coherence_req_rdreq <= '1';
             v.coh_flit          := narrow_coherence_req_data_out;
             v.hbusreq           := '1';
@@ -781,7 +847,7 @@ begin  -- rtl
             v.hwrite            := '1';
             v.state             := write_data;
           else
-            -- Need to get ownership of the bus
+            -- Need to acquire bus ownership.
             if (preamble = PREAMBLE_TAIL) then
               v.hburst := HBURST_SINGLE;
             else
@@ -794,16 +860,21 @@ begin  -- rtl
         end if;
 
       when dma_wr_request =>
+        -- DMA write request issue. Override HSIZE and burst heuristics when
+        -- segmented WSTRB traffic forces one logical word per DMA packet.
+        -- No extra state transitions vs baseline; delay grows only if traffic is
+        -- split into more single-word packets (more grant/address phases).
         v.hsize := target_dma_word_hsize;
+        if r.dma_size_valid = '1' then
+          v.hsize := r.dma_hsize;
+        end if;
         if dma_rcv_empty = '0' then
           if ((dma_preamble = PREAMBLE_TAIL) and
               (v.grant = '1') and (v.ready = '1')) then
-            -- Owning already address bus
-            -- Single word transfer: no request
-            -- Prefetch
+            -- Address bus already owned; single-word transfer. Prefetch first flit.
             dma_rcv_rdreq <= '1';
             v.dma_flit    := dma_rcv_data_out;
-            if (DMA_NOC_WIDTH = ARCH_BITS) then
+            if (dma_words_per_flit = 1) then
               v.hburst      := HBURST_SINGLE;
             else
               v.hburst      := HBURST_INCR;
@@ -813,9 +884,7 @@ begin  -- rtl
             v.state       := write_last_data;
             v.is_dma      := '1';
           elsif ((v.grant = '1') and (v.ready = '1')) then
-            -- Owning already address bus
-            -- More than one element burst
-            -- Prefetch
+            -- Address bus already owned; burst transfer. Prefetch first flit.
             dma_rcv_rdreq <= '1';
             v.dma_flit    := dma_rcv_data_out;
             v.hbusreq     := '1';
@@ -824,8 +893,8 @@ begin  -- rtl
             v.hwrite      := '1';
             v.state       := dma_write_data;
           else
-            -- Need to get ownership of the bus
-            if (dma_preamble = PREAMBLE_TAIL and DMA_NOC_WIDTH = ARCH_BITS) then
+            -- Need to acquire bus ownership.
+            if (dma_preamble = PREAMBLE_TAIL and dma_words_per_flit = 1) then
               v.hburst := HBURST_SINGLE;
             else
               v.hburst := HBURST_INCR;
@@ -838,9 +907,9 @@ begin  -- rtl
 
       when write_data =>
         if (v.ready = '1') then
-          -- Write data to memory
+          -- Write data word to memory.
           v.hwdata := r.coh_flit(ARCH_BITS - 1 downto 0);
-          -- Update address and control
+          -- Update address and bus-control signals.
           if r.hsize = HSIZE_WORD then
             v.addr := r.addr + 4;
           else
@@ -856,34 +925,38 @@ begin  -- rtl
               v.state   := write_last_data;
               v.is_dma  := '0';
             end if;
-            -- Prefetch
+            -- Prefetch next flit.
             narrow_coherence_req_rdreq <= '1';
             v.coh_flit          := narrow_coherence_req_data_out;
           end if;
         end if;
 
       when dma_write_data =>
+        -- Stream DMA payload words onto AHB. dma_words_per_flit can collapse to
+        -- 1 for WSTRB-derived subword packets, so fetch cadence follows override.
+        -- With dma_words_per_flit=1 this loop exits per packet sooner, so total
+        -- transaction latency depends on upstream packet count, not new local states.
         if (v.ready = '1') then
-          -- Write data to memory
+          -- Write data word to memory.
           v.hwdata := r.dma_flit((r.word_cnt + 1) * ARCH_BITS - 1 downto r.word_cnt * ARCH_BITS);
-          -- Update address and control
+          -- Update address and bus-control signals.
           v.addr   := r.addr + target_dma_incr;
           v.word_cnt := r.word_cnt + 1;
           v.htrans := HTRANS_SEQ;
-          if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS or eth_dma = 1 then
+          if v.word_cnt = dma_words_per_flit or eth_dma = 1 then
             v.word_cnt := 0;
             if dma_rcv_empty = '1' then
               v.htrans := HTRANS_BUSY;
               v.state  := dma_write_busy;
             else
               if (dma_preamble = PREAMBLE_TAIL) then
-                if (DMA_NOC_WIDTH = ARCH_BITS or eth_dma = 1) then
+                if (dma_words_per_flit = 1 or eth_dma = 1) then
                   v.hbusreq := '0';
                 end if;
                 v.state   := write_last_data;
                 v.is_dma  := '1';
               end if;
-              -- Prefetch
+              -- Prefetch next DMA flit.
               dma_rcv_rdreq <= '1';
               v.dma_flit    := dma_rcv_data_out;
             end if;
@@ -900,16 +973,17 @@ begin  -- rtl
           else
             v.state := write_data;
           end if;
-          -- Prefetch
+          -- Prefetch next flit.
           narrow_coherence_req_rdreq <= '1';
           v.coh_flit          := narrow_coherence_req_data_out;
         end if;
 
       when dma_write_busy =>
+        -- Resume DMA write stream after temporary HTRANS_BUSY backpressure.
         if (v.ready = '1' and dma_rcv_empty = '0') then
           v.htrans := HTRANS_SEQ;
           if (dma_preamble = PREAMBLE_TAIL) then
-            if (DMA_NOC_WIDTH = ARCH_BITS or eth_dma = 1) then
+            if (dma_words_per_flit = 1 or eth_dma = 1) then
               v.hbusreq := '0';
             end if;
             v.state   := write_last_data;
@@ -917,12 +991,16 @@ begin  -- rtl
           else
             v.state := dma_write_data;
           end if;
-          -- Prefetch
+          -- Prefetch next DMA flit.
           dma_rcv_rdreq <= '1';
           v.dma_flit    := dma_rcv_data_out;
         end if;
 
       when write_last_data =>
+        -- Final data phase. DMA path also uses dma_words_per_flit so bus release
+        -- remains correct for both full-width and size-overridden packets.
+        -- For size-overridden packets this state usually retires after one word,
+        -- which is correct but increases per-packet overhead across a whole beat.
         if (v.ready = '1') then
           v.word_cnt := r.word_cnt + 1;
           v.hwrite := '1';
@@ -930,10 +1008,10 @@ begin  -- rtl
           v.addr   := r.addr + target_dma_incr;
           if r.is_dma = '1' then
             v.hwdata := r.dma_flit((r.word_cnt + 1) * ARCH_BITS - 1 downto r.word_cnt * ARCH_BITS);
-            if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS - 1 then
+            if v.word_cnt = dma_words_per_flit - 1 then
               v.hbusreq := '0';
             end if;
-            if v.word_cnt = DMA_NOC_WIDTH / ARCH_BITS or eth_dma = 1 then
+            if v.word_cnt = dma_words_per_flit or eth_dma = 1 then
               v.htrans := HTRANS_IDLE;
               v.hwrite := '0';
               v.state  := write_complete;
@@ -972,7 +1050,7 @@ begin  -- rtl
     ahbmo.hsize   <= r.hsize;
     ahbmo.hburst  <= r.hburst;
     ahbmo.hprot   <= r.hprot;
-    -- Fix little vs. big endian ... !
+    -- Convert between little-endian and big-endian data views.
     if r.hsize = HSIZE_BYTE then
       hwdata_be := ahbdrivedata(r.hwdata(7 downto 0));
     elsif r.hsize = HSIZE_HWORD then
@@ -989,17 +1067,17 @@ begin  -- rtl
 
   end process ahb_roundtrip;
 
-  -- Update FSM state
+  -- Update main FSM state.
   process (clk, rst)
   begin  -- process
-    if rst = '0' then                   -- asynchronous reset (active low)
+    if rst = '0' then                   -- Asynchronous reset (active low).
       r <= reg_none;
-    elsif clk'event and clk = '1' then  -- rising clock edge
+    elsif clk'event and clk = '1' then  -- Rising clock edge.
       r <= rin;
     end if;
   end process;
 
-  -- SerDes for narrow NoC
+  -- SerDes for narrow NoC.
   serdes_gen: if narrow_noc /= 0 and ARCH_BITS /= 32 generate
 
     serdes_beh: process (serdes_current, r, ahbmi, rsp_reg, req_reg,
@@ -1020,7 +1098,7 @@ begin  -- rtl
       sample_rsp_buf <= '0';
       clear_rsp_buf <= '0';
 
-      -- passthru by default
+      -- Passthrough by default.
       coherence_req_rdreq           <= narrow_coherence_req_rdreq;
       narrow_coherence_req_data_out <= coherence_req_data_out;
       narrow_coherence_req_empty    <= coherence_req_empty;
@@ -1106,16 +1184,16 @@ begin  -- rtl
 
     end process serdes_beh;
 
-    -- Update FSM state
+    -- Update SerDes FSM state.
     process (clk, rst)
     begin  -- process
-      if rst = '0' then                   -- asynchronous reset (active low)
+      if rst = '0' then                   -- Asynchronous reset (active low).
         serdes_current <= passthru;
         rsp_reg <= (others => '0');
         rsp_buf_reg <= (others => '0');
         rsp_buf_valid <= '0';
         req_reg <= (others => '0');
-      elsif clk'event and clk = '1' then  -- rising clock edge
+      elsif clk'event and clk = '1' then  -- Rising clock edge.
         serdes_current <= serdes_next;
         if sample_rsp = '1' then
           rsp_reg <= narrow_coherence_rsp_snd_data_in;

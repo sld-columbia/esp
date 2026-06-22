@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -14,6 +14,7 @@ XMLOGOPT += -linedebug
 ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 XMLOGOPT += -DEFINE XILINX_FPGA
 endif
+XMLOGOPT += $(GT_VORTEX_XCELIUM_DEFINES)
 XMLOGOPT += $(INCDIR_XCELIUM)
 
 XMELABOPT += -nowarn DLCPT

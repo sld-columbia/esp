@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2026 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -69,6 +69,22 @@ package nocpackage is
   subtype reserved_field_type is std_logic_vector(RESERVED_WIDTH-1 downto 0);
   subtype reserved_field_misc_type is std_logic_vector(RESERVED_WIDTH_MISC-1 downto 0);
   subtype ports_vec is std_logic_vector(4 downto 0);
+
+  -- Reserved field layout for DMA headers (DMA plane)
+  -- [3:0]   HPROT (as in AHB)
+  -- [5:4]   Size encoding for DMA subword writes (00=B,01=HW,10=W,11=DW)
+  -- [6]     Size override valid for DMA writes
+  -- [7]     Reserved
+  -- Diagram (reserved[7:0]):
+  --   7       6       5:4         3:0
+  -- +-----+-------+-----------+---------+
+  -- |  r  | sizev | size[1:0] |  HPROT  |
+  -- +-----+-------+-----------+---------+
+  constant DMA_HDR_PROT_LSB        : natural := 0;
+  constant DMA_HDR_PROT_MSB        : natural := 3;
+  constant DMA_HDR_SIZE_LSB        : natural := 4;
+  constant DMA_HDR_SIZE_MSB        : natural := 5;
+  constant DMA_HDR_SIZE_VALID_BIT  : natural := 6;
 
   type coh_noc_flit_vector is array (natural range <>) of coh_noc_flit_type;
   type dma_noc_flit_vector is array (natural range <>) of dma_noc_flit_type;
@@ -167,6 +183,8 @@ package nocpackage is
   constant REQ_P2P       : noc_msg_type := "11101";
   constant REQ_DMA_READ  : noc_msg_type := "11110";  -- Read coherent with LLC
   constant REQ_DMA_WRITE : noc_msg_type := "11111";  -- Write coherent with LLC
+  -- Coherent DMA (REQ_DMA_*) targets LLC and typically omits write length flit.
+  -- Non-coherent DMA (DMA_*) bypasses LLC; writes include an explicit length.
   constant CPU_DMA       : noc_msg_type := "11100";  -- identify DMA from CPU
   -- Configuration plane 5 -> RD/WR registers
   constant REQ_REG_RD   : noc_msg_type := "11000";
