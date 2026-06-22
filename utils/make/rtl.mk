@@ -149,6 +149,14 @@ QUARTUS_EXTRA_RTL_SRCS += $(wildcard $(ESP_ROOT)/rtl/sockets/adapters/intel/esp_
 QUARTUS_EXTRA_RTL_SRCS += $(wildcard $(ESP_ROOT)/rtl/sockets/adapters/intel/hps_h2f_axi_to_esp_ahb_master.vhd)
 QUARTUS_EXTRA_RTL_SRCS += $(wildcard $(DESIGN_PATH)/quartus/ghrd_s10_top.v)
 
+QUARTUS_VERILOG_DEFINES := QUARTUS=1 SYNTHESIS=1
+ifeq ("$(CPU_ARCH)","ibex")
+QUARTUS_VERILOG_DEFINES += WT_DCACHE=1
+else
+QUARTUS_VERILOG_DEFINES += WT_DCACHE=1 FPU_FPNEW=1 XLEN_64=1
+endif
+QUARTUS_VERILOG_DEFINES += $(GT_VORTEX_QUARTUS_DEFINES)
+
 
 ### Check if files lists changed ###
 ALL_SIM_SRCS  = $(SIM_VHDL_PKGS) $(SIM_VHDL_SRCS) $(SIM_VLOG_SRCS) $(IP_XCI_SRCS) $(DAT_SRCS)
@@ -223,6 +231,9 @@ ifneq ("$(wildcard $(DESIGN_PATH)/quartus)","")
 	@quartus_prefix="$(DESIGN_PATH)/quartus/"; \
 	design_prefix="$(DESIGN_PATH)/"; \
 	esp_prefix="$(ESP_ROOT)/"; \
+	for def in $(QUARTUS_VERILOG_DEFINES); do \
+		echo "set_global_assignment -name VERILOG_MACRO {$$def}" >> $(QUARTUS_AUTO_SRCS); \
+	done; \
 	for dir in $(INCDIR); do \
 		qdir="$$dir"; \
 		case "$$dir" in \
