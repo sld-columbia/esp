@@ -15,7 +15,7 @@ XDC_SUFFIX =
 endif
 
 
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 
 ACC_TECH_DIR   = $(ESP_ROOT)/tech/$(TECHLIB)/acc
 ACC_TECH_PRESENT = $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_DIR)/*)),$(RTL_ACC)))
@@ -106,7 +106,7 @@ $(VIVADO_LOGS):
 vivado: $(VIVADO_LOGS)
 	$(QUIET_MKDIR)mkdir -p vivado
 
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 
 vivado/srcs.tcl: vivado check_all_rtl_srcs $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 	$(QUIET_INFO)echo "generating source list for Vivado"
@@ -657,7 +657,7 @@ vivado-update-emu: vivado vivado/syn_emu.tcl
 		fi; \
 	fi;
 
-endif # ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+endif # ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 
 vivado-prog-fpga: vivado/program.tcl
 	@cd vivado; \

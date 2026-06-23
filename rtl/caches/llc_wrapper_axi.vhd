@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2024 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2026 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -892,7 +892,7 @@ begin  -- architecture rtl
 	  when write_request =>
 		AW_VALID	<= '1';		
 		if AW_READY = '1' then
-			reg.state := load_line;
+			reg.state := store_line;
 		end if;
 
       -- LOAD LINE
