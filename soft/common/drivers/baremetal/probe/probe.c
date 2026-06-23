@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2026 Columbia University, System Level Design Group
+ * Copyright (c) 2011-2025 Columbia University, System Level Design Group
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -14,7 +14,14 @@
 
 #ifdef __riscv
 
-uintptr_t dtb = DTB_ADDRESS;
+/*
+ * Some bare-metal flows link bootrom startup.S (which defines "_dtb"), while
+ * others use riscv-tests crt.S + test.ld and do not provide that symbol.
+ * Keep a default DTB address for the latter, and override with "_dtb" when
+ * available.
+ */
+extern unsigned char _dtb[] __attribute__((weak));
+uintptr_t dtb = (uintptr_t)_dtb;
     /*
      * The RISC-V bare-metal toolchain does not have support for malloc
      * on unthethered systems. This simple hack is used to enable RTL
@@ -242,6 +249,9 @@ int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const ch
 {
     struct fdt_cb cb;
     ndev = 0;
+
+    if (dtb == 0)
+        dtb = DTB_ADDRESS;
 
     // Initialize first entry of the device structure (may not be discovered!)
     (*espdevs) = (struct esp_device *)aligned_malloc(NACC_MAX * sizeof(struct esp_device));

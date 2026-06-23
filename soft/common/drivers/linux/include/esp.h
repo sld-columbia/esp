@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2026 Columbia University, System Level Design Group
+ * Copyright (c) 2011-2025 Columbia University, System Level Design Group
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -87,6 +87,7 @@ struct esp_device {
     unsigned int ddr_node;
     unsigned int in_place;
     unsigned int reuse_factor;
+    bool third_party;
 };
 
 struct esp_status {

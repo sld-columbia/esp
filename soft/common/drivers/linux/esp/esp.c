@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2026 Columbia University, System Level Design Group
+ * Copyright (c) 2011-2025 Columbia University, System Level Design Group
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -65,9 +65,18 @@ static irqreturn_t esp_irq(int irq, void *dev)
     struct esp_device *esp = dev_get_drvdata(dev);
     u32 status, error, done;
 
-    status = ioread32be(esp->iomem + STATUS_REG);
-    error  = status & STATUS_MASK_ERR;
-    done   = status & STATUS_MASK_DONE;
+    if (esp->third_party) {
+        status = ioread32be(esp->iomem + 0x58);
+	    error = 0;
+	    done = !(status & BIT(0));
+        //printk(KERN_INFO "Third_Party\n");
+    }
+    else {
+        status = ioread32be(esp->iomem + STATUS_REG);
+        error = status & STATUS_MASK_ERR;
+        done = status & STATUS_MASK_DONE;
+        //printk(KERN_INFO "Not Third_Party\n");
+    }
 
     /* printk(KERN_INFO "IRQ: %08x\n", status); */
 

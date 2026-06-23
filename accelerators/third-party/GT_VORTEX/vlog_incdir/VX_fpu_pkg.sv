@@ -1,0 +1,1 @@
+../ip/hw/rtl/fpu/VX_fpu_pkg.sv
