@@ -17,6 +17,9 @@ extern volatile uint64_t fromhost;
 #define NUM_COUNTERS 2
 static uintptr_t counters[NUM_COUNTERS];
 static char *counter_names[NUM_COUNTERS];
+static __thread int errno_value;
+
+int *__errno(void) { return &errno_value; }
 
 void setStats(int enable)
 {
