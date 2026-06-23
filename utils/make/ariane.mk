@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -89,7 +89,6 @@ RISCV_CFLAGS += -static
 RISCV_CFLAGS += -std=gnu99
 RISCV_CFLAGS += -O2
 RISCV_CFLAGS += -ffast-math
-RISCV_CFLAGS += -fno-common
 RISCV_CFLAGS += -fno-builtin-printf
 RISCV_CFLAGS += -nostdlib
 RISCV_CFLAGS += -nostartfiles -lm -lgcc
@@ -144,7 +143,7 @@ $(SOFT_BUILD)/linux-build/.config: $(LINUXSRC)/arch/$(ARCH)/configs/$(LINUX_CONF
 
 
 $(SOFT_BUILD)/linux-build/vmlinux: $(SOFT_BUILD)/sysroot.cpio $(SOFT_BUILD)/linux-build/.config
-	$(QUIET_MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(SOFT_BUILD)/linux-build
+	$(QUIET_MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(SOFT_BUILD)/linux-build KCFLAGS="-fcommon" HOSTCFLAGS="-fcommon"
 
 
 $(SOFT_BUILD)/pk-build:
@@ -232,4 +231,3 @@ VERILOG_ARIANE += $(foreach f, $(shell strings $(FLISTS)/ariane_fpga_vlog.flist)
 endif
 THIRDPARTY_VLOG += $(VERILOG_ARIANE)
 endif
-

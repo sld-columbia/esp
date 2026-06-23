@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -15,6 +15,8 @@ GENUS_EXCLUDE_VHDL += $(DESIGN_PATH)/fpga_proxy_top.vhd
 
 ### Genus targets ###
 GENUS_SVLOGOPT +=
+GENUS_VLOGOPT += $(GENUS_SVLOGOPT)
+GENUS_VLOGOPT += $(GT_VORTEX_GENUS_DEFINES)
 GENUS_VLOG = read_hdl -language sv $(GENUS_VLOGOPT)
 GENUS_VHDL = read_hdl -language vhdl
 

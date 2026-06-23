@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ###############################################################################
@@ -124,6 +124,7 @@ class StyledComponents:
             variable=variable,
             text="",
             state=state,
+            command=command,
             fg_color="green",
             border_color="grey",
             corner_radius=0,
@@ -602,6 +603,103 @@ class AdvancedConfigFrame:
             self.clk_value.pack(anchor="center", padx=3, pady=3)
 
 
+class VortexConfigFrame:
+    def __init__(self, soc, left_panel, main_frame):
+        self.soc = soc
+        self.left_panel = left_panel
+        self.main_frame = main_frame
+
+        self.vortex_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
+        self.vortex_frame.pack(padx=(8, 3), pady=(10, 20), fill="x")
+        self.title_label = StyledComponents.Header(
+            self.vortex_frame, "Vortex Configuration", 0, 0)
+
+        self.note_label = ctk.CTkLabel(
+            self.vortex_frame,
+            text="Single cluster / AXI bank integration",
+            font=("Arial", 10))
+        self.note_label.grid(row=1, column=0, columnspan=2, sticky="w", padx=20, pady=(0, 10))
+
+        self.cores_label = ctk.CTkLabel(
+            self.vortex_frame,
+            text="Cores",
+            font=("Arial", 10))
+        self.cores_label.grid(row=2, column=0, padx=20, pady=5, sticky="w")
+        self.cores_frame = ctk.CTkFrame(self.vortex_frame)
+        self.cores_frame.grid(row=2, column=1, padx=20, pady=5)
+        self.cores_dd = StyledComponents.OptionMenu(
+            self.cores_frame,
+            self.soc.gt_vortex_num_cores,
+            self._as_strings(self.soc.gt_vortex_compatible_core_choices()),
+            width=160,
+            command=main_frame.update_noc_config)
+
+        self.warps_label = ctk.CTkLabel(
+            self.vortex_frame,
+            text="Warps",
+            font=("Arial", 10))
+        self.warps_label.grid(row=3, column=0, padx=20, pady=5, sticky="w")
+        self.warps_frame = ctk.CTkFrame(self.vortex_frame)
+        self.warps_frame.grid(row=3, column=1, padx=20, pady=5)
+        self.warps_dd = StyledComponents.OptionMenu(
+            self.warps_frame,
+            self.soc.gt_vortex_num_warps,
+            self._as_strings(self.soc.gt_vortex_warp_choices()),
+            width=160,
+            command=main_frame.update_noc_config)
+
+        self.threads_label = ctk.CTkLabel(
+            self.vortex_frame,
+            text="Threads",
+            font=("Arial", 10))
+        self.threads_label.grid(row=4, column=0, padx=20, pady=5, sticky="w")
+        self.threads_frame = ctk.CTkFrame(self.vortex_frame)
+        self.threads_frame.grid(row=4, column=1, padx=20, pady=5)
+        self.threads_dd = StyledComponents.OptionMenu(
+            self.threads_frame,
+            self.soc.gt_vortex_num_threads,
+            self._as_strings(self.soc.gt_vortex_compatible_thread_choices()),
+            width=160,
+            command=main_frame.update_noc_config)
+
+        self.l2_label, self.l2_checkbox = StyledComponents.CheckBoxWithLabel(
+            self.vortex_frame,
+            self.soc.gt_vortex_l2_enabled,
+            "L2 Cache",
+            "normal",
+            5,
+            0,
+            command=main_frame.update_noc_config)
+        self.l3_label, self.l3_checkbox = StyledComponents.CheckBoxWithLabel(
+            self.vortex_frame,
+            self.soc.gt_vortex_l3_enabled,
+            "L3 Cache",
+            "normal",
+            5,
+            1,
+            command=main_frame.update_noc_config)
+        self.refresh()
+
+    def _as_strings(self, values):
+        return [str(value) for value in values]
+
+    def refresh(self):
+        self.soc.sanitize_gt_vortex_config()
+        self.cores_dd.configure(
+            values=self._as_strings(self.soc.gt_vortex_compatible_core_choices()))
+        self.warps_dd.configure(
+            values=self._as_strings(self.soc.gt_vortex_warp_choices()))
+        self.threads_dd.configure(
+            values=self._as_strings(self.soc.gt_vortex_compatible_thread_choices()))
+        self.note_label.configure(
+            text=(
+                "Single cluster / AXI bank integration"
+                " | L3 still acts as a single-cluster LLC"
+                f" | AXI TID width {self.soc.gt_vortex_tid_width()}/"
+                f"{self.soc.GT_VORTEX_MAX_TID_WIDTH}"
+            ))
+
+
 class EspCreator:
     def __init__(self, root, _soc):
         self.soc = _soc
@@ -672,6 +770,8 @@ class EspCreator:
         self.debug_link_config_frame.update_frame()
         self.adv_config_frame = AdvancedConfigFrame(
             self.soc, self.left_panel, self)
+        self.vortex_config_frame = VortexConfigFrame(
+            self.soc, self.left_panel, self)
         self.caches_config_frame = CachesConfigFrame(
             self.soc, self.left_panel, self)
         self.noc_config_frame = NoCConfigFrame(
@@ -709,6 +809,7 @@ class EspCreator:
             soc.CPU_ARCH.get())
         self.soc.update_list_of_ips()
         self.soc.changed()
+        self.vortex_config_frame.refresh()
         self.noc_config_frame.changed()
 
     def generate_files(self):
