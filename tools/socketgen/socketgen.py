@@ -29,7 +29,7 @@ def print_usage():
     print("")
     print("      <arch_bits>        : Bit-width for the DMA channel (32, 64)")
     print("")
-    print("      <cpu_arch>         : Target processor (ariane, ibex, leon3)")
+    print("      <cpu_arch>         : Target processor (ariane, cva6, ibex, leon3)")
     print("")
     print("      <cache_line_size>  : Cache line size in bits (128, 256, 512, 1024)")
     print("")

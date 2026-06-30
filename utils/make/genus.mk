@@ -7,6 +7,10 @@ GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/ariane/ariane/src/util/ex_trace_item
 GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/ariane/ariane/src/util/instr_trace_item.svh
 GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/ariane/ariane/src/util/instr_tracer_if.sv
 GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/ariane/ariane/src/util/instr_tracer.sv
+GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/cva6/cva6/common/local/util/ex_trace_item.svh
+GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/cva6/cva6/common/local/util/ex_trace_item.svh
+GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/cva6/cva6/common/local/util/instr_trace_item.svh
+GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/cva6/cva6/common/local/util/instr_tracer.sv
 GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/ibex/ibex/vendor/lowrisc_ip/ip/prim_xilinx/rtl/prim_xilinx_clock_gating.sv
 
 GENUS_EXCLUDE_VHDL += $(ESP_ROOT)/rtl/sockets/monitor/monitor.vhd

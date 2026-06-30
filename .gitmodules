@@ -21,7 +21,7 @@
 	url = https://github.com/sld-columbia/riscv-pk.git
 [submodule "soft/ariane/riscv-tests"]
 	path = soft/ariane/riscv-tests
-	url = https://github.com/riscv/riscv-tests.git
+	url = https://github.com/riscv-software-src/riscv-tests.git
 [submodule "accelerators/third-party/NV_NVDLA/ip"]
 	path = accelerators/third-party/NV_NVDLA/ip
 	url = https://github.com/sld-columbia/nvdla-hw.git
@@ -54,3 +54,12 @@
 [submodule "soft/common/drivers/common/utils/eigen"]
 	path = soft/common/drivers/common/utils/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "rtl/cores/cva6/cva6"]
+	path = rtl/cores/cva6/cva6
+	url = https://github.com/openhwgroup/cva6.git
+[submodule "soft/cva6/linux"]
+	path = soft/cva6/linux
+	url = https://github.com/m-d-upm/esp-linux.git
+[submodule "soft/cva6/opensbi"]
+	path = soft/cva6/opensbi
+	url = https://github.com/riscv-software-src/opensbi.git

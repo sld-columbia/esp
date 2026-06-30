@@ -1,0 +1,52 @@
+#!/bin/sh
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
+
+# start (per DDR node): contig_alloc starting address
+# size (per DDR node): contig_alloc region size
+# chunk_log: default accelerator page
+
+# Default values:
+#
+#               #DDR#
+# 0x80000000 -> \----\
+#               |    |
+#               |    |
+#               |    | -> reserved for software only
+#               |    |
+# 0xA0000000 -> |    | -> End of Ariane's L1 cacheable address space
+#               |    | -> reserved for Ethernet DMA
+# 0xA0100000 -> |    | -> End of Ethernet DMA buffer
+#               |    |
+#               |    |
+#               |    |
+#               |    | -> shared (software and accellerators) and cached in L2 and LLC
+#               |    |
+#               |    |
+#               |    |
+#               |    |
+#               |    |
+# 0xB0000000 -> |    | -> End shared accelerators' buffer
+#               |    |
+#               |    | -> reserved for NV_NVDLA
+#               |    |
+#               |    |
+# 0xBfffffff -> \----\ -> 1GB
+#
+
+# The current address mapping allows ESP to execute with accelerators
+# and NVDLA even on the VC707 board (1GB DDR3)
+# Adjust these settings in the system if necessary
+
+# accelerator page: 2^20B -> 1MB
+# shared accelerator buffer on DDR node 0 starts at 0xA0100000
+# shared accelerator buffer on DDR node 1 starts at 0xA8000000
+
+#note: the above comments apply to S64esp
+
+cd /opt/drivers
+for K in `ls *.ko`; do
+   insmod $K;
+done
+
+lsmod

@@ -20,3 +20,17 @@ cores/ariane/ariane/include/wt_cache_pkg.sv
 cores/ariane/ariane_wrap.sv
 cores/ariane/riscv_clint_wrap.sv
 cores/ariane/riscv_plic_wrap.sv
+cores/cva6/cva6/core/include/config_pkg.sv
+cores/cva6/cva6_soc_pkg.sv
+cores/cva6/cva6/core/include/${TARGET_CFG}_config_pkg.sv
+cores/cva6/cva6/core/include/build_config_pkg.sv
+cores/cva6/cva6/core/include/riscv_pkg.sv
+cores/cva6/cva6/corev_apu/riscv-dbg/src/dm_pkg.sv
+cores/cva6/cva6/core/include/ariane_pkg.sv
+cores/cva6/cva6/vendor/pulp-platform/axi/src/axi_pkg.sv
+cores/cva6/cva6/corev_apu/tb/ariane_axi_pkg.sv
+cores/cva6/cva6/core/include/std_cache_pkg.sv
+cores/cva6/cva6/core/include/wt_cache_pkg.sv
+cores/cva6/cva6_wrap.sv
+cores/cva6/riscv_clint_wrap.sv
+cores/cva6/riscv_plic_wrap.sv

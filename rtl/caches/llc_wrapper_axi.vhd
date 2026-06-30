@@ -810,7 +810,7 @@ begin  -- architecture rtl
   -- Static outputs: AHB master, NoC
   -------------------------------------------------------------------------------
 
-  ariane_cache_word_gen : if GLOB_CPU_ARCH = ariane generate
+  ariane_cache_word_gen : if GLOB_CPU_ARCH = ariane or GLOB_CPU_ARCH = cva6 generate
     ar_size <= XSIZE_DWORD;
     aw_size <= XSIZE_DWORD;
   end generate ariane_cache_word_gen;

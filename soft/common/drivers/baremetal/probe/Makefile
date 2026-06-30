@@ -26,7 +26,7 @@ LDFLAGS += -lgcc
 
 OBJS_DEP := syscalls.o uart.o fdt.o
 OBJS_DEP := $(addprefix  $(BUILD_PATH)/, $(OBJS_DEP))
-ifeq ("$(CPU_ARCH)", "ariane")
+ifneq ($(filter cva6 ariane,$(CPU_ARCH)),)
 CROSS_COMPILE ?= riscv64-unknown-elf-
 else # ("$(CPU_ARCH)", "ibex")
 CROSS_COMPILE ?= riscv32-unknown-elf-
