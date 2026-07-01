@@ -21,7 +21,7 @@ CFLAGS += -fno-builtin-printf
 CFLAGS += -nostdlib
 CFLAGS += -nostartfiles
 
-ifeq ("$(CPU_ARCH)", "ariane")
+ifneq ($(filter cva6 ariane,$(CPU_ARCH)),)
 CROSS_COMPILE ?= riscv64-unknown-elf-
 else # ("$(CPU_ARCH)", "ibex")
 CROSS_COMPILE ?= riscv32-unknown-elf-

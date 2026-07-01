@@ -1,0 +1,1921 @@
+diff --git a/common/local/util/instr_tracer.sv b/common/local/util/instr_tracer.sv
+index dad2f29c..5383a190 100644
+--- a/common/local/util/instr_tracer.sv
++++ b/common/local/util/instr_tracer.sv
+@@ -300,6 +300,8 @@ module instr_tracer #(
+ 
+ 
+   initial begin
++    #15ns;
++    @(posedge rstn)
+     #15ns;
+     create_file(hart_id_i);
+     trace();
+diff --git a/core/amo_buffer.sv b/core/amo_buffer.sv
+index d489dde5..91057496 100644
+--- a/core/amo_buffer.sv
++++ b/core/amo_buffer.sv
+@@ -27,6 +27,8 @@ module amo_buffer #(
+     input  logic [CVA6Cfg.PLEN-1:0]      paddr_i,            // physical address of store which needs to be placed in the queue
+     input logic [CVA6Cfg.XLEN-1:0] data_i,  // data which is placed in the queue
+     input logic [1:0] data_size_i,  // type of request we are making (e.g.: bytes to write)
++    input  logic             aq_i,
++    input  logic             rl_i,
+     // D$
+     output ariane_pkg::amo_req_t amo_req_o,  // request to cache subsystem
+     input ariane_pkg::amo_resp_t amo_resp_i,  // response from cache subsystem
+@@ -42,6 +44,8 @@ module amo_buffer #(
+     logic [CVA6Cfg.PLEN-1:0] paddr;
+     logic [CVA6Cfg.XLEN-1:0] data;
+     logic [1:0]              size;
++    logic                    aq;
++    logic                    rl;
+   } amo_op_t;
+ 
+   amo_op_t amo_data_in, amo_data_out;
+@@ -52,11 +56,15 @@ module amo_buffer #(
+   assign amo_req_o.size = amo_data_out.size;
+   assign amo_req_o.operand_a = {{64 - CVA6Cfg.PLEN{1'b0}}, amo_data_out.paddr};
+   assign amo_req_o.operand_b = {{64 - CVA6Cfg.XLEN{1'b0}}, amo_data_out.data};
++  assign amo_req_o.aq = amo_data_out.aq;
++  assign amo_req_o.rl = amo_data_out.rl;
+ 
+   assign amo_data_in.op = amo_op_i;
+   assign amo_data_in.data = data_i;
+   assign amo_data_in.paddr = paddr_i;
+   assign amo_data_in.size = data_size_i;
++  assign amo_data_in.aq = aq_i;
++  assign amo_data_in.rl = rl_i;
+ 
+   // only flush if we are currently not committing the AMO
+   // e.g.: it is not speculative anymore
+diff --git a/core/axi_shim.sv b/core/axi_shim.sv
+index 5511d518..b0a8adc8 100644
+--- a/core/axi_shim.sv
++++ b/core/axi_shim.sv
+@@ -34,9 +34,11 @@ module axi_shim #(
+     input logic [CVA6Cfg.AxiAddrWidth-1:0] rd_addr_i,
+     input logic [$clog2(AxiNumWords)-1:0] rd_blen_i,  // axi convention: LEN-1
+     input logic [2:0] rd_size_i,
++    input  ariane_pkg::dcs_data_t rd_dcs_data_i,
+     input  logic [CVA6Cfg.AxiIdWidth-1:0]   rd_id_i,   // use same ID for reads, or make sure you only have one outstanding read tx
+     input logic rd_lock_i,
+     // read response (we have to unconditionally sink the response)
++    input logic rd_instr_i,
+     input logic rd_rdy_i,
+     output logic rd_last_o,
+     output logic rd_valid_o,
+@@ -53,17 +55,30 @@ module axi_shim #(
+     input logic [AxiNumWords-1:0][(CVA6Cfg.AxiDataWidth/8)-1:0] wr_be_i,
+     input logic [$clog2(AxiNumWords)-1:0] wr_blen_i,  // axi convention: LEN-1
+     input logic [2:0] wr_size_i,
++    input  ariane_pkg::dcs_data_t wr_dcs_data_i,
+     input logic [CVA6Cfg.AxiIdWidth-1:0] wr_id_i,
+     input logic wr_lock_i,
+     input logic [5:0] wr_atop_i,
++    input logic wr_aq_i,
++    input logic wr_rl_i,
+     // write response
+     input logic wr_rdy_i,
+     output logic wr_valid_o,
+     output logic [CVA6Cfg.AxiIdWidth-1:0] wr_id_o,
+     output logic wr_exokay_o,  // indicates whether exclusive tx succeeded
++  // snoop channel
++  // request
++  output logic                            axi_ac_valid_o,
++  output logic [63:0]                     axi_ac_addr_o,
++  output axi_pkg::prot_t                  axi_ac_prot_o,
++  // response
++  input  logic                            axi_ac_ready_i,
+     // AXI port
+     output axi_req_t axi_req_o,
+-    input axi_rsp_t axi_resp_i
++  input axi_rsp_t axi_resp_i,
++  // ACE snoop
++  input  ariane_axi::snoop_req_t ace_req_i,
++  output ariane_axi::snoop_resp_t ace_resp_o
+ );
+   localparam AddrIndex = ($clog2(AxiNumWords) > 0) ? $clog2(AxiNumWords) : 1;
+ 
+@@ -90,6 +105,7 @@ module axi_shim #(
+   assign axi_req_o.aw.burst = axi_pkg::BURST_INCR;  // Use BURST_INCR for AXI regular transaction
+   assign axi_req_o.aw.addr = wr_addr_i[CVA6Cfg.AxiAddrWidth-1:0];
+   assign axi_req_o.aw.size = wr_size_i;
++  assign axi_req_o.aw.user = {wr_aq_i, wr_rl_i, wr_dcs_data_i};
+   assign axi_req_o.aw.len = wr_blen_i;
+   assign axi_req_o.aw.id = wr_id_i;
+   assign axi_req_o.aw.prot = 3'b0;
+@@ -98,7 +114,6 @@ module axi_shim #(
+   assign axi_req_o.aw.cache = axi_pkg::CACHE_MODIFIABLE;
+   assign axi_req_o.aw.qos = 4'b0;
+   assign axi_req_o.aw.atop = wr_atop_i;
+-  assign axi_req_o.aw.user = '0;
+ 
+   // data
+   assign axi_req_o.w.data = wr_data_i[wr_cnt_q];
+@@ -253,14 +268,14 @@ module axi_shim #(
+   assign axi_req_o.ar.burst  = axi_pkg::BURST_INCR;  // Use BURST_INCR for AXI regular transaction
+   assign axi_req_o.ar.addr   = rd_addr_i[CVA6Cfg.AxiAddrWidth-1:0];
+   assign axi_req_o.ar.size   = rd_size_i;
++  assign axi_req_o.ar.user   = {2'b0, rd_dcs_data_i};
+   assign axi_req_o.ar.len    = rd_blen_i;
+   assign axi_req_o.ar.id     = rd_id_i;
+-  assign axi_req_o.ar.prot   = 3'b0;
++  assign axi_req_o.ar.prot   = {rd_instr_i, 2'b0};
+   assign axi_req_o.ar.region = 4'b0;
+   assign axi_req_o.ar.lock   = rd_lock_i;
+   assign axi_req_o.ar.cache  = axi_pkg::CACHE_MODIFIABLE;
+   assign axi_req_o.ar.qos    = 4'b0;
+-  assign axi_req_o.ar.user   = '0;
+ 
+   // make the read request
+   assign axi_req_o.ar_valid  = rd_req_i;
+@@ -280,6 +295,17 @@ module axi_shim #(
+   assign rd_exokay_o = (axi_resp_i.r.resp == axi_pkg::RESP_EXOKAY);
+ 
+ 
++  ///////////////////////////////////////////////////////
++  // snoop channel
++  ///////////////////////////////////////////////////////
++
++  // accepting only invalidation requests
++  assign axi_ac_valid_o      = (ace_req_i.ac.snoop == axi_pkg::SNOOP_MAKEINVALID) ? ace_req_i.ac_valid : 1'b0;
++  assign axi_ac_prot_o       = ace_req_i.ac.prot;
++  assign axi_ac_addr_o       = ace_req_i.ac.addr;
++  assign ace_resp_o.ac_ready = axi_ac_ready_i;
++
++
+   // ----------------
+   // Registers
+   // ----------------
+diff --git a/core/cache_subsystem/cva6_icache.sv b/core/cache_subsystem/cva6_icache.sv
+index d84ee26d..d1ed557d 100644
+--- a/core/cache_subsystem/cva6_icache.sv
++++ b/core/cache_subsystem/cva6_icache.sv
+@@ -54,6 +54,9 @@ module cva6_icache
+     // data requests
+     input  icache_dreq_t dreq_i,
+     output icache_drsp_t dreq_o,
++    input  logic                      mem_inv_req_i,        // invalidate request
++    input  logic [CVA6Cfg.PLEN-1:0]   mem_inv_addr_i,       // physical address to invalidate
++    output logic                      mem_inv_ack_o,        // invalidate request ack
+     // refill port
+     input  logic         mem_rtrn_vld_i,
+     input  icache_rtrn_t mem_rtrn_i,
+@@ -179,6 +182,8 @@ module cva6_icache
+   assign mem_data_o.way = repl_way;
+   assign dreq_o.vaddr   = vaddr_q;
+ 
++  assign mem_inv_ack_o = 1'b1;
++
+   // invalidations take two cycles
+   assign inv_d          = inv_en;
+ 
+diff --git a/core/cache_subsystem/wt_axi_adapter.sv b/core/cache_subsystem/wt_axi_adapter.sv
+index 784c193b..36e39469 100644
+--- a/core/cache_subsystem/wt_axi_adapter.sv
++++ b/core/cache_subsystem/wt_axi_adapter.sv
+@@ -58,7 +58,19 @@ module wt_axi_adapter
+     // Invalidations
+     input  logic [63:0] inval_addr_i,
+     input  logic        inval_valid_i,
+-    output logic        inval_ready_o
++    output logic        inval_ready_o,
++
++    // invalidate request from AXI
++    output logic                    icache_inv_req_o,
++    output logic [CVA6Cfg.PLEN-1:0] icache_inv_addr_o,
++    input  logic                    icache_inv_ack_i,
++    output logic                    dcache_inv_req_o,
++    output logic [CVA6Cfg.PLEN-1:0] dcache_inv_addr_o,
++    input  logic                    dcache_inv_ack_i,
++
++    // ACE port (only need AC channel for invalidate)
++    input  ariane_axi::snoop_req_t   ace_req_i,
++    output ariane_axi::snoop_resp_t  ace_resp_o
+ );
+ 
+   // support up to 512bit cache lines
+@@ -84,7 +96,9 @@ module wt_axi_adapter
+   logic axi_rd_req, axi_rd_gnt;
+   logic axi_wr_req, axi_wr_gnt;
+   logic axi_wr_valid, axi_rd_valid, axi_rd_rdy, axi_wr_rdy;
+-  logic axi_rd_lock, axi_wr_lock, axi_rd_exokay, axi_wr_exokay, wr_exokay;
++  logic axi_wr_aq, axi_wr_rl;
++  dcs_data_t axi_rd_dcs_data, axi_wr_dcs_data;
++  logic axi_rd_lock, axi_wr_lock, axi_rd_exokay, axi_wr_exokay, wr_exokay, axi_rd_instr;
+   logic [CVA6Cfg.AxiAddrWidth-1:0] axi_rd_addr, axi_wr_addr;
+   logic [AxiBlenWidth-1:0] axi_rd_blen, axi_wr_blen;
+   logic [2:0] axi_rd_size, axi_wr_size;
+@@ -108,6 +122,15 @@ module wt_axi_adapter
+   logic icache_rd_full, icache_rd_empty;
+   logic dcache_rd_full, dcache_rd_empty;
+   logic dcache_wr_full, dcache_wr_empty;
++  logic [CVA6Cfg.PLEN-1:0] dcache_rtrn_rd_addr;
++  logic dcache_rd_addr_empty;
++
++  // snooping on ACE
++  logic                 axi_ac_valid;
++  logic                 axi_ac_ready;
++  logic [63:0]          axi_ac_addr;
++  axi_pkg::prot_t       axi_ac_prot;
++  logic                 inval_gnt;
+ 
+   assign icache_data_ack_o = icache_data_req_i & ~icache_data_full;
+   assign dcache_data_ack_o = dcache_data_req_i & ~dcache_data_full;
+@@ -147,6 +170,7 @@ module wt_axi_adapter
+     // Cast to AXI address width
+     axi_wr_addr  = CVA6Cfg.AxiAddrWidth'(dcache_data.paddr);
+     axi_wr_size  = dcache_data.size;
++    axi_wr_dcs_data = dcache_data.dcs_data;
+     axi_wr_req   = 1'b0;
+     axi_wr_blen  = '0;// single word writes
+     axi_wr_be    = '0;
+@@ -154,12 +178,15 @@ module wt_axi_adapter
+     axi_wr_atop  = '0;
+     amo_off_d    = amo_off_q;
+     amo_gen_r_d  = amo_gen_r_q;
++    axi_wr_aq    = dcache_data.aq;
++    axi_wr_rl    = dcache_data.rl;
+ 
+     // read channel
+     axi_rd_id_in = {{CVA6Cfg.AxiIdWidth-1{1'b0}}, arb_idx};
+     axi_rd_req   = 1'b0;
+     axi_rd_lock  = '0;
+     axi_rd_blen  = '0;
++    axi_rd_instr = 1'b0;
+ 
+     if (dcache_data.paddr[2] == 1'b0) begin
+       axi_wr_user = {{64 - CVA6Cfg.AxiUserWidth{1'b0}}, dcache_data.user};
+@@ -173,6 +200,7 @@ module wt_axi_adapter
+       axi_rd_addr = CVA6Cfg.AxiAddrWidth'(dcache_data.paddr);
+       // If dcache_data.size MSB is set, we want to read as much as possible
+       axi_rd_size = dcache_data.size[2] ? MaxNumWords[2:0] : dcache_data.size;
++      axi_rd_dcs_data = dcache_data.dcs_data;
+       if (dcache_data.size[2]) begin
+         axi_rd_blen = AxiRdBlenDcache[AxiBlenWidth-1:0];
+       end
+@@ -180,9 +208,11 @@ module wt_axi_adapter
+       // Cast to AXI address width
+       axi_rd_addr = CVA6Cfg.AxiAddrWidth'(icache_data.paddr);
+       axi_rd_size = MaxNumWords[2:0];  // always request max number of words in case of ifill
++      axi_rd_dcs_data   = '0;
+       if (!icache_data.nc) begin
+         axi_rd_blen = AxiRdBlenIcache[AxiBlenWidth-1:0];
+       end
++      axi_rd_instr = 1'b1;
+     end
+ 
+     // signal that an invalidation message
+@@ -450,6 +480,25 @@ module wt_axi_adapter
+       .pop_i     (dcache_rd_pop)
+   );
+ 
++  // keep track of read address to check incoming invalidations for conflict
++  cva6_fifo_v3 #(
++    .DATA_WIDTH(CVA6Cfg.PLEN),
++    .DEPTH     (MetaFifoDepth),
++    .FPGA_EN   (CVA6Cfg.FpgaEn)
++  ) i_rd_dcache_addr (
++    .clk_i     (clk_i),
++    .rst_ni    (rst_ni),
++    .flush_i   (1'b0),
++    .testmode_i(1'b0),
++    .full_o    (),
++    .empty_o   (dcache_rd_addr_empty),
++    .usage_o   (),
++    .data_i    (dcache_data.paddr),
++    .push_i    (arb_ack[1] & axi_rd_gnt),
++    .data_o    (dcache_rtrn_rd_addr),
++    .pop_i     (dcache_rd_pop)
++  );
++
+   cva6_fifo_v3 #(
+       .DATA_WIDTH(CVA6Cfg.MEM_TID_WIDTH),
+       .DEPTH     (MetaFifoDepth),
+@@ -471,6 +520,23 @@ module wt_axi_adapter
+   // select correct tid to return
+   assign dcache_rtrn_tid_d = (dcache_wr_pop) ? dcache_rtrn_wr_tid : dcache_rtrn_rd_tid;
+ 
++  ///////////////////////////////////////////////////////
++  // Snoop channel request-response
++  ///////////////////////////////////////////////////////
++  assign icache_inv_addr_o = axi_ac_addr[CVA6Cfg.PLEN-1:0];
++  assign dcache_inv_addr_o = axi_ac_addr[CVA6Cfg.PLEN-1:0];
++  assign axi_ac_ready      = (icache_inv_ack_i & icache_inv_req_o) | (dcache_inv_ack_i & dcache_inv_req_o);
++  assign inval_gnt         = (axi_ac_addr[CVA6Cfg.PLEN-1:0] != dcache_rtrn_rd_addr) | dcache_rd_addr_empty;
++
++  always_comb begin : p_axi_snoop
++    icache_inv_req_o = 1'b0;
++    dcache_inv_req_o = 1'b0;
++    if (axi_ac_prot[2])
++      icache_inv_req_o = axi_ac_valid & inval_gnt;
++    else
++      dcache_inv_req_o = axi_ac_valid & inval_gnt;
++  end
++
+   ///////////////////////////////////////////////////////
+   // return path
+   ///////////////////////////////////////////////////////
+@@ -743,7 +809,9 @@ module wt_axi_adapter
+       .rd_addr_i  (axi_rd_addr),
+       .rd_blen_i  (axi_rd_blen),
+       .rd_size_i  (axi_rd_size),
++      .rd_dcs_data_i (axi_rd_dcs_data),
+       .rd_id_i    (axi_rd_id_in),
++      .rd_instr_i (axi_rd_instr),
+       .rd_rdy_i   (axi_rd_rdy),
+       .rd_lock_i  (axi_rd_lock),
+       .rd_last_o  (axi_rd_last),
+@@ -760,15 +828,24 @@ module wt_axi_adapter
+       .wr_be_i    (axi_wr_be),
+       .wr_blen_i  (axi_wr_blen),
+       .wr_size_i  (axi_wr_size),
++      .wr_dcs_data_i (axi_wr_dcs_data),
+       .wr_id_i    (axi_wr_id_in),
+       .wr_lock_i  (axi_wr_lock),
+       .wr_atop_i  (axi_wr_atop),
++      .wr_aq_i    (axi_wr_aq),
++      .wr_rl_i    (axi_wr_rl),
+       .wr_rdy_i   (axi_wr_rdy),
+       .wr_valid_o (axi_wr_valid),
+       .wr_id_o    (axi_wr_id_out),
+       .wr_exokay_o(axi_wr_exokay),
+-      .axi_req_o  (axi_req_o),
+-      .axi_resp_i (axi_resp_i)
++    .axi_ac_valid_o(axi_ac_valid),
++    .axi_ac_addr_o (axi_ac_addr),
++    .axi_ac_prot_o (axi_ac_prot),
++    .axi_ac_ready_i(axi_ac_ready),
++    .axi_req_o  (axi_req_o),
++    .axi_resp_i (axi_resp_i),
++    .ace_req_i  (ace_req_i),
++    .ace_resp_o (ace_resp_o)
+   );
+ 
+   ///////////////////////////////////////////////////////
+diff --git a/core/cache_subsystem/wt_cache_subsystem.sv b/core/cache_subsystem/wt_cache_subsystem.sv
+index 4f40002f..7166c9c7 100644
+--- a/core/cache_subsystem/wt_cache_subsystem.sv
++++ b/core/cache_subsystem/wt_cache_subsystem.sv
+@@ -72,7 +72,10 @@ module wt_cache_subsystem
+     // Invalidations
+     input logic [63:0] inval_addr_i,
+     input logic inval_valid_i,
+-    output logic inval_ready_o
++    output logic inval_ready_o,
++    // ACE snoop invalidate channel
++    input  ariane_axi::snoop_req_t  ace_req_i,
++    output ariane_axi::snoop_resp_t ace_resp_o
+     // TODO: interrupt interface
+ );
+ 
+@@ -94,6 +97,9 @@ module wt_cache_subsystem
+     logic nc;  // noncacheable
+     logic [CVA6Cfg.MEM_TID_WIDTH-1:0] tid;  // thread id (used as transaction id in Ariane)
+     ariane_pkg::amo_t amo_op;  // amo opcode
++    ariane_pkg::dcs_data_t dcs_data;
++    logic aq;
++    logic rl;
+   };
+ 
+   localparam type dcache_rtrn_t = struct packed {
+@@ -113,6 +119,14 @@ module wt_cache_subsystem
+   dcache_req_t  dcache_adapter;
+   dcache_rtrn_t adapter_dcache;
+ 
++  // invalidate requests from AXI bus
++  logic                   adapter_icache_inv_req;
++  logic [CVA6Cfg.PLEN-1:0] adapter_icache_inv_addr;
++  logic                   adapter_icache_inv_ack;
++  logic                   adapter_dcache_inv_req;
++  logic [CVA6Cfg.PLEN-1:0] adapter_dcache_inv_addr;
++  logic                   adapter_dcache_inv_ack;
++
+   cva6_icache #(
+       // use ID 0 for icache reads
+       .CVA6Cfg(CVA6Cfg),
+@@ -133,6 +147,9 @@ module wt_cache_subsystem
+       .areq_o        (icache_areq_o),
+       .dreq_i        (icache_dreq_i),
+       .dreq_o        (icache_dreq_o),
++      .mem_inv_req_i (adapter_icache_inv_req),
++      .mem_inv_addr_i(adapter_icache_inv_addr),
++      .mem_inv_ack_o (adapter_icache_inv_ack),
+       .mem_rtrn_vld_i(adapter_icache_rtrn_vld),
+       .mem_rtrn_i    (adapter_icache),
+       .mem_data_req_o(icache_adapter_data_req),
+@@ -169,6 +186,9 @@ module wt_cache_subsystem
+       .req_ports_i     (dcache_req_ports_i),
+       .req_ports_o     (dcache_req_ports_o),
+       .miss_vld_bits_o (miss_vld_bits_o),
++      .mem_inv_req_i   (adapter_dcache_inv_req),
++      .mem_inv_addr_i  (adapter_dcache_inv_addr),
++      .mem_inv_ack_o   (adapter_dcache_inv_ack),
+       .mem_rtrn_vld_i  (adapter_dcache_rtrn_vld),
+       .mem_rtrn_i      (adapter_dcache),
+       .mem_data_req_o  (dcache_adapter_data_req),
+@@ -228,8 +248,16 @@ module wt_cache_subsystem
+       .dcache_data_i    (dcache_adapter),
+       .dcache_rtrn_vld_o(adapter_dcache_rtrn_vld),
+       .dcache_rtrn_o    (adapter_dcache),
++      .icache_inv_req_o (adapter_icache_inv_req),
++      .icache_inv_addr_o(adapter_icache_inv_addr),
++      .icache_inv_ack_i (adapter_icache_inv_ack),
++      .dcache_inv_req_o (adapter_dcache_inv_req),
++      .dcache_inv_addr_o(adapter_dcache_inv_addr),
++      .dcache_inv_ack_i (adapter_dcache_inv_ack),
+       .axi_req_o        (noc_req_o),
+       .axi_resp_i       (noc_resp_i),
++      .ace_req_i        (ace_req_i),
++      .ace_resp_o       (ace_resp_o),
+       .mbe_i            (mbe_i),
+       .inval_addr_i     (inval_addr_i),
+       .inval_valid_i    (inval_valid_i),
+diff --git a/core/cache_subsystem/wt_dcache.sv b/core/cache_subsystem/wt_dcache.sv
+index 76248861..c7908d24 100644
+--- a/core/cache_subsystem/wt_dcache.sv
++++ b/core/cache_subsystem/wt_dcache.sv
+@@ -53,10 +53,24 @@ module wt_dcache
+     input  dcache_rtrn_t mem_rtrn_i,
+     output logic         mem_data_req_o,
+     input  logic         mem_data_ack_i,
+-    output dcache_req_t  mem_data_o
++    output dcache_req_t  mem_data_o,
++
++    // Invalidation request from AXI-ACE
++    input  logic                           mem_inv_req_i,
++    input  logic [CVA6Cfg.PLEN-1:0]        mem_inv_addr_i,
++    output logic                           mem_inv_ack_o
+ );
+ 
+   localparam DCACHE_CL_IDX_WIDTH = $clog2(CVA6Cfg.DCACHE_NUM_WORDS);
++  localparam int unsigned MemPorts = NumPorts + 1;
++
++  // Cache invalidation type
++  localparam type dcache_inval_t = struct packed {
++    logic                                      vld;  // invalidate only affected way
++    logic                                      all;  // invalidate all ways
++    logic [CVA6Cfg.DCACHE_INDEX_WIDTH-1:0]     idx;  // physical address to invalidate
++    logic [CVA6Cfg.DCACHE_SET_ASSOC_WIDTH-1:0] way;  // way to invalidate
++  };
+ 
+   localparam type wbuffer_t = struct packed {
+     logic [CVA6Cfg.DCACHE_TAG_WIDTH+(CVA6Cfg.DCACHE_INDEX_WIDTH-CVA6Cfg.XLEN_ALIGN_BYTES)-1:0] wtag;
+@@ -67,6 +81,7 @@ module wt_dcache
+     logic [(CVA6Cfg.XLEN/8)-1:0] txblock;  // byte is part of transaction in-flight
+     logic checked;  // if cache state of this word has been checked
+     logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0] hit_oh;  // valid way in the cache
++    ariane_pkg::dcs_data_t dcs_data;
+   };
+ 
+   // miss unit <-> read controllers
+@@ -101,18 +116,19 @@ module wt_dcache
+   logic     [                      NumPorts-1:0][               CVA6Cfg.PLEN-1:0] miss_paddr;
+   logic     [                      NumPorts-1:0][                            2:0] miss_size;
+   logic     [                      NumPorts-1:0][      CVA6Cfg.MEM_TID_WIDTH-1:0] miss_id;
++  dcs_data_t [NumPorts-1:0]                                                        miss_dcs_data;
+   logic     [                      NumPorts-1:0]                                  miss_replay;
+   logic     [                      NumPorts-1:0]                                  miss_rtrn_vld;
+   logic     [         CVA6Cfg.MEM_TID_WIDTH-1:0]                                  miss_rtrn_id;
+ 
+   // memory <-> read controllers/miss unit
+-  logic     [                      NumPorts-1:0]                                  rd_prio;
+-  logic     [                      NumPorts-1:0]                                  rd_tag_only;
+-  logic     [                      NumPorts-1:0]                                  rd_req;
+-  logic     [                      NumPorts-1:0]                                  rd_ack;
+-  logic     [                      NumPorts-1:0][   CVA6Cfg.DCACHE_TAG_WIDTH-1:0] rd_tag;
+-  logic     [                      NumPorts-1:0][        DCACHE_CL_IDX_WIDTH-1:0] rd_idx;
+-  logic     [                      NumPorts-1:0][CVA6Cfg.DCACHE_OFFSET_WIDTH-1:0] rd_off;
++  logic     [                      MemPorts-1:0]                                  rd_prio;
++  logic     [                      MemPorts-1:0]                                  rd_tag_only;
++  logic     [                      MemPorts-1:0]                                  rd_req;
++  logic     [                      MemPorts-1:0]                                  rd_ack;
++  logic     [                      MemPorts-1:0][   CVA6Cfg.DCACHE_TAG_WIDTH-1:0] rd_tag;
++  logic     [                      MemPorts-1:0][        DCACHE_CL_IDX_WIDTH-1:0] rd_idx;
++  logic     [                      MemPorts-1:0][CVA6Cfg.DCACHE_OFFSET_WIDTH-1:0] rd_off;
+   logic     [                  CVA6Cfg.XLEN-1:0]                                  rd_data;
+   logic     [     CVA6Cfg.DCACHE_USER_WIDTH-1:0]                                  rd_user;
+   logic     [      CVA6Cfg.DCACHE_SET_ASSOC-1:0]                                  rd_vld_bits;
+@@ -126,6 +142,11 @@ module wt_dcache
+   wbuffer_t [     CVA6Cfg.WtDcacheWbufDepth-1:0]                                  wbuffer_data;
+ 
+ 
++  // inval <-> missunit
++  dcache_inval_t inv_req;
++  logic          inv_ack;
++
++
+   ///////////////////////////////////////////////////////
+   // miss handling unit
+   ///////////////////////////////////////////////////////
+@@ -135,6 +156,7 @@ module wt_dcache
+       .DCACHE_CL_IDX_WIDTH(DCACHE_CL_IDX_WIDTH),
+       .dcache_req_t(dcache_req_t),
+       .dcache_rtrn_t(dcache_rtrn_t),
++      .dcache_inval_t(dcache_inval_t),
+       .AmoTxId(RdAmoTxId),
+       .NumPorts(NumPorts)
+   ) i_wt_dcache_missunit (
+@@ -161,9 +183,13 @@ module wt_dcache
+       .miss_vld_bits_i(miss_vld_bits_o),
+       .miss_size_i    (miss_size),
+       .miss_id_i      (miss_id),
++      .miss_dcs_data_i(miss_dcs_data),
+       .miss_replay_o  (miss_replay),
+       .miss_rtrn_vld_o(miss_rtrn_vld),
+       .miss_rtrn_id_o (miss_rtrn_id),
++      // invalidate
++      .inv_req_i      (inv_req),
++      .inv_ack_o      (inv_ack),
+       // from writebuffer
+       .tx_paddr_i     (tx_paddr),
+       .tx_vld_i       (tx_vld),
+@@ -219,6 +245,7 @@ module wt_dcache
+           .miss_nc_o      (miss_nc[k]),
+           .miss_size_o    (miss_size[k]),
+           .miss_id_o      (miss_id[k]),
++          .miss_dcs_data_o(miss_dcs_data[k]),
+           .miss_replay_i  (miss_replay[k]),
+           .miss_rtrn_vld_i(miss_rtrn_vld[k]),
+           // used to detect readout mux collisions
+@@ -290,6 +317,7 @@ module wt_dcache
+       .miss_nc_o      (miss_nc[NumPorts-1]),
+       .miss_size_o    (miss_size[NumPorts-1]),
+       .miss_id_o      (miss_id[NumPorts-1]),
++      .miss_dcs_data_o( miss_dcs_data[NumPorts-1] ),
+       .miss_rtrn_vld_i(miss_rtrn_vld[NumPorts-1]),
+       .miss_rtrn_id_i (miss_rtrn_id),
+       // cache read interface
+@@ -327,7 +355,7 @@ module wt_dcache
+       .CVA6Cfg(CVA6Cfg),
+       .DCACHE_CL_IDX_WIDTH(DCACHE_CL_IDX_WIDTH),
+       .wbuffer_t(wbuffer_t),
+-      .NumPorts(NumPorts)
++      .NumPorts(MemPorts)
+   ) i_wt_dcache_mem (
+       .clk_i          (clk_i),
+       .rst_ni         (rst_ni),
+@@ -366,6 +394,50 @@ module wt_dcache
+       .wbuffer_data_i (wbuffer_data)
+   );
+ 
++`ifndef PITON_ARIANE
++  ///////////////////////////////////////////////////////
++  // invalidate unit for snooping on AXI
++  ///////////////////////////////////////////////////////
++
++  // set read port to high priority
++  assign rd_prio[MemPorts-1] = 1'b1;
++
++  wt_dcache_inval #(
++      .CVA6Cfg       (CVA6Cfg),
++      .dcache_inval_t(dcache_inval_t)
++  ) i_wt_dcache_inval (
++      .clk_i          (clk_i),
++      .rst_ni         (rst_ni),
++      // request port from bus
++      .mem_inv_req_i  (mem_inv_req_i),
++      .mem_inv_paddr_i(mem_inv_addr_i),
++      .mem_inv_ack_o  (mem_inv_ack_o),
++      // cache read interface
++      .rd_tag_o       (rd_tag      [MemPorts-1]),
++      .rd_idx_o       (rd_idx      [MemPorts-1]),
++      .rd_off_o       (rd_off      [MemPorts-1]),
++      .rd_req_o       (rd_req      [MemPorts-1]),
++      .rd_tag_only_o  (rd_tag_only [MemPorts-1]),
++      .rd_ack_i       (rd_ack      [MemPorts-1]),
++      .rd_data_i      (rd_data),
++      .rd_vld_bits_i  (rd_vld_bits),
++      .rd_hit_oh_i    (rd_hit_oh),
++      // to missunit
++      .inv_req_o      (inv_req),
++      .inv_ack_i      (inv_ack)
++  );
++
++`else
++  assign rd_prio[MemPorts-1]    = 1'b0;
++  assign rd_tag[MemPorts-1]     = '0;
++  assign rd_idx[MemPorts-1]     = '0;
++  assign rd_off[MemPorts-1]     = '0;
++  assign rd_req[MemPorts-1]     = 1'b0;
++  assign rd_tag_only[MemPorts-1]= 1'b0;
++  assign mem_inv_ack_o          = 1'b0;
++  assign inv_req                = '0;
++`endif
++
+   ///////////////////////////////////////////////////////
+   // assertions
+   ///////////////////////////////////////////////////////
+diff --git a/core/cache_subsystem/wt_dcache_ctrl.sv b/core/cache_subsystem/wt_dcache_ctrl.sv
+index 61fd7b03..d5f7f985 100644
+--- a/core/cache_subsystem/wt_dcache_ctrl.sv
++++ b/core/cache_subsystem/wt_dcache_ctrl.sv
+@@ -40,6 +40,7 @@ module wt_dcache_ctrl
+     output logic miss_nc_o,  // request to I/O space
+     output logic [2:0] miss_size_o,  // 00: 1byte, 01: 2byte, 10: 4byte, 11: 8byte, 111: cacheline
+     output logic [CVA6Cfg.MEM_TID_WIDTH-1:0] miss_id_o,  // set to constant ID
++    output dcs_data_t miss_dcs_data_o,
+     input logic miss_replay_i,  // request collided with pending miss - have to replay the request
+     input  logic                            miss_rtrn_vld_i, // signals that the miss has been served, asserted in the same cycle as when the data returns from memory
+     // used to detect readout mux collisions
+@@ -77,6 +78,7 @@ module wt_dcache_ctrl
+   logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0] vld_data_d, vld_data_q;
+   logic save_tag, rd_req_d, rd_req_q, rd_ack_d, rd_ack_q;
+   logic [1:0] data_size_d, data_size_q;
++  dcs_data_t dcs_data_d, dcs_data_q;
+ 
+   ///////////////////////////////////////////////////////
+   // misc
+@@ -89,6 +91,7 @@ module wt_dcache_ctrl
+   assign address_off_d = (req_port_o.data_gnt) ? req_port_i.address_index[CVA6Cfg.DCACHE_OFFSET_WIDTH-1:0]                  : address_off_q;
+   assign id_d = (req_port_o.data_gnt) ? req_port_i.data_id : id_q;
+   assign data_size_d = (req_port_o.data_gnt) ? req_port_i.data_size : data_size_q;
++  assign dcs_data_d = (req_port_o.data_gnt) ? req_port_i.dcs_data : dcs_data_q;
+   assign rd_tag_o = address_tag_d;
+   assign rd_idx_o = address_idx_d;
+   assign rd_off_o = address_off_d;
+@@ -101,6 +104,7 @@ module wt_dcache_ctrl
+   assign miss_vld_bits_o = vld_data_q;
+   assign miss_paddr_o = {address_tag_q, address_idx_q, address_off_q};
+   assign miss_size_o = (miss_nc_o) ? {1'b0, data_size_q} : 3'b111;
++  assign miss_dcs_data_o       = dcs_data_q;
+ 
+   // noncacheable if request goes to I/O space, or if cache is disabled
+   assign miss_nc_o = (~cache_en_i) | (~config_pkg::is_inside_cacheable_regions(
+@@ -262,6 +266,7 @@ module wt_dcache_ctrl
+       id_q          <= '0;
+       vld_data_q    <= '0;
+       data_size_q   <= '0;
++      dcs_data_q    <= '0;
+       rd_req_q      <= '0;
+       rd_ack_q      <= '0;
+     end else begin
+@@ -272,6 +277,7 @@ module wt_dcache_ctrl
+       id_q          <= id_d;
+       vld_data_q    <= vld_data_d;
+       data_size_q   <= data_size_d;
++      dcs_data_q    <= dcs_data_d;
+       rd_req_q      <= rd_req_d;
+       rd_ack_q      <= rd_ack_d;
+     end
+diff --git a/core/cache_subsystem/wt_dcache_inval.sv b/core/cache_subsystem/wt_dcache_inval.sv
+new file mode 100644
+index 00000000..b6289e23
+--- /dev/null
++++ b/core/cache_subsystem/wt_dcache_inval.sv
+@@ -0,0 +1,159 @@
++// Copyright 2018 ETH Zurich and University of Bologna.
++// Copyright and related rights are licensed under the Solderpad Hardware
++// License, Version 0.51 (the "License"); you may not use this file except in
++// compliance with the License.  You may obtain a copy of the License at
++// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
++// or agreed to in writing, software, hardware and materials distributed under
++// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
++// CONDITIONS OF ANY KIND, either express or implied. See the License for the
++// specific language governing permissions and limitations under the License.
++//
++// Author: Paolo Mantovani <paolo.mantovani@columbia.edu>, Columbia University, New York NY
++// Description: invalidation request unit
++//
++// This module receives an invalidation request from the bus in the form of a valid bit and
++// the physical address for the request.
++// Invalidation occurs then in two steps. First, a cache read is performed to check if
++// the target TAG is present in the L1 cache. If the look up returns a hit, an invalidation
++// request for the corresponding way is sent to the miss unit which executes the invalidation.
++
++module wt_dcache_inval
++  import ariane_pkg::*;
++  import wt_cache_pkg::*;
++#(
++    parameter config_pkg::cva6_cfg_t CVA6Cfg = config_pkg::cva6_cfg_empty,
++    parameter type dcache_inval_t = logic
++) (
++    input  logic                        clk_i,            // Clock
++    input  logic                        rst_ni,           // Asynchronous reset active low
++    // request port from bus
++    input  logic                        mem_inv_req_i,    // invalidate request
++    input  logic [CVA6Cfg.PLEN-1:0]     mem_inv_paddr_i,  // physical address to invalidate
++    output logic                        mem_inv_ack_o,    // invalidate request ack
++    // cache read interface
++    output logic [CVA6Cfg.DCACHE_TAG_WIDTH-1:0]    rd_tag_o,   // tag computed from paddr
++    output logic [CVA6Cfg.DCACHE_INDEX_WIDTH-CVA6Cfg.DCACHE_OFFSET_WIDTH-1:0]  rd_idx_o,   // cacheline index computed from paddr
++    output logic [CVA6Cfg.DCACHE_OFFSET_WIDTH-1:0] rd_off_o,   // byte offset unused for invalidation
++    output logic                        rd_req_o,         // read request for all ways and index rd_idx_o
++    output logic                        rd_tag_only_o,    // set to 1 here as we do not have to read the data arrays
++    input  logic                        rd_ack_i,
++    input  logic [CVA6Cfg.XLEN-1:0]     rd_data_i,        // unused
++    input  logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0] rd_vld_bits_i, // valid ways at index rd_idx_o
++    input  logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0] rd_hit_oh_i,   // onehot hit array indicating if a way matches rd_tag_o
++    // to missunit
++    output dcache_inval_t               inv_req_o,        // invalidation request for line inv_req_o.idx, inv_req_o.way
++    input  logic                        inv_ack_i
++);
++
++  enum logic [1:0] {IDLE, INV_REQ, WAIT_INV} state_d, state_q;
++
++  logic [CVA6Cfg.DCACHE_INDEX_WIDTH-1:0]     inv_idx_d, inv_idx_q;
++  logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0]       inv_way_d, inv_way_q;
++
++  logic rd_req, save_idx, save_way, save_tag, hit, inv_req;
++
++  logic [CVA6Cfg.DCACHE_TAG_WIDTH-1:0] cmp_tag_d, cmp_tag_q;
++
++  // cache read
++  assign cmp_tag_d     = (save_tag) ? mem_inv_paddr_i[CVA6Cfg.DCACHE_TAG_WIDTH + CVA6Cfg.DCACHE_INDEX_WIDTH-1 :
++                                                      CVA6Cfg.DCACHE_INDEX_WIDTH] :
++                                      cmp_tag_q;
++  assign rd_tag_o      = cmp_tag_d;
++  assign rd_idx_o      = mem_inv_paddr_i[CVA6Cfg.DCACHE_INDEX_WIDTH-1:CVA6Cfg.DCACHE_OFFSET_WIDTH];
++  assign rd_off_o      = '0;
++  assign rd_tag_only_o = 1'b1;
++  assign rd_req_o      = rd_req;
++
++  // save invalidate request
++  assign inv_way_d = (save_way) ? (rd_vld_bits_i & rd_hit_oh_i)                             : inv_way_q;
++  assign inv_idx_d = (save_idx) ? mem_inv_paddr_i[CVA6Cfg.DCACHE_INDEX_WIDTH-1:0]           : inv_idx_q;
++  assign hit       = |(rd_vld_bits_i & rd_hit_oh_i);
++
++  // invalidate request
++  assign inv_req_o.vld = inv_req;
++  assign inv_req_o.all = 1'b0; // only invalidate target way
++  assign inv_req_o.idx = inv_idx_q;
++
++  always_comb begin : way_oh2bin
++    integer i;
++    inv_req_o.way = '0;
++    for (i = 0; i < CVA6Cfg.DCACHE_SET_ASSOC; i++) begin
++      if (inv_way_d[i]) begin
++        inv_req_o.way = i;
++      end
++    end
++  end
++
++  // ---------------------
++  // Invalidate Control
++  // --------------------
++  always_comb begin : invalidate_control
++    state_d       = state_q;
++
++    save_idx      = 1'b0;
++    save_way      = 1'b0;
++    save_tag      = 1'b0;
++
++    inv_req       = 1'b0;
++    rd_req        = 1'b0;
++
++    mem_inv_ack_o = 1'b0;
++
++    case (state_q)
++      //////////////////////////////////
++      // wait for an incoming request
++      IDLE : begin
++        if (mem_inv_req_i) begin
++          rd_req   = 1'b1;
++          save_tag = 1'b1;
++          if (rd_ack_i) begin
++            state_d       = INV_REQ;
++            save_idx      = 1'b1;
++            mem_inv_ack_o = 1'b1;
++          end
++        end
++      end
++
++      //////////////////////////////////
++      // send invalidate req to missunit
++      // if the lookup returns a hit
++      INV_REQ : begin
++        save_way = 1'b1;
++        inv_req  = hit;
++        if (hit & ~inv_ack_i)
++          state_d = WAIT_INV;
++        else
++          state_d = IDLE;
++      end
++
++      //////////////////////////////////
++      // wait invalidate ack
++      WAIT_INV : begin
++        inv_req = 1'b1;
++        if (inv_ack_i)
++          state_d = IDLE;
++      end
++
++      default : begin
++        state_d = IDLE;
++      end
++
++    endcase
++  end
++
++
++  always_ff @(posedge clk_i or negedge rst_ni) begin : p_regs
++    if (~rst_ni) begin
++      state_q   <= IDLE;
++      inv_idx_q <= '0;
++      inv_way_q <= '0;
++      cmp_tag_q <= '0;
++    end else begin
++      state_q   <= state_d;
++      inv_idx_q <= inv_idx_d;
++      inv_way_q <= inv_way_d;
++      cmp_tag_q <= cmp_tag_d;
++    end
++  end
++
++endmodule
+diff --git a/core/cache_subsystem/wt_dcache_mem.sv b/core/cache_subsystem/wt_dcache_mem.sv
+index e20320de..ddc00f00 100644
+--- a/core/cache_subsystem/wt_dcache_mem.sv
++++ b/core/cache_subsystem/wt_dcache_mem.sv
+@@ -211,7 +211,9 @@ module wt_dcache_mem
+       end
+ 
+       if (|wr_req_i) begin
+-        if (rd_tag_only_i[vld_sel_d] || !(rd_ack_o[vld_sel_d] && bank_collision[vld_sel_d])) begin
++        // If there is no accepted read this cycle, always allow the writeback.
++        // This avoids indexing with an undefined arbiter selection when no read request is present.
++        if (!rd_acked || rd_tag_only_i[vld_sel_d] || !(rd_ack_o[vld_sel_d] && bank_collision[vld_sel_d])) begin
+           wr_ack_o = 1'b1;
+           bank_req |= dcache_cl_bin2oh(
+               wr_off_i[CVA6Cfg.DCACHE_OFFSET_WIDTH-1:CVA6Cfg.XLEN_ALIGN_BYTES]
+diff --git a/core/cache_subsystem/wt_dcache_missunit.sv b/core/cache_subsystem/wt_dcache_missunit.sv
+index c40491ab..33f829f3 100644
+--- a/core/cache_subsystem/wt_dcache_missunit.sv
++++ b/core/cache_subsystem/wt_dcache_missunit.sv
+@@ -22,6 +22,7 @@ module wt_dcache_missunit
+     parameter DCACHE_CL_IDX_WIDTH = 0,
+     parameter type dcache_req_t = logic,
+     parameter type dcache_rtrn_t = logic,
++    parameter type dcache_inval_t = logic,
+     parameter logic [CVA6Cfg.MEM_TID_WIDTH-1:0] AmoTxId = 1,  // TX id to be used for AMOs
+     parameter int unsigned NumPorts = 4  // number of miss ports
+ ) (
+@@ -50,11 +51,15 @@ module wt_dcache_missunit
+     input logic [NumPorts-1:0][CVA6Cfg.DCACHE_SET_ASSOC-1:0] miss_vld_bits_i,
+     input logic [NumPorts-1:0][2:0] miss_size_i,
+     input logic [NumPorts-1:0][CVA6Cfg.MEM_TID_WIDTH-1:0] miss_id_i,  // used as transaction ID
++    input  dcs_data_t [NumPorts-1:0]                   miss_dcs_data_i,
+     // signals that the request collided with a pending read
+     output logic [NumPorts-1:0] miss_replay_o,
+     // signals response from memory
+     output logic [NumPorts-1:0] miss_rtrn_vld_o,
+     output logic [CVA6Cfg.MEM_TID_WIDTH-1:0]                  miss_rtrn_id_o,     // only used for writes, set to zero for reads
++    // from invalidate unit
++    input  dcache_inval_t                                     inv_req_i,
++    output logic                                              inv_ack_o,
+     // from writebuffer
+     input  logic [CVA6Cfg.DCACHE_MAX_TX-1:0][CVA6Cfg.PLEN-1:0]  tx_paddr_i,         // used to check for address collisions with read operations
+     input  logic [CVA6Cfg.DCACHE_MAX_TX-1:0]                   tx_vld_i,           // used to check for address collisions with read operations
+@@ -131,6 +136,8 @@ module wt_dcache_missunit
+ 
+   mshr_t mshr_d, mshr_q;
+   logic [$clog2(CVA6Cfg.DCACHE_SET_ASSOC)-1:0] repl_way, inv_way, rnd_way;
++  logic [CVA6Cfg.DCACHE_SET_ASSOC-1:0] inv_req_way_oh;
++  logic [DCACHE_CL_IDX_WIDTH-1:0] inv_req_idx;
+   logic mshr_vld_d, mshr_vld_q, mshr_vld_q1;
+   logic mshr_allocate;
+   logic update_lfsr, all_ways_valid;
+@@ -149,7 +156,7 @@ module wt_dcache_missunit
+   logic [DCACHE_CL_IDX_WIDTH-1:0] cnt_d, cnt_q;
+   logic [NumPorts-1:0] miss_req_masked_d, miss_req_masked_q;
+ 
+-  logic inv_vld, inv_vld_all, cl_write_en;
++  logic inv_vld, inv_vld_all, inv_ack, cl_write_en;
+   logic load_ack, store_ack, amo_ack;
+ 
+   logic [NumPorts-1:0] mshr_rdrd_collision_d, mshr_rdrd_collision_q;
+@@ -326,6 +333,9 @@ module wt_dcache_missunit
+   assign mem_data_o.user = (CVA6Cfg.RVA && amo_sel) ? amo_user : miss_wuser_i[miss_port_idx];
+   assign mem_data_o.size   = (CVA6Cfg.RVA && amo_sel) ? {1'b0, amo_req_i.size} : miss_size_i [miss_port_idx];
+   assign mem_data_o.amo_op = (CVA6Cfg.RVA && amo_sel) ? amo_req_i.amo_op : AMO_NONE;
++  assign mem_data_o.dcs_data = (amo_sel) ? '0                : miss_dcs_data_i[miss_port_idx];
++  assign mem_data_o.aq     = (amo_sel) ? amo_req_i.aq        : '0;
++  assign mem_data_o.rl     = (amo_sel) ? amo_req_i.rl        : '0;
+ 
+   assign tmp_paddr         = (CVA6Cfg.RVA && amo_sel) ? amo_req_i.operand_a[CVA6Cfg.PLEN-1:0] : miss_paddr_i[miss_port_idx];
+   assign mem_data_o.paddr = paddrSizeAlign(tmp_paddr, mem_data_o.size);
+@@ -367,6 +377,7 @@ module wt_dcache_missunit
+     amo_ack         = 1'b0;
+     inv_vld         = 1'b0;
+     inv_vld_all     = 1'b0;
++    inv_ack         = 1'b0;
+     sc_fail         = 1'b0;
+     sc_pass         = 1'b0;
+     miss_rtrn_vld_o = '0;
+@@ -410,12 +421,19 @@ module wt_dcache_missunit
+         default: begin
+         end
+       endcase
++    end else if (inv_req_i.vld) begin // if (mem_rtrn_vld_i)
++       // Give priority to memory responses over invalidate requests from AXI
++       inv_vld = 1'b1;
++       inv_ack = 1'b1;
+     end
+   end
+ 
+   // to write buffer
+   assign miss_rtrn_id_o = mem_rtrn_i.tid;
+ 
++  // to invalidate unit
++  assign inv_ack_o                = inv_ack;
++
+   ///////////////////////////////////////////////////////
+   // writes to cache memory
+   ///////////////////////////////////////////////////////
+@@ -424,19 +442,28 @@ module wt_dcache_missunit
+   assign wr_cl_nc_o = mshr_q.nc;
+   assign wr_cl_vld_o = load_ack | (|wr_cl_we_o);
+ 
+-  assign wr_cl_we_o = (flush_en) ? '1 : (inv_vld_all) ? '1 : (inv_vld) ? dcache_way_bin2oh(
+-      mem_rtrn_i.inv.way
+-  ) : (cl_write_en) ? dcache_way_bin2oh(
+-      mshr_q.repl_way
+-  ) : '0;
++  assign inv_req_way_oh  = (CVA6Cfg.NOCType == config_pkg::NOC_TYPE_AXI4_ATOP) ?
++                                dcache_way_bin2oh(inv_req_i.way)   :
++			                          dcache_way_bin2oh(mem_rtrn_i.inv.way);
++
++  assign wr_cl_we_o      = (flush_en   )  ? '1                                     :
++                           (inv_vld_all)   ? '1                                    :
++                           (inv_vld    )   ? inv_req_way_oh                        :
++                           (cl_write_en)   ? dcache_way_bin2oh(mshr_q.repl_way)    :
++                                             '0;
+ 
+   assign wr_vld_bits_o = (flush_en) ? '0 : (inv_vld) ? '0 : (cl_write_en) ? dcache_way_bin2oh(
+       mshr_q.repl_way
+   ) : '0;
+ 
+-  assign wr_cl_idx_o     = (flush_en) ? cnt_q                                                        :
+-                           (inv_vld)  ? mem_rtrn_i.inv.idx[CVA6Cfg.DCACHE_INDEX_WIDTH-1:CVA6Cfg.DCACHE_OFFSET_WIDTH] :
+-                                        mshr_q.paddr[CVA6Cfg.DCACHE_INDEX_WIDTH-1:CVA6Cfg.DCACHE_OFFSET_WIDTH];
++  assign inv_req_idx     = (CVA6Cfg.NOCType == config_pkg::NOC_TYPE_AXI4_ATOP) ?
++                                inv_req_i.idx[CVA6Cfg.DCACHE_INDEX_WIDTH-1:CVA6Cfg.DCACHE_OFFSET_WIDTH]      :
++			                          mem_rtrn_i.inv.idx[CVA6Cfg.DCACHE_INDEX_WIDTH-1:CVA6Cfg.DCACHE_OFFSET_WIDTH];
++
++  assign wr_cl_idx_o     = (flush_en)    ? cnt_q                                                        :
++                           (inv_vld_all) ? mem_rtrn_i.inv.idx[CVA6Cfg.DCACHE_INDEX_WIDTH-1:CVA6Cfg.DCACHE_OFFSET_WIDTH] :
++                           (inv_vld)     ? inv_req_idx                                                  :
++                                           mshr_q.paddr[CVA6Cfg.DCACHE_INDEX_WIDTH-1:CVA6Cfg.DCACHE_OFFSET_WIDTH];
+ 
+   assign wr_cl_tag_o = mshr_q.paddr[CVA6Cfg.DCACHE_TAG_WIDTH+CVA6Cfg.DCACHE_INDEX_WIDTH-1:CVA6Cfg.DCACHE_INDEX_WIDTH];
+   assign wr_cl_off_o = mshr_q.paddr[CVA6Cfg.DCACHE_OFFSET_WIDTH-1:0];
+diff --git a/core/cache_subsystem/wt_dcache_wbuffer.sv b/core/cache_subsystem/wt_dcache_wbuffer.sv
+index ef3a62ef..f3e9415f 100644
+--- a/core/cache_subsystem/wt_dcache_wbuffer.sv
++++ b/core/cache_subsystem/wt_dcache_wbuffer.sv
+@@ -79,6 +79,7 @@ module wt_dcache_wbuffer
+     output logic miss_nc_o,  // request to I/O space
+     output logic [2:0] miss_size_o,  //
+     output logic [CVA6Cfg.MEM_TID_WIDTH-1:0]          miss_id_o,       // ID of this transaction (wbuffer uses all IDs from 0 to DCACHE_MAX_TX-1)
++    output dcs_data_t                          miss_dcs_data_o,
+     // write responses from memory
+     input logic miss_rtrn_vld_i,
+     input logic [CVA6Cfg.MEM_TID_WIDTH-1:0] miss_rtrn_id_i,  // transaction ID to clear
+@@ -258,6 +259,7 @@ module wt_dcache_wbuffer
+   // add the offset to the physical base address of this buffer entry
+   assign miss_paddr_o = {wbuffer_dirty_mux.wtag, bdirty_off};
+   assign miss_id_o = tx_id;
++  assign miss_dcs_data_o = wbuffer_dirty_mux.dcs_data;
+ 
+   // is there any dirty word to be transmitted, and is there a free TX slot?
+   assign miss_req_o = (|dirty) && free_tx_slots;
+@@ -517,7 +519,7 @@ module wt_dcache_wbuffer
+   always_comb begin : p_buffer
+     wbuffer_d           = wbuffer_q;
+     ni_pending_d        = ni_pending_q;
+-    dirty_rd_en         = 1'b0;
++    dirty_rd_en         = (miss_req_o && miss_ack_i);
+     req_port_o.data_gnt = 1'b0;
+     wbuffer_wren        = 1'b0;
+ 
+@@ -560,8 +562,7 @@ module wt_dcache_wbuffer
+     end
+ 
+     // mark bytes sent out to the memory system
+-    if (miss_req_o && miss_ack_i) begin
+-      dirty_rd_en = 1'b1;
++    if (dirty_rd_en) begin
+       for (int k = 0; k < (CVA6Cfg.XLEN / 8); k++) begin
+         if (tx_be[k]) begin
+           wbuffer_d[dirty_ptr].dirty[k]   = 1'b0;
+@@ -597,6 +598,7 @@ module wt_dcache_wbuffer
+             end
+           end
+         end
++        wbuffer_d[wr_ptr].dcs_data = req_port_i.dcs_data;
+       end
+     end
+   end
+diff --git a/core/commit_stage.sv b/core/commit_stage.sv
+index 1589d2a8..9e8af409 100644
+--- a/core/commit_stage.sv
++++ b/core/commit_stage.sv
+@@ -89,7 +89,9 @@ module commit_stage
+     // TO_BE_COMPLETED - CONTROLLER
+     output logic hfence_gvma_o,
+     // Breakpoint exception from trigger module
+-    input logic break_from_trigger_i
++    input logic break_from_trigger_i,
++    // fence indication to l2
++    output logic [1:0] fence_l2_o
+ );
+ 
+   // ila_0 i_ila_commit (
+@@ -155,6 +157,7 @@ module commit_stage
+     hfence_gvma_o = 1'b0;
+     csr_write_fflags_o = 1'b0;
+     flush_commit_o = 1'b0;
++    fence_l2_o         = 2'b0;
+ 
+     // we do not commit the instruction yet if we requested a halt
+     if (commit_instr_i[0].valid && !halt_i) begin
+@@ -288,6 +291,11 @@ module commit_stage
+             commit_ack_o[0] = no_st_pending_i;
+             // tell the controller to flush the D$
+             fence_o = no_st_pending_i;
++
++            // we also sample the values of SR (required for self-invalidation)
++            // and PW (required for WB flush)
++            fence_l2_o[0] = commit_instr_i[0].fence_op[0] & fence_o; // SR
++            fence_l2_o[1] = commit_instr_i[0].fence_op[1] & fence_o; // PW
+           end
+         end
+         // ------------------
+diff --git a/core/cva6.sv b/core/cva6.sv
+index 8e733ed8..16b6674a 100644
+--- a/core/cva6.sv
++++ b/core/cva6.sv
+@@ -102,6 +102,7 @@ module cva6
+       logic [REG_ADDR_SIZE-1:0] rs1;  // register source address 1
+       logic [REG_ADDR_SIZE-1:0] rs2;  // register source address 2
+       logic [REG_ADDR_SIZE-1:0] rd;  // register destination address
++      logic                     sync;
+       logic [CVA6Cfg.XLEN-1:0] result;  // for unfinished instructions this field also holds the immediate,
+       // for unfinished floating-point that are partly encoded in rs2, this field also holds rs2
+       // for unfinished floating-point fused operations (FMADD, FMSUB, FNMADD, FNMSUB)
+@@ -119,6 +120,10 @@ module cva6
+       logic is_double_rd_macro_instr;  // is double move decoded 32bit instruction of macro definition
+       logic vfp;  // is this a vector floating-point instruction?
+       logic is_zcmt;  //is a zcmt instruction
++      logic [1:0] fence_op;  // SR/PW bits sampled from a FENCE instruction
++      logic                     use_dcs;       // 1 for load/store using dcs
++      logic                     aq;
++      logic                     rl;
+     },
+     localparam type writeback_t = struct packed {
+       logic valid;  // wb data is valid
+@@ -164,6 +169,9 @@ module cva6
+       fu_t                              fu;
+       fu_op                             operation;
+       logic [CVA6Cfg.TRANS_ID_BITS-1:0] trans_id;
++      dcs_data_t                        dcs_data;
++      logic                             aq;
++      logic                             rl;
+       logic                             is_speculative_load;
+       logic                             is_speculative_load_miss;
+     },
+@@ -178,6 +186,9 @@ module cva6
+       logic [CVA6Cfg.XLEN-1:0]          operand_b;
+       logic [CVA6Cfg.XLEN-1:0]          imm;
+       logic [CVA6Cfg.TRANS_ID_BITS-1:0] trans_id;
++      logic                             use_dcs;
++      logic                             aq;
++      logic                             rl;
+     },
+ 
+     localparam type icache_req_t = struct packed {
+@@ -213,6 +224,7 @@ module cva6
+       logic                                  kill_req;
+       logic                                  tag_valid;
+       cbo_t                                  cbo_op;
++      dcs_data_t                             dcs_data;
+     },
+ 
+     localparam type dcache_req_o_t = struct packed {
+@@ -341,7 +353,14 @@ module cva6
+     // noc request, can be AXI or OpenPiton - SUBSYSTEM
+     output noc_req_t noc_req_o,
+     // noc response, can be AXI or OpenPiton - SUBSYSTEM
+-    input noc_resp_t noc_resp_i
++    input noc_resp_t noc_resp_i,
++    input  ariane_axi::snoop_req_t ace_req_i,
++    output ariane_axi::snoop_resp_t ace_resp_o,
++    // fence indication to l2
++    output logic [1:0] fence_l2_o,
++    //flush L1 from L2
++    input logic flush_l1_i,
++    output logic flush_done_o
+ );
+ 
+   localparam type interrupts_t = struct packed {
+@@ -664,6 +683,7 @@ module cva6
+   dcache_req_o_t [1:0] dcache_req_ports_cache_acc;
+   logic dcache_commit_wbuffer_empty;
+   logic dcache_commit_wbuffer_not_ni;
++  logic dcache_flush;
+ 
+   //RVFI
+   lsu_ctrl_t rvfi_lsu_ctrl;
+@@ -1153,7 +1173,8 @@ module cva6
+       .sfence_vma_o        (sfence_vma_commit_controller),
+       .hfence_vvma_o       (hfence_vvma_commit_controller),
+       .hfence_gvma_o       (hfence_gvma_commit_controller),
+-      .break_from_trigger_i(break_from_trigger)
++      .break_from_trigger_i(break_from_trigger),
++      .fence_l2_o          (fence_l2_o)
+   );
+ 
+   assign commit_ack = commit_macro_ack & ~commit_drop_id_commit;
+@@ -1353,7 +1374,8 @@ module cva6
+   // -------------------
+   // Cache Subsystem
+   // -------------------
+-
++  assign dcache_flush = dcache_flush_ctrl_cache | flush_l1_i;
++  assign flush_done_o = dcache_flush_ack_cache_ctrl;
+   // Acc dispatcher and store buffer share a dcache request port.
+   // Store buffer always has priority access over acc dispatcher.
+   dcache_req_i_t [NumPorts-1:0] dcache_req_to_cache;
+@@ -1422,7 +1444,7 @@ module cva6
+         .icache_dreq_o     (icache_dreq_cache_if),
+         // D$
+         .dcache_enable_i   (dcache_en_csr_nbdcache),
+-        .dcache_flush_i    (dcache_flush_ctrl_cache),
++        .dcache_flush_i    (dcache_flush),
+         .dcache_flush_ack_o(dcache_flush_ack_cache_ctrl),
+         // to commit stage
+         .dcache_amo_req_i  (amo_req),
+@@ -1441,7 +1463,9 @@ module cva6
+         .noc_resp_i        (noc_resp_i),
+         .inval_addr_i      (inval_addr),
+         .inval_valid_i     (inval_valid),
+-        .inval_ready_o     (inval_ready)
++        .inval_ready_o     (inval_ready),
++        .ace_req_i         (ace_req_i),
++        .ace_resp_o        (ace_resp_o)
+     );
+   end else if (
+         CVA6Cfg.DCacheType == config_pkg::HPDCACHE_WT ||
+@@ -1480,7 +1504,7 @@ module cva6
+         .icache_dreq_o (icache_dreq_cache_if),
+ 
+         .dcache_enable_i   (dcache_en_csr_nbdcache),
+-        .dcache_flush_i    (dcache_flush_ctrl_cache),
++        .dcache_flush_i    (dcache_flush),
+         .dcache_flush_ack_o(dcache_flush_ack_cache_ctrl),
+         .dcache_miss_o     (dcache_miss_cache_perf),
+ 
+@@ -1544,7 +1568,7 @@ module cva6
+         .icache_dreq_o     (icache_dreq_cache_if),
+         // D$
+         .dcache_enable_i   (dcache_en_csr_nbdcache),
+-        .dcache_flush_i    (dcache_flush_ctrl_cache),
++        .dcache_flush_i    (dcache_flush),
+         .dcache_flush_ack_o(dcache_flush_ack_cache_ctrl),
+         // to commit stage
+         .amo_req_i         (amo_req),
+diff --git a/core/decoder.sv b/core/decoder.sv
+index 44c0281a..b0c48466 100644
+--- a/core/decoder.sv
++++ b/core/decoder.sv
+@@ -187,6 +187,7 @@ module decoder
+     instruction_o.rs1                      = '0;
+     instruction_o.rs2                      = '0;
+     instruction_o.rd                       = '0;
++    instruction_o.sync                     = 1'b0;
+     instruction_o.use_pc                   = 1'b0;
+     instruction_o.is_compressed            = is_compressed_i;
+     instruction_o.is_macro_instr           = is_macro_instr_i;
+@@ -194,8 +195,12 @@ module decoder
+     instruction_o.is_double_rd_macro_instr = is_double_rd_macro_instr_i;
+     instruction_o.use_zimm                 = 1'b0;
+     instruction_o.bp                       = branch_predict_i;
++    instruction_o.use_dcs                  = 1'b0;
++    instruction_o.aq                       = 1'b0;
++    instruction_o.rl                       = 1'b0;
+     instruction_o.vfp                      = 1'b0;
+     instruction_o.is_zcmt                  = is_zcmt_i;
++    instruction_o.fence_op                 = 2'b0;
+     ecall                                  = 1'b0;
+     ebreak                                 = 1'b0;
+     check_fprm                             = 1'b0;
+@@ -465,7 +470,11 @@ module decoder
+           case (instr.stype.funct3)
+             // FENCE
+             // Currently implemented as a whole DCache flush boldly ignoring other things
+-            3'b000: instruction_o.op = ariane_pkg::FENCE;
++            3'b000: begin
++              instruction_o.op = ariane_pkg::FENCE;
++              instruction_o.fence_op[0] = instr.stype.rs2[21]; // SR bit
++              instruction_o.fence_op[1] = instr.stype.rs2[24]; // PW bit
++            end
+             // FENCE.I
+             3'b001: instruction_o.op = ariane_pkg::FENCE_I;
+             // CBO - optional
+@@ -1329,6 +1338,94 @@ module decoder
+           end
+         end
+ 
++        // --------------------------------
++        // DCS Load/Store
++        // Custom1 used for Store, bit 31: 0 for integer, 1 for float
++        // Custom0 used for Load,  bit 31: 0 for integer, 1 for float
++        // --------------------------------
++        riscv::OpcodeCustom1: begin
++            if (instr.instr[31] == 1'b0) begin
++                instruction_o.fu  = STORE;
++                imm_select = SIMM;
++                instruction_o.rs1[4:0]  = instr.stype.rs1;
++                instruction_o.rs2[4:0]  = instr.stype.rs2;
++                instruction_o.use_dcs   = 1'b1;
++                // determine store size
++                unique case (instr.stype.funct3)
++                    3'b000: instruction_o.op  = ariane_pkg::SB;
++                    3'b001: instruction_o.op  = ariane_pkg::SH;
++                    3'b010: instruction_o.op  = ariane_pkg::SW;
++                    3'b011: instruction_o.op  = ariane_pkg::SD;
++                    default: illegal_instr = 1'b1;
++                endcase
++            end else begin
++                if (FP_PRESENT && fs_i != riscv::Off) begin // only generate decoder if FP extensions are enabled (static)
++                    instruction_o.fu  = STORE;
++                    imm_select = SIMM;
++                    instruction_o.rs1        = instr.stype.rs1;
++                    instruction_o.rs2        = instr.stype.rs2;
++                    instruction_o.use_dcs    = 1'b1;
++                    // determine store size
++                    unique case (instr.stype.funct3)
++                        // Only process instruction if corresponding extension is active (static)
++                        3'b000: if (XF8) instruction_o.op = ariane_pkg::FSB;
++                                else illegal_instr = 1'b1;
++                        3'b001: if (XF16 | XF16ALT) instruction_o.op = ariane_pkg::FSH;
++                                else illegal_instr = 1'b1;
++                        3'b010: if (RVF) instruction_o.op = ariane_pkg::FSW;
++                                else illegal_instr = 1'b1;
++                        3'b011: if (RVD) instruction_o.op = ariane_pkg::FSD;
++                                else illegal_instr = 1'b1;
++                        default: illegal_instr = 1'b1;
++                    endcase
++                end else
++                    illegal_instr = 1'b1;
++            end
++        end
++
++        riscv::OpcodeCustom0: begin
++            if (instr.instr[31] == 1'b0) begin
++            instruction_o.fu  = LOAD;
++            imm_select = IIMM;
++            instruction_o.rs1[4:0] = instr.itype.rs1;
++            instruction_o.rd[4:0]  = instr.itype.rd;
++                instruction_o.use_dcs   = 1'b1;
++            // determine load size and signed type
++            unique case (instr.itype.funct3)
++                3'b000: instruction_o.op  = ariane_pkg::LB;
++                3'b001: instruction_o.op  = ariane_pkg::LH;
++                3'b010: instruction_o.op  = ariane_pkg::LW;
++                3'b100: instruction_o.op  = ariane_pkg::LBU;
++                3'b101: instruction_o.op  = ariane_pkg::LHU;
++                3'b110: instruction_o.op  = ariane_pkg::LWU;
++                3'b011: instruction_o.op  = ariane_pkg::LD;
++                default: illegal_instr = 1'b1;
++            endcase
++            end else begin
++                if (FP_PRESENT && fs_i != riscv::Off) begin // only generate decoder if FP extensions are enabled (static)
++                    instruction_o.fu  = LOAD;
++                    imm_select = IIMM;
++                    instruction_o.rs1       = instr.itype.rs1;
++                    instruction_o.rd        = instr.itype.rd;
++                    instruction_o.use_dcs   = 1'b1;
++                    // determine load size
++                    unique case (instr.itype.funct3)
++                        // Only process instruction if corresponding extension is active (static)
++                        3'b000: if (XF8) instruction_o.op = ariane_pkg::FLB;
++                                else illegal_instr = 1'b1;
++                        3'b001: if (XF16 | XF16ALT) instruction_o.op = ariane_pkg::FLH;
++                                else illegal_instr = 1'b1;
++                        3'b010: if (RVF) instruction_o.op  = ariane_pkg::FLW;
++                                else illegal_instr = 1'b1;
++                        3'b011: if (RVD) instruction_o.op  = ariane_pkg::FLD;
++                                else illegal_instr = 1'b1;
++                        default: illegal_instr = 1'b1;
++                    endcase
++                end else
++                    illegal_instr = 1'b1;
++            end
++        end
++
+         // --------------------------------
+         // Floating-Point Load/store
+         // --------------------------------
+@@ -1606,6 +1703,8 @@ module decoder
+           instruction_o.rs2 = instr.atype.rs2;
+           instruction_o.rd  = instr.atype.rd;
+           // TODO(zarubaf): Ordering
++          instruction_o.aq   = instr.instr[26];
++          instruction_o.rl   = instr.instr[25];
+           // words
+           if (CVA6Cfg.RVA && instr.stype.funct3 == 3'h2) begin
+             unique case (instr.instr[31:27])
+diff --git a/core/include/ariane_pkg.sv b/core/include/ariane_pkg.sv
+index 48736329..038e9a81 100644
+--- a/core/include/ariane_pkg.sv
++++ b/core/include/ariane_pkg.sv
+@@ -71,6 +71,26 @@ package ariane_pkg;
+   // amount of data count registers implemented
+   localparam logic [3:0] DataCount = 4'h2;
+ 
++`ifdef PITON_ARIANE
++  // Floating-point extensions configuration
++  localparam bit RVF = 1'b1; // Is F extension enabled
++  localparam bit RVD = 1'b1; // Is D extension enabled
++`else
++  // Floating-point extensions configuration
++  localparam bit RVF = 1'b1; // Is F extension enabled
++  localparam bit RVD = 1'b1; // Is D extension enabled
++`endif
++
++  // Transprecision floating-point extensions configuration
++  localparam bit XF16    = 1'b0; // Is half-precision float extension (Xf16) enabled
++  localparam bit XF16ALT = 1'b0; // Is alternative half-precision float extension (Xf16alt) enabled
++  localparam bit XF8     = 1'b0; // Is quarter-precision float extension (Xf8) enabled
++  localparam bit XFVEC   = 1'b0; // Is vectorial float extension (Xfvec) enabled
++
++  // --------------------------------------
++  // vvvv Don't change these by hand! vvvv
++  localparam bit FP_PRESENT = RVF | RVD | XF16 | XF16ALT | XF8;
++
+   // address where data0-15 is shadowed or if shadowed in a CSR
+   // address of the first CSR used for shadowing the data
+   localparam logic [11:0] DataAddr = 12'h380;  // we are aligned with Rocket here
+@@ -684,6 +704,13 @@ package ariane_pkg;
+     FE_INSTR_GUEST_PAGE_FAULT
+   } frontend_exception_t;
+ 
++  typedef struct packed {
++    logic       dcs_en;
++    logic       use_owner_pred;
++    logic [1:0] dcs;
++    logic [3:0] cid;
++  } dcs_data_t;
++
+   // AMO request going to cache. this request is unconditionally valid as soon
+   // as request goes high.
+   // Furthermore, those signals are kept stable until the response indicates
+@@ -694,6 +721,8 @@ package ariane_pkg;
+     logic [1:0]  size;       // 2'b10 --> word operation, 2'b11 --> double word operation
+     logic [63:0] operand_a;  // address
+     logic [63:0] operand_b;  // data as layouted in the register
++    logic        aq;
++    logic        rl;
+   } amo_req_t;
+ 
+   // AMO response coming from cache.
+diff --git a/core/issue_read_operands.sv b/core/issue_read_operands.sv
+index 7523d346..99a2f2ab 100644
+--- a/core/issue_read_operands.sv
++++ b/core/issue_read_operands.sv
+@@ -233,6 +233,7 @@ module issue_read_operands
+   logic [OPERANDS_PER_INSTR-1:0] rs_valid;
+   logic [OPERANDS_PER_INSTR-1:0][CVA6Cfg.XLEN-1:0] rs;
+ 
++
+   cvxif_issue_register_commit_if_driver #(
+       .CVA6Cfg       (CVA6Cfg),
+       .x_issue_req_t (x_issue_req_t),
+@@ -286,7 +287,9 @@ module issue_read_operands
+   end
+ 
+   assign alu_bypass_o = alu_bypass_q;
+-  assign fu_data_o = fu_data_q;
++  always_comb begin
++    fu_data_o = fu_data_q;
++  end
+   assign alu_valid_o = alu_valid_q;
+   assign aes_valid_o = aes_valid_q;
+   assign branch_valid_o = branch_valid_q;
+@@ -697,6 +700,9 @@ module issue_read_operands
+       fu_data_n[i].trans_id  = issue_instr_i[i].trans_id;
+       fu_data_n[i].fu        = issue_instr_i[i].fu;
+       fu_data_n[i].operation = issue_instr_i[i].op;
++      fu_data_n[i].use_dcs   = issue_instr_i[i].use_dcs;
++      fu_data_n[i].aq        = issue_instr_i[i].aq;
++      fu_data_n[i].rl        = issue_instr_i[i].rl;
+       if (CVA6Cfg.RVH) begin
+         tinst_n[i] = issue_instr_i[i].ex.tinst;
+       end
+diff --git a/core/load_store_unit.sv b/core/load_store_unit.sv
+index fd84ceab..92711bc7 100644
+--- a/core/load_store_unit.sv
++++ b/core/load_store_unit.sv
+@@ -183,6 +183,9 @@ module load_store_unit
+   logic                        pop_st;
+   logic                        pop_ld;
+ 
++  // dynamic coherence specialization data
++  dcs_data_t                dcs_data;
++
+   // ------------------------------
+   // Address Generation Unit (AGU)
+   // ------------------------------
+@@ -193,7 +196,33 @@ module load_store_unit
+   logic                        g_overflow;
+   logic [(CVA6Cfg.XLEN/8)-1:0] be_i;
+ 
+-  assign vaddr_xlen = $unsigned($signed(fu_data_i.imm) + $signed(fu_data_i.operand_a));
++  always_comb begin
++    if (fu_data_i.use_dcs == 1'b1) begin
++      dcs_data.dcs_en = 1'b1;
++      dcs_data.dcs    = fu_data_i.imm[10:9];
++      dcs_data.cid    = fu_data_i.imm[8:5];
++      if (fu_data_i.imm[4] == 1'b1) begin
++        // use owner prediction
++        dcs_data.use_owner_pred = 1'b1;
++        vaddr_xlen = $unsigned(
++            $signed({{CVA6Cfg.XLEN - 4{fu_data_i.imm[3]}}, fu_data_i.imm[3:0]}) +
++            $signed(fu_data_i.operand_a)
++        );
++      end else begin
++        // no owner prediction
++        dcs_data.use_owner_pred = 1'b0;
++        vaddr_xlen = $unsigned(
++            $signed(
++                {{CVA6Cfg.XLEN - 8{fu_data_i.imm[7]}}, fu_data_i.imm[8:5], fu_data_i.imm[3:0]}
++            ) + $signed(fu_data_i.operand_a)
++        );
++      end
++    end else begin
++      dcs_data = '0;
++      vaddr_xlen = $unsigned($signed(fu_data_i.imm) + $signed(fu_data_i.operand_a));
++    end
++  end
++
+   assign vaddr_i = vaddr_xlen[CVA6Cfg.VLEN-1:0];
+   // we work with SV39 or SV32, so if VM is enabled, check that all bits [XLEN-1:38] or [XLEN-1:31] are equal
+   assign overflow = (CVA6Cfg.IS_XLEN64 && (!((&vaddr_xlen[CVA6Cfg.XLEN-1:CVA6Cfg.SV-1]) == 1'b1 || (|vaddr_xlen[CVA6Cfg.XLEN-1:CVA6Cfg.SV-1]) == 1'b0)));
+@@ -865,6 +894,9 @@ module load_store_unit
+     fu_data_i.fu,
+     fu_data_i.operation,
+     fu_data_i.trans_id,
++    dcs_data,
++    fu_data_i.aq,
++    fu_data_i.rl,
+     speculative_load_i,
+     1'b0
+   };
+diff --git a/core/load_unit.sv b/core/load_unit.sv
+index d4167b00..4f0a6549 100644
+--- a/core/load_unit.sv
++++ b/core/load_unit.sv
+@@ -211,6 +211,8 @@ module load_unit
+   assign req_port_o.address_tag   = paddr_i[CVA6Cfg.DCACHE_TAG_WIDTH     +
+                                               CVA6Cfg.DCACHE_INDEX_WIDTH-1 :
+                                               CVA6Cfg.DCACHE_INDEX_WIDTH];
++  // assign dynamic coherence specialization
++  assign req_port_o.dcs_data = lsu_ctrl_i.dcs_data;
+   // request id = index of the load buffer's entry
+   assign req_port_o.data_id = ldbuf_windex;
+   // user field not used
+diff --git a/core/store_buffer.sv b/core/store_buffer.sv
+index aad6f8a8..acc32999 100644
+--- a/core/store_buffer.sv
++++ b/core/store_buffer.sv
+@@ -46,6 +46,7 @@ module store_buffer
+     input logic [CVA6Cfg.XLEN-1:0] data_i,  // data which is placed in the queue
+     input logic [(CVA6Cfg.XLEN/8)-1:0] be_i,  // byte enable in
+     input logic [1:0] data_size_i,  // type of request we are making (e.g.: bytes to write)
++    input  dcs_data_t dcs_data_i,
+     input cbo_t cbo_op_i,  // type of cache block operation
+ 
+     // D$ interface
+@@ -61,6 +62,7 @@ module store_buffer
+     logic [CVA6Cfg.XLEN-1:0] data;
+     logic [(CVA6Cfg.XLEN/8)-1:0] be;
+     logic [1:0] data_size;
++    dcs_data_t dcs_data;
+     cbo_t cbo_op;
+     logic valid;  // this entry is valid, we need this for checking if the address offset matches
+     logic wait_rvalid;  // need to wait for rvalid...
+@@ -99,6 +101,7 @@ module store_buffer
+       speculative_queue_n[speculative_write_pointer_q].data = data_i;
+       speculative_queue_n[speculative_write_pointer_q].be = be_i;
+       speculative_queue_n[speculative_write_pointer_q].data_size = data_size_i;
++      speculative_queue_n[speculative_write_pointer_q].dcs_data  = dcs_data_i;
+       speculative_queue_n[speculative_write_pointer_q].valid = 1'b1;
+       speculative_queue_n[speculative_write_pointer_q].cbo_op = cbo_op_i;
+       speculative_queue_n[speculative_write_pointer_q].wait_rvalid = 1'b0;
+@@ -155,6 +158,7 @@ module store_buffer
+   assign req_port_o.data_wuser = '0;
+   assign req_port_o.data_be = commit_queue_q[commit_read_pointer_q].be;
+   assign req_port_o.data_size = commit_queue_q[commit_read_pointer_q].data_size;
++  assign req_port_o.dcs_data      = commit_queue_q[commit_read_pointer_q].dcs_data;
+ 
+   assign rvfi_mem_paddr_o = speculative_queue_q[speculative_read_pointer_q].address;
+ 
+diff --git a/core/store_unit.sv b/core/store_unit.sv
+index f5594867..a336acbd 100644
+--- a/core/store_unit.sv
++++ b/core/store_unit.sv
+@@ -137,6 +137,9 @@ module store_unit
+   logic [CVA6Cfg.XLEN-1:0] st_data_n, st_data_q;
+   logic [(CVA6Cfg.XLEN/8)-1:0] st_be_n, st_be_q;
+   logic [1:0] st_data_size_n, st_data_size_q;
++  dcs_data_t    st_dcs_data_n,  st_dcs_data_q;
++  logic         st_aq_n,        st_aq_q;
++  logic         st_rl_n,        st_rl_q;
+   amo_t amo_op_d, amo_op_q;
+   cbo_t cbo_op_d, cbo_op_q;
+ 
+@@ -278,6 +281,9 @@ module store_unit
+     st_data_n = ((CVA6Cfg.RVA && instr_is_amo) ? endian_data[CVA6Cfg.XLEN-1:0] :
+                  data_align(lsu_ctrl_i.vaddr[2:0], {{64 - CVA6Cfg.XLEN{1'b0}}, endian_data}));
+     st_data_size_n = extract_transfer_size(lsu_ctrl_i.operation);
++    st_dcs_data_n = lsu_ctrl_i.dcs_data;
++    st_aq_n = lsu_ctrl_i.aq;
++    st_rl_n = lsu_ctrl_i.rl;
+     // save AMO op for next cycle
+     if (CVA6Cfg.RVA) begin
+       case (lsu_ctrl_i.operation)
+@@ -352,6 +358,7 @@ module store_unit
+       .cbo_op_i             (cbo_op_q),
+       .be_i                 (st_be_q),
+       .data_size_i          (st_data_size_q),
++      .dcs_data_i           (st_dcs_data_q),
+       .req_port_i           (req_port_i),
+       .req_port_o           (req_port_o)
+   );
+@@ -369,6 +376,8 @@ module store_unit
+         .amo_op_i          (amo_op_q),
+         .data_i            (st_data_q),
+         .data_size_i       (st_data_size_q),
++        .aq_i              (st_aq_q),
++        .rl_i              (st_rl_q),
+         .amo_req_o         (amo_req_o),
+         .amo_resp_i        (amo_resp_i),
+         .amo_valid_commit_i(amo_valid_commit_i),
+@@ -388,6 +397,9 @@ module store_unit
+       st_be_q        <= '0;
+       st_data_q      <= '0;
+       st_data_size_q <= '0;
++      st_dcs_data_q  <= '0;
++      st_aq_q        <= '0;
++      st_rl_q        <= '0;
+       trans_id_q     <= '0;
+       amo_op_q       <= AMO_NONE;
+       cbo_op_q       <= ariane_pkg::CBO_NONE;
+@@ -399,6 +411,9 @@ module store_unit
+       st_data_size_q <= st_data_size_n;
+       amo_op_q       <= amo_op_d;
+       cbo_op_q       <= cbo_op_d;
++      st_dcs_data_q  <= st_dcs_data_n;
++      st_aq_q        <= st_aq_n;
++      st_rl_q        <= st_rl_n;
+     end
+   end
+ 
+diff --git a/corev_apu/src/ariane.sv b/corev_apu/src/ariane.sv
+index 272b7f35..34e42131 100644
+--- a/corev_apu/src/ariane.sv
++++ b/corev_apu/src/ariane.sv
+@@ -65,7 +65,14 @@ module ariane import ariane_pkg::*; #(
+   output rvfi_probes_t rvfi_probes_o,
+   // memory side
+   output noc_req_t                     noc_req_o,
+-  input  noc_resp_t                    noc_resp_i
++  input  noc_resp_t                    noc_resp_i,
++  input  ariane_axi::snoop_req_t       ace_req_i,
++  output ariane_axi::snoop_resp_t      ace_resp_o,
++  // fence indication to l2
++  output logic [1:0]                   fence_l2_o,
++  //flush L1 from L2
++  input logic                          flush_l1_i,
++  output logic                         flush_done_o
+ );
+ 
+   cvxif_req_t  cvxif_req;
+@@ -107,7 +114,12 @@ module ariane import ariane_pkg::*; #(
+     .cvxif_req_o          ( cvxif_req                 ),
+     .cvxif_resp_i         ( cvxif_resp                ),
+     .noc_req_o            ( noc_req_o                 ),
+-    .noc_resp_i           ( noc_resp_i                )
++    .noc_resp_i           ( noc_resp_i                ),
++    .ace_req_i            ( ace_req_i                 ),
++    .ace_resp_o           ( ace_resp_o                ),
++    .fence_l2_o           (fence_l2_o                 ),
++    .flush_l1_i           (flush_l1_i                 ),
++    .flush_done_o         (flush_done_o               )
+   );
+ 
+   if (CVA6Cfg.CvxifEn) begin: gen_cvxif
+diff --git a/corev_apu/tb/ariane_axi_pkg.sv b/corev_apu/tb/ariane_axi_pkg.sv
+index c750336a..35017960 100644
+--- a/corev_apu/tb/ariane_axi_pkg.sv
++++ b/corev_apu/tb/ariane_axi_pkg.sv
+@@ -106,4 +106,22 @@ package ariane_axi;
+         r_chan_t  r;
+     } resp_t;
+ 
++   // We only need to add the ACE snoop address channel (AC) to handle
++   // invalidate requests from the cahce hierarcy to the wt L1.
++   // AC Channel
++   typedef struct packed {
++      addr_t            addr;
++      axi_pkg::prot_t   prot;
++      axi_pkg::snoop_t  snoop;
++   } ac_chan_t;
++
++   typedef struct packed {
++      logic         ac_valid;
++      ac_chan_t     ac;
++   } snoop_req_t;
++
++   typedef struct packed {
++      logic         ac_ready;
++   } snoop_resp_t;
++
+ endpackage
+diff --git a/vendor/pulp-platform/axi/src/axi_pkg.sv b/vendor/pulp-platform/axi/src/axi_pkg.sv
+index 92ede558..13110b2f 100644
+--- a/vendor/pulp-platform/axi/src/axi_pkg.sv
++++ b/vendor/pulp-platform/axi/src/axi_pkg.sv
+@@ -39,6 +39,8 @@ package axi_pkg;
+   typedef logic [5:0] atop_t; // atomic operations
+   /// AXI5 Non-Secure Address Identifier.
+   typedef logic [3:0] nsaid_t;
++  // coherent transaction that requires snoop
++  typedef logic [3:0] snoop_t;
+ 
+   /// In a fixed burst:
+   /// - The address is the same for every transfer in the burst.
+@@ -359,6 +361,18 @@ package axi_pkg;
+   // Ussage eg: if (req_i.aw.atop[axi_pkg::ATOP_R_RESP]) begin
+   localparam ATOP_R_RESP = 32'd5;
+ 
++  // ACE Snoop Types
++  localparam SNOOP_READONCE           = 4'b0000;
++  localparam SNOOP_READSHARED         = 4'b0001;
++  localparam SNOOP_READCLEAN          = 4'b0010;
++  localparam SNOOP_READNOTSHAREDDIRTY = 4'b0011;
++  localparam SNOOP_READUNIQUE         = 4'b0111;
++  localparam SNOOP_CLEANSHARED        = 4'b1000;
++  localparam SNOOP_CLEANINVALID       = 4'b1001;
++  localparam SNOOP_MAKEINVALID        = 4'b1101;
++  localparam SNOOP_DVMCOMPLETE        = 4'b1110;
++  localparam SNOOP_DVMMESSAGE         = 4'b1111;
++
+   // `xbar_latency_e` and `xbar_cfg_t` are documented in `doc/axi_xbar.md`.
+   /// Slice on Demux AW channel.
+   localparam logic [9:0] DemuxAw = (1 << 9);
+@@ -420,4 +434,12 @@ package axi_pkg;
+     logic [31:0] start_addr;
+     logic [31:0] end_addr;
+   } xbar_rule_32_t;
++
++  // Snoop Address Channel (AC)
++   typedef struct packed {
++      logic [63:0]   addr;
++      prot_t   prot;
++      snoop_t  snoop;
++   } ac_chan_t;
++
+ endpackage
+diff --git a/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_amos.sv b/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_amos.sv
+index dae2974a..5b67aa7e 100644
+--- a/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_amos.sv
++++ b/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_amos.sv
+@@ -107,6 +107,7 @@ module axi_riscv_amos #(
+ 
+     output logic [AXI_ADDR_WIDTH-1:0]   mst_ar_addr_o,
+     output logic [2:0]                  mst_ar_prot_o,
++    output logic [5:0]                  mst_ar_atop_o,
+     output logic [3:0]                  mst_ar_region_o,
+     output logic [7:0]                  mst_ar_len_o,
+     output logic [2:0]                  mst_ar_size_o,
+@@ -400,6 +401,7 @@ module axi_riscv_amos #(
+                     mst_aw_qos_o    = qos_q;
+                     mst_aw_region_o = region_q;
+                     mst_aw_user_o   = aw_user_q;
++                    mst_aw_atop_o   = atop_q;
+                     // Check if request is acknowledged
+                     if (mst_aw_ready_i) begin
+                         aw_state_d = FEEDTHROUGH_AW;
+@@ -710,6 +712,7 @@ module axi_riscv_amos #(
+         mst_ar_qos_o    = slv_ar_qos_i;
+         mst_ar_region_o = slv_ar_region_i;
+         mst_ar_user_o   = slv_ar_user_i;
++        mst_ar_atop_o   = 6'b0;
+         mst_ar_valid_o  = 1'b0;
+         slv_ar_ready_o  = 1'b0;
+         // State Machine
+@@ -740,6 +743,7 @@ module axi_riscv_amos #(
+                             mst_ar_qos_o    = slv_aw_qos_i;
+                             mst_ar_region_o = slv_aw_region_i;
+                             mst_ar_user_o   = slv_aw_user_i;
++                            mst_ar_atop_o   = slv_aw_atop_i;
+                             if (!mst_ar_ready_i) begin
+                                 // Hold read request but do not depend on AW
+                                 ar_state_d = SEND_AR;
+@@ -768,6 +772,7 @@ module axi_riscv_amos #(
+                     mst_ar_qos_o    = qos_q;
+                     mst_ar_region_o = region_q;
+                     mst_ar_user_o   = aw_user_q;
++                    mst_ar_atop_o   = atop_q;
+                     if (mst_ar_ready_i) begin
+                         // Request acknowledged
+                         ar_state_d = FEEDTHROUGH_AR;
+diff --git a/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_atomics.sv b/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_atomics.sv
+index f9b72d34..cdf85c01 100644
+--- a/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_atomics.sv
++++ b/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_atomics.sv
+@@ -161,6 +161,7 @@ module axi_riscv_atomics #(
+     logic [AXI_ADDR_WIDTH-1:0]   int_axi_ar_addr;
+     logic [2:0]                  int_axi_ar_prot;
+     logic [3:0]                  int_axi_ar_region;
++    logic [5:0]                  int_axi_ar_atop;
+     logic [7:0]                  int_axi_ar_len;
+     logic [2:0]                  int_axi_ar_size;
+     logic [1:0]                  int_axi_ar_burst;
+@@ -265,6 +266,7 @@ module axi_riscv_atomics #(
+         .mst_ar_addr_o      ( int_axi_ar_addr   ),
+         .mst_ar_prot_o      ( int_axi_ar_prot   ),
+         .mst_ar_region_o    ( int_axi_ar_region ),
++        .mst_ar_atop_o      ( int_axi_ar_atop   ),
+         .mst_ar_len_o       ( int_axi_ar_len    ),
+         .mst_ar_size_o      ( int_axi_ar_size   ),
+         .mst_ar_burst_o     ( int_axi_ar_burst  ),
+@@ -322,6 +324,7 @@ module axi_riscv_atomics #(
+         .slv_ar_addr_i      ( int_axi_ar_addr   ),
+         .slv_ar_prot_i      ( int_axi_ar_prot   ),
+         .slv_ar_region_i    ( int_axi_ar_region ),
++        .slv_ar_atop_i      ( int_axi_ar_atop   ),
+         .slv_ar_len_i       ( int_axi_ar_len    ),
+         .slv_ar_size_i      ( int_axi_ar_size   ),
+         .slv_ar_burst_i     ( int_axi_ar_burst  ),
+@@ -374,7 +377,7 @@ module axi_riscv_atomics #(
+         .mst_ar_cache_o     ( mst_ar_cache_o    ),
+         .mst_ar_qos_o       ( mst_ar_qos_o      ),
+         .mst_ar_id_o        ( mst_ar_id_o       ),
+-        .mst_ar_user_o      ( mst_ar_user_o     ),
++        .mst_ar_user_o      (                   ),
+         .mst_ar_ready_i     ( mst_ar_ready_i    ),
+         .mst_ar_valid_o     ( mst_ar_valid_o    ),
+         .mst_w_data_o       ( mst_w_data_o      ),
+@@ -397,4 +400,6 @@ module axi_riscv_atomics #(
+         .mst_b_valid_i      ( mst_b_valid_i     )
+     );
+ 
++    assign mst_ar_user_o = {4'b0, int_axi_ar_atop};
++
+ endmodule
+diff --git a/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_lrsc.sv b/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_lrsc.sv
+index 82c132c7..99bd7922 100644
+--- a/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_lrsc.sv
++++ b/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_lrsc.sv
+@@ -38,6 +38,7 @@ module axi_riscv_lrsc #(
+     parameter int unsigned AXI_DATA_WIDTH = 0,
+     parameter int unsigned AXI_ID_WIDTH = 0,
+     parameter int unsigned AXI_USER_WIDTH = 0,
++    parameter logic AXI_RISCV_AMOS_PRESENT = 1'b1,
+     /// Derived Parameters (do NOT change manually!)
+     localparam int unsigned AXI_STRB_WIDTH = AXI_DATA_WIDTH / 8
+ ) (
+@@ -63,6 +64,7 @@ module axi_riscv_lrsc #(
+     input  logic [AXI_ADDR_WIDTH-1:0]   slv_ar_addr_i,
+     input  logic [2:0]                  slv_ar_prot_i,
+     input  logic [3:0]                  slv_ar_region_i,
++    input  logic [5:0]                  slv_ar_atop_i,
+     input  logic [7:0]                  slv_ar_len_i,
+     input  logic [2:0]                  slv_ar_size_i,
+     input  logic [1:0]                  slv_ar_burst_i,
+@@ -178,6 +180,8 @@ module axi_riscv_lrsc #(
+                                 B_INJECT} w_state_t;
+     w_state_t                       w_state_d,                  w_state_q;
+ 
++    logic on_going_amo_d, on_going_amo_q;
++
+     // AR and R Channel
+ 
+     // Time-Invariant Signal Assignments
+@@ -187,7 +191,7 @@ module axi_riscv_lrsc #(
+     assign mst_ar_len_o       = slv_ar_len_i;
+     assign mst_ar_size_o      = slv_ar_size_i;
+     assign mst_ar_burst_o     = slv_ar_burst_i;
+-    assign mst_ar_lock_o      = 1'b0;
++    assign mst_ar_lock_o      = AXI_RISCV_AMOS_PRESENT ? slv_ar_lock_i | (|slv_ar_atop_i) : slv_ar_lock_i;
+     assign mst_ar_cache_o     = slv_ar_cache_i;
+     assign mst_ar_qos_o       = slv_ar_qos_i;
+     assign mst_ar_id_o        = slv_ar_id_i;
+@@ -201,7 +205,7 @@ module axi_riscv_lrsc #(
+     always_comb begin
+         mst_ar_valid_o  = 1'b0;
+         slv_ar_ready_o  = 1'b0;
+-        mst_r_ready_o   = 1'b0;
++        mst_r_ready_o   = AXI_RISCV_AMOS_PRESENT ? 1'b0 : slv_r_ready_i;
+         slv_r_valid_o   = 1'b0;
+         slv_r_resp_o    = '0;
+         art_set_addr    = '0;
+@@ -211,11 +215,15 @@ module axi_riscv_lrsc #(
+         rd_clr_req      = 1'b0;
+         r_excl_d        = r_excl_q;
+         r_state_d       = r_state_q;
++        on_going_amo_d  = AXI_RISCV_AMOS_PRESENT ? 1'b0 : on_going_amo_q || (slv_aw_valid_i && slv_aw_atop_i);
+ 
+         case (r_state_q)
+ 
+             R_IDLE: begin
+-                if (slv_ar_valid_i) begin
++                 if (on_going_amo_q) begin
++                     r_state_d = R_WAIT_R;
++                     on_going_amo_d = 1'b0;
++                 end else if (slv_ar_valid_i) begin
+                     if (slv_ar_addr_i >= ADDR_BEGIN && slv_ar_addr_i <= ADDR_END && slv_ar_lock_i &&
+                             slv_ar_len_i == 8'h00) begin
+                         // Inside exclusively-accessible address range and exclusive access and no
+@@ -285,7 +293,7 @@ module axi_riscv_lrsc #(
+     assign mst_aw_len_o     = slv_aw_len_i;
+     assign mst_aw_size_o    = slv_aw_size_i;
+     assign mst_aw_burst_o   = slv_aw_burst_i;
+-    assign mst_aw_lock_o    = 1'b0;
++    assign mst_aw_lock_o    = AXI_RISCV_AMOS_PRESENT ? slv_aw_lock_i | (|slv_aw_atop_i) : slv_aw_lock_i;
+     assign mst_aw_cache_o   = slv_aw_cache_i;
+     assign mst_aw_qos_o     = slv_aw_qos_i;
+     assign mst_aw_id_o      = slv_aw_id_i;
+@@ -410,8 +418,7 @@ module axi_riscv_lrsc #(
+             B_FORWARD: begin
+                 mst_b_ready_o   = slv_b_ready_i;
+                 slv_b_valid_o   = mst_b_valid_i;
+-                slv_b_resp_o[1] = mst_b_resp_i[1];
+-                slv_b_resp_o[0] = (mst_b_resp_i[1] == 1'b0) ? b_excl_q : mst_b_resp_i[0];
++                slv_b_resp_o    = mst_b_resp_i;
+                 slv_b_user_o    = mst_b_user_i;
+                 slv_b_id_o      = mst_b_id_i;
+                 if (slv_b_valid_o && slv_b_ready_i) begin
+@@ -480,6 +487,7 @@ module axi_riscv_lrsc #(
+             w_addr_q    <= '0;
+             w_id_q      <= '0;
+             w_state_q   <= AW_IDLE;
++            on_going_amo_q <= 1'b0;
+         end else begin
+             b_excl_q    <= b_excl_d;
+             r_excl_q    <= r_excl_d;
+@@ -487,6 +495,7 @@ module axi_riscv_lrsc #(
+             w_addr_q    <= w_addr_d;
+             w_id_q      <= w_id_d;
+             w_state_q   <= w_state_d;
++            on_going_amo_q <= on_going_amo_d;
+         end
+     end
+ 
+@@ -494,7 +503,7 @@ module axi_riscv_lrsc #(
+ // pragma translate_off
+ `ifndef VERILATOR
+     initial begin: validate_params
+-        assert (ADDR_END > ADDR_BEGIN)
++        assert (ADDR_END >= ADDR_BEGIN)
+             else $fatal(1, "ADDR_END must be greater than ADDR_BEGIN!");
+         assert (AXI_ADDR_WIDTH > 0)
+             else $fatal(1, "AXI_ADDR_WIDTH must be greater than 0!");
+diff --git a/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_lrsc_wrap.sv b/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_lrsc_wrap.sv
+index 3eb409bf..70dfc948 100644
+--- a/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_lrsc_wrap.sv
++++ b/vendor/pulp-platform/axi_riscv_atomics/src/axi_riscv_lrsc_wrap.sv
+@@ -39,7 +39,8 @@ module axi_riscv_lrsc_wrap #(
+         .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
+         .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
+         .AXI_ID_WIDTH   (AXI_ID_WIDTH),
+-        .AXI_USER_WIDTH (AXI_USER_WIDTH)
++        .AXI_USER_WIDTH (AXI_USER_WIDTH),
++        .AXI_RISCV_AMOS_PRESENT(1'b0)
+     ) i_lrsc (
+         .clk_i           ( clk_i         ),
+         .rst_ni          ( rst_ni        ),
+@@ -60,6 +61,7 @@ module axi_riscv_lrsc_wrap #(
+         .slv_ar_addr_i   ( slv.ar_addr   ),
+         .slv_ar_prot_i   ( slv.ar_prot   ),
+         .slv_ar_region_i ( slv.ar_region ),
++        .slv_ar_atop_i   ( '0            ),
+         .slv_ar_len_i    ( slv.ar_len    ),
+         .slv_ar_size_i   ( slv.ar_size   ),
+         .slv_ar_burst_i  ( slv.ar_burst  ),
+diff --git a/verif/tb/core/tb_components/axi_master_connect.sv b/verif/tb/core/tb_components/axi_master_connect.sv
+index e0e6502d..4345ee11 100644
+--- a/verif/tb/core/tb_components/axi_master_connect.sv
++++ b/verif/tb/core/tb_components/axi_master_connect.sv
+@@ -28,7 +28,7 @@ module axi_master_connect (
+     assign master.aw_qos        = dis_mem? '0 : axi_req_i.aw.qos;
+     assign master.aw_atop       = dis_mem? '0 : axi_req_i.aw.atop;
+     assign master.aw_region     = dis_mem? '0 : axi_req_i.aw.region;
+-    assign master.aw_user       = dis_mem? '0 : '0;
++    assign master.aw_user       = dis_mem? '0 : axi_req_i.aw.user;
+     assign master.aw_valid      = dis_mem? '0 : axi_req_i.aw_valid;
+ 
+     assign master.w_data        = dis_mem? '0 : axi_req_i.w.data;
+@@ -49,7 +49,7 @@ module axi_master_connect (
+     assign master.ar_prot       = dis_mem? '0 : axi_req_i.ar.prot;
+     assign master.ar_qos        = dis_mem? '0 : axi_req_i.ar.qos;
+     assign master.ar_region     = dis_mem? '0 : axi_req_i.ar.region;
+-    assign master.ar_user       = dis_mem? '0 : '0;
++    assign master.ar_user       = dis_mem? '0 : axi_req_i.ar.user;
+     assign master.ar_valid      = dis_mem? '0 : axi_req_i.ar_valid;
+ 
+     assign master.r_ready       = dis_mem? '0 : axi_req_i.r_ready;

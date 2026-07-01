@@ -4,6 +4,9 @@ cores/ibex/riscv_plic_apb_wrap.vhd
 cores/ariane/ariane_axi_wrap.vhd
 cores/ariane/riscv_plic_apb_wrap.vhd
 cores/ariane/riscv_clint_ahb_wrap.vhd
+cores/cva6/cva6_axi_wrap.vhd
+cores/cva6/riscv_clint_ahb_wrap.vhd
+cores/cva6/riscv_plic_apb_wrap.vhd
 cores/leon3/mmu_icache.vhd
 cores/leon3/mmu.vhd
 cores/leon3/mmutlbcam.vhd
