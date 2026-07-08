@@ -42,34 +42,38 @@ genus:
 
 genus/incdir.tcl: genus $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 	$(QUIET_MAKE) \
-	echo "set DES(hdl_search_path) \"$(INCDIR) $(BSG_INCDIR)\"" > $@
+	{ \
+		echo "set DES(hdl_search_path) [list \\"; \
+		for dir in $(GENUS_HDL_SEARCH_PATH); do \
+			printf '    "%s" \\\n' "$$dir"; \
+		done; \
+		echo "]"; \
+	} > $@
 
 genus/srcs.tcl: genus $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 	$(QUIET_MAKE) $(RM) $@
 	@echo "### Compile VHDL packages ###" >> $@; \
-	for vhd in $(VHDL_PKGS); do \
+	for vhd in $(GENUS_VHDL_PKGS); do \
 		rtl=$$vhd; \
 		echo "$(GENUS_VHDL) $$rtl" >> $@; \
 	done; \
 	echo "### Compile VHDL source files ###" >> $@; \
-	for rtl in $(VHDL_SRCS); do \
-		if echo "$(GENUS_EXCLUDE_VHDL)" | grep -q $$rtl; then \
-			echo "# skip $$rtl" >> $@; \
-		else \
-			[[ $$rtl =~ techmap/virtex  ]] || echo "$(GENUS_VHDL) $$rtl" >> $@; \
-		fi; \
+	for rtl in $(GENUS_VHDL_SRCS); do \
+		echo "$(GENUS_VHDL) $$rtl" >> $@; \
 	done; \
 	echo "### Compile Verilog source files ###" >> $@; \
-	for rtl in $(VLOG_SRCS); do \
-		if echo "$(GENUS_EXCLUDE_VLOG)" | grep -q $$rtl; then \
-			echo "# skip $$rtl" >> $@; \
-		else \
-			[[ $$rtl =~ techmap/virtex  ]] || echo "$(GENUS_VLOG) $$rtl" >> $@; \
-		fi; \
+	for rtl in $(GENUS_VLOG_SRCS); do \
+		echo "$(GENUS_VLOG) $$rtl" >> $@; \
 	done;
 ifneq ("$(wildcard $(ESP_ROOT)/rtl/peripherals/bsg/.git)", "")
 	@echo "### Compile BSG Verilog source files ###" >> $@; \
-	echo "$(GENUS_VLOG) $(GENUS_BSG_VLOGOPT) $(BSG_VLOG_SRCS)" >> $@;
+	{ \
+		printf '%s %s' "$(GENUS_VLOG)" "$(GENUS_BSG_VLOGOPT)"; \
+		for rtl in $(GENUS_BSG_VLOG_SRCS); do \
+			printf ' \\\n    "%s"' "$$rtl"; \
+		done; \
+		printf '\n'; \
+	} >> $@;
 endif
 
 genus/$(DESIGN): genus genus/srcs.tcl genus/incdir.tcl
