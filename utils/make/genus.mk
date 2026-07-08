@@ -8,9 +8,27 @@ GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/ariane/ariane/src/util/instr_trace_i
 GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/ariane/ariane/src/util/instr_tracer_if.sv
 GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/ariane/ariane/src/util/instr_tracer.sv
 GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/cores/ibex/ibex/vendor/lowrisc_ip/ip/prim_xilinx/rtl/prim_xilinx_clock_gating.sv
+GENUS_EXCLUDE_VLOG += $(ESP_ROOT)/rtl/techmap/virtex%
 
 GENUS_EXCLUDE_VHDL += $(ESP_ROOT)/rtl/sockets/monitor/monitor.vhd
+GENUS_EXCLUDE_VHDL += $(ESP_ROOT)/rtl/sim/%
+GENUS_EXCLUDE_VHDL += $(ESP_ROOT)/rtl/sockets/jtag/jtag_tb.vhd
+GENUS_EXCLUDE_VHDL += $(ESP_ROOT)/rtl/sockets/jtag/fpga_proxy_jtag.vhd
+GENUS_EXCLUDE_VHDL += $(ESP_ROOT)/rtl/peripherals/ddr/%_profpga.vhd
+GENUS_EXCLUDE_VHDL += $(ESP_ROOT)/rtl/techmap/virtex%
 GENUS_EXCLUDE_VHDL += $(DESIGN_PATH)/fpga_proxy_top.vhd
+GENUS_EXCLUDE_VHDL += $(DESIGN_PATH)/chip_emu_top.vhd
+GENUS_EXCLUDE_VHDL += $(DESIGN_PATH)/top.vhd
+GENUS_EXCLUDE_VHDL += $(DESIGN_PATH)/testbench.vhd
+
+GENUS_EXCLUDE_INCDIR += $(PROFPGA)/hdl/%
+GENUS_EXCLUDE_INCDIR += $(ESP_ROOT)/rtl/peripherals/bsg/testing/%
+
+GENUS_HDL_SEARCH_PATH = $(filter-out $(GENUS_EXCLUDE_INCDIR),$(INCDIR) $(BSG_INCDIR))
+GENUS_VHDL_PKGS = $(filter-out $(GENUS_EXCLUDE_VHDL),$(VHDL_PKGS))
+GENUS_VHDL_SRCS = $(filter-out $(GENUS_EXCLUDE_VHDL),$(VHDL_SRCS))
+GENUS_VLOG_SRCS = $(filter-out $(GENUS_EXCLUDE_VLOG),$(VLOG_SRCS))
+GENUS_BSG_VLOG_SRCS = $(filter-out $(ESP_ROOT)/rtl/peripherals/bsg/testing/%,$(BSG_VLOG_SRCS))
 
 
 ### Genus targets ###
