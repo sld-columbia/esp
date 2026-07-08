@@ -16,7 +16,7 @@ SIM_VHDL_PKGS += $(THIRDPARTY_VHDL_PKGS)
 SIM_VHDL_PKGS += $(TOP_VHDL_RTL_PKGS) $(TOP_VHDL_SIM_PKGS)
 
 VHDL_PKGS += $(SOCKETGEN_VHDL_RTL_PKGS)
-VHDL_PKGS += $(foreach f, $(shell strings $(FLISTS)/vhdl_pkgs.flist), $(if $(findstring rtl/sim, $(f)),, $(ESP_ROOT)/rtl/$(f)))
+VHDL_PKGS += $(foreach f, $(filter-out sim/%,$(shell strings $(FLISTS)/vhdl_pkgs.flist)), $(ESP_ROOT)/rtl/$(f))
 VHDL_PKGS += $(THIRDPARTY_VHDL_PKGS)
 VHDL_PKGS += $(TOP_VHDL_RTL_PKGS)
 
