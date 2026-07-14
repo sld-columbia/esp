@@ -105,6 +105,9 @@ architecture mesh of sync_noc_xy is
   signal data_void_out_i : std_logic_vector(4 downto 0);
   signal stop_out_i      : std_logic_vector(4 downto 0);
 
+  signal tile_inject_sync : std_logic_vector(1 downto 0);
+  signal queue_full_sync : std_logic_vector(9 downto 0);
+
   begin
 
   data_void_in_i            <= sync_data_void_in & data_void_in(3 downto 0);
@@ -147,14 +150,39 @@ architecture mesh of sync_noc_xy is
           stop_out      => stop_out_i);
 
     -- Monitor signals
+    -- synchronize tile_inject to tile_clk for csr performance counter
+    mon_inject_sync : process(clk_tile, rst_tile)
+    begin
+      if rst_tile = '0' then
+        tile_inject_sync <= (others => '0');
+      elsif rising_edge(clk_tile) then
+        tile_inject_sync(0) <= not data_void_in(4);
+        tile_inject_sync(1) <= tile_inject_sync(0);
+      end if;
+    end process mon_inject_sync;
+    
     mon_noc.clk          <= clk;
-    mon_noc.tile_inject  <= not data_void_in(4);
+    mon_noc.tile_inject  <= tile_inject_sync(1);
 
-    mon_noc.queue_full(4) <= data_void_out_i(4) nand data_void_in_i(4);
-    mon_noc.queue_full(3) <= not data_void_out_i(3);
-    mon_noc.queue_full(2) <= not data_void_out_i(2);
-    mon_noc.queue_full(1) <= not data_void_out_i(1);
-    mon_noc.queue_full(0) <= not data_void_out_i(0);
+  -- synchronize queue_full to tile_clk for csr performance counter
+  -- TODO: improve this
+  mon_queue_full_sync : process(clk_tile, rst_tile)
+  begin
+    if rst_tile = '0' then
+      queue_full_sync <= (others => '0');
+    elsif rising_edge(clk_tile) then
+      -- stage 1
+      queue_full_sync(4) <= data_void_out_i(4) nand data_void_in_i(4);
+      queue_full_sync(3) <= not data_void_out_i(3);
+      queue_full_sync(2) <= not data_void_out_i(2);
+      queue_full_sync(1) <= not data_void_out_i(1);
+      queue_full_sync(0) <= not data_void_out_i(0);
+      -- stage 2
+      queue_full_sync(9 downto 5) <= queue_full_sync(4 downto 0);
+    end if;
+  end process mon_queue_full_sync;
+
+  mon_noc.queue_full <= queue_full_sync(9 downto 5);
 
 ----------------------------------------------------------------------------------------------
 -- FWD channel: input to the NoC
