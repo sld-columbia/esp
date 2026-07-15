@@ -65,6 +65,14 @@ RTL_ACC-hls       = $(addsuffix -hls, $(RTL_ACC))
 RTL_ACC-clean     = $(addsuffix -clean, $(RTL_ACC))
 RTL_ACC-distclean = $(addsuffix -distclean, $(RTL_ACC))
 
+BAMBUHLS_ACC_PATH      = $(ESP_ROOT)/accelerators/bambu_hls
+BAMBUHLS_ACC           = $(filter-out common, $(shell ls -d $(BAMBUHLS_ACC_PATH)/*/ 2> /dev/null | awk -F/ '{print $$(NF-1)}'))
+BAMBUHLS_ACC_PATHS     = $(addprefix $(BAMBUHLS_ACC_PATH)/, $(BAMBUHLS_ACC))
+BAMBUHLS_ACC-wdir      = $(addsuffix -wdir, $(BAMBUHLS_ACC))
+BAMBUHLS_ACC-hls       = $(addsuffix -hls, $(BAMBUHLS_ACC))
+BAMBUHLS_ACC-clean     = $(addsuffix -clean, $(BAMBUHLS_ACC))
+BAMBUHLS_ACC-distclean = $(addsuffix -distclean, $(BAMBUHLS_ACC))
+
 THIRDPARTY_PATH = $(ESP_ROOT)/accelerators/third-party
 ifdef CPU_ARCH
 THIRDPARTY_ACC  = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell if grep -q $(CONFIG_DMA_NOC_WIDTH) $(THIRDPARTY_PATH)/$(acc)/$(acc).dma_widths; then echo $(acc); fi))
@@ -81,14 +89,14 @@ THIRDPARTY_SVLOG      = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell
 THIRDPARTY_VHDL_PKGS  = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).pkgs),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
 THIRDPARTY_VHDL       = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).vhdl),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
 
-ACC_PATHS = $(STRATUSHLS_ACC_PATHS) $(VIVADOHLS_ACC_PATHS) $(CATAPULTHLS_ACC_PATHS) $(HLS4ML_ACC_PATHS) $(CHISEL_ACC_PATHS) $(RTL_ACC_PATHS)
+ACC_PATHS = $(STRATUSHLS_ACC_PATHS) $(VIVADOHLS_ACC_PATHS) $(CATAPULTHLS_ACC_PATHS) $(HLS4ML_ACC_PATHS) $(CHISEL_ACC_PATHS) $(RTL_ACC_PATHS) $(BAMBUHLS_ACC_PATHS)
 
-ACC-driver       = $(addsuffix -driver, $(STRATUSHLS_ACC)) $(addsuffix -driver, $(VIVADOHLS_ACC)) $(addsuffix -driver, $(HLS4ML_ACC)) $(addsuffix -driver, $(CHISEL_ACC)) $(addsuffix -driver, $(CATAPULTHLS_ACC)) $(addsuffix -driver, $(RTL_ACC))
-ACC-driver-clean = $(addsuffix -driver-clean, $(STRATUSHLS_ACC)) $(addsuffix -driver-clean, $(VIVADOHLS_ACC)) $(addsuffix -driver-clean, $(HLS4ML_ACC)) $(addsuffix -driver-clean, $(CHISEL_ACC)) $(addsuffix -driver-clean, $(CATAPULTHLS_ACC)) $(addsuffix -driver-clean, $(RTL_ACC))
-ACC-app          = $(addsuffix -app, $(STRATUSHLS_ACC)) $(addsuffix -app, $(VIVADOHLS_ACC)) $(addsuffix -app, $(HLS4ML_ACC)) $(addsuffix -app, $(CHISEL_ACC)) $(addsuffix -app, $(CATAPULTHLS_ACC)) $(addsuffix -app, $(RTL_ACC)) 
-ACC-app-clean    = $(addsuffix -app-clean, $(STRATUSHLS_ACC)) $(addsuffix -app-clean, $(VIVADOHLS_ACC)) $(addsuffix -app-clean, $(HLS4ML_ACC)) $(addsuffix -app-clean, $(CHISEL_ACC)) $(addsuffix -app-clean, $(CATAPULTHLS_ACC)) $(addsuffix -app-clean, $(RTL_ACC))
-ACC-baremetal        = $(addsuffix -baremetal, $(STRATUSHLS_ACC)) $(addsuffix -baremetal, $(VIVADOHLS_ACC)) $(addsuffix -baremetal, $(HLS4ML_ACC)) $(addsuffix -baremetal, $(CHISEL_ACC)) $(addsuffix -baremetal, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal, $(RTL_ACC))
-ACC-baremetal-clean  = $(addsuffix -baremetal-clean, $(STRATUSHLS_ACC)) $(addsuffix -baremetal-clean, $(VIVADOHLS_ACC)) $(addsuffix -baremetal-clean, $(HLS4ML_ACC)) $(addsuffix -baremetal-clean, $(CHISEL_ACC)) $(addsuffix -baremetal-clean, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal-clean, $(RTL_ACC))
+ACC-driver       = $(addsuffix -driver, $(STRATUSHLS_ACC)) $(addsuffix -driver, $(VIVADOHLS_ACC)) $(addsuffix -driver, $(HLS4ML_ACC)) $(addsuffix -driver, $(CHISEL_ACC)) $(addsuffix -driver, $(CATAPULTHLS_ACC)) $(addsuffix -driver, $(RTL_ACC)) $(addsuffix -driver, $(BAMBUHLS_ACC))
+ACC-driver-clean = $(addsuffix -driver-clean, $(STRATUSHLS_ACC)) $(addsuffix -driver-clean, $(VIVADOHLS_ACC)) $(addsuffix -driver-clean, $(HLS4ML_ACC)) $(addsuffix -driver-clean, $(CHISEL_ACC)) $(addsuffix -driver-clean, $(CATAPULTHLS_ACC)) $(addsuffix -driver-clean, $(RTL_ACC)) $(addsuffix -driver-clean, $(BAMBUHLS_ACC))
+ACC-app          = $(addsuffix -app, $(STRATUSHLS_ACC)) $(addsuffix -app, $(VIVADOHLS_ACC)) $(addsuffix -app, $(HLS4ML_ACC)) $(addsuffix -app, $(CHISEL_ACC)) $(addsuffix -app, $(CATAPULTHLS_ACC)) $(addsuffix -app, $(RTL_ACC)) $(addsuffix -app, $(BAMBUHLS_ACC))
+ACC-app-clean    = $(addsuffix -app-clean, $(STRATUSHLS_ACC)) $(addsuffix -app-clean, $(VIVADOHLS_ACC)) $(addsuffix -app-clean, $(HLS4ML_ACC)) $(addsuffix -app-clean, $(CHISEL_ACC)) $(addsuffix -app-clean, $(CATAPULTHLS_ACC)) $(addsuffix -app-clean, $(RTL_ACC)) $(addsuffix -app-clean, $(BAMBUHLS_ACC))
+ACC-baremetal        = $(addsuffix -baremetal, $(STRATUSHLS_ACC)) $(addsuffix -baremetal, $(VIVADOHLS_ACC)) $(addsuffix -baremetal, $(HLS4ML_ACC)) $(addsuffix -baremetal, $(CHISEL_ACC)) $(addsuffix -baremetal, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal, $(RTL_ACC)) $(addsuffix -baremetal, $(BAMBUHLS_ACC))
+ACC-baremetal-clean  = $(addsuffix -baremetal-clean, $(STRATUSHLS_ACC)) $(addsuffix -baremetal-clean, $(VIVADOHLS_ACC)) $(addsuffix -baremetal-clean, $(HLS4ML_ACC)) $(addsuffix -baremetal-clean, $(CHISEL_ACC)) $(addsuffix -baremetal-clean, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal-clean, $(RTL_ACC)) $(addsuffix -baremetal-clean, $(BAMBUHLS_ACC))
 
 THIRDPARTY_ACC_PRINT  = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell echo $(acc)))
 print-available-acc:
@@ -98,6 +106,7 @@ print-available-acc:
 	$(QUIET_INFO)echo "Available accelerators generated from hls4ml: $(HLS4ML_ACC)"
 	$(QUIET_INFO)echo "Available accelerators generated from Chisel3: $(CHISEL_ACC)"
 	$(QUIET_INFO)echo "Available accelerators generated from RTL: $(RTL_ACC)"
+	$(QUIET_INFO)echo "Available accelerators generated from Bambu HLS: $(BAMBUHLS_ACC)"
 	$(QUIET_INFO)echo "Available third-party accelerators: $(THIRDPARTY_ACC_PRINT)"
 
 ### Chisel ###
@@ -409,6 +418,44 @@ rtl_acc-clean: $(RTL_ACC-clean)
 rtl_acc-distclean: $(RTL_ACC-distclean)
 
 .PHONY: rtl_acc rtl_acc-clean rtl_acc-distclean
+
+### Bambu HLS ###
+$(BAMBUHLS_ACC-wdir): $(HLS_LOGS)
+	$(QUIET_MKDIR)mkdir -p $(BAMBUHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB)
+	@cd $(BAMBUHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); \
+	rm -f Makefile; \
+	ln -s ../hls/Makefile
+
+$(BAMBUHLS_ACC-hls): %-hls : %-wdir
+	$(QUIET_INFO)echo "Running bambu HLS for $(@:-hls=)"
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(BAMBUHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) hls | tee $(HLS_LOGS)/$(@:-hls=)_hls.log
+	$(QUIET_INFO)echo "Installing $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-hls=)"
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(BAMBUHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) install
+	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
+		sed -i '/$(@:-hls=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
+	fi;
+	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
+
+$(BAMBUHLS_ACC-clean): %-clean : %-wdir
+	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(BAMBUHLS_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
+	@$(RM) $(HLS_LOGS)/$(@:-clean=)*.log
+
+$(BAMBUHLS_ACC-distclean): %-distclean : %-wdir
+	$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(BAMBUHLS_ACC_PATH)/$(@:-distclean=)/hw/hls-work-$(TECHLIB) distclean
+	@$(RM) $(HLS_LOGS)/$(@:-distclean=)*.log
+	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
+		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
+	fi;
+
+.PHONY: $(BAMBUHLS_ACC-wdir) $(BAMBUHLS_ACC-hls) $(BAMBUHLS_ACC-clean) $(BAMBUHLS_ACC-distclean)
+
+bambuhls_acc: $(BAMBUHLS_ACC-hls)
+
+bambuhls_acc-clean: $(BAMBUHLS_ACC-clean)
+
+bambuhls_acc-distclean: $(BAMBUHLS_ACC-distclean)
+
+.PHONY: bambuhls_acc bambuhls_acc-clean bambuhls_acc-distclean
 
 ### Common ###
 $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log:
