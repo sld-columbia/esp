@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="sqr_bambu" desc="Accelerator SQR" data_size="4" device_id="07a" hls_tool="bambu">
+    <param name="size" desc="size" />
+  </accelerator>
+</sld>
