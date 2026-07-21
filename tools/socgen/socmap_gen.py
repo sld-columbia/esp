@@ -922,7 +922,7 @@ def print_mapping(fp, soc, esp_config):
     # If no memory tile is present:
     #  - RISC-V   : 0x80000000 - 0x88000000
     #  - SPARC V8 : 0x40000000 - 0x48000000
-    # Smaller alowed size for an SLM tile is 1 MB
+    # Smaller allowed size for an SLM tile is 1 MB
     if esp_config.nmem == 0:
         # Use SLM in as main memory
         global SLM_HADDR
