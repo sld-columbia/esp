@@ -72,6 +72,9 @@ BAMBUHLS_ACC-wdir      = $(addsuffix -wdir, $(BAMBUHLS_ACC))
 BAMBUHLS_ACC-hls       = $(addsuffix -hls, $(BAMBUHLS_ACC))
 BAMBUHLS_ACC-clean     = $(addsuffix -clean, $(BAMBUHLS_ACC))
 BAMBUHLS_ACC-distclean = $(addsuffix -distclean, $(BAMBUHLS_ACC))
+BAMBUHLS_ACC-sim       = $(addsuffix -sim, $(BAMBUHLS_ACC))
+BAMBUHLS_ACC-plot      = $(addsuffix -plot, $(BAMBUHLS_ACC))
+BAMBUHLS_ACC-exe       = $(addsuffix -exe, $(BAMBUHLS_ACC))
 
 THIRDPARTY_PATH = $(ESP_ROOT)/accelerators/third-party
 ifdef CPU_ARCH
@@ -436,6 +439,13 @@ $(BAMBUHLS_ACC-hls): %-hls : %-wdir
 	fi;
 	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 
+$(BAMBUHLS_ACC-exe): %-exe : %-wdir
+	$(QUIET_RUN)ACCELERATOR=$(@:-exe=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(BAMBUHLS_ACC_PATH)/$(@:-exe=)/hw/hls-work-$(TECHLIB) exe
+
+$(BAMBUHLS_ACC-sim): %-sim : %-wdir
+	$(QUIET_INFO)echo "Running bambu RTL co-simulation for $(@:-sim=)"
+	$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(BAMBUHLS_ACC_PATH)/$(@:-sim=)/hw/hls-work-$(TECHLIB) sim | tee $(HLS_LOGS)/$(@:-sim=)_sim.log
+
 $(BAMBUHLS_ACC-clean): %-clean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(BAMBUHLS_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
 	@$(RM) $(HLS_LOGS)/$(@:-clean=)*.log
@@ -447,7 +457,7 @@ $(BAMBUHLS_ACC-distclean): %-distclean : %-wdir
 		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
 	fi;
 
-.PHONY: $(BAMBUHLS_ACC-wdir) $(BAMBUHLS_ACC-hls) $(BAMBUHLS_ACC-clean) $(BAMBUHLS_ACC-distclean)
+.PHONY: $(BAMBUHLS_ACC-wdir) $(BAMBUHLS_ACC-hls) $(BAMBUHLS_ACC-sim) $(BAMBUHLS_ACC-exe) $(BAMBUHLS_ACC-clean) $(BAMBUHLS_ACC-distclean)
 
 bambuhls_acc: $(BAMBUHLS_ACC-hls)
 
