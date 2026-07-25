@@ -590,8 +590,7 @@ begin
   cgi.pllctrl <= "00";
   cgi.pllrst  <= rstraw;
 
-  lock <= c0_calib_done and c1_calib_done and c2_calib_done and c3_calib_done
-          and c4_calib_done and c5_calib_done and c6_calib_done and cgo.clklock;
+  lock <= c0_calib_done and cgo.clklock;
 
   reset_pad : inpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v) port map (reset, rst);
   rst0      : rstgen                    -- reset generator
