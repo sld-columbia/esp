@@ -179,24 +179,67 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
     	git checkout .
     	git pull
     else
-    	git clone https://git.buildroot.net/buildroot
+    	git clone https://github.com/buildroot/buildroot.git
     	cd $src
     fi
 
-if [[ "$python_en" -eq 1 ]]; then       # python enable
     git reset --hard ${BUILDROOT_SHA}
     git submodule update --init --recursive
-    git apply ${BUILDROOT_PATCH}
+
+    if [[ "$python_en" -eq 1 ]]; then
+        git apply ${BUILDROOT_PATCH}
+    fi
+
+    mkdir -p output && touch output/.br-external.mk
     make distclean
-    make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_python_defconfig
+    mkdir -p output && touch output/.br-external.mk
+
+    # Install glibc >= 2.34 compatibility patches into buildroot package
+    # directories so they are applied automatically during source extraction.
+    # These patches are harmless on older glibc (guarded by #ifndef/#undef).
+    #
+    # - host-m4-sigstksz: glibc 2.34+ changed SIGSTKSZ from a compile-time
+    #   constant to sysconf(), breaking preprocessor checks in m4-1.4.18.
+    # - host-fakeroot-glibc-compat: glibc 2.33+ removed _STAT_VER and related
+    #   macros used by fakeroot-1.20.2.
+    cp ${SCRIPT_PATH}/patches/host-m4-sigstksz.patch \
+        package/m4/0003-fix-sigstksz-glibc-2.34.patch
+    cp ${SCRIPT_PATH}/patches/host-fakeroot-glibc-compat.patch \
+        package/fakeroot/0003-fix-stat-ver-glibc-2.33.patch
+
+    if [[ "$python_en" -eq 1 ]]; then
+        make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_python_defconfig
+    else
+        make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_defconfig
+    fi
+
+    # On glibc >= 2.33, buildroot's fakeroot 1.20.2 compiles (thanks to the
+    # _STAT_VER patch) but cannot intercept mknod() at runtime because glibc
+    # removed __xmknod(). We must swap it with the system fakeroot BEFORE the
+    # rootfs step. To do this: build fakeroot first, swap if needed, then
+    # continue the full build.
+    GLIBC_VER=$(ldd --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+$')
+    if [ "$(printf '%s\n' "2.33" "$GLIBC_VER" | sort -V | head -1)" = "2.33" ]; then
+        # glibc >= 2.33: build fakeroot, then swap before full build
+        make host-fakeroot -j ${NTHREADS}
+        if [ -x /usr/bin/fakeroot ]; then
+            echo ""
+            echo "*** glibc ${GLIBC_VER} detected: replacing buildroot fakeroot with system fakeroot ***"
+            echo ""
+            mv output/host/bin/fakeroot output/host/bin/fakeroot.buildroot
+            ln -s /usr/bin/fakeroot output/host/bin/fakeroot
+        else
+            echo ""
+            echo "*** glibc ${GLIBC_VER} detected but no system fakeroot found.   ***"
+            echo "*** Buildroot's fakeroot 1.20.2 cannot intercept mknod() on     ***"
+            echo "*** glibc >= 2.33. Please install fakeroot and re-run:          ***"
+            echo "***   Ubuntu/Debian: sudo apt-get install fakeroot              ***"
+            echo "***   RHEL/CentOS:   sudo yum install fakeroot (requires EPEL) ***"
+            exit 1
+        fi
+    fi
+
     make -j ${NTHREADS}
-else                                    # default
-    git reset --hard ${BUILDROOT_SHA}
-    git submodule update --init --recursive
-    make distclean
-    make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_defconfig
-    make -j ${NTHREADS}
-fi
 
     # Populate repository sysroot overlay w/ generated files (git ignores them)
     rm output/target/THIS_IS_NOT_YOUR_ROOT_FILESYSTEM

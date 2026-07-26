@@ -1,0 +1,54 @@
+--- a/libfakeroot.c	2026-03-16 22:14:21.295006948 -0400
++++ libfakeroot.c	2026-03-16 22:14:28.120949622 -0400
+@@ -59,6 +59,17 @@
+ #include "config.h"
+ #include "communicate.h"
+ 
++/* glibc >= 2.33 removed _STAT_VER and related macros */
++#ifndef _STAT_VER
++#if defined(__aarch64__) || defined(__riscv)
++#define _STAT_VER 0
++#elif defined(__x86_64__)
++#define _STAT_VER 1
++#else
++#define _STAT_VER 3
++#endif
++#endif
++
+ #ifdef __APPLE__
+ /* The *xattr functions are currently disabled on __APPLE__ since the prototypes
+    are all different from the Linux versions and there is, as of yet, no
+
+--- a/communicate.c	2026-03-16 22:14:21.296006939 -0400
++++ communicate.c	2026-03-16 22:14:36.468879516 -0400
+@@ -28,6 +28,30 @@
+ #endif
+ 
+ #include "communicate.h"
++
++/* glibc >= 2.33 removed _STAT_VER and related macros */
++#ifndef _STAT_VER
++#if defined(__aarch64__) || defined(__riscv)
++#define _STAT_VER 0
++#elif defined(__x86_64__)
++#define _STAT_VER 1
++#else
++#define _STAT_VER 3
++#endif
++#endif
++
++#ifndef _STAT_VER_KERNEL
++#define _STAT_VER_KERNEL 0
++#endif
++
++#ifndef _STAT_VER_GLIBC2
++#define _STAT_VER_GLIBC2 1
++#endif
++
++#ifndef _STAT_VER_GLIBC2_1
++#define _STAT_VER_GLIBC2_1 1
++#endif
++
+ #include <dlfcn.h>
+ #include <stdio.h>
+ #ifndef FAKEROOT_FAKENET
