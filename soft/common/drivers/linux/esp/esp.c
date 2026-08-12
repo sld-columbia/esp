@@ -85,12 +85,12 @@ static irqreturn_t esp_irq(int irq, void *dev)
     return IRQ_NONE;
 }
 
-static int esp_flush(struct esp_device *esp)
+static int esp_flush(enum accelerator_coherence coherence)
 {
     int rc = 0;
-    if (esp->coherence < ACC_COH_RECALL) rc |= esp_private_cache_flush();
+    if (coherence < ACC_COH_RECALL) rc |= esp_private_cache_flush();
 
-    if (esp->coherence < ACC_COH_LLC) rc |= esp_cache_flush();
+    if (coherence < ACC_COH_LLC) rc |= esp_cache_flush();
 
     return rc;
 }
@@ -414,10 +414,10 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
     }
 
     rc = esp_p2p_init(esp, access);
-    if (rc) { goto out; }
+    if (rc) goto out_unlock;
 
     rc = esp_yx_table_init(esp, access);
-    if (rc) { goto out; }
+    if (rc) goto out_unlock;
 
     esp->coherence    = access->coherence;
     esp->footprint    = access->footprint;
@@ -428,15 +428,15 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 
     if (mutex_lock_interruptible(&esp_status.lock)) {
         rc = -EINTR;
-        goto out;
+        goto out_unlock;
     }
 
     esp_runtime_config(esp);
 
     mutex_unlock(&esp_status.lock);
 
-    rc = esp_flush(esp);
-    if (rc) goto out;
+    rc = esp_flush(esp->coherence);
+    if (rc) goto out_update_status;
 
     esp_transfer(esp, contig);
 
@@ -447,15 +447,12 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
         rc = esp_wait(esp);
     }
 
-    if (mutex_lock_interruptible(&esp_status.lock)) {
-        rc = -EINTR;
-        goto out;
-    }
-
+out_update_status:
+    mutex_lock(&esp_status.lock);
     esp_update_status(esp);
-
     mutex_unlock(&esp_status.lock);
 
+out_unlock:
     mutex_unlock(&esp->lock);
 
 out:
@@ -483,9 +480,13 @@ static long esp_flush_ioctl(struct esp_device *esp, void __user *argp)
         goto out;
     }
 
-    access         = arg;
-    esp->coherence = access->coherence;
-    rc             = esp_flush(esp);
+    access = arg;
+    if (mutex_lock_interruptible(&esp->lock)) {
+        rc = -EINTR;
+        goto out;
+    }
+    rc = esp_flush(access->coherence);
+    mutex_unlock(&esp->lock);
 out:
     kfree(arg);
     return rc;
