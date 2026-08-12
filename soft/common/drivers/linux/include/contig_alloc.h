@@ -100,6 +100,7 @@ struct contig_alloc_req {
 
 #ifdef __KERNEL__
 
+    #include <linux/kref.h>
     #include <linux/list.h>
 
 struct contig_desc {
@@ -107,6 +108,9 @@ struct contig_desc {
     dma_addr_t arr_dma_addr;
     unsigned int n;
     int most_allocated;
+    unsigned long khandle;
+    struct mm_struct *owner_mm;
+    struct kref refcount;
     struct list_head desc_node;
     struct list_head file_node;
     struct list_head alloc_list;
@@ -116,6 +120,7 @@ extern struct contig_desc *contig_alloc(const struct contig_alloc_params *params
                                         unsigned long size);
 extern void contig_free(struct contig_desc *desc);
 extern struct contig_desc *contig_khandle_to_desc(contig_khandle_t khandle);
+extern void contig_desc_put(struct contig_desc *desc);
 
 extern unsigned long contig_chunk_size_log;
 

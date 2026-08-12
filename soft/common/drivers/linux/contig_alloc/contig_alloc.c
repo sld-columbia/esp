@@ -22,9 +22,12 @@
 #include <linux/compiler.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
+#include <linux/kref.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/list.h>
+#include <linux/random.h>
+#include <linux/sched/mm.h>
 #include <linux/slab.h>
 #include <linux/stat.h>
 #include <linux/err.h>
@@ -41,6 +44,7 @@ struct contig_chunk {
 };
 
 struct contig_file {
+    struct mutex lock;
     struct list_head desc_list;
 };
 
@@ -86,6 +90,10 @@ static struct contig_desc *contig_alloc_descriptor(unsigned int n_chunks)
     desc = kmalloc(sizeof(*desc), GFP_KERNEL);
     if (unlikely(desc == NULL)) return ERR_PTR(-ENOMEM);
 
+    desc->khandle  = 0;
+    desc->owner_mm = NULL;
+    kref_init(&desc->refcount);
+
     desc->arr = kmalloc_array(n_chunks, sizeof(unsigned long), GFP_KERNEL);
     if (unlikely(desc->arr == NULL)) goto err_arr;
 
@@ -113,6 +121,7 @@ static void contig_free_descriptor(struct contig_desc *desc)
 #ifndef __riscv
     dma_unmap_single(NULL, desc->arr_dma_addr, desc->n * sizeof(dma_addr_t), DMA_TO_DEVICE);
 #endif
+    if (desc->owner_mm) mmdrop(desc->owner_mm);
     kfree(desc->arr);
     kfree(desc);
 }
@@ -350,31 +359,74 @@ void __contig_free(struct contig_desc *desc)
     contig_free_descriptor(desc);
 }
 
-void contig_free(struct contig_desc *desc)
+static void contig_desc_release(struct kref *ref)
 {
+    struct contig_desc *desc = container_of(ref, struct contig_desc, refcount);
+
     mutex_lock(&contig_lock);
     __contig_free(desc);
     mutex_unlock(&contig_lock);
 }
+
+void contig_desc_put(struct contig_desc *desc) { kref_put(&desc->refcount, contig_desc_release); }
+EXPORT_SYMBOL_GPL(contig_desc_put);
+
+void contig_free(struct contig_desc *desc) { contig_desc_put(desc); }
 EXPORT_SYMBOL_GPL(contig_free);
 
-/*
- * Check that this is a valid desc. Ideally we'd also make sure that the calling
- * process owns the contig buffer. But for now this will do.
- */
+static bool contig_khandle_exists(unsigned long khandle)
+{
+    struct contig_desc *desc;
+
+    list_for_each_entry(desc, &desc_list, desc_node) if (desc->khandle == khandle) return true;
+    return false;
+}
+
+static int contig_desc_publish(struct contig_desc *desc, contig_khandle_t *khandle)
+{
+    unsigned long value;
+
+    if (unlikely(!current->mm)) return -EINVAL;
+
+    mmgrab(current->mm);
+    mutex_lock(&contig_lock);
+    do {
+        value = get_random_long();
+    } while (!value || contig_khandle_exists(value));
+    desc->owner_mm = current->mm;
+    desc->khandle  = value;
+    mutex_unlock(&contig_lock);
+
+    *khandle = (contig_khandle_t)value;
+    return 0;
+}
+
+static void contig_desc_unpublish(struct contig_desc *desc)
+{
+    mutex_lock(&contig_lock);
+    desc->khandle = 0;
+    mutex_unlock(&contig_lock);
+}
+
 struct contig_desc *contig_khandle_to_desc(contig_khandle_t khandle)
 {
-    struct contig_desc *handle = (struct contig_desc *)khandle;
-    struct contig_desc *desc;
+    unsigned long value = (unsigned long)khandle;
+    struct contig_desc *desc, *ret = NULL;
+
+    if (!value || unlikely(!current->mm)) return NULL;
 
     mutex_lock(&contig_lock);
     list_for_each_entry(desc, &desc_list, desc_node)
     {
-        if (desc == handle) break;
+        if (desc->khandle == value && desc->owner_mm == current->mm) {
+            kref_get(&desc->refcount);
+            ret = desc;
+            break;
+        }
     }
     mutex_unlock(&contig_lock);
 
-    return desc == handle ? desc : NULL;
+    return ret;
 }
 EXPORT_SYMBOL_GPL(contig_khandle_to_desc);
 
@@ -449,6 +501,7 @@ static int contig_open(struct inode *inode, struct file *file)
 
     priv = kmalloc(sizeof(*priv), GFP_KERNEL);
     if (priv == NULL) return -ENOMEM;
+    mutex_init(&priv->lock);
     INIT_LIST_HEAD(&priv->desc_list);
     file->private_data = priv;
     return 0;
@@ -459,11 +512,14 @@ static int contig_release(struct inode *inode, struct file *file)
     struct contig_file *priv = file->private_data;
     struct contig_desc *desc, *nxt;
 
+    mutex_lock(&priv->lock);
     list_for_each_entry_safe(desc, nxt, &priv->desc_list, file_node)
     {
         list_del(&desc->file_node);
-        contig_free(desc);
+        contig_desc_unpublish(desc);
+        contig_desc_put(desc);
     }
+    mutex_unlock(&priv->lock);
     kfree(priv);
     return 0;
 }
@@ -513,38 +569,51 @@ static long contig_alloc_ioctl(struct file *file, void __user *arg)
         contig_free(desc);
         return -EFAULT;
     }
-    req.n              = desc->n;
-    req.khandle        = (contig_khandle_t)desc;
-    req.most_allocated = desc->most_allocated;
-    if (copy_to_user(arg, &req, sizeof(req))) {
+    req.n = desc->n;
+    if (contig_desc_publish(desc, &req.khandle)) {
         contig_free(desc);
+        return -EINVAL;
+    }
+    req.most_allocated = desc->most_allocated;
+
+    mutex_lock(&priv->lock);
+    list_add(&desc->file_node, &priv->desc_list);
+    mutex_unlock(&priv->lock);
+
+    if (copy_to_user(arg, &req, sizeof(req))) {
+        mutex_lock(&priv->lock);
+        list_del(&desc->file_node);
+        mutex_unlock(&priv->lock);
+        contig_desc_unpublish(desc);
+        contig_desc_put(desc);
         return -EFAULT;
     }
-    list_add(&desc->file_node, &priv->desc_list);
     return 0;
 }
 
 static long contig_free_ioctl(struct file *file, contig_khandle_t __user *arg)
 {
     struct contig_file *priv = file->private_data;
-    struct contig_desc *del, *desc, *next;
+    struct contig_desc *desc, *next;
     contig_khandle_t del_addr;
     bool found = false;
 
     if (get_user(del_addr, arg)) return -EFAULT;
-    del = (struct contig_desc *)del_addr;
 
     /* is it a valid descriptor for this file? */
+    mutex_lock(&priv->lock);
     list_for_each_entry_safe(desc, next, &priv->desc_list, file_node)
     {
-        if (desc == del) {
-            list_del(&del->file_node);
+        if (desc->khandle == (unsigned long)del_addr) {
+            list_del(&desc->file_node);
             found = true;
             break;
         }
     }
+    mutex_unlock(&priv->lock);
     if (!found) return -EFAULT;
-    contig_free(del);
+    contig_desc_unpublish(desc);
+    contig_desc_put(desc);
     return 0;
 }
 
@@ -569,6 +638,20 @@ static long contig_ioctl(struct file *file, unsigned int cm, unsigned long arg)
     return contig_do_ioctl(file, cm, (void __user *)arg);
 }
 
+static void contig_vma_open(struct vm_area_struct *vma)
+{
+    struct contig_desc *desc = vma->vm_private_data;
+
+    kref_get(&desc->refcount);
+}
+
+static void contig_vma_close(struct vm_area_struct *vma) { contig_desc_put(vma->vm_private_data); }
+
+static const struct vm_operations_struct contig_vm_ops = {
+    .open  = contig_vma_open,
+    .close = contig_vma_close,
+};
+
 static int contig_mmap(struct file *file, struct vm_area_struct *vma)
 {
     int i, rc;
@@ -577,30 +660,38 @@ static int contig_mmap(struct file *file, struct vm_area_struct *vma)
     long unsigned paddr      = PFN_PHYS(vma->vm_pgoff);
     bool found               = false;
 
-    mutex_lock(&contig_lock);
+    mutex_lock(&priv->lock);
     list_for_each_entry(itr, &priv->desc_list, file_node)
     {
         if (itr->arr[0] == paddr) {
             found = true;
             desc  = itr;
+            kref_get(&desc->refcount);
             break;
         }
     }
-    mutex_unlock(&contig_lock);
+    mutex_unlock(&priv->lock);
 
     if (!found) {
         pr_info("contig_alloc: descriptor for addres %08lX not found", paddr);
         return -EFAULT;
     }
 
-    vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+    vma->vm_ops          = &contig_vm_ops;
+    vma->vm_private_data = desc;
+    vma->vm_page_prot    = pgprot_noncached(vma->vm_page_prot);
 
     for (i = 0; i < desc->n; i++) {
         /* pr_info("contig_mmap: paddr[%d] = %08lX\n", i, desc->arr[i]); */
         rc = remap_pfn_range(vma, vma->vm_start + i * chunk_size, PHYS_PFN(desc->arr[i]),
                              chunk_size, vma->vm_page_prot);
 
-        if (rc) return rc;
+        if (rc) {
+            vma->vm_ops          = NULL;
+            vma->vm_private_data = NULL;
+            contig_desc_put(desc);
+            return rc;
+        }
     }
 
     return 0;
@@ -683,7 +774,11 @@ static void contig_exit(void)
 {
     struct contig_desc *desc, *nxt;
 
-    list_for_each_entry_safe(desc, nxt, &desc_list, desc_node) { __contig_free(desc); }
+    list_for_each_entry_safe(desc, nxt, &desc_list, desc_node)
+    {
+        desc->khandle = 0;
+        __contig_free(desc);
+    }
     __contig_chunks_remove();
     contig_phys_free();
     contig_remove_file();
