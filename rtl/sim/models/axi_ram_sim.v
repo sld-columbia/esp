@@ -42,6 +42,7 @@ module axi_ram_sim_model #
     parameter ADDR_WIDTH = 32,
     parameter STRB_WIDTH = (DATA_WIDTH/8),
     parameter ID_WIDTH = 8,
+    parameter string INIT_FILE = "",
     parameter PIPELINE_OUTPUT = 0 // Extra pipeline register on output  
 )
 (
@@ -87,7 +88,11 @@ module axi_ram_sim_model #
 
 // RAM initialization
 initial begin
-	if (STRB_WIDTH == 8)
+	if (INIT_FILE != "") begin
+		$display("axi_ram_sim: loading %s", INIT_FILE);
+		$readmemh(INIT_FILE, mem);
+	end
+	else if (STRB_WIDTH == 8)
 		$readmemh("../soft-build/ariane/ram.vhx", mem);
 	else if (STRB_WIDTH == 4 && GLOB_CPU_RISCV == 0)
 		$readmemh("../soft-build/leon3/ram.vhx", mem);

@@ -3,7 +3,9 @@
 
 ### Supported technology libraries ###
 #ASICLIBS = inferred gf12 sky130
-FPGALIBS = virtex7 virtexu virtexup
+XIL_FPGALIBS = virtex7 virtexu virtexup
+INTEL_FPGALIBS = stratix10
+FPGALIBS = $(XIL_FPGALIBS) $(INTEL_FPGALIBS)
 
 
 ### Check for technology library definition ###
@@ -11,8 +13,10 @@ ifeq ("$(TECHLIB)","")
 $(error technology library not specified)
 endif
 
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 ifeq ("$(XILINX_VIVADO)","")
 $(error XILINX_VIVADO path not specified)
+endif
 endif
 
 ifneq ($(findstring profpga, $(BOARD)),)
@@ -35,7 +39,11 @@ ifeq ($(TECH_TYPE),asic)
 DEVICE = ASIC-$(TECHLIB)
 else ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 include $(ESP_ROOT)/constraints/$(BOARD)/Makefile.inc
+ifneq ("$(QUARTUS_DEVICE)","")
+DEVICE = $(QUARTUS_DEVICE)
+else
 DEVICE = $(PART)-$(PACKAGE)-$(SPEED)
+endif
 TECH_TYPE = fpga
 #else ifneq ($(filter $(TECHLIB),$(ASICLIBS)),)
 #DEVICE = ASIC-$(TECHLIB)
@@ -46,7 +54,7 @@ endif
 
 
 ### Simulate BRAMs ###
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 EXTRA_SIMTOP  = glbl
 else
 EXTRA_SIMTOP  =
@@ -136,6 +144,16 @@ ifneq ($(strip $(GT_VORTEX_ENABLE_MARK_DEBUG)),)
 GT_VORTEX_VIVADO_DEFINES += GT_VORTEX_ENABLE_MARK_DEBUG=$(GT_VORTEX_ENABLE_MARK_DEBUG)
 endif
 
+GT_VORTEX_QUARTUS_DEFINES := ESP_GT_VORTEX_NUM_CORES=$(GT_VORTEX_NUM_CORES)
+GT_VORTEX_QUARTUS_DEFINES += ESP_GT_VORTEX_NUM_WARPS=$(GT_VORTEX_NUM_WARPS)
+GT_VORTEX_QUARTUS_DEFINES += ESP_GT_VORTEX_NUM_THREADS=$(GT_VORTEX_NUM_THREADS)
+ifneq ($(GT_VORTEX_L2_ENABLED),0)
+GT_VORTEX_QUARTUS_DEFINES += L2_ENABLE=1
+endif
+ifneq ($(GT_VORTEX_L3_ENABLED),0)
+GT_VORTEX_QUARTUS_DEFINES += L3_ENABLE=1
+endif
+
 GT_VORTEX_GENUS_DEFINES := -define ESP_GT_VORTEX_NUM_CORES=$(GT_VORTEX_NUM_CORES)
 GT_VORTEX_GENUS_DEFINES += -define ESP_GT_VORTEX_NUM_WARPS=$(GT_VORTEX_NUM_WARPS)
 GT_VORTEX_GENUS_DEFINES += -define ESP_GT_VORTEX_NUM_THREADS=$(GT_VORTEX_NUM_THREADS)
@@ -167,7 +185,10 @@ endif
 
 ifeq ("$(CPU_ARCH)", "leon3")
 ARCH=sparc
-CROSS_COMPILE_ELF = sparc-elf-
+# Current Gaisler BCC releases use sparc-gaisler-elf. Keep the legacy prefix
+# as a fallback for existing installations of BCC 1.
+LEON_BARE_PREFIX ?= $(if $(shell command -v sparc-gaisler-elf-gcc 2>/dev/null),sparc-gaisler-elf-,sparc-elf-)
+CROSS_COMPILE_ELF = $(LEON_BARE_PREFIX)
 CROSS_COMPILE_LINUX = sparc-linux-
 endif
 
@@ -225,7 +246,7 @@ TOP_VLOG_RTL_SRCS += $(DESIGN_PATH)/cache_def_mem_asic.sv
 endif
 endif
 
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 TOP_VLOG_SIM_SRCS += $(XILINX_VIVADO)/data/verilog/src/glbl.v
 endif
 

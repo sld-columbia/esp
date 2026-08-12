@@ -107,7 +107,7 @@ make linux
 * Ensures Vortex is configured (runs `./configure` when needed).
 * Builds `libvortex.so` and `libvortex-esp.so`.
 * Cross-compiles Vortex regression host apps.
-* If kernels are missing and toolchain is available, builds kernels via `make software` and `make tests` in the Vortex tree.
+* If kernels are missing and toolchain is available, builds the Vortex kernel support library and regression kernels.
 * Copies shared libraries into sysroot `/lib`.
 * Installs available kernels into `/applications/test/vortex_kernels/<test>.vxbin`.
 * Installs a helper launcher at `/applications/test/vortex-regression` and `/usr/bin/vortex-regression`.
@@ -136,8 +136,8 @@ If host/runtime libraries or `kernel.vxbin` files are built with different value
 `make gt_vortex_rtl-app` forwards these values automatically from the ESP SoC configuration. If you build directly in the Vortex tree, pass matching defines explicitly, for example:
 
 ```bash
-make CONFIGS="-DESP_GT_VORTEX_NUM_CORES=<C> -DESP_GT_VORTEX_NUM_WARPS=<W> -DESP_GT_VORTEX_NUM_THREADS=<T> [-DL2_ENABLE=1] [-DL3_ENABLE=1]" software
-make CONFIGS="-DESP_GT_VORTEX_NUM_CORES=<C> -DESP_GT_VORTEX_NUM_WARPS=<W> -DESP_GT_VORTEX_NUM_THREADS=<T> [-DL2_ENABLE=1] [-DL3_ENABLE=1]" tests
+make CONFIGS="-DESP_GT_VORTEX_NUM_CORES=<C> -DESP_GT_VORTEX_NUM_WARPS=<W> -DESP_GT_VORTEX_NUM_THREADS=<T> [-DL2_ENABLE=1] [-DL3_ENABLE=1]" -C kernel
+make CONFIGS="-DESP_GT_VORTEX_NUM_CORES=<C> -DESP_GT_VORTEX_NUM_WARPS=<W> -DESP_GT_VORTEX_NUM_THREADS=<T> [-DL2_ENABLE=1] [-DL3_ENABLE=1]" -C tests/regression
 ```
 
 For per-test/manual kernel builds, use the same `CONFIGS` flags when running `make kernel.vxbin`.
@@ -220,10 +220,10 @@ make kernel.vxbin
 
 This generates `kernel.vxbin` in `.../tests/regression/mytest/`.
 
-Important detail: auto kernel build from `make gt_vortex_rtl-app` uses Vortex `make tests`, which only covers tests listed in `vortex/tests/regression/Makefile`. For brand new tests, either:
+Important detail: auto kernel build from `make gt_vortex_rtl-app` uses Vortex `tests/regression`, which only covers tests listed in `vortex/tests/regression/Makefile`. For brand new tests, either:
 
 * Build `kernel.vxbin` manually as above, or
-* Add your test to `vortex/tests/regression/Makefile` so `make tests` includes it.
+* Add your test to `vortex/tests/regression/Makefile` so the regression build includes it.
 
 ### 3) Stage custom host app and kernel into ESP sysroot
 

@@ -2570,7 +2570,10 @@ def gen_noc_interface(acc, noc_width, template_dir, out_dir, is_axi):
             elif tline.find("-- <<accelerator_instance>>") >= 0:
                 f.write("  " + acc.name + "_rtl_i: ")
                 if is_axi:
-                    f.write("entity " + acc.name + "." + acc.name + "_wrapper\n")
+                    # Use component binding for third-party RTL wrappers so
+                    # unused accelerators do not require their mixed-language
+                    # library to resolve during VHDL analysis.
+                    f.write(acc.name + "_wrapper\n")
                     write_axi_acc_port_map(f, acc, noc_width)
                 else:
                     f.write(acc.name + "_rtl\n")
@@ -2734,6 +2737,11 @@ cache_list = []
 # Get scheduled accelerators
 accelerators = next(os.walk(acc_rtl_dir))[1]
 axi_accelerators = next(os.walk(axi_acc_dir))[1]
+if "ESP_THIRDPARTY_ACCELERATORS" in os.environ:
+    enabled_axi_accelerators = os.environ[
+        "ESP_THIRDPARTY_ACCELERATORS"].split()
+    axi_accelerators = [
+        acc for acc in axi_accelerators if acc in enabled_axi_accelerators]
 accelerators.sort()
 axi_accelerators.sort()
 

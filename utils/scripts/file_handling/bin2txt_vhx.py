@@ -65,4 +65,3 @@ with open(txtfile_path, "w") as f:
             f.write(zero_word_hex + '\n')
 
 print(f"VHX file generated.")
-

@@ -11,7 +11,7 @@ XMCOMOPT += -nocopyright
 
 XMLOGOPT += -nocopyright
 XMLOGOPT += -linedebug
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 XMLOGOPT += -DEFINE XILINX_FPGA
 endif
 XMLOGOPT += $(GT_VORTEX_XCELIUM_DEFINES)
@@ -44,12 +44,21 @@ $(ESP_ROOT)/.cache/xcelium/xilinx_lib:
 		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib cds.lib; exit 1; \
 	fi;
 
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 xcelium/cds.lib: $(ESP_ROOT)/.cache/xcelium/xilinx_lib
 	$(QUIET_MAKE)mkdir -p xcelium
 	@cp $(ESP_ROOT)/.cache/xcelium/cds.lib $@
 
 xcelium/hdl.var: xcelium/cds.lib
 	@cp $(ESP_ROOT)/.cache/xcelium/hdl.var $@
+else
+xcelium/cds.lib:
+	$(QUIET_MAKE)mkdir -p xcelium
+	@touch $@
+
+xcelium/hdl.var: xcelium/cds.lib
+	@touch $@
+endif
 
 
 ### Compile simulation source files ###

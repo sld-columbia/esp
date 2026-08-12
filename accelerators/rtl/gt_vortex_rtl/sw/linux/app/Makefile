@@ -14,6 +14,8 @@ SYSROOT ?= $(abspath $(BUILD_PATH)/../../../..)/sysroot
 
 CXX := $(CROSS_COMPILE)g++
 CC := $(CROSS_COMPILE)gcc
+VORTEX_NM := $(CROSS_COMPILE)nm
+VORTEX_APP_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 
 # Runtime libraries produced from the Vortex tree.
 VORTEX_RT_OUT ?= $(BUILD_PATH)/vortex_runtime
@@ -33,6 +35,7 @@ endif
 # Regression tests to cross-compile and stage into ESP sysroot.
 VORTEX_TESTS ?= basic demo dogfood mstress io_addr printf diverge sort fence vecaddx sgemmx conv3x sgemm2x stencil3d systolic_transformer
 
+VORTEX_TEST_OBJS := $(addprefix $(BUILD_PATH)/vortex_,$(addsuffix .o,$(VORTEX_TESTS)))
 VORTEX_TEST_BINS := $(addprefix $(BUILD_PATH)/vortex_,$(addsuffix .exe,$(VORTEX_TESTS)))
 
 CXXFLAGS += -std=c++11 -O2 -DNDEBUG -Wall -Wextra -pedantic
@@ -53,6 +56,8 @@ VORTEX_KERNEL_CONFIG_STAMP := $(VORTEX_ROOT)/tests/regression/.esp_gt_vortex_con
 VORTEX_KERNEL_BUILD_SIGNATURE := $(strip $(GT_VORTEX_CONFIGS))
 
 all: legacy_apps vortex_libs vortex_tests install_kernels install_runner
+
+.DELETE_ON_ERROR:
 
 # Build legacy C sample app(s) if present in this folder.
 legacy_apps:
@@ -77,12 +82,13 @@ vortex_config_state: vortex_config
 	@if [ ! -f "$(VORTEX_BUILD_CONFIG_STAMP)" ] || ! grep -Fqx -- "$(strip $(GT_VORTEX_CONFIGS))" "$(VORTEX_BUILD_CONFIG_STAMP)"; then \
 		echo "[Vortex] configuration changed; rebuilding host/runtime artifacts"; \
 		rm -f "$(LIBVORTEX)" "$(LIBVORTEX_ESP)" "$(VORTEX_HW_CONFIG)" "$(VORTEX_HW_TYPES)"; \
-		rm -f $(VORTEX_TEST_BINS); \
+		rm -f $(VORTEX_TEST_OBJS) $(VORTEX_TEST_BINS); \
 		printf '%s\n' "$(strip $(GT_VORTEX_CONFIGS))" > "$(VORTEX_BUILD_CONFIG_STAMP)"; \
 	fi
 
 vortex_libs: vortex_config_state $(VORTEX_HW_CONFIG) $(VORTEX_HW_TYPES) $(LIBVORTEX) $(LIBVORTEX_ESP)
-	@cp -f $(LIBVORTEX) $(LIBVORTEX_ESP) .
+	@mkdir -p $(BUILD_PATH)
+	@cp -f $(LIBVORTEX) $(LIBVORTEX_ESP) $(BUILD_PATH)/
 
 $(LIBVORTEX): vortex_config_state
 	@mkdir -p $(VORTEX_RT_OUT)
@@ -94,13 +100,61 @@ $(LIBVORTEX_ESP): vortex_config_state
 
 vortex_tests: $(VORTEX_TEST_BINS)
 
-$(BUILD_PATH)/vortex_%.exe: vortex_config_state $(VORTEX_ROOT)/tests/regression/%/main.cpp $(LIBVORTEX) $(VORTEX_HW_CONFIG) $(VORTEX_HW_TYPES)
+$(BUILD_PATH)/vortex_%.o: vortex_config_state $(VORTEX_ROOT)/tests/regression/%/main.cpp $(VORTEX_ROOT)/tests/regression/%/common.h $(VORTEX_HW_CONFIG) $(VORTEX_HW_TYPES) $(VORTEX_APP_MAKEFILE)
 	@mkdir -p $(BUILD_PATH)
-	$(CXX) $(CXXFLAGS) -I$(VORTEX_ROOT)/tests/regression/$* $(VORTEX_ROOT)/tests/regression/$*/main.cpp -o $@ $(VORTEX_LDFLAGS)
+	@rm -f $@
+	@if ! grep -Eq 'int[[:space:]]+main[[:space:]]*\(' $(VORTEX_ROOT)/tests/regression/$*/main.cpp; then \
+		echo "[ERROR] $(VORTEX_ROOT)/tests/regression/$*/main.cpp does not contain an int main(...) definition"; \
+		echo "[ERROR] The Vortex host source may be missing, truncated, or overwritten."; \
+		wc -l -c $(VORTEX_ROOT)/tests/regression/$*/main.cpp; \
+		sed -n '1,80p' $(VORTEX_ROOT)/tests/regression/$*/main.cpp; \
+		exit 1; \
+	fi
+	@if ! test -s $(VORTEX_ROOT)/tests/regression/$*/common.h; then \
+		echo "[ERROR] $(VORTEX_ROOT)/tests/regression/$*/common.h is missing or empty"; \
+		echo "[ERROR] The Vortex host support header may be missing, truncated, or overwritten."; \
+		exit 1; \
+	fi
+	@if grep -Eq '(^|[^[:alnum:]_])kernel_arg_t([^[:alnum:]_]|$$)' $(VORTEX_ROOT)/tests/regression/$*/main.cpp && \
+		! grep -Eq '(^|[^[:alnum:]_])kernel_arg_t([^[:alnum:]_]|$$)' $(VORTEX_ROOT)/tests/regression/$*/common.h; then \
+		echo "[ERROR] $(VORTEX_ROOT)/tests/regression/$*/main.cpp references kernel_arg_t, but common.h does not define it"; \
+		wc -l -c $(VORTEX_ROOT)/tests/regression/$*/common.h; \
+		sed -n '1,80p' $(VORTEX_ROOT)/tests/regression/$*/common.h; \
+		exit 1; \
+	fi
+	@if grep -Eq '(^|[^[:alnum:]_])TYPE([^[:alnum:]_]|$$)' $(VORTEX_ROOT)/tests/regression/$*/main.cpp && \
+		! grep -Eq '^#[[:space:]]*define[[:space:]]+TYPE([^[:alnum:]_]|$$)' $(VORTEX_ROOT)/tests/regression/$*/common.h; then \
+		echo "[ERROR] $(VORTEX_ROOT)/tests/regression/$*/main.cpp references TYPE, but common.h does not define it"; \
+		wc -l -c $(VORTEX_ROOT)/tests/regression/$*/common.h; \
+		sed -n '1,80p' $(VORTEX_ROOT)/tests/regression/$*/common.h; \
+		exit 1; \
+	fi
+	$(CXX) $(CXXFLAGS) -I$(VORTEX_ROOT)/tests/regression/$* -x c++ -c $(VORTEX_ROOT)/tests/regression/$*/main.cpp -o $@
+	@if ! $(VORTEX_NM) $@ | grep -Eq '[[:space:]][Tt][[:space:]]+main$$'; then \
+		echo "[ERROR] $@ does not define main after compiling the $* Vortex host app"; \
+		echo "[ERROR] compiler: $(CXX)"; \
+		echo "[ERROR] nm: $(VORTEX_NM)"; \
+		echo "[ERROR] flags: $(CXXFLAGS) -I$(VORTEX_ROOT)/tests/regression/$*"; \
+		ls -l $@; \
+		echo "[ERROR] first symbols from object:"; \
+		$(VORTEX_NM) -a $@ | sed -n '1,80p'; \
+		echo "[ERROR] source lines around main:"; \
+		grep -n "main" $(VORTEX_ROOT)/tests/regression/$*/main.cpp; \
+		sed -n '108,132p' $(VORTEX_ROOT)/tests/regression/$*/main.cpp; \
+		echo "[ERROR] preprocessed main-related lines:"; \
+		$(CXX) $(CXXFLAGS) -I$(VORTEX_ROOT)/tests/regression/$* -x c++ -E -dD $(VORTEX_ROOT)/tests/regression/$*/main.cpp > $@.ii; \
+		grep -nE '(^#[[:space:]]*define[[:space:]]+main([[:space:]]|$$)|int[[:space:]]+main[[:space:]]*\(|[[:space:]]main[[:space:]]*\()' $@.ii | tail -n 40; \
+		exit 1; \
+	fi
+
+$(BUILD_PATH)/vortex_%.exe: $(BUILD_PATH)/vortex_%.o $(LIBVORTEX) $(VORTEX_APP_MAKEFILE)
+	@rm -f $@
+	$(CXX) $< -o $@ $(VORTEX_LDFLAGS)
 
 $(VORTEX_HW_CONFIG) $(VORTEX_HW_TYPES): vortex_config_state
 	$(MAKE) -C $(VORTEX_ROOT)/hw config CONFIGS="$(GT_VORTEX_CONFIGS)"
 
+# ESP builds regression host apps separately; this target only asks Vortex for kernel blobs.
 vortex_kernels: vortex_config_state
 	# Build kernel.vxbin files in the Vortex tree when required/available.
 	@VORTEX_ROOT="$(VORTEX_ROOT)"; \
@@ -173,8 +227,11 @@ vortex_kernels: vortex_config_state
 		fi; \
 	fi; \
 	echo "[Vortex] building regression kernels"; \
-	(cd "$$VORTEX_ROOT" && $(MAKE) CONFIGS="$(GT_VORTEX_CONFIGS)" software) || { echo "[WARN] Vortex software build failed"; exit 0; }; \
-	(cd "$$VORTEX_ROOT" && $(MAKE) CONFIGS="$(GT_VORTEX_CONFIGS)" tests) || { echo "[WARN] Vortex tests build failed"; exit 0; }; \
+	(cd "$$VORTEX_ROOT" && $(MAKE) CONFIGS="$(GT_VORTEX_CONFIGS)" -C kernel) || { echo "[WARN] Vortex kernel support library build failed"; exit 0; }; \
+	for t in $(VORTEX_TESTS); do \
+		echo "[Vortex] building $$t kernel.vxbin"; \
+		(cd "$$VORTEX_ROOT/tests/regression/$$t" && $(MAKE) CONFIGS="$(GT_VORTEX_CONFIGS)" kernel.vxbin) || { echo "[WARN] Vortex $$t kernel build failed"; exit 0; }; \
+	done; \
 	printf '%s\n' "$(VORTEX_KERNEL_BUILD_SIGNATURE)" > "$(VORTEX_KERNEL_CONFIG_STAMP)"
 
 install_kernels: vortex_kernels

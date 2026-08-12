@@ -331,9 +331,14 @@ class SoC_Config():
         item = line.split()
         self.noc.max_mcast_dests.set(int(item[2]))
         line = fp.readline()
-        item = line.split()
-        self.noc.queue_size.set(int(item[2]))
-        line = fp.readline()
+        if line.find("CONFIG_QUEUE_SIZE =") != -1:
+            item = line.split()
+            self.noc.queue_size.set(int(item[2]))
+            line = fp.readline()
+        else:
+            # Older defconfigs did not store the router FIFO depth explicitly.
+            # Keep the long-standing default and continue parsing the current line.
+            self.noc.queue_size.set(4)
         if line.find("CONFIG_CACHE_EN = y") != -1:
             self.cache_en.set(1)
         else:
@@ -687,7 +692,8 @@ class SoC_Config():
             FPGA_BOARD,
             EMU_TECH,
             EMU_FREQ,
-            temporary):
+            temporary,
+            tk_master=None):
         self.ARCH_BITS = ARCH_BITS
         self.TECH_TYPE = TECH_TYPE
         self.TECH = TECH
@@ -696,43 +702,43 @@ class SoC_Config():
         self.FPGA_BOARD = FPGA_BOARD
         self.ESP_EMU_TECH = EMU_TECH
         self.ESP_EMU_FREQ = EMU_FREQ
-        self.transfers = StringVar()
+        self.transfers = StringVar(master=tk_master)
         # CPU architecture
-        self.CPU_ARCH = StringVar()
+        self.CPU_ARCH = StringVar(master=tk_master)
         # Cache hierarchy
-        self.cache_en = IntVar()
-        self.cache_rtl = IntVar()
-        self.cache_spandex = IntVar()
-        self.cache_impl = StringVar()
-        self.l2_sets = IntVar()
-        self.l2_ways = IntVar()
-        self.llc_sets = IntVar()
-        self.llc_ways = IntVar()
-        self.acc_l2_sets = IntVar()
-        self.acc_l2_ways = IntVar()
-        self.cache_line_size = IntVar()
+        self.cache_en = IntVar(master=tk_master)
+        self.cache_rtl = IntVar(master=tk_master)
+        self.cache_spandex = IntVar(master=tk_master)
+        self.cache_impl = StringVar(master=tk_master)
+        self.l2_sets = IntVar(master=tk_master)
+        self.l2_ways = IntVar(master=tk_master)
+        self.llc_sets = IntVar(master=tk_master)
+        self.llc_ways = IntVar(master=tk_master)
+        self.acc_l2_sets = IntVar(master=tk_master)
+        self.acc_l2_ways = IntVar(master=tk_master)
+        self.cache_line_size = IntVar(master=tk_master)
         # SLM
-        self.slm_kbytes = IntVar()
+        self.slm_kbytes = IntVar(master=tk_master)
         # Peripherals
-        self.jtag_en = IntVar()
-        self.eth_en = IntVar()
-        self.iolink_en = IntVar()
-        self.iolink_width = IntVar()
-        self.mem_link_width = IntVar()
-        self.svga_en = IntVar()
+        self.jtag_en = IntVar(master=tk_master)
+        self.eth_en = IntVar(master=tk_master)
+        self.iolink_en = IntVar(master=tk_master)
+        self.iolink_width = IntVar(master=tk_master)
+        self.mem_link_width = IntVar(master=tk_master)
+        self.svga_en = IntVar(master=tk_master)
         # Debug Link
         self.dsu_ip = ""
         self.dsu_eth = ""
         # Advanced Configuration
-        self.clk_str = IntVar()
-        self.sync_en = IntVar()
+        self.clk_str = IntVar(master=tk_master)
+        self.sync_en = IntVar(master=tk_master)
         # GT_VORTEX (GUI choices are filtered to configurations whose derived
         # AXI ID width stays within ESP's third-party accelerator limit)
-        self.gt_vortex_num_cores = IntVar()
-        self.gt_vortex_num_warps = IntVar()
-        self.gt_vortex_num_threads = IntVar()
-        self.gt_vortex_l2_enabled = IntVar()
-        self.gt_vortex_l3_enabled = IntVar()
+        self.gt_vortex_num_cores = IntVar(master=tk_master)
+        self.gt_vortex_num_warps = IntVar(master=tk_master)
+        self.gt_vortex_num_threads = IntVar(master=tk_master)
+        self.gt_vortex_l2_enabled = IntVar(master=tk_master)
+        self.gt_vortex_l3_enabled = IntVar(master=tk_master)
         self.gt_vortex_num_cores.set(self.GT_VORTEX_DEFAULT_CORES)
         self.gt_vortex_num_warps.set(self.GT_VORTEX_DEFAULT_WARPS)
         self.gt_vortex_num_threads.set(self.GT_VORTEX_DEFAULT_THREADS)
@@ -762,7 +768,7 @@ class SoC_Config():
                         line, "integer := ", " ")
 
         # Read ESP configuration
-        self.noc = ncfg.NoC()
+        self.noc = ncfg.NoC(tk_master)
         self.read_config(temporary)
         self.set_IP()
 
