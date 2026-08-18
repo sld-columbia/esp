@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 ARIANE := $(ESP_ROOT)/rtl/cores/ariane/ariane
 
@@ -11,33 +11,37 @@ INCDIR += $(ESP_ROOT)/rtl/caches/esp-caches/common/defs
 
 ## VHDL Packages
 SIM_VHDL_PKGS += $(SOCKETGEN_VHDL_RTL_PKGS)
-SIM_VHDL_PKGS += $(foreach f, $(shell strings $(FLISTS)/vhdl_pkgs.flist), $(ESP_ROOT)/rtl/$(f))
+SIM_VHDL_PKGS += $(foreach f, $(call safe_strings,$(FLISTS)/vhdl_pkgs.flist), $(ESP_ROOT)/rtl/$(f))
 SIM_VHDL_PKGS += $(THIRDPARTY_VHDL_PKGS)
 SIM_VHDL_PKGS += $(TOP_VHDL_RTL_PKGS) $(TOP_VHDL_SIM_PKGS)
 
 VHDL_PKGS += $(SOCKETGEN_VHDL_RTL_PKGS)
-VHDL_PKGS += $(foreach f, $(shell strings $(FLISTS)/vhdl_pkgs.flist), $(if $(findstring rtl/sim, $(f)),, $(ESP_ROOT)/rtl/$(f)))
+VHDL_PKGS += $(foreach f, $(call safe_strings,$(FLISTS)/vhdl_pkgs.flist), $(if $(findstring rtl/sim, $(f)),, $(ESP_ROOT)/rtl/$(f)))
 VHDL_PKGS += $(THIRDPARTY_VHDL_PKGS)
 VHDL_PKGS += $(TOP_VHDL_RTL_PKGS)
 
 ## VHDL Source
-VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/vhdl.flist), $(ESP_ROOT)/rtl/$(f))
-VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/cores_vhdl.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
+VHDL_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/vhdl.flist), $(ESP_ROOT)/rtl/$(f))
+VHDL_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/cores_vhdl.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
 
 ifeq ($(TECHLIB), inferred)
-VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+VHDL_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
 else ifeq ($(TECH_TYPE), asic)
-VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/asic, $(f)), $(ESP_ROOT)/rtl/$(f),))
+VHDL_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/asic, $(f)), $(ESP_ROOT)/rtl/$(f),))
 else
-VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+VHDL_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
+VHDL_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/altera_mf, $(f)), $(ESP_ROOT)/rtl/$(f),))
+endif
 endif
 
 ifeq ("$(CPU_ARCH)", "ariane")
 INCDIR += $(ARIANE)/src/common_cells/include
-VERILOG_ARIANE += $(foreach f, $(shell strings $(FLISTS)/ariane_vlog.flist), $(ARIANE)/$(f))
+VERILOG_ARIANE += $(foreach f, $(call safe_strings,$(FLISTS)/ariane_vlog.flist), $(ARIANE)/$(f))
 VERILOG_ARIANE += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/plic_regmap.sv
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
-VERILOG_ARIANE += $(foreach f, $(shell strings $(FLISTS)/ariane_fpga_vlog.flist), $(ARIANE)/$(f))
+# Ariane's FPGA SRAM shim is required for both Xilinx and Intel FPGA builds.
+VERILOG_ARIANE += $(foreach f, $(call safe_strings,$(FLISTS)/ariane_fpga_vlog.flist), $(ARIANE)/$(f))
 endif
 THIRDPARTY_VLOG += $(VERILOG_ARIANE)
 endif
@@ -50,9 +54,9 @@ VHDL_SRCS += $(TOP_VHDL_RTL_SRCS)
 SIM_VHDL_SRCS += $(VHDL_SRCS)
 ifeq ($(filter $(TECHLIB),$(FPGALIBS)),)
 # ADD FPGA techlib to simulation files
-SIM_VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/$(FPGA_TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+SIM_VHDL_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/$(FPGA_TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
 endif
-SIM_VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/sim_vhdl.flist), $(ESP_ROOT)/rtl/$(f))
+SIM_VHDL_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/sim_vhdl.flist), $(ESP_ROOT)/rtl/$(f))
 SIM_VHDL_SRCS += $(TOP_VHDL_SIM_SRCS)
 
 ## Verilog Source
@@ -60,19 +64,19 @@ RTL_TECH_FOLDERS = $(shell ls -d $(ESP_ROOT)/tech/$(TECHLIB)/*/)
 
 VLOG_SRCS += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/esp_global_sv.sv
 
-VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/vlog.flist), $(ESP_ROOT)/rtl/$(f))
-VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/cores_vlog.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
+VLOG_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/vlog.flist), $(ESP_ROOT)/rtl/$(f))
+VLOG_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/cores_vlog.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
 
 ifeq ($(TECHLIB), inferred)
-VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+VLOG_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
 else ifeq ($(TECH_TYPE), asic)
-VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/asic, $(f)), $(ESP_ROOT)/rtl/$(f),))
+VLOG_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/asic, $(f)), $(ESP_ROOT)/rtl/$(f),))
 else
-VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+VLOG_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
 endif
 
 ifeq ($(CONFIG_HAS_DVFS),y)
-VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/dvfs_vlog.flist), $(ESP_ROOT)/rtl/$(f))
+VLOG_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/dvfs_vlog.flist), $(ESP_ROOT)/rtl/$(f))
 endif
 
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.v")))
@@ -100,6 +104,9 @@ VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/axi/src -name
 #VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/include/ -name "*.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/axi_node/src/ -name "*.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/util -name "*.sv"))
+# The ESP cache local memories and inferred SRAM wrappers instantiate
+# sram_behav; Ariane gets it from ariane_vlog.flist, so add it explicitly here.
+VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/src/ -name "sram.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/src/ -name "spill_register.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/src/ -name "stream_arbiter.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/src/ -name "stream_arbiter_flushable.sv"))
@@ -114,22 +121,22 @@ VLOG_SRCS += $(THIRDPARTY_VLOG) $(THIRDPARTY_SVLOG)
 VLOG_SRCS += $(TOP_VLOG_RTL_SRCS)
 
 SIM_VLOG_SRCS += $(VLOG_SRCS)
-SIM_VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/sim_vlog.flist), $(ESP_ROOT)/rtl/$(f))
+SIM_VLOG_SRCS += $(foreach f, $(call safe_strings,$(FLISTS)/sim_vlog.flist), $(ESP_ROOT)/rtl/$(f))
 
 ifeq ($(TECHLIB), inferred)
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
+SIM_VLOG_SRCS += $(call safe_find,$(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/,-name "*.v")
 else ifeq ($(TECH_TYPE), asic)
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/asic/verilog/ -name "*.v" ))
+SIM_VLOG_SRCS += $(call safe_find,$(ESP_ROOT)/rtl/sim/asic/verilog/,-name "*.v")
 else
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
+SIM_VLOG_SRCS += $(call safe_find,$(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/,-name "*.v")
 endif
 
 ifeq ($(TECHLIB), inferred)
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.sv" ))
+SIM_VLOG_SRCS += $(call safe_find,$(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/,-name "*.sv")
 else ifeq ($(TECH_TYPE), asic)
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/asic/verilog/ -name "*.sv" ))
+SIM_VLOG_SRCS += $(call safe_find,$(ESP_ROOT)/rtl/sim/asic/verilog/,-name "*.sv")
 else
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.sv" ))
+SIM_VLOG_SRCS += $(call safe_find,$(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/,-name "*.sv")
 endif
 
 SIM_VLOG_SRCS += $(TOP_VLOG_SIM_SRCS)
@@ -137,6 +144,23 @@ SIM_VLOG_SRCS += $(TOP_VLOG_SIM_SRCS)
 ## Vivado HLS generated files
 IP_XCI_SRCS  = $(shell (find $(ESP_ROOT)/tech/$(TECHLIB) -name "*.xci" ))
 DAT_SRCS = $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.dat" ))
+QUARTUS_AUTO_SRCS_NAME ?= srcs_auto.tcl
+QUARTUS_AUTO_SRCS ?= $(DESIGN_PATH)/quartus/$(QUARTUS_AUTO_SRCS_NAME)
+QUARTUS_INCDIR_MANIFEST ?= $(RTL_CFG_BUILD)/quartus_incdirs.list
+QUARTUS_RTL_MANIFEST ?= $(RTL_CFG_BUILD)/quartus_rtl_sources.list
+QUARTUS_EXTRA_RTL_SRCS += $(wildcard $(ESP_ROOT)/rtl/sockets/adapters/intel/esp_ahb_slave_to_hps_f2sdram_axi.vhd)
+QUARTUS_EXTRA_RTL_SRCS += $(wildcard $(ESP_ROOT)/rtl/sockets/adapters/intel/hps_h2f_axi_to_esp_ahb_master.vhd)
+QUARTUS_EXTRA_RTL_SRCS += $(wildcard $(DESIGN_PATH)/fpga/ghrd_s10_top.v)
+
+# ESP's RTL caches use the Xilinx-compatible BRAM module interface. Intel
+# targets provide board-family implementations of those modules under tech/.
+QUARTUS_VERILOG_DEFINES := QUARTUS=1 SYNTHESIS=1 FPGA_TARGET_ALTERA=1 XILINX_FPGA=1
+ifeq ("$(CPU_ARCH)","ibex")
+QUARTUS_VERILOG_DEFINES += WT_DCACHE=1
+else
+QUARTUS_VERILOG_DEFINES += WT_DCACHE=1 FPU_FPNEW=1 XLEN_64=1
+endif
+QUARTUS_VERILOG_DEFINES += $(GT_VORTEX_QUARTUS_DEFINES)
 
 
 ### Check if files lists changed ###
@@ -154,11 +178,11 @@ techmap_flist:
 
 
 check_all_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
-	@echo $(SIM_VHDL_PKGS) > $@.new;
-	@echo $(SIM_VHDL_SRCS) >> $@.new;
-	@echo $(SIM_VLOG_SRCS) >> $@.new;
-	@echo $(IP_XCI_SRCS) >> $@.new;
-	@echo $(DAT_SRCS) >> $@.new;
+	@$(file >$@.new,$(strip $(SIM_VHDL_PKGS)))
+	@$(file >>$@.new,$(strip $(SIM_VHDL_SRCS)))
+	@$(file >>$@.new,$(strip $(SIM_VLOG_SRCS)))
+	@$(file >>$@.new,$(strip $(IP_XCI_SRCS)))
+	@$(file >>$@.new,$(strip $(DAT_SRCS)))
 	@if test -f $(RTL_CFG_BUILD)/$@.old; then \
 		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \
 		if [ $$? -eq 0 ]; then \
@@ -180,11 +204,11 @@ check_all_srcs-distclean:
 .PHONY: check_all_srcs check_all_srcs-distclean
 
 check_all_rtl_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
-	@echo $(VHDL_PKGS) > $@.new;
-	@echo $(VHDL_SRCS) >> $@.new;
-	@echo $(VLOG_SRCS) >> $@.new;
-	@echo $(IP_XCI_SRCS) >> $@.new;
-	@echo $(DAT_SRCS) >> $@.new;
+	@$(file >$@.new,$(strip $(VHDL_PKGS)))
+	@$(file >>$@.new,$(strip $(VHDL_SRCS)))
+	@$(file >>$@.new,$(strip $(VLOG_SRCS)))
+	@$(file >>$@.new,$(strip $(IP_XCI_SRCS)))
+	@$(file >>$@.new,$(strip $(DAT_SRCS)))
 	@if test -f $(RTL_CFG_BUILD)/$@.old; then \
 		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \
 		if [ $$? -eq 0 ]; then \
@@ -202,4 +226,62 @@ check_all_rtl_srcs-distclean:
 check_srcs-distclean:
 	$(QUIET_CLEAN)rm -rf $(RTL_CFG_BUILD)
 
-.PHONY: check_all_rtl_srcs check_all_rtl_srcs-distclean check_srcs-distclean
+quartus-srcs: check_all_rtl_srcs $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
+ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
+	$(QUIET_INFO)echo "generating source list for Quartus"
+	@mkdir -p $(dir $(QUARTUS_AUTO_SRCS))
+	@$(RM) $(QUARTUS_AUTO_SRCS)
+	@echo "# Auto-generated by 'make quartus-srcs' from the current ESP RTL graph." > $(QUARTUS_AUTO_SRCS)
+	@echo "# Re-run this target after changing the SoC configuration or RTL file lists." >> $(QUARTUS_AUTO_SRCS)
+	@$(file >$(QUARTUS_INCDIR_MANIFEST),$(strip $(INCDIR)))
+	@$(file >$(QUARTUS_RTL_MANIFEST),$(strip $(VHDL_PKGS)))
+	@$(file >>$(QUARTUS_RTL_MANIFEST),$(strip $(VHDL_SRCS)))
+	@$(file >>$(QUARTUS_RTL_MANIFEST),$(strip $(VLOG_SRCS)))
+	@$(file >>$(QUARTUS_RTL_MANIFEST),$(strip $(QUARTUS_EXTRA_RTL_SRCS)))
+	@quartus_prefix="$(DESIGN_PATH)/quartus/"; \
+	design_prefix="$(DESIGN_PATH)/"; \
+	esp_prefix="$(ESP_ROOT)/"; \
+	for def in $(QUARTUS_VERILOG_DEFINES); do \
+		echo "set_global_assignment -name VERILOG_MACRO {$$def}" >> $(QUARTUS_AUTO_SRCS); \
+	done; \
+	while IFS= read -r dirs; do \
+		for dir in $$dirs; do \
+			qdir="$$dir"; \
+			case "$$dir" in \
+				"$$quartus_prefix"*) qdir="./$${dir#$$quartus_prefix}" ;; \
+				"$$design_prefix"*) qdir="../$${dir#$$design_prefix}" ;; \
+				"$$esp_prefix"*) qdir="../../../$${dir#$$esp_prefix}" ;; \
+			esac; \
+			echo "set_global_assignment -name SEARCH_PATH {$$qdir}" >> $(QUARTUS_AUTO_SRCS); \
+		done; \
+	done < "$(QUARTUS_INCDIR_MANIFEST)"; \
+	while IFS= read -r sources; do \
+		for rtl in $$sources; do \
+			qrtl="$$rtl"; \
+			case "$$rtl" in \
+				"$$quartus_prefix"*) qrtl="./$${rtl#$$quartus_prefix}" ;; \
+				"$$design_prefix"*) qrtl="../$${rtl#$$design_prefix}" ;; \
+				"$$esp_prefix"*) qrtl="../../../$${rtl#$$esp_prefix}" ;; \
+			esac; \
+			case "$$rtl" in \
+				*.vhd|*.vhdl) assignment=VHDL_FILE ;; \
+				*.sv) assignment=SYSTEMVERILOG_FILE ;; \
+				*.v) assignment=VERILOG_FILE ;; \
+				*) continue ;; \
+			esac; \
+			qassign="set_global_assignment -name $$assignment {$$qrtl}"; \
+			for acc in $(THIRDPARTY_ACC); do \
+				acc_prefix="$(THIRDPARTY_PATH)/$$acc/"; \
+				if test "$${rtl#$$acc_prefix}" != "$$rtl"; then \
+					qassign="set_global_assignment -name $$assignment {$$qrtl} -library $$acc"; \
+					break; \
+				fi; \
+			done; \
+			echo "$$qassign" >> $(QUARTUS_AUTO_SRCS); \
+		done; \
+	done < "$(QUARTUS_RTL_MANIFEST)"
+else
+	@echo "Quartus source lists are only generated for Intel FPGA boards"
+endif
+
+.PHONY: check_all_rtl_srcs check_all_rtl_srcs-distclean check_srcs-distclean quartus-srcs

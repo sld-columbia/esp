@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2026 Columbia University, System Level Design Group */
+/* Copyright (c) 2011-2025 Columbia University, System Level Design Group */
 /* SPDX-License-Identifier: Apache-2.0 */
 
 #include <stdio.h>
@@ -29,8 +29,17 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st) { return (sizeof(void *) / _st);
 #define PLIC_IP_OFFSET     0x1000
 #define PLIC_INTACK_OFFSET 0x200004
 
-// IRQ number, get from device tree
-#define NVDLA_IRQ 6
+#ifndef SOC_COHERENCE
+    #define SOC_COHERENCE 0
+#endif
+
+#ifndef NVDLA_COHERENCE
+    #if SOC_COHERENCE
+        #define NVDLA_COHERENCE ACC_COH_RECALL
+    #else
+        #define NVDLA_COHERENCE ACC_COH_NONE
+    #endif
+#endif
 
 // number of loop iterations for which nvdla is to be run
 #define N_ITER 3
@@ -68,28 +77,38 @@ static void init_buf(token_t *in, native_t *gold)
 #include "gold.h"
 }
 
+static void nvdla_flush(unsigned int coh)
+{
+    if (coh == ACC_COH_NONE && !SOC_COHERENCE) {
+        printf("	-> Non-coherent DMA\n");
+        return;
+    }
+
+    esp_flush(coh);
+}
+
 int main(int argc, char *argv[])
 {
-    int i;
     int n;
     int ndev;
     struct esp_device *espdevs;
     struct esp_device *dev;
+    struct esp_device dev_storage;
     struct esp_device plic_dev;
-    unsigned done;
     token_t *mem;
     native_t *gold;
     unsigned errors = 0;
-    unsigned coherence;
     unsigned error_id;
     unsigned read_val;
     unsigned int coh;
     unsigned int tile_offset;
+    unsigned int nvdla_tile_count;
     unsigned int *coh_reg_addr;
     unsigned int *rst_reg_addr;
+    const unsigned int *nvdla_tile_numbers;
+    const unsigned int nvdla_tile_numbers_2x2[]   = {2};
+    const unsigned int nvdla_tile_numbers_guide[] = {1, 3, 5, 7};
 
-    // change this depending on the SoC layout and number of NVDLA instances
-    unsigned int nvdla_tile_numbers[1] = {2};
     i_base                             = 0x200;
     w_base                             = 0x000;
     b_base                             = 0x280;
@@ -105,13 +124,29 @@ int main(int argc, char *argv[])
 
     ndev = probe(&espdevs, VENDOR_SLD, NV_NVDLA, DEV_NAME);
     if (ndev == 0) {
-        printf("nv_nvdla not found\n");
+        printf("nv_nvdla not found; expected compatible \"%s\" in embedded DTB\n", DEV_NAME);
         return 0;
+    }
+
+    if (ndev == 1) {
+        nvdla_tile_numbers = nvdla_tile_numbers_2x2;
+        nvdla_tile_count   = sizeof(nvdla_tile_numbers_2x2) / sizeof(nvdla_tile_numbers_2x2[0]);
+    }
+    else {
+        nvdla_tile_numbers = nvdla_tile_numbers_guide;
+        nvdla_tile_count   = sizeof(nvdla_tile_numbers_guide) / sizeof(nvdla_tile_numbers_guide[0]);
+    }
+
+    if ((unsigned)ndev > nvdla_tile_count) {
+        printf("Only %u NVDLA tile numbers configured; testing first %u devices\n", nvdla_tile_count,
+               nvdla_tile_count);
+        ndev = nvdla_tile_count;
     }
 
     for (n = 0; n < ndev; n++) {
 
-        dev = &espdevs[n];
+        dev_storage = espdevs[n];
+        dev         = &dev_storage;
 
         // Allocation of the accelerator data array (mem) and of the expected output array (gold)
         mem  = aligned_malloc(mem_size);
@@ -127,9 +162,9 @@ int main(int argc, char *argv[])
         tile_offset   = (CSR_TILE_SIZE / sizeof(unsigned int)) * nvdla_tile_numbers[n];
         coh_reg_addr  = ((unsigned int *)CSR_BASE_ADDR) + tile_offset + COH_REG_INDEX;
         rst_reg_addr  = ((unsigned int *)CSR_BASE_ADDR) + tile_offset + TP_RST_REG_INDEX;
-        coh           = ACC_COH_RECALL;
+        coh           = NVDLA_COHERENCE;
         *coh_reg_addr = coh;
-        esp_flush(coh);
+        nvdla_flush(coh);
 
         // Write the accelerator configuration registers
 
@@ -299,14 +334,17 @@ int main(int argc, char *argv[])
             if (read_val != 1) printf("error %u\n", error_id);
             error_id++;
 
+            plic_dev.addr = PLIC_ADDR;
+            iowrite32(&plic_dev, 4 * dev->irq, 0x2);
+            iowrite32(&plic_dev, 0x2000, ioread32(&plic_dev, 0x2000) | (1U << dev->irq));
+
             iowrite32(dev, 28680, 1);
             iowrite32(dev, 20488, 1);
             iowrite32(dev, 24584, 1);
             iowrite32(dev, 16392, 1);
             iowrite32(dev, 12304, 1);
 
-            plic_dev.addr = PLIC_ADDR;
-            while ((ioread32(&plic_dev, PLIC_IP_OFFSET) & 0x40) == 0)
+            while ((ioread32(&plic_dev, PLIC_IP_OFFSET) & (1U << dev->irq)) == 0)
                 ;
             printf("wait\n");
             printf("wait\n");
@@ -332,9 +370,9 @@ int main(int argc, char *argv[])
             printf("  Done\n");
 
             /* Validation */
-            iowrite32(&plic_dev, PLIC_INTACK_OFFSET, NVDLA_IRQ);
-            iowrite32(&plic_dev, 0x2000, 0x40);
-            iowrite32(&plic_dev, 0x18, 0x2);
+            iowrite32(&plic_dev, PLIC_INTACK_OFFSET, dev->irq);
+            iowrite32(&plic_dev, 0x2000, ioread32(&plic_dev, 0x2000) | (1U << dev->irq));
+            iowrite32(&plic_dev, 4 * dev->irq, 0x2);
             ioread32(&plic_dev, PLIC_INTACK_OFFSET);
             *rst_reg_addr = 0x1;
 

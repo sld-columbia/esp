@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ESP_DEFCONFIG ?= $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig
@@ -34,7 +34,12 @@ $(ESP_CFG_BUILD)/socmap.vhd: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grl
 	fi; \
 	echo ""; \
 	echo "Generating ESP configuration..."; \
-	LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/tools/socgen/esp_creator_batch.py $(ARCH_BITS) $(TECH_TYPE) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK) $(BOARD) $(EMU_TECH) $(EMU_FREQ)
+	if command -v xvfb-run > /dev/null 2>&1; then \
+		SOCGEN_RUNNER="xvfb-run -a"; \
+	else \
+		SOCGEN_RUNNER=""; \
+	fi; \
+	LD_LIBRARY_PATH="" $$SOCGEN_RUNNER python3 $(ESP_ROOT)/tools/socgen/esp_creator_batch.py $(ARCH_BITS) $(TECH_TYPE) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK) $(BOARD) $(EMU_TECH) $(EMU_FREQ)
 
 $(ESP_CFG_BUILD)/esplink.h: $(ESP_CFG_BUILD)/socmap.vhd
 

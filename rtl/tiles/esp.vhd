@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2026 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -14,8 +14,6 @@ use work.leon3.all;
 use work.net.all;
 -- pragma translate_off
 use work.sim.all;
-library unisim;
-use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
 use work.sldacc.all;

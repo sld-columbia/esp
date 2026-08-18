@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 import customtkinter as ctk
@@ -344,22 +344,22 @@ class Tile():
         y = h / 2 - size[1] / 2
         toplevel.geometry("%dx%d+%d+%d" % (size + (x, y)))
 
-    def __init__(self, top, x, y):
+    def __init__(self, top, x, y, tk_master=None):
         self.row = x
         self.col = y
-        self.ip_type = StringVar()
-        self.point = StringVar()
+        self.ip_type = StringVar(master=tk_master)
+        self.point = StringVar(master=tk_master)
         self.vendor = ""
-        self.has_l2 = IntVar()
-        self.has_tdvfs = IntVar()
-        self.has_ddr = IntVar()
+        self.has_l2 = IntVar(master=tk_master)
+        self.has_tdvfs = IntVar(master=tk_master)
+        self.has_ddr = IntVar(master=tk_master)
 
 
 class NoC():
 
     rows = 0
     cols = 0
-    top = ""
+    top = None
 
     topology = []
 
@@ -369,7 +369,7 @@ class NoC():
         for y in range(_R):
             new_topology.append([])
             for x in range(_C):
-                new_topology[y].append(Tile(top, y, x))
+                new_topology[y].append(Tile(top, y, x, self.tk_master))
                 if x < self.cols and y < self.rows:
                     new_topology[y][x].ip_type.set(
                         self.topology[y][x].ip_type.get())
@@ -468,22 +468,23 @@ class NoC():
 
     # WARNING: Geometry in this class only uses x=rows, y=cols, but socmap
     # uses y=row, x=cols!
-    def __init__(self):
+    def __init__(self, tk_master=None):
+        self.tk_master = tk_master
         self.cols = 0
         self.rows = 0
-        self.coh_noc_width = IntVar()
-        self.dma_noc_width = IntVar()
-        self.multicast_en = IntVar()
-        self.max_mcast_dests = IntVar()
-        self.queue_size = IntVar()
-        self.monitor_ddr = IntVar()
-        self.monitor_mem = IntVar()
-        self.monitor_inj = IntVar()
-        self.monitor_routers = IntVar()
-        self.monitor_accelerators = IntVar()
-        self.monitor_l2 = IntVar()
-        self.monitor_llc = IntVar()
-        self.monitor_dvfs = IntVar()
+        self.coh_noc_width = IntVar(master=tk_master)
+        self.dma_noc_width = IntVar(master=tk_master)
+        self.multicast_en = IntVar(master=tk_master)
+        self.max_mcast_dests = IntVar(master=tk_master)
+        self.queue_size = IntVar(master=tk_master)
+        self.monitor_ddr = IntVar(master=tk_master)
+        self.monitor_mem = IntVar(master=tk_master)
+        self.monitor_inj = IntVar(master=tk_master)
+        self.monitor_routers = IntVar(master=tk_master)
+        self.monitor_accelerators = IntVar(master=tk_master)
+        self.monitor_l2 = IntVar(master=tk_master)
+        self.monitor_llc = IntVar(master=tk_master)
+        self.monitor_dvfs = IntVar(master=tk_master)
 
 # NoC configuration frame (middle)
 

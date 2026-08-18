@@ -1,4 +1,5 @@
 *.old
+.DS_Store
 
 .cxl.*
 logs
@@ -78,6 +79,7 @@ mmi64
 *.rpt
 
 *.dts
+!terasic-de10-pro-sx/hps/devicetree/socfpga_stratix10_de10_pro.dts
 *.dtb
 prom.bin
 systest.bin
@@ -105,3 +107,8 @@ zynq/
 
 sdf_dco.list
 genus/
+
+terasic-de10-pro-sx/quartus/
+terasic-de10-pro-sx/local/hps-boot/
+terasic-de10-pro-sx/local/boot/*
+!terasic-de10-pro-sx/local/boot/.gitignore

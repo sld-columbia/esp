@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2026 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 module ariane_wrap #(
@@ -313,6 +313,10 @@ module ariane_wrap #(
     output logic                flush_done
 );
 
+    // Questa rejects the downstream atomic bookkeeping when this is set to 1,
+    // since it collapses an internal vector width to zero bits at elaboration.
+    localparam int AXI_ATOMICS_MAX_WRITE_TXNS = 2;
+
     // Base addresses for Ariane
     localparam ariane_pkg::ariane_cfg_t ArianeSocCfg = '{
         RASDepth: 2,
@@ -351,6 +355,13 @@ module ariane_wrap #(
         SLMDDR = 4,
         DRAM   = 5
     } axi_slaves_t;
+
+    logic [0:0][NSLV-1:0] axi_xbar_valid_rule;
+
+    always_comb begin
+        axi_xbar_valid_rule[0]         = {NSLV{1'b1}};
+        axi_xbar_valid_rule[0][SLMDDR] = |SLMDDRLength[AXI_ADDR_WIDTH-1:0];
+    end
 
     AXI_BUS #(
         .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
@@ -407,7 +418,7 @@ module ariane_wrap #(
             APBBase[AXI_ADDR_WIDTH-1:0] + APBLength[AXI_ADDR_WIDTH-1:0] - 1,
             ROMBase[AXI_ADDR_WIDTH-1:0] + ROMLength[AXI_ADDR_WIDTH-1:0] - 1
         }),
-        .valid_rule_i({{NSLV} {1'b1}})
+        .valid_rule_i(axi_xbar_valid_rule)
     );
 
     // ---------------
@@ -587,7 +598,7 @@ module ariane_wrap #(
         .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
         .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
         .AXI_USER_WIDTH ( AXI_USER_WIDTH   ),
-        .AXI_MAX_WRITE_TXNS ( 1  ),
+        .AXI_MAX_WRITE_TXNS ( AXI_ATOMICS_MAX_WRITE_TXNS ),
         .RISCV_WORD_WIDTH   ( 64 )
     ) i_axi_riscv_atomics (
         .clk_i (clk),
@@ -786,7 +797,7 @@ module ariane_wrap #(
                 .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
                 .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
                 .AXI_USER_WIDTH ( AXI_USER_WIDTH   ),
-                .AXI_MAX_WRITE_TXNS ( 1  ),
+                .AXI_MAX_WRITE_TXNS ( AXI_ATOMICS_MAX_WRITE_TXNS ),
                 .RISCV_WORD_WIDTH   ( 64 )
             ) i_axi_riscv_atomics (
                 .clk_i (clk),

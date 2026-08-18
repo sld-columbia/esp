@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2026 Columbia University, System Level Design Group
+// Copyright (c) 2011-2025 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #include "accelerator_name.hpp"
@@ -107,7 +107,8 @@ void acc_full_name::load()
                     wreq.indx[0] = i;
                     wreq.data[0] = dataBv;
 
-                    if (ping_pong) in_ping_w.Push(wreq);
+                    if (ping_pong)
+                        in_ping_w.Push(wreq);
                     else
                         in_pong_w.Push(wreq);
                 }
@@ -124,7 +125,8 @@ void acc_full_name::load()
                         wreq.indx[k] = i + k;
                         wreq.data[k] = data_dma.slc<DATA_WIDTH>(k * DATA_WIDTH);
                     }
-                    if (ping_pong) in_ping_w.Push(wreq);
+                    if (ping_pong)
+                        in_ping_w.Push(wreq);
                     else
                         in_pong_w.Push(wreq);
                 }
@@ -188,7 +190,8 @@ void acc_full_name::compute_dataReq()
 
                     rreq.indx[0] = i;
 
-                    if (ping_pong) in_ping_ra.Push(rreq);
+                    if (ping_pong)
+                        in_ping_ra.Push(rreq);
                     else
                         in_pong_ra.Push(rreq);
                 }
@@ -246,7 +249,8 @@ void acc_full_name::compute()
 
                     FPDATA_WORD op;
 
-                    if (ping_pong) op = in_ping_rd.Pop().data[0];
+                    if (ping_pong)
+                        op = in_ping_rd.Pop().data[0];
                     else
                         op = in_pong_rd.Pop().data[0];
 
@@ -256,7 +260,8 @@ void acc_full_name::compute()
 
                     if (i < /* <<--data_out_size-->> */) {
 
-                        if (out_ping_pong) out_ping_w.Push(rreq);
+                        if (out_ping_pong)
+                            out_ping_w.Push(rreq);
                         else
                             out_pong_w.Push(rreq);
                     }
@@ -322,7 +327,8 @@ void acc_full_name::store_dataReq()
                     plm_RRq<out_as, outrp> rreq;
                     rreq.indx[0] = i;
 
-                    if (ping_pong) out_ping_ra.Push(rreq);
+                    if (ping_pong)
+                        out_ping_ra.Push(rreq);
                     else
                         out_pong_ra.Push(rreq);
                 }
@@ -338,7 +344,8 @@ void acc_full_name::store_dataReq()
                         rreq.indx[k] = i + k;
                     }
 
-                    if (ping_pong) out_ping_ra.Push(rreq);
+                    if (ping_pong)
+                        out_ping_ra.Push(rreq);
                     else
                         out_pong_ra.Push(rreq);
                 }
@@ -420,7 +427,8 @@ void acc_full_name::store()
                 for (uint32_t i = 0; i < len; i++) {
                     FPDATA_WORD dataBv;
 
-                    if (ping_pong) dataBv = out_ping_rd.Pop().data[0];
+                    if (ping_pong)
+                        dataBv = out_ping_rd.Pop().data[0];
                     else
                         dataBv = out_pong_rd.Pop().data[0];
 
@@ -437,7 +445,8 @@ void acc_full_name::store()
                 for (uint32_t i = 0; i < len; i += DMA_WORD_PER_BEAT) {
                     DMA_WORD dataBv;
 
-                    if (ping_pong) rrsp = out_ping_rd.Pop();
+                    if (ping_pong)
+                        rrsp = out_ping_rd.Pop();
                     else
                         rrsp = out_pong_rd.Pop();
 

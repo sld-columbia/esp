@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 boards:
@@ -100,6 +100,6 @@ INCDIR += $(PROFPGA)/hdl/mmi64
 INCDIR += $(PROFPGA)/hdl/profpga_user
 INCDIR += $(PROFPGA)/hdl/pd_muxdemux2
 
-VHDL_PROFPGA    = $(shell strings $(FLISTS)/profpga_vhdl.flist)
-VERILOG_PROFPGA = $(shell strings $(FLISTS)/profpga_vlog.flist)
+VHDL_PROFPGA    = $(call safe_strings,$(FLISTS)/profpga_vhdl.flist)
+VERILOG_PROFPGA = $(call safe_strings,$(FLISTS)/profpga_vlog.flist)
 endif

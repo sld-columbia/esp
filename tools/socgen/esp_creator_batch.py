@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ###############################################################################
@@ -11,8 +11,7 @@
 
 import sys
 
-from tkinter import *
-from tkinter import messagebox
+from tkinter import Tcl
 from soc import *
 from socmap_gen import *
 from mmi64_gen import *
@@ -46,7 +45,9 @@ FPGA_BOARD = sys.argv[6]
 EMU_TECH = sys.argv[7]
 EMU_FREQ = sys.argv[8]
 
-root = Tk()
+# Tcl provides the variable storage used by the shared SoC model without
+# loading Tk or connecting to an X display.
+root = Tcl()
 soc = SoC_Config(
     ARCH_BITS,
     TECH_TYPE,
@@ -56,7 +57,8 @@ soc = SoC_Config(
     FPGA_BOARD,
     EMU_TECH,
     EMU_FREQ,
-    False)
+    False,
+    root)
 
 esp_config = soc_config(soc)
 create_socmap(esp_config, soc)

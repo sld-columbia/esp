@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 STRATUSHLS_ACC_PATH      = $(ESP_ROOT)/accelerators/stratus_hls
@@ -65,29 +65,45 @@ RTL_ACC-hls       = $(addsuffix -hls, $(RTL_ACC))
 RTL_ACC-clean     = $(addsuffix -clean, $(RTL_ACC))
 RTL_ACC-distclean = $(addsuffix -distclean, $(RTL_ACC))
 
+# Accelerator selections are stored as "<id> acc <name> ..." in TILE_*.
+# Keep optional accelerator dependencies tied to the active SoC rather than
+# every accelerator whose integration metadata exists in the source tree.
+SOC_CONFIGURED_ACCELERATORS = $(sort $(foreach tile_var,$(filter TILE_%,$(.VARIABLES)),$(if $(filter acc,$(word 2,$($(tile_var)))),$(word 3,$($(tile_var))))))
+GT_VORTEX_SELECTED = $(filter GT_VORTEX,$(SOC_CONFIGURED_ACCELERATORS))
+
+RTL_SW_ACC = $(RTL_ACC)
+# Vortex software requires its optional submodule and currently targets RISC-V.
+ifeq ($(strip $(GT_VORTEX_SELECTED)),)
+RTL_SW_ACC := $(filter-out gt_vortex_rtl, $(RTL_SW_ACC))
+else ifeq ("$(ARCH)", "sparc")
+RTL_SW_ACC := $(filter-out gt_vortex_rtl, $(RTL_SW_ACC))
+endif
+
 THIRDPARTY_PATH = $(ESP_ROOT)/accelerators/third-party
 ifdef CPU_ARCH
-THIRDPARTY_ACC  = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell if grep -q $(CONFIG_DMA_NOC_WIDTH) $(THIRDPARTY_PATH)/$(acc)/$(acc).dma_widths; then echo $(acc); fi))
+THIRDPARTY_ACC_AVAILABLE = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell if grep -q $(CONFIG_DMA_NOC_WIDTH) $(THIRDPARTY_PATH)/$(acc)/$(acc).dma_widths; then echo $(acc); fi))
+THIRDPARTY_ACC = $(filter $(SOC_CONFIGURED_ACCELERATORS),$(THIRDPARTY_ACC_AVAILABLE))
 else
+THIRDPARTY_ACC_AVAILABLE =
 THIRDPARTY_ACC  =
 endif
-THIRDPARTY_ACC-clean     = $(addsuffix -clean, $(THIRDPARTY_ACC))
-THIRDPARTY_ACC-distclean = $(addsuffix -distclean, $(THIRDPARTY_ACC))
+THIRDPARTY_ACC-clean     = $(addsuffix -clean, $(THIRDPARTY_ACC_AVAILABLE))
+THIRDPARTY_ACC-distclean = $(addsuffix -distclean, $(THIRDPARTY_ACC_AVAILABLE))
 
 THIRDPARTY_VLOG       = $(foreach acc, $(THIRDPARTY_ACC), $(shell f=$(THIRDPARTY_PATH)/$(acc)/out; l=$$(readlink $$f); if test -e $(THIRDPARTY_PATH)/$(acc)/$$l; then echo $(THIRDPARTY_PATH)/$(acc)/$(acc)_wrapper.v; fi))
-THIRDPARTY_VLOG      += $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).verilog),  $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+THIRDPARTY_VLOG      += $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(call safe_strings,$(THIRDPARTY_PATH)/$(acc)/$(acc).verilog),  $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
 THIRDPARTY_INCDIR     = $(foreach acc, $(THIRDPARTY_ACC), $(shell if test -r $(THIRDPARTY_PATH)/$(acc)/vlog_incdir; then echo -n $(THIRDPARTY_PATH)/$(acc)/vlog_incdir; else echo -n ""; fi))
-THIRDPARTY_SVLOG      = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).sverilog), $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
-THIRDPARTY_VHDL_PKGS  = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).pkgs),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
-THIRDPARTY_VHDL       = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).vhdl),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+THIRDPARTY_SVLOG      = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(call safe_strings,$(THIRDPARTY_PATH)/$(acc)/$(acc).sverilog), $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+THIRDPARTY_VHDL_PKGS  = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(call safe_strings,$(THIRDPARTY_PATH)/$(acc)/$(acc).pkgs),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+THIRDPARTY_VHDL       = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(call safe_strings,$(THIRDPARTY_PATH)/$(acc)/$(acc).vhdl),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
 
 ACC_PATHS = $(STRATUSHLS_ACC_PATHS) $(VIVADOHLS_ACC_PATHS) $(CATAPULTHLS_ACC_PATHS) $(HLS4ML_ACC_PATHS) $(CHISEL_ACC_PATHS) $(RTL_ACC_PATHS)
 
-ACC-driver       = $(addsuffix -driver, $(STRATUSHLS_ACC)) $(addsuffix -driver, $(VIVADOHLS_ACC)) $(addsuffix -driver, $(HLS4ML_ACC)) $(addsuffix -driver, $(CHISEL_ACC)) $(addsuffix -driver, $(CATAPULTHLS_ACC)) $(addsuffix -driver, $(RTL_ACC))
+ACC-driver       = $(addsuffix -driver, $(STRATUSHLS_ACC)) $(addsuffix -driver, $(VIVADOHLS_ACC)) $(addsuffix -driver, $(HLS4ML_ACC)) $(addsuffix -driver, $(CHISEL_ACC)) $(addsuffix -driver, $(CATAPULTHLS_ACC)) $(addsuffix -driver, $(RTL_SW_ACC))
 ACC-driver-clean = $(addsuffix -driver-clean, $(STRATUSHLS_ACC)) $(addsuffix -driver-clean, $(VIVADOHLS_ACC)) $(addsuffix -driver-clean, $(HLS4ML_ACC)) $(addsuffix -driver-clean, $(CHISEL_ACC)) $(addsuffix -driver-clean, $(CATAPULTHLS_ACC)) $(addsuffix -driver-clean, $(RTL_ACC))
-ACC-app          = $(addsuffix -app, $(STRATUSHLS_ACC)) $(addsuffix -app, $(VIVADOHLS_ACC)) $(addsuffix -app, $(HLS4ML_ACC)) $(addsuffix -app, $(CHISEL_ACC)) $(addsuffix -app, $(CATAPULTHLS_ACC)) $(addsuffix -app, $(RTL_ACC)) 
+ACC-app          = $(addsuffix -app, $(STRATUSHLS_ACC)) $(addsuffix -app, $(VIVADOHLS_ACC)) $(addsuffix -app, $(HLS4ML_ACC)) $(addsuffix -app, $(CHISEL_ACC)) $(addsuffix -app, $(CATAPULTHLS_ACC)) $(addsuffix -app, $(RTL_SW_ACC))
 ACC-app-clean    = $(addsuffix -app-clean, $(STRATUSHLS_ACC)) $(addsuffix -app-clean, $(VIVADOHLS_ACC)) $(addsuffix -app-clean, $(HLS4ML_ACC)) $(addsuffix -app-clean, $(CHISEL_ACC)) $(addsuffix -app-clean, $(CATAPULTHLS_ACC)) $(addsuffix -app-clean, $(RTL_ACC))
-ACC-baremetal        = $(addsuffix -baremetal, $(STRATUSHLS_ACC)) $(addsuffix -baremetal, $(VIVADOHLS_ACC)) $(addsuffix -baremetal, $(HLS4ML_ACC)) $(addsuffix -baremetal, $(CHISEL_ACC)) $(addsuffix -baremetal, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal, $(RTL_ACC))
+ACC-baremetal        = $(addsuffix -baremetal, $(STRATUSHLS_ACC)) $(addsuffix -baremetal, $(VIVADOHLS_ACC)) $(addsuffix -baremetal, $(HLS4ML_ACC)) $(addsuffix -baremetal, $(CHISEL_ACC)) $(addsuffix -baremetal, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal, $(RTL_SW_ACC))
 ACC-baremetal-clean  = $(addsuffix -baremetal-clean, $(STRATUSHLS_ACC)) $(addsuffix -baremetal-clean, $(VIVADOHLS_ACC)) $(addsuffix -baremetal-clean, $(HLS4ML_ACC)) $(addsuffix -baremetal-clean, $(CHISEL_ACC)) $(addsuffix -baremetal-clean, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal-clean, $(RTL_ACC))
 
 THIRDPARTY_ACC_PRINT  = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell echo $(acc)))
@@ -139,14 +155,14 @@ chisel-acc-distclean: chisel-acc-clean $(CHISEL_ACC-distclean)
 
 
 ### Third-Party ###
-$(THIRDPARTY_ACC): $(BAREMETAL_BIN)
+$(THIRDPARTY_ACC_AVAILABLE): $(BAREMETAL_BIN)
 	$(QUIET_BUILD)
 	@cd $(THIRDPARTY_PATH)/$@; \
 	if ! test -e $(THIRDPARTY_PATH)/$@/out; then \
 		$(MAKE) TECH_TYPE=$(TECH_TYPE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build hw; \
 	fi;
 	@cd $(THIRDPARTY_PATH)/$@; \
-	$(MAKE) ESP_ROOT=$(ESP_ROOT) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) CPU_ARCH=$(CPU_ARCH) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build sw;
+	$(MAKE) ESP_ROOT=$(ESP_ROOT) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) CPU_ARCH=$(CPU_ARCH) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build SOFT_BUILD=$(SOFT_BUILD) DRIVERS=$(DRIVERS) GT_VORTEX_CONFIGS="$(GT_VORTEX_CONFIGS)" sw;
 	@for f in $$(cat $(THIRDPARTY_PATH)/$@/$@.kmd); do \
 		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f $(SOFT_BUILD)/sysroot/opt/drivers/; \
 	done;
@@ -159,7 +175,7 @@ $(THIRDPARTY_ACC): $(BAREMETAL_BIN)
 	done;
 
 
-thirdparty-acc: $(THIRDPARTY_ACC)
+thirdparty-acc: $(THIRDPARTY_ACC_AVAILABLE)
 
 $(THIRDPARTY_ACC-clean):
 	$(QUIET_CLEAN)
@@ -175,7 +191,7 @@ thirdparty-acc-clean: $(THIRDPARTY_ACC-clean)
 
 thirdparty-acc-distclean: $(THIRDPARTY_ACC-distclean)
 
-.PHONY: thirdparty-acc thirdparty-acc-clean thirdparty-acc-distclean $(THIRDPARTY_ACC) $(THIRDPARTY_ACC-clean) $(THIRDPARTY_ACC-distclean)
+.PHONY: thirdparty-acc thirdparty-acc-clean thirdparty-acc-distclean $(THIRDPARTY_ACC_AVAILABLE) $(THIRDPARTY_ACC-clean) $(THIRDPARTY_ACC-distclean)
 
 $(HLS_LOGS):
 	$(QUIET_MKDIR)mkdir -p $(HLS_LOGS)
@@ -419,10 +435,19 @@ SOCKETGEN_DEPS += $(ESP_ROOT)/tools/socketgen/socketgen.py
 SOCKETGEN_DEPS += $(wildcard $(ESP_ROOT)/tools/socketgen/templates/*.vhd)
 SOCKETGEN_DEPS += $(ESP_CFG_BUILD)/socmap.vhd $(ESP_CFG_BUILD)/esp_global.vhd $(ESP_CFG_BUILD)/esp_global_sv.sv
 
+gt-vortex-submodule-check:
+	@test -r "$(THIRDPARTY_PATH)/GT_VORTEX/vortex/hw/rtl/Vortex.sv" || { \
+		echo $(SPACES)"ERROR: this SoC uses GT_VORTEX, but its submodule is not initialized"; \
+		echo $(SPACES)"Run: git submodule update --init --recursive accelerators/third-party/GT_VORTEX/vortex"; \
+		false; \
+	}
+
+GT_VORTEX_CHECK = $(if $(GT_VORTEX_SELECTED),gt-vortex-submodule-check)
+
 ### ESP Wrappers ###
-socketgen: $(SOCKETGEN_DEPS)
+socketgen: $(SOCKETGEN_DEPS) | $(GT_VORTEX_CHECK)
 	$(QUIET_MKDIR) $(RM) $@; mkdir -p $@
-	$(QUIET_RUN)$(ESP_ROOT)/tools/socketgen/socketgen.py $(ARCH_BITS) $(CPU_ARCH) $(CONFIG_CACHE_LINE_SIZE) $(CONFIG_DMA_NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/accelerators/third-party $(ESP_ROOT)/tools/socketgen/templates ./socketgen
+	$(QUIET_RUN)ESP_THIRDPARTY_ACCELERATORS="$(THIRDPARTY_ACC)" GT_VORTEX_NUM_CORES=$(GT_VORTEX_NUM_CORES) GT_VORTEX_NUM_WARPS=$(GT_VORTEX_NUM_WARPS) GT_VORTEX_NUM_THREADS=$(GT_VORTEX_NUM_THREADS) GT_VORTEX_L2_ENABLED=$(GT_VORTEX_L2_ENABLED) GT_VORTEX_L3_ENABLED=$(GT_VORTEX_L3_ENABLED) $(ESP_ROOT)/tools/socketgen/socketgen.py $(ARCH_BITS) $(CPU_ARCH) $(CONFIG_CACHE_LINE_SIZE) $(CONFIG_DMA_NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/accelerators/third-party $(ESP_ROOT)/tools/socketgen/templates ./socketgen
 	@touch $@
 
 socketgen-clean:
@@ -430,7 +455,7 @@ socketgen-clean:
 socketgen-distclean: socketgen-clean
 	$(QUIET_CLEAN)$(RM) socketgen
 
-.PHONY: socketgen-clean socketgen-distclean
+.PHONY: gt-vortex-submodule-check socketgen-clean socketgen-distclean
 
 ## Device Drivers ##
 $(ACC-driver): $(SOFT_BUILD)/sysroot $(SOFT_BUILD)/linux-build/vmlinux soft-build
@@ -439,12 +464,18 @@ $(ACC-driver): $(SOFT_BUILD)/sysroot $(SOFT_BUILD)/linux-build/vmlinux soft-buil
 	mkdir -p $$BUILD_PATH; \
 	ln -sf $$ACC_PATH/sw/linux/driver/* $$BUILD_PATH; \
 	if test -e $$BUILD_PATH/Makefile; then \
+		ko_file=""; \
 		echo '   ' MAKE $@; mkdir -p $(SOFT_BUILD)/sysroot/opt/drivers; \
-		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(SOFT_BUILD)/linux-build DRIVERS=$(DRV_LINUX) ACC_SW=$$ACC_PATH/sw $(MAKE) ESP_CORE_PATH=$(BUILD_DRIVERS)/esp DESIGN_PATH=$(DESIGN_PATH) -C $$BUILD_PATH; \
-		if test -e $$BUILD_PATH/*.ko; then \
-			echo '   ' CP $@; cp $$BUILD_PATH/*.ko $(SOFT_BUILD)/sysroot/opt/drivers/$(@:-driver=).ko; \
+		if ! ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(SOFT_BUILD)/linux-build DRIVERS=$(DRV_LINUX) ACC_SW=$$ACC_PATH/sw $(MAKE) ESP_CORE_PATH=$(BUILD_DRIVERS)/esp DESIGN_PATH=$(DESIGN_PATH) -C $$BUILD_PATH; then \
+			echo '   ' ERROR $@ compilation failed!; \
+			exit 1; \
+		fi; \
+		ko_file=$$(find $$BUILD_PATH -maxdepth 1 -name '*.ko' -type f -print -quit); \
+		if test -n "$$ko_file"; then \
+			echo '   ' CP $@; cp $$ko_file $(SOFT_BUILD)/sysroot/opt/drivers/$(@:-driver=).ko; \
 		else \
-			echo '   ' WARNING $@ compilation failed!; \
+			echo '   ' ERROR $@ did not produce a kernel module!; \
+			exit 1; \
 		fi; \
 	else \
 		echo '   ' WARNING $@ not found!; \
@@ -456,19 +487,22 @@ $(ACC-driver-clean):
 $(ACC-app): $(SOFT_BUILD)/sysroot soft-build
 	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-app=)/linux/app; \
 	ACC_PATH=$(filter %/$(@:-app=), $(ACC_PATHS)); \
-	if [ `ls -1 $$ACC_PATH/sw/linux/app/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
+	if test -e $$ACC_PATH/sw/linux/app/Makefile || [ `ls -1 $$ACC_PATH/sw/linux/app/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
 		mkdir -p $(SOFT_BUILD)/sysroot/applications/test/; \
 		mkdir -p $$BUILD_PATH; \
-		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $$ACC_PATH/sw/linux/app; \
+		if ! CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH GT_VORTEX_CONFIGS="$(GT_VORTEX_CONFIGS)" $(MAKE) -C $$ACC_PATH/sw/linux/app; then \
+			echo '   ' ERROR $@ compilation failed!; \
+			exit 1; \
+		fi; \
 		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
 			if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -eq 1 ]; then \
 				echo '   ' CP $@; cp  $$BUILD_PATH/*.exe $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=).exe ; \
 			else \
 				for f in $$BUILD_PATH/*.exe; do echo '   ' CP $@ $${f##*/}; cp $$f $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=)_$${f##*/} ; done; \
 			fi; \
-			if [ `ls -1 $$ACC_PATH/sw/linux/app/*.so 2>/dev/null | wc -l ` -gt 0 ]; then \
-				echo '   ' CP "shared libraries"; cp $$ACC_PATH/sw/linux/app/*.so $(SOFT_BUILD)/sysroot/lib/ ; \
+			if [ `ls -1 $$BUILD_PATH/*.so 2>/dev/null | wc -l ` -gt 0 ]; then \
+				echo '   ' CP "shared libraries"; cp $$BUILD_PATH/*.so $(SOFT_BUILD)/sysroot/lib/ ; \
 			fi; \
 		else \
 			echo '   ' WARNING $@ compilation failed!; \

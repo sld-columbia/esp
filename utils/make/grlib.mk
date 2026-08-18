@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ### Paths shortcuts ###
@@ -47,7 +47,7 @@ $(GRLIB_CFG_BUILD)/lconfig.tk: $(GRLIB_CFG_BUILD)/main.tk $(TKCONFIG_DEP) $(TKCO
 	$(QUIET_BUILD)cat $(TKCONFIG)/header.tk $< $(TKCONFIG)/tail.tk > $@
 	$(QUIET_CHMOD)chmod a+x $(GRLIB_CFG_BUILD)/lconfig.tk
 
-$(GRLIB_CFG_BUILD)/grlib_config.vhd: $(GRLIB_CFG_BUILD)/.grlib_config $(GRLIB_CFG_BUILD)/lconfig.tk
+$(GRLIB_CFG_BUILD)/grlib_config.vhd: $(GRLIB_CFG_BUILD)/.grlib_config $(GRLIB_CFG_BUILD)/lconfig.tk $(TKCONFIG)/regen_config.tcl
 	$(QUIET_DIFF)echo "checking .grlib_config..."
 	@cd $(GRLIB_CFG_BUILD); \
 	/usr/bin/diff .grlib_config $(GRLIB_DEFCONFIG) -q > /dev/null; \
@@ -60,11 +60,17 @@ $(GRLIB_CFG_BUILD)/grlib_config.vhd: $(GRLIB_CFG_BUILD)/.grlib_config $(GRLIB_CF
 	$(QUIET_INFO)echo "Creating grlib_config.vhd";
 	@cd $(GRLIB_CFG_BUILD); \
 	unset LD_LIBRARY_PATH ; \
-	xvfb-run -a wish -f lconfig.tk -regen; \
-	if test $$? = "2" ; then \
-	   cpp -P -I$$PWD $(TKCONFIG)/config.vhd > grlib_config.vhd; \
-	   echo $(SPACES)"INFO grlib_config.vhd written"; \
-	fi
+	if command -v xvfb-run > /dev/null 2>&1; then \
+		xvfb-run -a wish -f lconfig.tk -regen; config_status=$$?; \
+	else \
+		tclsh $(TKCONFIG)/regen_config.tcl main.tk; config_status=$$?; \
+	fi; \
+	if test $$config_status != "2"; then \
+	   echo $(SPACES)"ERROR GRLIB configuration regeneration failed" >&2; \
+	   if test $$config_status = "0"; then exit 1; else exit $$config_status; fi; \
+	fi; \
+	cpp -P -I$$PWD $(TKCONFIG)/config.vhd > grlib_config.vhd; \
+	echo $(SPACES)"INFO grlib_config.vhd written"
 
 grlib-xconfig: $(GRLIB_CFG_BUILD)/lconfig.tk
 	$(QUIET_RUN)

@@ -1,14 +1,12 @@
-
-EXTRA_OBJS := libcrunsvd.so
-CFLAGS += -L.
+EXTRA_OBJS := $(BUILD_PATH)/libcrunsvd.so
+LDFLAGS += -L$(BUILD_PATH)
 LDFLAGS += -lcrunsvd
-CXX := riscv64-unknown-linux-gnu-g++
 
 APPNAME := svd
 include $(DRIVERS)/common.mk
 
-LIB_CFLAGS ?= -I../../../../../../soft/common/drivers/common/utils
+LIB_CFLAGS ?= -std=gnu++14 -I../../../../../../soft/common/drivers/common/utils
 
-libcrunsvd.so:
-	$(CXX) $(LIB_CFLAGS) c_run.cpp -L. -shared -fPIC -o $@
-
+$(BUILD_PATH)/libcrunsvd.so: c_run.cpp $(wildcard *.h)
+	@mkdir -p $(BUILD_PATH)
+	$(CXX) $(LIB_CFLAGS) $< -shared -fPIC -o $@

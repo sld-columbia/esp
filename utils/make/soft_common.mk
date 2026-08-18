@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2026 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -75,6 +75,13 @@ sysroot-distclean: sysroot-clean
 
 
 ### Linux ###
+
+ifeq ($(strip $(M4)),)
+M4 := $(shell command -v m4 2>/dev/null)
+endif
+ifneq ($(strip $(M4)),)
+export M4
+endif
 
 $(SOFT_BUILD)/linux-build:
 	$(QUIET_MKDIR)mkdir -p $@
