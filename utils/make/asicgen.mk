@@ -15,13 +15,18 @@ ASIC_PADLOC = $(ESP_ROOT)/utils/scripts/asic/pads_vh_loc.py
 
 ASIC_MEMGEN = $(ESP_ROOT)/tools/asicgen/asic_memgen.py
 ASIC_MEMGEN_OUT = ../$(DIRTECH_NAME)/mem_wrappers
+ASIC_MEMGEN_CPU_ARCH = $(strip $(shell sed -n 's/^CPU_ARCH[[:space:]]*=[[:space:]]*//p' $(ESP_CFG_BUILD)/.esp_config))
 
 MEMGEN = $(ESP_ROOT)/tools/asicgen/asic_plmgen.py
 MEMTECH = ../$(DIRTECH_NAME)/mem_wrappers
 MEMGEN_OUT = $(ESP_ROOT)/tech/$(TECHLIB)/memgen/slm_gen
 
-mem_wrapper:
-	$(ASIC_MEMGEN) $(ASIC_MEMGEN_OUT) | tee $(ASIC_MEMGEN_OUT)/asic_memgen.log
+mem_wrapper: $(ESP_CFG_BUILD)/.esp_config
+	@if test -z "$(ASIC_MEMGEN_CPU_ARCH)"; then \
+		echo "Error: CPU_ARCH is missing from $(ESP_CFG_BUILD)/.esp_config"; \
+		exit 1; \
+	fi
+	$(ASIC_MEMGEN) $(ASIC_MEMGEN_OUT) $(ASIC_MEMGEN_CPU_ARCH) | tee $(ASIC_MEMGEN_OUT)/asic_memgen.log
 
 pad_wrapper:
 	$(ASIC_PADGEN) $(ASIC_PADGEN_OUT) | tee $(ASIC_PADGEN_OUT)/asic_padgen.log

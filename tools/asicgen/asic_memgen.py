@@ -1175,7 +1175,18 @@ def acc_gen(out_path, mem_dict):
         print_lib(file, lib_list, "acc")
 
 
+if len(sys.argv) != 3:
+    print("Usage: asic_memgen.py <output_path> <cpu_arch>")
+    sys.exit(1)
+
 out_path = sys.argv[1]
+cpu_arch = sys.argv[2]
+supported_cpu_archs = ["ariane", "ibex", "leon3"]
+
+if cpu_arch not in supported_cpu_archs:
+    print("Error: unsupported CPU architecture \"%s\"" % cpu_arch)
+    sys.exit(1)
+
 memory_list = []
 with open("asic_memlist.txt", "r") as memories:
     for mem_line in memories:
@@ -1197,7 +1208,11 @@ llc_sp_gen(out_path, mem_dict, val_addr)
 l2_val_addr = l2_policy_check(mem_dict)
 l2_sp_gen(out_path, mem_dict, l2_val_addr)
 
-l1_sp_gen(out_path, mem_dict)
+if cpu_arch == "ariane":
+    if len(mem_dict["l1"]) == 0:
+        print("Error: Ariane requires a 256x64 L1 memory entry in asic_memlist.txt")
+        sys.exit(1)
+    l1_sp_gen(out_path, mem_dict)
 
 slm_val_word = slm_policy_check(mem_dict)
 slm_sp_gen(out_path, mem_dict, slm_val_word)
