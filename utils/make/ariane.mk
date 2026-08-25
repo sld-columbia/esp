@@ -220,16 +220,3 @@ XMLOGOPT += -DEFINE VERILATOR
 XMLOGOPT += -UNCLOCKEDSVA
 XMLOGOPT += -DEFINE WT_DCACHE=1
 
-
-### Incdir and RTL
-
-ifeq ("$(CPU_ARCH)", "ariane")
-INCDIR += $(ARIANE)/src/common_cells/include
-VERILOG_ARIANE += $(foreach f, $(shell strings $(FLISTS)/ariane_vlog.flist), $(ARIANE)/$(f))
-VERILOG_ARIANE += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/plic_regmap.sv
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
-VERILOG_ARIANE += $(foreach f, $(shell strings $(FLISTS)/ariane_fpga_vlog.flist), $(ARIANE)/$(f))
-endif
-THIRDPARTY_VLOG += $(VERILOG_ARIANE)
-endif
-
