@@ -2205,9 +2205,7 @@ def gen_tech_indep_impl(
                                 acc.name +
                                 "_" +
                                 impl.name +
-                                "_i: entity " +
-                                acc.name +
-                                "." +
+                                "_i: " +
                                 acc.name +
                                 "_" +
                                 impl.name +

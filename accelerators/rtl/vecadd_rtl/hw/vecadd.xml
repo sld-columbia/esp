@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="vecadd" desc="Vector addition (RTL)" data_size="4" device_id="0a0" hls_tool="rtl">
+    <param name="vector_size" desc="number of 32-bit elements per vector" />
+    <param name="chunk_size" desc="elements per DMA burst; 0 selects the PLM depth" />
+    </accelerator>
+</sld>
