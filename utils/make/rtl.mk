@@ -169,6 +169,8 @@ QUARTUS_EXTRA_RTL_SRCS += $(wildcard $(ESP_ROOT)/rtl/socs/$(BOARD)/*.v)
 QUARTUS_VERILOG_DEFINES := QUARTUS=1 SYNTHESIS=1 FPGA_TARGET_ALTERA=1 FPGA_CACHE_MEM=1
 ifeq ("$(CPU_ARCH)","ibex")
 QUARTUS_VERILOG_DEFINES += WT_DCACHE=1
+else ifeq ("$(CPU_ARCH)","cva6")
+QUARTUS_VERILOG_DEFINES += WT_DCACHE=1 ESP_CVA6=1
 else
 QUARTUS_VERILOG_DEFINES += WT_DCACHE=1 FPU_FPNEW=1 XLEN_64=1
 endif
@@ -248,7 +250,7 @@ ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
 	@$(file >$(QUARTUS_INCDIR_MANIFEST),$(strip $(INCDIR)))
 	@$(file >$(QUARTUS_RTL_MANIFEST),$(strip $(VHDL_PKGS)))
 	@$(file >>$(QUARTUS_RTL_MANIFEST),$(strip $(VHDL_SRCS)))
-	@$(file >>$(QUARTUS_RTL_MANIFEST),$(strip $(VLOG_SRCS)))
+	@$(file >>$(QUARTUS_RTL_MANIFEST),$(strip $(subst $${TARGET_CFG},$(TARGET_CFG),$(VLOG_SRCS))))	
 	@$(file >>$(QUARTUS_RTL_MANIFEST),$(strip $(QUARTUS_EXTRA_RTL_SRCS)))
 	@quartus_prefix="$(DESIGN_PATH)/quartus/"; \
 	design_prefix="$(DESIGN_PATH)/"; \
