@@ -63,6 +63,20 @@ round_up() {
     echo $(( ((x-1) | (y-1)) + 1 ))
 }
 
+rename_matches() {
+    old=$1
+    new=$2
+
+    while IFS= read -r -d '' path; do
+	dir=$(dirname "$path")
+	base=$(basename "$path")
+	new_base="${base//$old/$new}"
+	if [ "$base" != "$new_base" ]; then
+	    mv "$path" "$dir/$new_base"
+	fi
+    done < <(find . -depth -name "*${old}*" -print0)
+}
+
 declare -A values
 declare -A maxs
 
@@ -351,28 +365,14 @@ for d in $dirs; do
 	cp -r $TEMPLATES_DIR/$d/* .
     fi
 
-    if cat /etc/os-release | grep -q -i ubuntu; then
-        rename "s/accelerator/$LOWER/g" *
-	rename "s/acc_full/$LOWERFULL/g" *
-        rename "s/accelerator/$LOWER/g" */*
-	rename "s/acc_full/$LOWERFULL/g" */*
-    elif cat /etc/os-release | grep -q -i centos; then
-        rename accelerator $LOWER *
-	rename acc_full $LOWERFULL *
-        rename accelerator $LOWER */*
-	rename acc_full $LOWERFULL */*
-    elif cat /etc/os-release | grep -q -i rhel; then
-        rename accelerator $LOWER *
-	rename acc_full $LOWERFULL *
-        rename accelerator $LOWER */*
-	rename acc_full $LOWERFULL */*
-    fi
-    
+    rename_matches "accelerator" "$LOWER"
+    rename_matches "acc_full" "$LOWERFULL"
+
     if [[ "$FLOW" == "rtl" && "$d" != "hls" ]]; then
-	sed -i "s/accelerator_name/$LOWER/g" */*
-	sed -i "s/ACCELERATOR_NAME/$UPPER/g" */*
-	sed -i "s/cc_full_name/$LOWERFULL/g" */*
-	sed -i "s/ACC_FULL_NAME/$UPPERFULL/g" */*
+	find . -type f -exec sed -i "s/accelerator_name/$LOWER/g" {} +
+	find . -type f -exec sed -i "s/ACCELERATOR_NAME/$UPPER/g" {} +
+	find . -type f -exec sed -i "s/acc_full_name/$LOWERFULL/g" {} +
+	find . -type f -exec sed -i "s/ACC_FULL_NAME/$UPPERFULL/g" {} +
     elif [ "$FLOW" != "rtl" ]; then
 	find . -type f -exec sed -i "s/accelerator_name/$LOWER/g" {} +
 	find . -type f -exec sed -i "s/ACCELERATOR_NAME/$UPPER/g" {} +
@@ -736,16 +736,8 @@ for d in $dirs; do
     cd $new_dir
     cp $TEMPLATES_DIR/$d/* .
 
-    if cat /etc/os-release | grep -q -i ubuntu; then
-        rename "s/accelerator/$LOWER/g" *
-	rename "s/acc_full/$LOWERFULL/g" *
-    elif cat /etc/os-release | grep -q -i centos; then
-	rename accelerator $LOWER *
-	rename acc_full $LOWERFULL *
-    elif cat /etc/os-release | grep -q -i rhel; then
-	rename accelerator $LOWER *
-	rename acc_full $LOWERFULL *
-    fi
+    rename_matches "accelerator" "$LOWER"
+    rename_matches "acc_full" "$LOWERFULL"
 
     sed -i "s/accelerator_name/$LOWER/g" *
     sed -i "s/ACCELERATOR_NAME/$UPPER/g" *
