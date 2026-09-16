@@ -15,7 +15,10 @@ entity sync_noc_xy is
     HAS_SYNC  : integer range 0 to 1 := 0;
     this_noc_flit_size : integer range 32 to 1026;
     DEST_SIZE : integer := 1;
-    QUEUE_SIZE : integer := 4);
+    QUEUE_SIZE : integer := 4;
+    RING_EN   : integer range 0 to 1 := 0;
+    XLEN      : integer := 2;
+    YLEN      : integer := 2);
   port (
     clk           : in  std_logic;
     clk_tile      : in  std_logic;
@@ -51,8 +54,11 @@ architecture mesh of sync_noc_xy is
       width        : integer;
       depth        : integer;
       ports        : std_logic_vector(4 downto 0);
-      DEST_SIZE	   : integer;
-      QUEUE_SIZE   : integer
+      DEST_SIZE    : integer;
+      QUEUE_SIZE   : integer;
+      RING_EN      : integer range 0 to 1;
+      XLEN         : integer;
+      YLEN         : integer
     );
 
     port (
@@ -93,6 +99,9 @@ architecture mesh of sync_noc_xy is
   signal sync_stop_in 	    : std_logic;
   signal sync_stop_out 	    : std_logic;
 
+  -- Ring routing fix: rewrites header routing bits for ring topology
+  signal router_input_port  : std_logic_vector(this_noc_flit_size - 1 downto 0);
+
   signal fwd_rd_i, fwd_we_i : std_logic;
   signal rev_rd_i, rev_we_i : std_logic;
   signal fwd_rd_empty_o     : std_logic;
@@ -115,6 +124,53 @@ architecture mesh of sync_noc_xy is
   stop_out(3 downto 0)      <= stop_out_i(3 downto 0);
 
 ----------------------------------------------------------------------------------------------
+-- Ring routing fix: rewrite header routing bits on local port ingress
+-- Tiles call create_header with mesh (XY) routing. For ring topology, we intercept
+-- the header flit and replace the routing bits with the correct ring direction
+-- (goEast = clockwise, goWest = counterclockwise, goLocal = same tile).
+----------------------------------------------------------------------------------------------
+
+  ring_fix_gen: if RING_EN = 1 generate
+    process(sync_input_port, CONST_local_x, CONST_local_y)
+      variable preamble : std_logic_vector(PREAMBLE_WIDTH-1 downto 0);
+      variable dst_y    : std_logic_vector(YX_WIDTH-1 downto 0);
+      variable dst_x    : std_logic_vector(YX_WIDTH-1 downto 0);
+      variable src_pos  : integer;
+      variable dst_pos  : integer;
+      variable total    : integer;
+      variable cw_dist  : integer;
+    begin
+      router_input_port <= sync_input_port;  -- default passthrough
+      preamble := sync_input_port(this_noc_flit_size-1 downto this_noc_flit_size-PREAMBLE_WIDTH);
+      if preamble = PREAMBLE_HEADER or preamble = PREAMBLE_1FLIT then
+        dst_y := sync_input_port(this_noc_flit_size - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto
+                                 this_noc_flit_size - PREAMBLE_WIDTH - 3*YX_WIDTH);
+        dst_x := sync_input_port(this_noc_flit_size - PREAMBLE_WIDTH - 3*YX_WIDTH - 1 downto
+                                 this_noc_flit_size - PREAMBLE_WIDTH - 4*YX_WIDTH);
+        src_pos := conv_integer(unsigned(CONST_local_y)) * XLEN + conv_integer(unsigned(CONST_local_x));
+        dst_pos := conv_integer(unsigned(dst_y)) * XLEN + conv_integer(unsigned(dst_x));
+        total   := XLEN * YLEN;
+        if dst_pos >= src_pos then
+          cw_dist := dst_pos - src_pos;
+        else
+          cw_dist := dst_pos + total - src_pos;
+        end if;
+        if cw_dist = 0 then
+          router_input_port(NEXT_ROUTING_WIDTH-1 downto 0) <= "10000";  -- goLocal
+        elsif cw_dist <= total / 2 then
+          router_input_port(NEXT_ROUTING_WIDTH-1 downto 0) <= "01000";  -- goEast (clockwise)
+        else
+          router_input_port(NEXT_ROUTING_WIDTH-1 downto 0) <= "00100";  -- goWest (counterclockwise)
+        end if;
+      end if;
+    end process;
+  end generate ring_fix_gen;
+
+  no_ring_fix_gen: if RING_EN = 0 generate
+    router_input_port <= sync_input_port;
+  end generate no_ring_fix_gen;
+
+----------------------------------------------------------------------------------------------
 -- Router
 ----------------------------------------------------------------------------------------------
 
@@ -123,9 +179,12 @@ architecture mesh of sync_noc_xy is
           flow_control => FLOW_CONTROL,
           width        => this_noc_flit_size,
           depth        => ROUTER_DEPTH,
-          ports        => PORTS,
+          ports        => ring_ports_override(RING_EN, PORTS),
           DEST_SIZE    => DEST_SIZE,
-          QUEUE_SIZE   => QUEUE_SIZE)
+          QUEUE_SIZE   => QUEUE_SIZE,
+          RING_EN      => RING_EN,
+          XLEN         => XLEN,
+          YLEN         => YLEN)
       port map (
           clk           => clk,
           rst           => rst,
@@ -135,7 +194,7 @@ architecture mesh of sync_noc_xy is
           data_s_in     => data_s_in,
           data_w_in     => data_w_in,
           data_e_in     => data_e_in,
-          data_p_in     => sync_input_port,
+          data_p_in     => router_input_port,
           data_void_in  => data_void_in_i,
           stop_in       => stop_in_i,
           data_n_out    => data_n_out,
@@ -216,4 +275,3 @@ architecture mesh of sync_noc_xy is
   end generate inferred_async_fifos_gen;
 
 end mesh;
-

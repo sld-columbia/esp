@@ -13,7 +13,10 @@ use work.nocpackage.all;
 entity sync_noc_set is
   generic (
     PORTS     : std_logic_vector(4 downto 0);
-    HAS_SYNC  : integer range 0 to 1 := 0);
+    HAS_SYNC  : integer range 0 to 1 := 0;
+    RING_EN   : integer range 0 to 1 := 0;
+    XLEN      : integer := 2;
+    YLEN      : integer := 2);
   port (
     clk           : in  std_logic;
     clk_tile      : in  std_logic;
@@ -126,7 +129,10 @@ architecture mesh of sync_noc_set is
       has_sync  : integer range 0 to 1;
       this_noc_flit_size : integer range 32 to 1026;
       DEST_SIZE : integer:= 6;
-      QUEUE_SIZE: integer:= 4);
+      QUEUE_SIZE: integer:= 4;
+      RING_EN   : integer range 0 to 1 := 0;
+      XLEN      : integer := 2;
+      YLEN      : integer := 2);
     port (
       clk           : in  std_logic;
       clk_tile      : in  std_logic;
@@ -161,7 +167,10 @@ begin
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => COH_NOC_FLIT_SIZE,
       DEST_SIZE => 1,
-      QUEUE_SIZE=> 4)
+      QUEUE_SIZE=> 4,
+      RING_EN   => RING_EN,
+      XLEN      => XLEN,
+      YLEN      => YLEN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -192,7 +201,10 @@ begin
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => COH_NOC_FLIT_SIZE,
       DEST_SIZE => 1,
-      QUEUE_SIZE=> 4)
+      QUEUE_SIZE=> 4,
+      RING_EN   => RING_EN,
+      XLEN      => XLEN,
+      YLEN      => YLEN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -223,7 +235,10 @@ begin
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => COH_NOC_FLIT_SIZE,
       DEST_SIZE => 1,
-      QUEUE_SIZE=> 4)
+      QUEUE_SIZE=> 4,
+      RING_EN   => RING_EN,
+      XLEN      => XLEN,
+      YLEN      => YLEN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -253,7 +268,10 @@ begin
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => DMA_NOC_FLIT_SIZE,
       DEST_SIZE => MAX_MCAST_DESTS * MULTICAST_NOC_EN,
-      QUEUE_SIZE=> QUEUE_SIZE)
+      QUEUE_SIZE=> QUEUE_SIZE,
+      RING_EN   => RING_EN,
+      XLEN      => XLEN,
+      YLEN      => YLEN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -284,7 +302,10 @@ begin
       has_sync =>  0,
       this_noc_flit_size => MISC_NOC_FLIT_SIZE,
       DEST_SIZE => 1,
-      QUEUE_SIZE => 4)
+      QUEUE_SIZE => 4,
+      RING_EN   => RING_EN,
+      XLEN      => XLEN,
+      YLEN      => YLEN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,
@@ -315,7 +336,10 @@ begin
       has_sync =>  HAS_SYNC,
       this_noc_flit_size => DMA_NOC_FLIT_SIZE,
       DEST_SIZE => MAX_MCAST_DESTS * MULTICAST_NOC_EN,
-      QUEUE_SIZE => QUEUE_SIZE)
+      QUEUE_SIZE => QUEUE_SIZE,
+      RING_EN   => RING_EN,
+      XLEN      => XLEN,
+      YLEN      => YLEN)
     port map (
       clk           => clk,
       clk_tile      => clk_tile,

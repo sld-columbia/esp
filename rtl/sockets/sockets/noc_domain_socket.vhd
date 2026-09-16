@@ -41,7 +41,10 @@ entity noc_domain_socket is
     SIMULATION        : boolean              := false;
     ROUTER_PORTS      : ports_vec            := "11111";
     HAS_SYNC          : integer range 0 to 1 := 1;
-    is_asic           : boolean              := false
+    is_asic           : boolean              := false;
+    RING_EN           : integer range 0 to 1 := 0;
+    XLEN              : integer              := 2;
+    YLEN              : integer              := 2
 	);
   port (
     rst                : in  std_ulogic;
@@ -526,7 +529,10 @@ begin  -- architecture rtl
   sync_noc_set_acc : sync_noc_set
     generic map (
       PORTS    => ROUTER_PORTS,
-      HAS_SYNC => HAS_SYNC)
+      HAS_SYNC => HAS_SYNC,
+      RING_EN  => RING_EN,
+      XLEN     => XLEN,
+      YLEN     => YLEN)
     port map (
       clk                => noc_clk,    -- noc_clk_int
       clk_tile           => tile_clk,    -- acc_clk

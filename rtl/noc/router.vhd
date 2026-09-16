@@ -41,7 +41,10 @@ entity router is
     depth        : integer                      := 4;
     ports        : std_logic_vector(4 downto 0) := "11111";
     DEST_SIZE    : integer;
-    QUEUE_SIZE   : integer
+    QUEUE_SIZE   : integer;
+    RING_EN      : integer range 0 to 1         := 0;
+    XLEN         : integer                      := 2;
+    YLEN         : integer                      := 2
     );
   port(
     clk : in std_logic;
@@ -79,7 +82,10 @@ architecture behavior of router is
       Width       : integer;
       Ports       : std_logic_vector(4 downto 0);
       DEST_SIZE   : integer;
-      QUEUE_SIZE  : integer
+      QUEUE_SIZE  : integer;
+      RingEn      : std_logic;
+      XLen        : integer;
+      YLen        : integer
       );
     port(
       clk : in std_logic;
@@ -115,7 +121,10 @@ begin
       Width       => width,
       Ports       => Ports,
       DEST_SIZE   => DEST_SIZE,
-      QUEUE_SIZE  => QUEUE_SIZE)
+      QUEUE_SIZE  => QUEUE_SIZE,
+      RingEn      => to_std_logic(RING_EN),
+      XLen        => XLEN,
+      YLen        => YLEN)
     port map (
       clk           => clk,
       rst           => rst,
