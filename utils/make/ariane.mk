@@ -11,8 +11,8 @@ OPENSBI = $(SOFT)/opensbi
 soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/ram.vhx
 
 soft-clean:
-	$(QUIET_CLEAN)$(RM)		 	\
-		$(SOFT_BUILD)/prom.srec 	\
+	$(QUIET_CLEAN)$(RM)			\
+		$(SOFT_BUILD)/prom.srec		\
 		$(SOFT_BUILD)/ram.srec		\
 		$(SOFT_BUILD)/prom.exe		\
 		$(SOFT_BUILD)/systest.exe	\
@@ -98,7 +98,7 @@ $(SOFT_BUILD)/systest.exe: systest.c $(SOFT_BUILD)/uart.o
 	@mkdir -p $(SOFT_BUILD)
 	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc $(RISCV_CFLAGS) \
 	$(SOFT)/common/syscalls.c \
-	$(RISCV_TESTS)/benchmarks/common/crt.S  \
+	$(RISCV_TESTS)/benchmarks/common/crt.S	\
 	-T $(RISCV_TESTS)/benchmarks/common/test.ld -o $@ \
 	-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 	$(SOFT_BUILD)/uart.o $<
@@ -128,8 +128,8 @@ $(SOFT_BUILD)/sysroot.files: $(SOFT_BUILD)/sysroot
 	$(QUIET_MAKE)$(MAKE) -C ${LINUXSRC}/usr gen_init_cpio
 	$(QUIET_INFO)echo "Generating root file-system list..."
 	@sh ${LINUXSRC}/usr/gen_initramfs_list.sh -u `id -u` -g `id -g` $< \
-	    | sed -e 's/^file \(\/bin\/busybox .*\) 755 0 0/file \1 4755 0 0/' \
-	    > $@;
+		| sed -e 's/^file \(\/bin\/busybox .*\) 755 0 0/file \1 4755 0 0/' \
+		> $@;
 	@echo "nod /dev/console 622 0 0 c 5 1" >> $@
 	@touch $@
 
@@ -137,9 +137,17 @@ $(SOFT_BUILD)/sysroot.files: $(SOFT_BUILD)/sysroot
 $(SOFT_BUILD)/sysroot.cpio: $(SOFT_BUILD)/sysroot.files
 	$(QUIET_BUILD)${LINUXSRC}/usr/gen_init_cpio $< > $@
 
+# Patch the kernel source tree for the in-tree dtc on
+# GCC >= 10 (Ubuntu 22.04+, RHEL 9+), where -fno-common is the default
+.PHONY: linux-patches
+linux-patches:
+	if grep -q -- '-fcommon' $(LINUXSRC)/scripts/dtc/Makefile; then :; \
+	else \
+		echo "	PATCH	 linux-dtc-fcommon.patch"; \
+		patch -p1 -s -d $(LINUXSRC) -i $(ESP_ROOT)/utils/toolchain/patches/linux-dtc-fcommon.patch; \
+	fi
 
 # Patch the kernel source tree before any build step touches it.
-# Idempotent: each rule short-circuits if the change is already in place.
 # Currently applies:
 #   - linux-dtc-fcommon.patch: forces -fcommon for the in-tree dtc on
 #     GCC >= 10 (Ubuntu 22.04+, RHEL 9+), where -fno-common is the default
