@@ -472,7 +472,7 @@ static bool contig_alloc_ok(const struct contig_alloc_params *params)
 {
     switch (params->policy) {
         case CONTIG_ALLOC_PREFERRED:
-            if (params->pol.first.ddr_node < 0 || params->pol.first.ddr_node > nddr) return false;
+            if (params->pol.first.ddr_node < 0 || params->pol.first.ddr_node >= nddr) return false;
             break;
         case CONTIG_ALLOC_LEAST_LOADED:
             if (params->pol.lloaded.threshold < 0 ||
