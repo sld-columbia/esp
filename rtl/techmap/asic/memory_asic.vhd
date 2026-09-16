@@ -344,13 +344,19 @@ architecture rtl of asic_syncram is
   end component;
 
   signal do, di : std_logic_vector(63 downto 0);
-  signal xa     : std_logic_vector(13 downto 0);
+  signal xa     : std_logic_vector(14 downto 0);
 
   -- Replace Asic 16kx8 memory with 8 2kx8 banks
   signal mux_sel : std_logic_vector(2 downto 0);
   signal enable_int : std_logic_vector(7 downto 0);
   type bank_out_type is array (0 to 7) of std_logic_vector(7 downto 0);
   signal do_int : bank_out_type;
+
+  -- Replace ASIC 32kx8 memory with 16 2kx8 banks
+  signal mux_sel_15 : std_logic_vector(3 downto 0);
+  signal enable_int_15 : std_logic_vector(15 downto 0);
+  type bank_out_type_15 is array (0 to 15) of std_logic_vector(7 downto 0);
+  signal do_int_15 : bank_out_type_15;
 
 begin
 
@@ -359,9 +365,11 @@ begin
   di_narrow_gen: if dbits < 64 generate
     di(63 downto dbits)  <= (others => '0');
   end generate di_narrow_gen;
-  xa(abits - 1 downto 0) <= address;
-  xa_narrow_gen: if abits < 14 generate
-    xa(13 downto abits)  <= (others => '0');
+  xa_supported_gen: if abits <= 15 generate
+    xa(abits - 1 downto 0) <= address;
+  end generate xa_supported_gen;
+  xa_narrow_gen: if abits < 15 generate
+    xa(14 downto abits)  <= (others => '0');
   end generate xa_narrow_gen;
 
    a0 : if (abits < 8) generate
@@ -799,12 +807,95 @@ begin
 
   end generate a14;
 
+  a15 : if abits = 15 generate
+    d8 : if dbits = 8 generate
+      -- Bank chip enable
+      process (xa, enable) is
+      begin  -- process
+        enable_int_15 <= (others => '0');
+        case xa(14 downto 11) is
+          when "0000" => enable_int_15(0) <= enable;
+          when "0001" => enable_int_15(1) <= enable;
+          when "0010" => enable_int_15(2) <= enable;
+          when "0011" => enable_int_15(3) <= enable;
+          when "0100" => enable_int_15(4) <= enable;
+          when "0101" => enable_int_15(5) <= enable;
+          when "0110" => enable_int_15(6) <= enable;
+          when "0111" => enable_int_15(7) <= enable;
+          when "1000" => enable_int_15(8) <= enable;
+          when "1001" => enable_int_15(9) <= enable;
+          when "1010" => enable_int_15(10) <= enable;
+          when "1011" => enable_int_15(11) <= enable;
+          when "1100" => enable_int_15(12) <= enable;
+          when "1101" => enable_int_15(13) <= enable;
+          when "1110" => enable_int_15(14) <= enable;
+          when "1111" => enable_int_15(15) <= enable;
+          when others => null;
+        end case;
+      end process;
+
+      -- Register the bank selection to match the synchronous SRAM read.
+      process (clk) is
+      begin
+        if clk'event and clk = '1' then
+          mux_sel_15 <= xa(14 downto 11);
+        end if;
+      end process;
+
+      process (mux_sel_15, do_int_15) is
+      begin  -- process
+        case mux_sel_15 is
+          when "0000" => do(7 downto 0) <= do_int_15(0);
+          when "0001" => do(7 downto 0) <= do_int_15(1);
+          when "0010" => do(7 downto 0) <= do_int_15(2);
+          when "0011" => do(7 downto 0) <= do_int_15(3);
+          when "0100" => do(7 downto 0) <= do_int_15(4);
+          when "0101" => do(7 downto 0) <= do_int_15(5);
+          when "0110" => do(7 downto 0) <= do_int_15(6);
+          when "0111" => do(7 downto 0) <= do_int_15(7);
+          when "1000" => do(7 downto 0) <= do_int_15(8);
+          when "1001" => do(7 downto 0) <= do_int_15(9);
+          when "1010" => do(7 downto 0) <= do_int_15(10);
+          when "1011" => do(7 downto 0) <= do_int_15(11);
+          when "1100" => do(7 downto 0) <= do_int_15(12);
+          when "1101" => do(7 downto 0) <= do_int_15(13);
+          when "1110" => do(7 downto 0) <= do_int_15(14);
+          when "1111" => do(7 downto 0) <= do_int_15(15);
+          when others => do(7 downto 0) <= do_int_15(0);
+        end case;
+      end process;
+      do(63 downto 8) <= (others => '0');
+
+      -- Banks
+      b8: for b in 0 to 15 generate
+        s : IO_SP_2048x8
+          port map (
+            CLK0 => clk,
+            A0   => xa(10 downto 0),
+            D0   => di(7 downto 0),
+            Q0   => do_int_15(b),
+            WE0  => write,
+            WEM0 => (others => '1'),
+            CE0  => enable_int_15(b));
+      end generate b8;
+    end generate d8;
+  end generate a15;
+
 -- pragma translate_off
- a_to_high : if abits > 14 generate
+ a15_unsupported_width : if abits = 15 and dbits /= 8 generate
    x : process
    begin
      assert false
-     report  "Address depth larger than 14 not supported for asic_syncram"
+     report  "Address depth 15 is supported only for 8-bit asic_syncram"
+     severity failure;
+     wait;
+   end process;
+ end generate;
+ a_to_high : if abits > 15 generate
+   x : process
+   begin
+     assert false
+     report  "Address depth larger than 15 not supported for asic_syncram"
      severity failure;
      wait;
    end process;
