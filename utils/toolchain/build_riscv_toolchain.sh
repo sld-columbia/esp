@@ -135,6 +135,10 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
     fi
 
     git reset --hard ${RISCV_GNU_TOOLCHAIN_SHA}
+    # git://anongit.freedesktop.org is unreachable from some networks; repoint
+    git submodule update --init riscv-qemu
+    git config -f riscv-qemu/.gitmodules submodule.pixman.url https://gitlab.freedesktop.org/pixman/pixman.git
+    (cd riscv-qemu && git submodule sync -- pixman)
     git submodule update --init --recursive
     ./configure --prefix=${TARGET_DIR} --disable-gdb
     cmd="make -j ${NTHREADS}"
@@ -155,6 +159,10 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
     fi
 
     git reset --hard ${RISCV_GNU_TOOLCHAIN_SHA}
+    # git://anongit.freedesktop.org is unreachable from some networks; repoint
+    git submodule update --init riscv-qemu
+    git config -f riscv-qemu/.gitmodules submodule.pixman.url https://gitlab.freedesktop.org/pixman/pixman.git
+    (cd riscv-qemu && git submodule sync -- pixman)
     git submodule update --init --recursive
     ./configure --prefix=${TARGET_DIR} --disable-gdb
     cmd="make linux -j ${NTHREADS}"

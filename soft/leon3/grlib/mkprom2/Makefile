@@ -10,6 +10,7 @@ HOSTCC   = $(if $(ISCROSS),mingw32-,)gcc
 HOSTCC  += -m32
 HOSTCC  += -O2
 HOSTCC  += -Wall -Wextra -pedantic
+HOSTCC  += -Wno-unused-result
 AR=$(TARGET)-ar
 RANLIB=$(TARGET)-ranlib
 AS=$(TARGET)-gcc -c
