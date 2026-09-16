@@ -60,6 +60,7 @@ void p2p_setup(struct esp_device *dev, int p2p_store, int mcast_ndests, int p2p_
                struct esp_device *p2p_src)
 {
     esp_p2p_reset(dev);
+    esp_mcast_reset(dev);
     if (p2p_store) {
         esp_p2p_enable_dst(dev);
         esp_p2p_set_mcast_ndests(dev, mcast_ndests);
@@ -92,7 +93,7 @@ int main(int argc, char *argv[])
 
     unsigned **ptable = NULL;
     token_t *mem;
-    int i;
+    int i = 0;
 
     // Check if scatter-gather DMA is disabled
     if (ioread32(&devs[i], PT_NCHUNK_MAX_REG) == 0) {
