@@ -377,6 +377,8 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
     struct esp_access *access;
     void *arg;
     int rc = 0;
+    bool lock_held = false;
+    bool runtime_configured = false;
 
     arg = kmalloc(esp->driver->arg_size, GFP_KERNEL);
     if (arg == NULL) return -ENOMEM;
@@ -412,6 +414,7 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
         rc = -EINTR;
         goto out;
     }
+    lock_held = true;
 
     rc = esp_p2p_init(esp, access);
     if (rc) { goto out; }
@@ -432,6 +435,7 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
     }
 
     esp_runtime_config(esp);
+    runtime_configured = true;
 
     mutex_unlock(&esp_status.lock);
 
@@ -447,18 +451,13 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
         rc = esp_wait(esp);
     }
 
-    if (mutex_lock_interruptible(&esp_status.lock)) {
-        rc = -EINTR;
-        goto out;
-    }
-
-    esp_update_status(esp);
-
-    mutex_unlock(&esp_status.lock);
-
-    mutex_unlock(&esp->lock);
-
 out:
+    if (runtime_configured) {
+        mutex_lock(&esp_status.lock);
+        esp_update_status(esp);
+        mutex_unlock(&esp_status.lock);
+    }
+    if (lock_held) mutex_unlock(&esp->lock);
     kfree(arg);
     return rc;
 }
