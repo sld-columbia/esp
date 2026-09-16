@@ -365,6 +365,7 @@ begin  -- architecture rtl
     llc_ext_rsp_valid <= '0';
     dma_rcv_rdreq <= '0';
     dma_snd_wrreq <= '0';
+    dma_snd_data_in <= (others => '0');
 
     llc_ext_rsp_data <= ext_rcv_data_out;
 
