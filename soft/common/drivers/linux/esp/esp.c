@@ -463,12 +463,6 @@ out:
     return rc;
 }
 
-static int esp_run_ioctl(struct esp_device *esp)
-{
-    esp_run(esp);
-    return 0;
-}
-
 static long esp_flush_ioctl(struct esp_device *esp, void __user *argp)
 {
     struct esp_access *access;
@@ -496,7 +490,7 @@ static long esp_do_ioctl(struct file *file, unsigned int cm, void __user *arg)
     struct esp_device *esp = file->private_data;
 
     switch (cm) {
-        case ESP_IOC_RUN: return esp_run_ioctl(esp);
+        case ESP_IOC_RUN: return -ENOTTY;
         case ESP_IOC_FLUSH: return esp_flush_ioctl(esp, arg);
         default:
             if (cm == esp->driver->ioctl_cm) return esp_access_ioctl(esp, arg);
