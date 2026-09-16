@@ -21,8 +21,6 @@ use work.ibex_esp_pkg.all;
 use work.misc.all;
 -- pragma translate_off
 use work.sim.all;
-library unisim;
-use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
 use work.esp_csr_pkg.all;
@@ -283,6 +281,18 @@ architecture rtl of tile_cpu is
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask_cpu;
 
   constant ariane_cacheable_len : integer := (1 + CFG_L2_ENABLE) * 16#20000000#;
+
+  function set_ariane_slmddr_len
+    return std_logic_vector is
+  begin
+    if CFG_NSLMDDR_TILE = 0 then
+      return X"0000_0000_0000_0000";
+    else
+      return X"0000_0000_4000_0000";
+    end if;
+  end function;
+
+  constant ariane_slmddr_len : std_logic_vector(63 downto 0) := set_ariane_slmddr_len;
 
   attribute mark_debug : string;
 
@@ -670,7 +680,7 @@ begin
         SLMBase          => X"0000_0000_0400_0000",
         SLMLength        => X"0000_0000_0400_0000",  -- Reserving up to 64MB; devtree can set less
         SLMDDRBase       => X"0000_0000_C000_0000",
-        SLMDDRLength     => X"0000_0000_4000_0000",  -- Reserving up to 1GB; devtree can set less
+        SLMDDRLength     => ariane_slmddr_len,  -- Reserving up to 1GB; disabled when no SLMDDR tile exists
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
         DRAMLength       => X"0000_0000_4000_0000",
         DRAMCachedLength => conv_std_logic_vector(ariane_cacheable_len, 64))  -- TODO: length set automatically to match devtree
