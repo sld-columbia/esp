@@ -1666,8 +1666,10 @@ begin
                v.udpsrc := rxo.dataout(15 downto 0);
                v.rcntm := r.rcntm + 2; v.rcntl := r.rcntl + 1; 
              when 5 =>
-               setmz := '1';
-               v.rcntm := r.rcntm + 1; v.rcntl := r.rcntl + 1; 
+               -- Use the request's UDP destination as the reply's UDP source.
+               swap := '1'; veri.writem := '0';
+               veri.waddressl := r.rpnt & (r.rcntl - 1);
+               v.rcntm := r.rcntm + 1; v.rcntl := r.rcntl + 1;
              when 6 =>
                v.rcntm := r.rcntm + 1; v.rcntl := r.rcntl + 1; 
              when 7 =>
