@@ -1,0 +1,1 @@
+../vortex/third_party/fpnew/src/fpnew_pkg.sv

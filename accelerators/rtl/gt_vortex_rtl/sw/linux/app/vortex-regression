@@ -1,0 +1,77 @@
+#!/bin/sh
+
+APP_DIR=${VORTEX_ESP_APP_DIR:-/applications/test}
+KERNEL_DIR=${VORTEX_ESP_KERNEL_DIR:-$APP_DIR/vortex_kernels}
+
+print_usage() {
+	cat <<'EOF'
+Usage: vortex-regression [--list] <test-name> [test-args...]
+
+Runs a staged Vortex regression app with its matching kernel.vxbin.
+
+Examples:
+  vortex-regression --list
+  vortex-regression basic
+  vortex-regression printf -n1
+
+Environment overrides:
+  VORTEX_DRIVER          defaults to "esp"
+  VORTEX_ESP_APP_DIR     defaults to /applications/test
+  VORTEX_ESP_KERNEL_DIR  defaults to /applications/test/vortex_kernels
+EOF
+}
+
+list_tests() {
+	found=0
+	for app in "$APP_DIR"/gt_vortex_rtl_vortex_*.exe; do
+		if [ -e "$app" ]; then
+			found=1
+			name=${app##*/}
+			name=${name#gt_vortex_rtl_vortex_}
+			name=${name%.exe}
+			printf '%s\n' "$name"
+		fi
+	done
+
+	if [ "$found" -eq 0 ]; then
+		echo "No staged Vortex regression apps were found in $APP_DIR" >&2
+		return 1
+	fi
+}
+
+case "${1:-}" in
+--help|-h)
+	print_usage
+	exit 0
+	;;
+--list|-l)
+	list_tests
+	exit $?
+	;;
+"")
+	print_usage >&2
+	exit 1
+	;;
+esac
+
+test_name=$1
+shift
+
+app="$APP_DIR/gt_vortex_rtl_vortex_${test_name}.exe"
+kernel="$KERNEL_DIR/${test_name}.vxbin"
+
+if [ ! -f "$app" ]; then
+	echo "Missing staged app: $app" >&2
+	echo "Use 'vortex-regression --list' to see available tests." >&2
+	exit 1
+fi
+
+if [ ! -f "$kernel" ]; then
+	echo "Missing staged kernel: $kernel" >&2
+	exit 1
+fi
+
+: "${VORTEX_DRIVER:=esp}"
+export VORTEX_DRIVER
+
+exec "$app" -k "$kernel" "$@"
