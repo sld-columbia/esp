@@ -114,6 +114,18 @@ package allmem is
       );
   end component;
 
+  component altera_syncram_be
+    generic (abits : integer := 9; dbits : integer := 32);
+    port (
+      clk     : in  std_ulogic;
+      address : in  std_logic_vector (abits -1 downto 0);
+      datain  : in  std_logic_vector (dbits -1 downto 0);
+      dataout : out std_logic_vector (dbits -1 downto 0);
+      enable  : in  std_logic_vector (dbits/8-1 downto 0);
+      write   : in  std_logic_vector (dbits/8-1 downto 0)
+      );
+  end component;
+
 
   -- ASIC
 
