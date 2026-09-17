@@ -102,6 +102,19 @@ module noc2aximst #(
     logic [this_coh_flit_size-1 : 0] header_reg;
     logic sample_header;
 
+    // This version complements the WSTRB-aware `axislv2noc` implementation.
+    // When `axislv2noc` splits a non-coherent DMA beat into subword packets, it
+    // encodes the effective write size in DMA-header reserved bits [6:4].
+    // Decode that override here so `AW_SIZE`/`W_STRB` preserve the original
+    // byte-lane intent when the request is replayed on the AXI side.
+    // Delay impact in this block:
+    // - No new FSM states are added for the DMA size-override path.
+    // - Decode is combinational and reuses the existing AW/W request flow.
+    // - Extra latency comes indirectly from `axislv2noc` emitting more packets.
+    localparam int DMA_HDR_SIZE_LSB       = 4;
+    localparam int DMA_HDR_SIZE_MSB       = 5;
+    localparam int DMA_HDR_SIZE_VALID_BIT = 6;
+
 
     logic [DMA_NOC_FLIT_SIZE-1 : 0] dma_header;
     logic [DMA_NOC_FLIT_SIZE-1 : 0] dma_header_reg;
@@ -144,7 +157,51 @@ module noc2aximst #(
     localparam DMA_WRITE_DATA_COH = 5'b10100;
     localparam DMA_WRITE_DATA_ETH = 5'b10101;
 
-    (* mark_debug = "true" *) reg_type cs, ns;
+    reg_type cs, ns;
+
+    function automatic logic [2:0] target_dma_axi_size();
+        if (ARCH_BITS == 32) return XSIZE_WORD;
+        return XSIZE_DWORD;
+    endfunction
+
+    // Decode `nocpackage` DMA size encoding:
+    // 00=byte, 01=halfword, 10=word, 11=dword.
+    function automatic logic [2:0] dma_code_to_axi_size(input logic [1:0] code);
+        case (code)
+            2'b00:   return XSIZE_BYTE;
+            2'b01:   return XSIZE_HWORD;
+            2'b10:   return XSIZE_WORD;
+            default: return XSIZE_DWORD;
+        endcase
+    endfunction
+
+    // Rebuild AXI byte enables from the effective transfer size/address.
+    // For WSTRB-split DMA packets the payload still carries one replicated word;
+    // `W_STRB` selects the intended byte lanes at the final AXI target.
+    function automatic logic [AW-1:0] compute_axi_wstrb(input logic [2:0] axi_size,
+                                                        input logic [GLOB_PHYS_ADDR_BITS-1:0] axi_addr);
+        logic [AW-1:0] wstrb;
+
+        wstrb = '0;
+        if (ARCH_BITS == 32) begin
+            if (axi_size == XSIZE_BYTE)
+                wstrb = 4'b1000 >> axi_addr[$clog2(AW)-1:0];
+            else if (axi_size == XSIZE_HWORD)
+                wstrb = 4'b1100 >> axi_addr[$clog2(AW)-1:0];
+            else
+                wstrb = 4'b1111;
+        end else begin
+            if (axi_size == XSIZE_BYTE)
+                wstrb = 8'b10000000 >> axi_addr[$clog2(AW)-1:0];
+            else if (axi_size == XSIZE_HWORD)
+                wstrb = 8'b11000000 >> axi_addr[$clog2(AW)-1:0];
+            else if (axi_size == XSIZE_WORD)
+                wstrb = 8'b11110000 >> axi_addr[$clog2(AW)-1:0];
+            else
+                wstrb = 8'b11111111 >> axi_addr[$clog2(AW)-1:0];
+        end
+        return wstrb;
+    endfunction
 
     always_comb begin
         ns = cs;
@@ -167,6 +224,8 @@ module noc2aximst #(
         case (current_state)
 
             RECEIVE_HEADER: begin
+                ns.dma_size_valid = 1'b0;
+                ns.dma_size = target_dma_axi_size();
                 if (coherence_req_empty == 1'b0) begin
                     coherence_req_rdreq = 1'b1;
                     ns.msg      = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - 1 : this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH];
@@ -181,7 +240,15 @@ module noc2aximst #(
                     dma_rcv_rdreq = 1'b1;
                     ns.msg      = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - 1:DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH];
                     reserved    = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH - 1:DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH - `RESERVED_WIDTH];
-                    ns.ax_prot = reserved[3:0];
+                    ns.ax_prot = reserved[2:0];
+                    // `axislv2noc` sets reserved[6:4] only when partial WSTRB is
+                    // split into subword DMA packets. Carry that override into the
+                    // write path so `AW_SIZE` and `W_STRB` match the original beat.
+                    ns.dma_size_valid = reserved[DMA_HDR_SIZE_VALID_BIT];
+                    if (reserved[DMA_HDR_SIZE_VALID_BIT] == 1'b1)
+                        ns.dma_size = dma_code_to_axi_size(
+                            reserved[DMA_HDR_SIZE_MSB:DMA_HDR_SIZE_LSB]
+                        );
                     next_state = DMA_RECEIVE_ADDRESS;
                     sample_dma_header = 1'b1;
                 end
@@ -334,7 +401,6 @@ module noc2aximst #(
                     end
                 end
             end
-
             WRITE_RESPONSE_WAIT: begin
                 if (B_VALID == 1'b1) begin
                     if (cs.preamble_flag == PREAMBLE_BODY) begin
@@ -370,14 +436,8 @@ module noc2aximst #(
                 if (dma_rcv_empty == 1'b0) begin
                     dma_rcv_rdreq = 1'b1;
                     ns.ar_prot    = cs.ax_prot;
-
-                    if (ARCH_BITS == 32) begin
-                        ns.ar_size = XSIZE_WORD;
-                        ns.aw_size = XSIZE_WORD;
-                    end else begin
-                        ns.ar_size = XSIZE_DWORD;
-                        ns.aw_size = XSIZE_DWORD;
-                    end
+                    ns.ar_size    = target_dma_axi_size();
+                    ns.aw_size    = target_dma_axi_size();
 
                     if (cs.msg == DMA_TO_DEV || cs.msg == REQ_DMA_READ) begin
                         next_state = DMA_RECEIVE_READ_LENGTH;
@@ -401,25 +461,18 @@ module noc2aximst #(
                             next_state      = DMA_WRITE_REQUEST;
                         end
 
-                        ns.w_strb = 0;
-                        if (cs.msg == REQ_DMA_WRITE) begin
-                            ns.w_strb = 8'b11111111;
+                        if (cs.dma_size_valid == 1'b1) begin
+                            ns.aw_size = cs.dma_size;
+                        end
+
+                        // Preserve legacy coherent-DMA behavior unless an explicit
+                        // size override is present. Non-coherent split DMA packets
+                        // use the decoded size to rebuild the original AXI WSTRB.
+                        ns.w_strb = '0;
+                        if (cs.msg == REQ_DMA_WRITE && cs.dma_size_valid == 1'b0) begin
+                            ns.w_strb = {AW{1'b1}};
                         end else begin
-                            if (little_end == 0) begin
-                                if (ns.aw_size == XSIZE_WORD)
-                                    ns.w_strb = {4'b1111, {AW - 4{1'b0}}} >> ns.aw_addr[$clog2(
-                                        AW
-                                    )-1:0];
-                                else if (ns.aw_size == XSIZE_DWORD)
-                                    ns.w_strb = 8'b11111111 >> ns.aw_addr[$clog2(AW)-1:0];
-                            end else begin
-                                if (ns.aw_size == XSIZE_WORD)
-                                    ns.w_strb = {4'b1111, {AW - 4{1'b0}}} >> ns.aw_addr[$clog2(
-                                        AW
-                                    )-1:0];
-                                else if (ns.aw_size == XSIZE_DWORD)
-                                    ns.w_strb = 8'b11111111 >> ns.aw_addr[$clog2(AW)-1:0];
-                            end
+                            ns.w_strb = compute_axi_wstrb(ns.aw_size, ns.aw_addr);
                         end
                     end
                 end
@@ -816,7 +869,6 @@ module noc2aximst #(
             cs.preamble_flag <= PREAMBLE_BODY;
             cs.aw_addr       <= 0;
             cs.ar_addr       <= 0;
-            cs.w_data        <= 0;
             cs.ar_len        <= 0;
             cs.ar_size       <= 3'b010;
             cs.ar_prot       <= 0;
@@ -826,9 +878,6 @@ module noc2aximst #(
             cs.aw_prot       <= 0;
             cs.w_strb        <= 0;
             cs.aw_valid      <= 0;
-            cs.w_last        <= 0;
-            cs.w_valid       <= 0;
-            cs.b_ready       <= 1'b0;
             cs.count         <= 0;
             cs.sample_flag   <= 0;
             cs.burst_flag    <= 0;
@@ -836,6 +885,8 @@ module noc2aximst #(
             cs.dma_noc_data  <= 0;
             cs.word_rem      <= 0;
             cs.hsize_msb     <= 0;
+            cs.dma_size_valid <= 1'b0;
+            cs.dma_size      <= target_dma_axi_size();
         end else begin
             current_state <= next_state;
             cs            <= ns;

@@ -21,7 +21,8 @@ soft-clean:
 		$(SOFT_BUILD)/main.o		\
 		$(SOFT_BUILD)/uart.o		\
 		$(SOFT_BUILD)/systest.bin	\
-		$(SOFT_BUILD)/ram.vhx
+		$(SOFT_BUILD)/ram.vhx		\
+		$(SOFT_BUILD)/vhx.bin
 
 soft-distclean: soft-clean
 
@@ -100,7 +101,7 @@ RISCV_CFLAGS += -nostartfiles
 RISCV_CFLAGS +=	-march=rv32imc -mabi=ilp32
 RISCV_CFLAGS +=	-mstrict-align
 
-$(SOFT_BUILD)/systest.exe: systest.c $(SOFT_BUILD)/uart.o
+$(SOFT_BUILD)/systest.exe: systest.c $(SOFT_BUILD)/uart.o $(SOFT)/common/syscalls.c $(RISCV_TESTS)/benchmarks/common/crt.S $(RISCV_TESTS)/benchmarks/common/test.ld
 	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc $(RISCV_CFLAGS) \
 	$(SOFT)/common/syscalls.c \
 	$(RISCV_TESTS)/benchmarks/common/crt.S  \
@@ -109,18 +110,19 @@ $(SOFT_BUILD)/systest.exe: systest.c $(SOFT_BUILD)/uart.o
 	$(SOFT_BUILD)/uart.o -lm -lgcc $<
 
 $(SOFT_BUILD)/systest.bin: $(TEST_PROGRAM)
-	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O binary $< $@
+	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary $< $@
 
 $(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
-	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O srec --gap-fill 0 $< $@
+	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O srec --gap-fill 0 $< $@
 	@if [ -n "$(SIM_DATA_FILES)" ]; then\
 		python3 $(ESP_ROOT)/utils/scripts/srec/modify_srec.py $@ $(SIM_DATA_FILES) $(START_ADDRS);\
 	fi
 
-$(SOFT_BUILD)/ram.vhx: $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/vhx.bin
-
-$(SOFT_BUILD)/vhx.bin: $(TEST_PROGRAM)
+$(SOFT_BUILD)/ram.vhx: $(SOFT_BUILD)/systest.bin
 	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt_vhx.py 32 ibex
+
+$(SOFT_BUILD)/vhx.bin: $(SOFT_BUILD)/ram.vhx
+	@touch $@
 
 sysroot:
 
@@ -155,7 +157,7 @@ VLOGOPT += -suppress 13262
 VLOGOPT += -suppress 2286
 VLOGOPT += -permissive
 VLOGOPT += +define+WT_DCACHE
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 # use Xilinx-based primitives for FPGA
 VLOGOPT += +define+PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx
 endif
@@ -171,7 +173,7 @@ XMLOGOPT += -UNCLOCKEDSVA
 ### Incdir and RTL
 ifeq ("$(CPU_ARCH)", "ibex")
 INCDIR  += $(IBEX)/vendor/lowrisc_ip/ip/prim/rtl
-VERILOG_IBEX += $(foreach f, $(shell strings $(FLISTS)/ibex_vlog.flist), $(IBEX)/$(f))
+VERILOG_IBEX += $(foreach f, $(call safe_strings,$(FLISTS)/ibex_vlog.flist), $(IBEX)/$(f))
 VERILOG_IBEX += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/plic_regmap.sv
 THIRDPARTY_VLOG += $(VERILOG_IBEX)
 endif

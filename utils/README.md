@@ -16,7 +16,8 @@ scripts for each of the available processors.
 
 * `Makefile`, together with the Makefiles in `make`, are the main
   Makefiles of the repository. All Make targets should be launched
-  from inside the working folders in `socs`.
+  from inside the working folders in `socs`. Vivado timing-closure
+  controls are documented in `make/README.md`.
 
 * `scripts` contains a few useful scripts that can come in handy.
 

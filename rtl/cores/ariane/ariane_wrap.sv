@@ -352,6 +352,13 @@ module ariane_wrap #(
         DRAM   = 5
     } axi_slaves_t;
 
+    logic [0:0][NSLV-1:0] axi_xbar_valid_rule;
+
+    always_comb begin
+        axi_xbar_valid_rule[0]         = {NSLV{1'b1}};
+        axi_xbar_valid_rule[0][SLMDDR] = |SLMDDRLength[AXI_ADDR_WIDTH-1:0];
+    end
+
     AXI_BUS #(
         .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
         .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
@@ -407,7 +414,7 @@ module ariane_wrap #(
             APBBase[AXI_ADDR_WIDTH-1:0] + APBLength[AXI_ADDR_WIDTH-1:0] - 1,
             ROMBase[AXI_ADDR_WIDTH-1:0] + ROMLength[AXI_ADDR_WIDTH-1:0] - 1
         }),
-        .valid_rule_i({{NSLV} {1'b1}})
+        .valid_rule_i(axi_xbar_valid_rule)
     );
 
     // ---------------
