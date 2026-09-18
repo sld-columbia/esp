@@ -1,6 +1,7 @@
 # Copyright (c) 2011-2026 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 ARIANE := $(ESP_ROOT)/rtl/cores/ariane/ariane
+CVA6 := $(ESP_ROOT)/rtl/cores/cva6/cva6
 
 ### Include paths ###
 INCDIR += $(DESIGN_PATH)
@@ -21,8 +22,8 @@ VHDL_PKGS += $(THIRDPARTY_VHDL_PKGS)
 VHDL_PKGS += $(TOP_VHDL_RTL_PKGS)
 
 ## VHDL Source
-VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/vhdl.flist), $(ESP_ROOT)/rtl/$(f))
 VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/cores_vhdl.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
+VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/vhdl.flist), $(ESP_ROOT)/rtl/$(f))
 
 ifeq ($(TECHLIB), inferred)
 VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
@@ -42,6 +43,15 @@ endif
 THIRDPARTY_VLOG += $(VERILOG_ARIANE)
 endif
 
+ifeq ("$(CPU_ARCH)", "cva6")
+INCDIR += $(CVA6)/src/common_cells/include
+VERILOG_CVA6 += $(foreach f, $(shell strings $(FLISTS)/cva6_vlog.flist), $(CVA6)/$(f))
+VERILOG_CVA6 += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/plic_regmap.sv
+ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+VERILOG_CVA6 += $(foreach f, $(shell strings $(FLISTS)/cva6_fpga_vlog.flist), $(CVA6)/$(f))
+endif
+THIRDPARTY_VLOG += $(VERILOG_CVA6)
+endif
 
 VHDL_SRCS += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.vhd" ))
 VHDL_SRCS += $(THIRDPARTY_VHDL)
@@ -59,6 +69,11 @@ SIM_VHDL_SRCS += $(TOP_VHDL_SIM_SRCS)
 RTL_TECH_FOLDERS = $(shell ls -d $(ESP_ROOT)/tech/$(TECHLIB)/*/)
 
 VLOG_SRCS += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/esp_global_sv.sv
+
+ifeq ("$(CPU_ARCH)", "cva6")
+# Ensure CVA6's AXI package is compiled before other SV sources that depend on it
+VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/cva6/cva6/vendor/pulp-platform/axi/src -name "axi_pkg.sv" 2> /dev/null))
+endif
 
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/vlog.flist), $(ESP_ROOT)/rtl/$(f))
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/cores_vlog.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
@@ -78,7 +93,7 @@ endif
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.v")))
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.sv")))
 
-ifneq ("$(CPU_ARCH)", "ariane")
+ifeq ($(filter cva6 ariane,$(CPU_ARCH)),)
 INCDIR += $(ARIANE)/src/util
 #INCDIR += $(ARIANE)/include
 INCDIR += $(ARIANE)/src/common_cells/include

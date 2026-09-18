@@ -147,7 +147,7 @@ begin
     -- send address
     if CPU_STR = "ibex" then
       word <= X"00000081";
-    elsif CPU_STR = "ariane" then
+    elsif CPU_STR = "ariane" or CPU_STR = "cva6" then
       word <= X"00010001";
     else
       word <= X"00000001";

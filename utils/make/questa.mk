@@ -5,10 +5,44 @@ QCOMOPT = $(VCOMOPT)
 QLOGOPT = $(VLOGOPT)
 QSIMOPT = $(VSIMOPT)
 
+SIM_LIBDIR ?= $(abspath $(RTL_CFG_BUILD)/sim_libs)
+
+ACC_TECH_ROOT := $(ESP_ROOT)/tech/$(TECHLIB)/acc
+ACC_TECH_PRESENT := $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_ROOT)/*)),$(RTL_ACC)))
+THIRDPARTY_LIBS = $(THIRDPARTY_ACC)
+ACC_LIBS := $(THIRDPARTY_LIBS)
+ACC_LIB_OPT := $(foreach lib,$(ACC_LIBS),-L $(lib))
+THIRDPARTY_SIM_VHDL_PKGS := $(filter $(THIRDPARTY_PATH)/%,$(SIM_VHDL_PKGS))
+THIRDPARTY_SIM_VHDL_SRCS := $(filter $(THIRDPARTY_PATH)/%,$(SIM_VHDL_SRCS))
+THIRDPARTY_SIM_VLOG_SRCS := $(filter $(THIRDPARTY_PATH)/%,$(SIM_VLOG_SRCS))
+
+ifneq ($(THIRDPARTY_LIBS),)
+SIM_VHDL_PKGS := $(filter-out $(THIRDPARTY_SIM_VHDL_PKGS),$(SIM_VHDL_PKGS))
+SIM_VHDL_SRCS := $(filter-out $(THIRDPARTY_SIM_VHDL_SRCS),$(SIM_VHDL_SRCS))
+SIM_VLOG_SRCS := $(filter-out $(THIRDPARTY_SIM_VLOG_SRCS),$(SIM_VLOG_SRCS))
+endif
+
+QSIMOPT += -L work $(ACC_LIB_OPT)
+
 QLIB = vlib
 QCOM = vcom -quiet -93 $(QCOMOPT)
 QLOG = vlog -sv -quiet $(QLOGOPT)
 QSIM = vsim $(QSIMOPT)
+
+define DEFINE_QUESTA_THIRDPARTY
+TP_$(1)_NAME := $(1)
+TP_$(1)_LIB := $(1)
+TP_$(1)_SRC := $(ESP_ROOT)/accelerators/third-party/$(1)
+TP_$(1)_VHDL_PKGS := $$(TP_$(1)_SRC)/$(1).pkgs
+TP_$(1)_VHDL_SRCS := $$(TP_$(1)_SRC)/$(1).vhdl
+TP_$(1)_FILELIST_SV := $$(TP_$(1)_SRC)/$(1).sverilog
+TP_$(1)_FILELIST_V := $$(TP_$(1)_SRC)/$(1).verilog
+TP_$(1)_WRAPPER := $$(TP_$(1)_SRC)/$(1)_wrapper.v
+TP_$(1)_INCDIR := $$(TP_$(1)_SRC)/vlog_incdir
+endef
+$(foreach acc,$(THIRDPARTY_LIBS),$(eval $(call DEFINE_QUESTA_THIRDPARTY,$(acc))))
+
+QUESTA_THIRDPARTY_LIB_TARGETS := $(foreach acc,$(THIRDPARTY_LIBS),questa-thirdparty-$(acc))
 
 ### Xilinx Simulation libs targets ###
 $(ESP_ROOT)/.cache/questa/xilinx_lib:
@@ -34,12 +68,66 @@ questa/modelsim.ini: $(ESP_ROOT)/.cache/questa/xilinx_lib
 	$(QUIET_MAKE)mkdir -p questa
 	@cp $(ESP_ROOT)/.cache/questa/modelsim.ini $@
 
+$(SIM_LIBDIR):
+	$(QUIET_MKDIR)mkdir -p $@
+
+questa-libs: questa/modelsim.ini $(SIM_LIBDIR)
+	@cd questa; \
+	for lib in $(ACC_LIBS); do \
+		if test -n "$$lib"; then \
+			if ! test -e $(SIM_LIBDIR)/$$lib; then \
+				vlib -type directory $(SIM_LIBDIR)/$$lib; \
+			fi; \
+			vmap $$lib $(SIM_LIBDIR)/$$lib; \
+		fi; \
+	done
+
+define QUESTA_THIRDPARTY_LIB_RULE
+questa-thirdparty-$(1): questa-libs $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST)
+	cd questa; \
+	if ! test -e $(SIM_LIBDIR)/$$(TP_$(1)_LIB); then \
+		vlib -type directory $(SIM_LIBDIR)/$$(TP_$(1)_LIB); \
+	fi; \
+	vmap $$(TP_$(1)_LIB) $(SIM_LIBDIR)/$$(TP_$(1)_LIB); \
+	\
+	for vhdf in "$$(TP_$(1)_VHDL_PKGS)" "$$(TP_$(1)_VHDL_SRCS)"; do \
+		if test -f "$$$$vhdf"; then \
+			awk -v base="$$(TP_$(1)_SRC)/out/" 'function trim(s){sub(/^[ \t]+/,"",s); sub(/[ \t]+$$$$/,"",s); return s} {line=$$$$0; gsub(/\r/,"",line); line=trim(line); if(line=="" || line ~ /^#/ || line ~ /^\/\// || line ~ /^--/) next; if(line ~ /^\//) print line; else print base line}' "$$$$vhdf" | while read rtl; do \
+				echo $(SPACES)"$(QCOM) -work $$(TP_$(1)_LIB) $$$$rtl"; \
+				$(QCOM) -work $$(TP_$(1)_LIB) $$$$rtl || exit 1; \
+			done; \
+		fi; \
+	done; \
+	\
+	rm -f $$(TP_$(1)_LIB).rtl.f; \
+	if test -f "$$(TP_$(1)_WRAPPER)"; then \
+		echo "$$(TP_$(1)_WRAPPER)" >> $$(TP_$(1)_LIB).rtl.f; \
+	fi; \
+	if test -d "$$(TP_$(1)_INCDIR)"; then \
+		find -L "$$(TP_$(1)_INCDIR)" -type d | sort | while read dir; do \
+			echo "+incdir+$$$$dir" >> $$(TP_$(1)_LIB).rtl.f; \
+		done; \
+	fi; \
+	if test -f "$$(TP_$(1)_FILELIST_SV)"; then \
+		awk -v base="$$(TP_$(1)_SRC)/out/" 'function trim(s){sub(/^[ \t]+/,"",s); sub(/[ \t]+$$$$/,"",s); return s} {line=$$$$0; gsub(/\r/,"",line); line=trim(line); if(line=="" || line ~ /^#/ || line ~ /^\/\// || line ~ /^--/) next; if(line ~ /^[+]incdir[+]/){sub(/^[+]incdir[+]/,"",line); n=split(line,a,/[+]/); for(i=1;i<=n;i++){if(a[i]=="") continue; if(a[i] ~ /^\//) print "+incdir+" a[i]; else print "+incdir+" base a[i];} next} if(line ~ /^\//){print line; next} print base line}' "$$(TP_$(1)_FILELIST_SV)" >> $$(TP_$(1)_LIB).rtl.f; \
+	fi; \
+	if test -f "$$(TP_$(1)_FILELIST_V)"; then \
+		awk -v base="$$(TP_$(1)_SRC)/out/" 'function trim(s){sub(/^[ \t]+/,"",s); sub(/[ \t]+$$$$/,"",s); return s} {line=$$$$0; gsub(/\r/,"",line); line=trim(line); if(line=="" || line ~ /^#/ || line ~ /^\/\// || line ~ /^--/) next; if(line ~ /^[+]incdir[+]/){sub(/^[+]incdir[+]/,"",line); n=split(line,a,/[+]/); for(i=1;i<=n;i++){if(a[i]=="") continue; if(a[i] ~ /^\//) print "+incdir+" a[i]; else print "+incdir+" base a[i];} next} if(line ~ /^\//){print line; next} print base line}' "$$(TP_$(1)_FILELIST_V)" >> $$(TP_$(1)_LIB).rtl.f; \
+	fi; \
+	\
+	if test -s $$(TP_$(1)_LIB).rtl.f; then \
+		echo $(SPACES)"vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(TP_$(1)_LIB) -f $$(TP_$(1)_LIB).rtl.f"; \
+		vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(TP_$(1)_LIB) -f $$(TP_$(1)_LIB).rtl.f || exit 1; \
+	fi
+endef
+$(foreach acc,$(THIRDPARTY_LIBS),$(eval $(call QUESTA_THIRDPARTY_LIB_RULE,$(acc))))
+
 
 ### Compile simulation source files ###
 # Note that vmake fails to find unisim.vcomponents, however produces the correct
 # makefile for future compilation and all components are properly bound in simulation.
 # Please keep 2> /dev/null until the bug is fixed with a newer Modelsim release.
-questa/vsim.mk: questa/modelsim.ini $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST)
+questa/vsim.mk: questa/modelsim.ini $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST) questa-libs $(QUESTA_THIRDPARTY_LIB_TARGETS)
 	@cd questa; \
 	if ! test -e profpga; then \
 		vlib -type directory profpga; \
@@ -114,4 +202,4 @@ qsim-clean:
 qsim-distclean: qsim-clean
 	$(QUIET_CLEAN)rm -rf questa
 
-.PHONY: qsim qsim-gui qsim-compile qsim-clean qsim-distclean
+.PHONY: qsim qsim-gui qsim-compile qsim-clean qsim-distclean questa-libs $(QUESTA_THIRDPARTY_LIB_TARGETS)

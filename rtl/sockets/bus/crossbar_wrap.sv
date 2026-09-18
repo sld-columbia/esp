@@ -309,34 +309,94 @@ module crossbar_wrap
    // ---------------
    // AXI Xbar
    // ---------------
-   axi_node_wrap_with_slices
-     #(
-       .NB_SLAVE           (NMST),
-       .NB_MASTER          (NSLV   ),
-       .NB_REGION          (1),
-       .AXI_ADDR_WIDTH     (AXI_ADDR_WIDTH),
-       .AXI_DATA_WIDTH     (AXI_DATA_WIDTH),
-       .AXI_USER_WIDTH     (AXI_USER_WIDTH),
-       .AXI_ID_WIDTH       (AXI_ID_WIDTH),
-       .MASTER_SLICE_DEPTH (1),
-       .SLAVE_SLICE_DEPTH  (1)
-       ) i_axi_xbar
-       (
-	.clk          (clk),
-	.rst_n        (rstn),
-	.test_en_i    (1'b0),
-	.slave        (slave),
-	.master       (master),
-	.start_addr_i ({
-			DRAMBase[AXI_ADDR_WIDTH-1:0],
-			ROMBase[AXI_ADDR_WIDTH-1:0]
-			}),
-	.end_addr_i   ({
-			DRAMBase[AXI_ADDR_WIDTH-1:0]  + DRAMLength[AXI_ADDR_WIDTH-1:0] - 1,
-			ROMBase[AXI_ADDR_WIDTH-1:0]   + ROMLength[AXI_ADDR_WIDTH-1:0] - 1
-			}),
-	.valid_rule_i ({{NSLV}{1'b1}})
-	);
+   
+`ifdef ESP_CVA6
+    localparam axi_pkg::xbar_cfg_t AXI_XBAR_CFG = '{
+      NoSlvPorts:         unsigned'(NMST),
+      NoMstPorts:         unsigned'(NSLV),
+      MaxMstTrans:        unsigned'(1),
+      MaxSlvTrans:        unsigned'(1),
+      FallThrough:        1'b0,
+      LatencyMode:        axi_pkg::CUT_ALL_PORTS,
+      AxiIdWidthSlvPorts: unsigned'(AXI_ID_WIDTH),
+      AxiIdUsedSlvPorts:  unsigned'(AXI_ID_WIDTH),
+      UniqueIds:          1'b0,
+      AxiAddrWidth:       unsigned'(AXI_ADDR_WIDTH),
+      AxiDataWidth:       unsigned'(AXI_DATA_WIDTH),
+      NoAddrRules:        unsigned'(NSLV)
+    };
+
+    if (AXI_ADDR_WIDTH == 32) begin : gen_xbar_32
+      axi_pkg::xbar_rule_32_t [NSLV-1:0] addr_map;
+      assign addr_map = '{
+        '{ idx: DRAM, start_addr: DRAMBase, end_addr: DRAMBase + DRAMLength },
+        '{ idx: ROM,  start_addr: ROMBase,  end_addr: ROMBase + ROMLength    }
+      };
+      axi_xbar_intf #(
+        .AXI_USER_WIDTH ( AXI_USER_WIDTH           ),
+        .Cfg            ( AXI_XBAR_CFG             ),
+        .rule_t         ( axi_pkg::xbar_rule_32_t  )
+      ) i_axi_xbar (
+        .clk_i                 ( clk      ),
+        .rst_ni                ( rstn     ),
+        .test_i                ( 1'b0     ),
+        .slv_ports             ( slave    ),
+        .mst_ports             ( master   ),
+        .addr_map_i            ( addr_map ),
+        .en_default_mst_port_i ( '0       ),
+        .default_mst_port_i    ( '0       )
+      );
+    end else begin : gen_xbar_64
+      axi_pkg::xbar_rule_64_t [NSLV-1:0] addr_map;
+      assign addr_map = '{
+        '{ idx: DRAM, start_addr: DRAMBase, end_addr: DRAMBase + DRAMLength },
+        '{ idx: ROM,  start_addr: ROMBase,  end_addr: ROMBase + ROMLength    }
+      };
+      axi_xbar_intf #(
+        .AXI_USER_WIDTH ( AXI_USER_WIDTH           ),
+        .Cfg            ( AXI_XBAR_CFG             ),
+        .rule_t         ( axi_pkg::xbar_rule_64_t  )
+      ) i_axi_xbar (
+        .clk_i                 ( clk      ),
+        .rst_ni                ( rstn     ),
+        .test_i                ( 1'b0     ),
+        .slv_ports             ( slave    ),
+        .mst_ports             ( master   ),
+        .addr_map_i            ( addr_map ),
+        .en_default_mst_port_i ( '0       ),
+        .default_mst_port_i    ( '0       )
+      );
+    end
+
+`else
+    axi_node_wrap_with_slices
+      #(
+        .NB_SLAVE           (NMST),
+        .NB_MASTER          (NSLV),
+        .NB_REGION          (1),
+        .AXI_ADDR_WIDTH     (AXI_ADDR_WIDTH),
+        .AXI_DATA_WIDTH     (AXI_DATA_WIDTH),
+        .AXI_USER_WIDTH     (AXI_USER_WIDTH),
+        .AXI_ID_WIDTH       (AXI_ID_WIDTH),
+        .MASTER_SLICE_DEPTH (1),
+        .SLAVE_SLICE_DEPTH  (1)
+      ) i_axi_xbar (
+        .clk          (clk),
+        .rst_n        (rstn),
+        .test_en_i    (1'b0),
+        .slave        (slave),
+        .master       (master),
+        .start_addr_i ({
+            DRAMBase[AXI_ADDR_WIDTH-1:0],
+            ROMBase[AXI_ADDR_WIDTH-1:0]
+        }),
+        .end_addr_i   ({
+            DRAMBase[AXI_ADDR_WIDTH-1:0] + DRAMLength[AXI_ADDR_WIDTH-1:0] - 1,
+            ROMBase[AXI_ADDR_WIDTH-1:0]  + ROMLength[AXI_ADDR_WIDTH-1:0] - 1
+        }),
+        .valid_rule_i ({{NSLV}{1'b1}})
+      );
+`endif
     
 
    // ---------------

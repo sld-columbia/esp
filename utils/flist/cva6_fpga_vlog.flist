@@ -1,0 +1,6 @@
+common/local/util/tc_sram_fpga_wrapper.sv 
+common/local/util/hpdcache_sram_1rw.sv 
+common/local/util/hpdcache_sram_wbyteenable_1rw.sv 
+vendor/pulp-platform/fpga-support/rtl/SyncSpRamBeNx64.sv 
+vendor/pulp-platform/fpga-support/rtl/SyncSpRamBeNx32.sv 
+vendor/pulp-platform/fpga-support/rtl/SyncSpRam.sv
