@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Independent ESP DMA oracle. No sequential C model of shared ping-pong RAMs.
 `timescale 1ns/1ps
-module peek_dd_dma_tb;
+module sqr_bambu_dma_tb;
     reg clk = 0, rst = 0, conf_done = 0;
     always #5 clk = ~clk;
     reg [31:0] conf_info_len, conf_info_base_in, conf_info_base_out;
@@ -18,7 +18,7 @@ module peek_dd_dma_tb;
     wire dma_read_chnl_ready, dma_write_chnl_valid;
     reg [63:0] dma_read_chnl_data = 0;
     wire [63:0] dma_write_chnl_data;
-    peek_dd_basic_dma64 dut (.*);
+    sqr_bambu_basic_dma64 dut (.*);
 
     reg [31:0] mem [0:4095];
     reg [31:0] expected [0:4095];
@@ -160,7 +160,7 @@ module peek_dd_dma_tb;
         run_case(272, 1, 5);
         run_case(272, 2, 6);
         if (total_overlap == 0) $fatal(1, "load/store overlap never observed");
-        $display("ESP DMA RTL PASS seed=%0d overlap_cycles=%0d", seed,total_overlap);
+        $display("SQR_BAMBU DMA RTL PASS seed=%0d overlap_cycles=%0d", seed,total_overlap);
         $finish;
     end
     initial begin #20000000; $fatal(1, "global watchdog"); end

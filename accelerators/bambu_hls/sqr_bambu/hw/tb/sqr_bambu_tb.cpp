@@ -7,10 +7,10 @@
 // pattern, so the testbench pre-fills the read data channel in request
 // order, calls the top function, then checks the emitted read/write
 // descriptors, the output data and that no extra traffic was produced.
-// Stimulus is parity-based — w(b,i) = (b&1)*BATCH_ITEM_NUMBER + i + 1 — so
-// adjacent batches carry distinct data (catches ping-pong bank
-// mismanagement) while remaining consistent under sequential C execution
-// of the dataflow stages (native run and RTL agree).
+// RTL stimulus differs in every batch. Native execution is restricted to one
+// bank: sequential C calls do not model concurrent shared-array ownership.
+// Bambu co-simulation disables its sequential source comparison and uses this
+// independent numerical/descriptor oracle; sqr_bambu_dma_tb.sv adds backpressure.
 // Configuration registers are passed as scalar arguments with the wizard's
 // default values. It must print PASS on success and return non-zero on
 // failure.
@@ -32,32 +32,39 @@ static inline dma_req_t mk_req(unsigned index, unsigned length)
 }
 
 extern "C" void sqr_bambu_core(hls::stream<dma_req_t> &dma_read_ctrl,
-                               hls::stream<beat_t> &dma_read_chnl,
-                               hls::stream<dma_req_t> &dma_write_ctrl,
-                               hls::stream<beat_t> &dma_write_chnl, unsigned size);
+                             hls::stream<beat_t> &dma_read_chnl,
+                             hls::stream<dma_req_t> &dma_write_ctrl,
+                             hls::stream<beat_t> &dma_write_chnl, unsigned len, unsigned base_in,
+                             unsigned base_out);
 
 int main()
 {
-    const unsigned size           = 128;
-    const unsigned total_batches  = size / BATCH_ITEM_NUMBER;
-    const unsigned out_base_beats = (size / 2);
+#ifdef __BAMBU__
+    const unsigned len            = 272;
+#else
+    const unsigned len            = 16;
+#endif
+    const unsigned base_in        = 7;
+    const unsigned base_out       = 160;
+    const unsigned total_batches  = len / BATCH_ITEM_NUMBER;
+    const unsigned out_base_beats = base_out;
 
     hls::stream<dma_req_t> rd_ctrl, wr_ctrl;
     hls::stream<beat_t> rd_data, wr_data;
 
     for (unsigned b = 0; b < total_batches; ++b)
         for (int i = 0; i < BEATS_PER_BATCH; ++i) {
-            beat_t lo = (b & 1) * BATCH_ITEM_NUMBER + 2 * i + 1;
-            beat_t hi = (b & 1) * BATCH_ITEM_NUMBER + 2 * i + 2;
+            beat_t lo = b * BATCH_ITEM_NUMBER + 2 * i + 1;
+            beat_t hi = b * BATCH_ITEM_NUMBER + 2 * i + 2;
             rd_data.write((hi << 32) | lo);
         }
 
-    sqr_bambu_core(rd_ctrl, rd_data, wr_ctrl, wr_data, size);
+    sqr_bambu_core(rd_ctrl, rd_data, wr_ctrl, wr_data, len, base_in, base_out);
 
     int pass = 1;
 
     for (unsigned b = 0; b < total_batches; ++b) {
-        dma_req_t expected = mk_req(b * BEATS_PER_BATCH, BEATS_PER_BATCH);
+        dma_req_t expected = mk_req(base_in + b * BEATS_PER_BATCH, BEATS_PER_BATCH);
         dma_req_t got      = rd_ctrl.read();
         if (got != expected) {
             printf("FAIL read req[%u]: got %llx, expected %llx\n", b, got, expected);
@@ -77,8 +84,8 @@ int main()
             pass = 0;
         }
         for (int i = 0; i < BEATS_PER_BATCH; ++i) {
-            beat_t lo         = (b & 1) * BATCH_ITEM_NUMBER + 2 * i + 1;
-            beat_t hi         = (b & 1) * BATCH_ITEM_NUMBER + 2 * i + 2;
+            beat_t lo         = b * BATCH_ITEM_NUMBER + 2 * i + 1;
+            beat_t hi         = b * BATCH_ITEM_NUMBER + 2 * i + 2;
             beat_t expected_d = (((hi * hi) & 0xffffffffULL) << 32) | ((lo * lo) & 0xffffffffULL);
             beat_t computed   = wr_data.read();
             if (computed != expected_d) {

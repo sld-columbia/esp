@@ -11,7 +11,7 @@
 // descriptor (lengths in 64-bit beats) to dma_*_ctrl BEFORE moving data.
 //
 // The workload geometry is RUNTIME-configurable: the first configuration
-// register (size) gives the total number of 32-bit words per
+// register (len) gives the total number of 32-bit words per
 // invocation — a positive multiple of BATCH_ITEM_NUMBER — and the batch
 // count and output base derive from it below. Every configuration register
 // reaches this function as a scalar argument: bambu emits an input port per
@@ -40,11 +40,11 @@ static inline dma_req_t mk_req(unsigned index, unsigned length)
 extern "C" void __attribute__((noinline))
 load(hls::stream<dma_req_t> &dma_read_ctrl, hls::stream<beat_t> &dma_read_chnl,
      hls::stream<unsigned char> &ctrl_out, unsigned int array_out[BATCH_ITEM_NUMBER * 2],
-     unsigned total_batches)
+     unsigned total_batches, unsigned base_in)
 {
     static unsigned char ob = 0;
     for (unsigned b = 0; b < total_batches; ++b) {
-        dma_read_ctrl.write(mk_req(b * BEATS_PER_BATCH, BEATS_PER_BATCH));
+        dma_read_ctrl.write(mk_req(base_in + b * BEATS_PER_BATCH, BEATS_PER_BATCH));
         for (int i = 0; i < BEATS_PER_BATCH; ++i) {
             beat_t x                                      = dma_read_chnl.read();
             array_out[BATCH_ITEM_NUMBER * ob + 2 * i]     = (unsigned int)(x & 0xffffffffu);
@@ -97,18 +97,19 @@ store(hls::stream<unsigned char> &ctrl_in, unsigned int array_in[BATCH_ITEM_NUMB
 #pragma HLS interface port = dma_write_ctrl mode = axis
 #pragma HLS interface port = dma_write_chnl mode = axis
 extern "C" void sqr_bambu_core(hls::stream<dma_req_t> &dma_read_ctrl,
-                               hls::stream<beat_t> &dma_read_chnl,
-                               hls::stream<dma_req_t> &dma_write_ctrl,
-                               hls::stream<beat_t> &dma_write_chnl, unsigned size)
+                             hls::stream<beat_t> &dma_read_chnl,
+                             hls::stream<dma_req_t> &dma_write_ctrl,
+                             hls::stream<beat_t> &dma_write_chnl, unsigned len, unsigned base_in,
+                             unsigned base_out)
 {
 #pragma HLS DATAFLOW
     hls::stream<unsigned char> ctrl1;
     hls::stream<unsigned char> ctrl2;
     unsigned int buffer1[BATCH_ITEM_NUMBER * 2]; // ding-dong banks
     unsigned int buffer2[BATCH_ITEM_NUMBER * 2];
-    const unsigned total_batches  = size / BATCH_ITEM_NUMBER;
-    const unsigned out_base_beats = (size / 2);
-    load(dma_read_ctrl, dma_read_chnl, ctrl1, buffer1, total_batches);
+    const unsigned total_batches  = len / BATCH_ITEM_NUMBER;
+    const unsigned out_base_beats = base_out;
+    load(dma_read_ctrl, dma_read_chnl, ctrl1, buffer1, total_batches, base_in);
     compute(ctrl1, ctrl2, buffer1, buffer2, total_batches);
     store(ctrl2, buffer2, dma_write_ctrl, dma_write_chnl, total_batches, out_base_beats);
 }

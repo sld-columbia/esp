@@ -1,6 +1,6 @@
-# Manual Bambu dataflow accelerator
+# Bambu dataflow square accelerator
 
-`peek_dd` squares unsigned 32-bit words modulo 2^32. Load, compute and store
+`sqr_bambu` squares unsigned 32-bit words modulo 2^32. Load, compute and store
 execute concurrently, with two 16-word banks at each stage boundary. A depth-one
 control FIFO carries the bank index: `peek()` claims a bank and `read()` releases
 it. The producer can fill the other bank while the consumer owns the first, but
@@ -12,7 +12,7 @@ Use Bambu `feature/unified_ac_channels`. Validation used revision
 ## ESP contract
 
 The generated core exports active-low reset, start/done and four AXIS channels.
-The handwritten `peek_dd_basic_dma64` wrapper adapts those channels to ESP. APB
+The handwritten `sqr_bambu_basic_dma64` wrapper adapts those channels to ESP. APB
 registers, interrupt/status handling, scatter-gather translation and NoC DMA are
 provided by ESP's generated socket and `esp_acc_dma`, not by the Bambu core.
 
@@ -34,24 +34,24 @@ From the ESP root, with the normal ESP CAD/RISC-V environment enabled:
 ```bash
 export BAMBU=/path/to/unified_ac_channels/install/bin/bambu
 export BAMBU_ENV=/path/to/unified_ac_channels/install/settings.sh
-make -C socs/xilinx-vc707-xc7vx485t peek_dd-hls
-make -C socs/xilinx-vc707-xc7vx485t peek_dd-sim
-bash accelerators/bambu_hls/peek_dd/hw/tb/run_dma_test.sh
+make -C socs/xilinx-vc707-xc7vx485t sqr_bambu-hls
+make -C socs/xilinx-vc707-xc7vx485t sqr_bambu-sim
+bash accelerators/bambu_hls/sqr_bambu/hw/tb/run_dma_test.sh
 make -C socs/xilinx-vc707-xc7vx485t esp-defconfig \
-  ESP_DEFCONFIG="$PWD/socs/defconfig/esp_xilinx-vc707-peek_dd_defconfig"
-make -C socs/xilinx-vc707-xc7vx485t socketgen peek_dd-baremetal
+  ESP_DEFCONFIG="$PWD/socs/defconfig/esp_xilinx-vc707-sqr_bambu_defconfig"
+make -C socs/xilinx-vc707-xc7vx485t socketgen sqr_bambu-baremetal
 make -C socs/xilinx-vc707-xc7vx485t sim \
-  TEST_PROGRAM="$PWD/socs/xilinx-vc707-xc7vx485t/soft-build/ariane/baremetal/peek_dd.exe"
+  TEST_PROGRAM="$PWD/socs/xilinx-vc707-xc7vx485t/soft-build/ariane/baremetal/sqr_bambu.exe"
 make -C socs/xilinx-vc707-xc7vx485t vivado-syn
 ```
 
 The SoC configuration selects one Ariane CPU, one memory tile, one IO tile and
-one `PEEK_DD basic_dma64` tile, with caches disabled and 64-bit DMA.
+one `SQR_BAMBU basic_dma64` tile, with caches disabled and 64-bit DMA.
 ModelSim must match the version used to compile the cached Xilinx libraries.
 For an existing Vivado project, use `vivado-update` to rebuild it.
 
-`peek_dd-exe` is a one-bank native smoke test. Sequential C execution cannot
-represent concurrent shared-array ownership over many batches. `peek_dd-sim`
+`sqr_bambu-exe` is a one-bank native smoke test. Sequential C execution cannot
+represent concurrent shared-array ownership over many batches. `sqr_bambu-sim`
 therefore uses `BAMBU_SKIP_VERIFICATION` to disable Bambu's sequential C model
 comparison while retaining the testbench's independent descriptor and numerical
 checks on RTL outputs. It checks 272 distinct words. Bambu co-simulation needs
@@ -69,7 +69,7 @@ load/store overlap and nonzero stall coverage. It runs against installed RTL.
 The baremetal application allocates a DMA buffer/page table, programs the ESP
 and accelerator registers, runs three 272-word invocations on RISC-V, and checks
 unsigned square results with a bounded completion poll. The expected final UART
-line is `peek_dd PASS total_errors=0`. ESP's simulation harness subsequently
+line is `sqr_bambu PASS total_errors=0`. ESP's simulation harness subsequently
 prints `Failure: Program Completed!` as its normal termination assertion; check
 the application verdict before treating that assertion as success.
 

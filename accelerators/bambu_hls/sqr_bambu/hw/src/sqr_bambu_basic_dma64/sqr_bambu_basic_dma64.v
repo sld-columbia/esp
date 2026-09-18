@@ -1,22 +1,18 @@
 // Copyright (c) 2011-2026 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
-// ESP socket wrapper around the bambu-generated DMA-master core sqr_bambu_core.
-// The core already drives the DMA request channels (request precedes data), so the
-// wrapper is thin: it renames the core's AXIS streams to the ESP socket, splits the
-// {length[63:32], index[31:0]} descriptor into index/length/size fields, starts the
-// core on conf_done, and forwards the core's done_port as acc_done (measured
+// ESP wrapper around the 64-bit dataflow square DMA-master core `sqr_bambu_core`.
+// The core is already a DMA master (emits {index,length} requests, request-precedes-data),
+// so this wrapper is thin: it renames the core's AXIS request/data to the ESP socket,
+// fills size=DWORD/user=0, starts on conf_done, and forwards the core's done_port as acc_done (measured
 // blocking-to-the-wire: done never precedes the last AXIS write handshake; the
 // ESP socket samples the pulse). The debug port counts accepted write beats.
-//
-// Configuration registers (conf_info_*) are declared below; to pass one to the core,
-// give the C++ top function a scalar argument and connect the resulting input port
-// here, e.g.  .len(conf_info_len)
 module sqr_bambu_basic_dma64 (
     clk,
     rst,
-    /* <<--params-list-->> */
-    conf_info_size,
+    conf_info_len,
+    conf_info_base_in,
+    conf_info_base_out,
     conf_done,
     acc_done,
     debug,
@@ -42,8 +38,9 @@ module sqr_bambu_basic_dma64 (
 
     input clk;
     input rst;  // active-low
-    /* <<--params-def-->> */
-    input [31:0] conf_info_size;
+    input [31:0] conf_info_len;       // positive multiple of 16 words
+    input [31:0] conf_info_base_in;   // input offset in 64-bit DMA beats
+    input [31:0] conf_info_base_out;  // output offset in 64-bit DMA beats
     input conf_done;
     input dma_read_ctrl_ready;
     output dma_read_ctrl_valid;
@@ -77,7 +74,9 @@ module sqr_bambu_basic_dma64 (
         .start_port(conf_done),
         .done_port(c_done),
         /* <<--core-conf-map-->> */
-        .size(conf_info_size),
+        .len(conf_info_len),
+        .base_in(conf_info_base_in),
+        .base_out(conf_info_base_out),
         .dma_read_ctrl_TDATA(rc_tdata),
         .dma_read_ctrl_TVALID(dma_read_ctrl_valid),
         .dma_read_ctrl_TREADY(dma_read_ctrl_ready),
@@ -115,4 +114,5 @@ module sqr_bambu_basic_dma64 (
         else if (wbeat) wcnt <= wcnt + 1'b1;
     end
     assign debug = wcnt;
+
 endmodule
