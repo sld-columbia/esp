@@ -94,7 +94,47 @@ cd esp/accelerators/third-party/GT_VORTEX/vortex
 source ./ci/toolchain_env.sh
 ```
 
-2. Build ESP Linux and stage artifacts.
+2. Configure an SoC that contains a Vortex tile.
+
+The `gt_vortex_rtl-app` target only exists when the current SoC configuration
+actually instantiates a GT_VORTEX accelerator. `utils/make/accelerators.mk`
+derives the accelerator list from the `TILE_*` entries of the active
+configuration, so on an SoC without one, make reports
+
+```text
+make: *** No rule to make target 'gt_vortex_rtl-app'.  Stop.
+```
+
+Select a Vortex tile with `make esp-xconfig`, or headlessly by editing
+`.esp_config` and regenerating. Accelerator tiles take the form
+
+```text
+TILE_<y>_<x> = <id> acc <NAME> <point-to-point> <has_l2> <has_dvfs> <vendor>
+```
+
+so turning the empty tile of the stock 2x2 configuration into a Vortex tile
+means replacing
+
+```text
+TILE_1_0 = 2 empty empty
+```
+
+with
+
+```text
+TILE_1_0 = 2 acc GT_VORTEX 0 0 0 GATech
+```
+
+and then running `make esp-config`.
+
+Two further conditions apply, and failing either removes the target again with
+the same message:
+
+* The CPU must be RISC-V. Vortex software is not built for Leon3.
+* `CONFIG_DMA_NOC_WIDTH` must appear in
+  `accelerators/third-party/GT_VORTEX/GT_VORTEX.dma_widths`.
+
+3. Build ESP Linux and stage artifacts.
 
 ```bash
 cd esp/socs/<soc-name>
@@ -134,7 +174,7 @@ make CONFIGS="-DESP_GT_VORTEX_NUM_CORES=<C> -DESP_GT_VORTEX_NUM_WARPS=<W> -DESP_
 
 For per-test/manual kernel builds, use the same `CONFIGS` flags when running `make kernel.vxbin`.
 
-3. Run on Ariane Linux image.
+4. Run on Ariane Linux image.
 
 ```bash
 vortex-regression <TESTNAME>

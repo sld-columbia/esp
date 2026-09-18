@@ -55,7 +55,14 @@ endif
 
 ### Options for Vivado batch mode ###
 VIVADO_BATCH_OPT = -mode batch -quiet -notrace
+# Number of parallel Vivado runs. Safe to raise: each run is its own process.
 VIVADO_JOBS ?= 32
+# Worker threads inside a single Vivado process, via general.maxThreads. This
+# is not the same knob as VIVADO_JOBS and does not scale the same way: AMD
+# documents no benefit past 8 for timing analysis, and Vivado 2023.2 can
+# segfault in the parallel STA engine at higher values. Keep it at Vivado's
+# own default unless you have a reason not to.
+VIVADO_MAX_THREADS ?= 8
 VIVADO_TRUE_VALUES := true TRUE 1 yes YES
 VIVADO_ENABLE_ALL_OPTIMIZATIONS ?= 0
 VIVADO_SYNTH_RETIMING ?=
@@ -479,7 +486,7 @@ vivado/syn.tcl: vivado
 	@echo "open_project $(DESIGN).xpr" > $@
 	@echo "update_ip_catalog" >> $@
 	@echo "update_compile_order -fileset sources_1" >> $@
-	@echo "set_param general.maxThreads $(VIVADO_JOBS)" >> $@
+	@echo "set_param general.maxThreads $(VIVADO_MAX_THREADS)" >> $@
 	@echo "reset_run impl_1" >> $@
 	@echo "reset_run synth_1" >> $@
 #	@echo "synth_design -rtl -name rtl_1" >> $@
@@ -508,7 +515,7 @@ vivado/syn_emu.tcl: vivado
 	@echo "open_project $(DESIGN)-chip-emu.xpr" > $@
 	@echo "update_ip_catalog" >> $@
 	@echo "update_compile_order -fileset sources_1" >> $@
-	@echo "set_param general.maxThreads $(VIVADO_JOBS)" >> $@
+	@echo "set_param general.maxThreads $(VIVADO_MAX_THREADS)" >> $@
 	@echo "reset_run impl_1" >> $@
 	@echo "reset_run synth_1" >> $@
 #	@echo "synth_design -rtl -name rtl_1" >> $@

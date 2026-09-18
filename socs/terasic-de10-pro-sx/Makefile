@@ -47,7 +47,7 @@ QUARTUS_HPS_BOOTLOADER ?= ../local/boot/u-boot-spl-dtb.hex
 QUARTUS_EXTRA_RTL_SRCS += $(wildcard $(ESP_ROOT)/rtl/peripherals/fan/*.v)
 
 DTC ?= dtc
-HPS_DTS ?= hps/devicetree/socfpga_stratix10_de10_pro.dts
+HPS_DTS ?= $(ESP_ROOT)/utils/scripts/hps/devicetree/socfpga_stratix10_de10_pro.dts
 HPS_DTB ?= local/boot/socfpga_stratix10_de10_pro.dtb
 
 HPS_BOOT_SCRIPT ?= $(ESP_ROOT)/utils/scripts/hps/build_boot_artifacts.sh
@@ -59,7 +59,7 @@ HPS_BOOT_MANIFEST ?= $(HPS_BOOT_OUT)/hps-boot-artifacts.txt
 HPS_BOOT_UBOOT_REPO ?= https://github.com/altera-fpga/u-boot-socfpga.git
 HPS_BOOT_UBOOT_REF ?= rel_socfpga_v2021.01_21.10.01_pr
 HPS_BOOT_UBOOT_DEFCONFIG ?= socfpga_stratix10_atf_defconfig
-HPS_BOOT_UBOOT_OVERLAY ?= $(DESIGN_PATH)/hps/boot/u-boot-overlay
+HPS_BOOT_UBOOT_OVERLAY ?= $(ESP_ROOT)/utils/scripts/hps/boot/u-boot-overlay
 HPS_BOOT_ATF_REPO ?= https://github.com/altera-fpga/arm-trusted-firmware.git
 HPS_BOOT_ATF_REF ?= rel_socfpga_v2.4.1_21.10.01_pr
 HPS_BOOT_ATF_PLAT ?= stratix10

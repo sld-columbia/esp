@@ -108,7 +108,7 @@ zynq/
 sdf_dco.list
 genus/
 
+ttyV0
+
 terasic-de10-pro-sx/quartus/
-terasic-de10-pro-sx/local/hps-boot/
-terasic-de10-pro-sx/local/boot/*
-!terasic-de10-pro-sx/local/boot/.gitignore
+terasic-de10-pro-sx/local/

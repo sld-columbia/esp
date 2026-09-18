@@ -27,6 +27,40 @@ BUILDROOT_PATCH=${ESP_ROOT}/utils/toolchain/python-patches/python-numpy.patch
 
 DEFAULT_TARGET_DIR="/home/${USER}/riscv"
 
+# Buildroot's bundled fakeroot 1.20.2 compiles on glibc >= 2.33 but cannot
+# intercept mknod() at runtime, because glibc dropped __xmknod(). The rootfs
+# step below swaps in the host's fakeroot instead, so it has to exist. Check
+# now rather than after an hour of building.
+# Never let this probe abort the script: it runs under set -e. Try glibc's own
+# interface first; not every ldd accepts --version, and the banner wording
+# differs between distributions. If the version cannot be determined, skip the
+# check rather than guess.
+detect_glibc_version () {
+    local out
+    out=$(getconf GNU_LIBC_VERSION 2>/dev/null) || out=""
+    if [ -z "$out" ]; then
+        out=$(ldd --version 2>/dev/null | head -1) || out=""
+    fi
+    if [ -z "$out" ]; then
+        out=$(python3 -c 'import platform; print(platform.libc_ver()[1])' 2>/dev/null) || out=""
+    fi
+    printf '%s' "$out" | grep -oE '[0-9]+\.[0-9]+' | tail -1
+}
+GLIBC_VER=$(detect_glibc_version) || true
+GLIBC_VER=${GLIBC_VER:-}
+if [ -n "${GLIBC_VER}" ] && \
+   [ "$(printf '%s\n' "2.33" "${GLIBC_VER}" | sort -V | head -1)" = "2.33" ] && \
+   [ ! -x /usr/bin/fakeroot ]; then
+    echo ""
+    echo "*** glibc ${GLIBC_VER} detected but no system fakeroot found.   ***"
+    echo "*** Buildroot's fakeroot 1.20.2 cannot intercept mknod() on     ***"
+    echo "*** glibc >= 2.33. Please install fakeroot and re-run:          ***"
+    echo "***   Ubuntu/Debian: sudo apt-get install fakeroot              ***"
+    echo "***   RHEL/AlmaLinux: sudo dnf install fakeroot (needs EPEL)    ***"
+    echo ""
+    exit 1
+fi
+
 # Helper functions
 yesno () {
     while true; do
@@ -361,8 +395,7 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
     # removed __xmknod(). We must swap it with the system fakeroot BEFORE the
     # rootfs step. To do this: build fakeroot first, swap if needed, then
     # continue the full build.
-    GLIBC_VER=$(ldd --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+$')
-    if [ "$(printf '%s\n' "2.33" "$GLIBC_VER" | sort -V | head -1)" = "2.33" ]; then
+    if [ -n "$GLIBC_VER" ] && [ "$(printf '%s\n' "2.33" "$GLIBC_VER" | sort -V | head -1)" = "2.33" ]; then
         # glibc >= 2.33: build fakeroot, then swap before full build
         make host-fakeroot -j ${NTHREADS}
         if [ -x /usr/bin/fakeroot ]; then

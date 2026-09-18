@@ -13,6 +13,12 @@ NCLOGOPT += -nocopyright
 NCLOGOPT += -linedebug
 ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 NCLOGOPT += -DEFINE XILINX_FPGA
+else ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
+NCLOGOPT += -DEFINE FPGA_TARGET_ALTERA
+# See the note in utils/make/modelsim.mk: XILINX_FPGA selects the FPGA cache
+# memories, so an Intel target needs it too. Without it the caches silently
+# fall back to their ASIC-style implementation.
+NCLOGOPT += -DEFINE XILINX_FPGA
 endif
 NCLOGOPT += $(GT_VORTEX_XCELIUM_DEFINES)
 NCLOGOPT += $(INCDIR_INCISIVE)

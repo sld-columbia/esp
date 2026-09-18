@@ -27,6 +27,8 @@ programming targets from the selected directory.
 | `epochs0-gf12` | EPOCHS-0 GlobalFoundries 12LP project |
 
 The board or technology wrapper normally lives in `top.vhd` and instantiates
-the ESP tile array from `rtl/tiles/esp.vhd`. Default ESP configurations are
+the ESP tile array from `rtl/tiles/esp.vhd`. Intel boards additionally have a
+Quartus board shell under `rtl/socs/<board>`, which instantiates `top.vhd`
+alongside the HPS and other board-level hard IP. Default ESP configurations are
 stored in `socs/defconfig` and selected through the `BOARD` value in each local
 Makefile.

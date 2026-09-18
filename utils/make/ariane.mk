@@ -8,15 +8,13 @@ RISCV_TESTS = $(SOFT)/riscv-tests
 RISCV_PK = $(SOFT)/riscv-pk
 OPENSBI = $(SOFT)/opensbi
 
-soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/prom.txt $(SOFT_BUILD)/prom.dump $(SOFT_BUILD)/prom.map $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/ram.vhx
+soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/prom.txt $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/ram.vhx
 
 soft-clean:
 	$(QUIET_CLEAN)$(RM)			\
 		$(SOFT_BUILD)/prom.srec		\
 		$(SOFT_BUILD)/ram.srec		\
 		$(SOFT_BUILD)/prom.exe		\
-		$(SOFT_BUILD)/prom.map		\
-		$(SOFT_BUILD)/prom.dump		\
 		$(SOFT_BUILD)/prom.txt		\
 		$(SOFT_BUILD)/systest.exe	\
 		$(SOFT_BUILD)/prom.bin		\
@@ -63,7 +61,7 @@ $(SOFT_BUILD)/uart.o: $(BOOTROM_PATH)/uart.c $(ESP_CFG_BUILD)/esplink.h
 		-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		-c $< -o $@
 
-$(SOFT_BUILD)/prom.exe $(SOFT_BUILD)/prom.map: $(SOFT_BUILD)/startup.o $(SOFT_BUILD)/uart.o $(SOFT_BUILD)/main.o $(BOOTROM_PATH)/linker.lds
+$(SOFT_BUILD)/prom.exe: $(SOFT_BUILD)/startup.o $(SOFT_BUILD)/uart.o $(SOFT_BUILD)/main.o $(BOOTROM_PATH)/linker.lds
 	@mkdir -p $(SOFT_BUILD)
 	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc \
 		-Os \
@@ -72,7 +70,6 @@ $(SOFT_BUILD)/prom.exe $(SOFT_BUILD)/prom.map: $(SOFT_BUILD)/startup.o $(SOFT_BU
 		-I$(BOOTROM_PATH) \
 		-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		-nostdlib -nodefaultlibs -nostartfiles \
-		-Wl,-Map,$(SOFT_BUILD)/prom.map \
 		-T$(BOOTROM_PATH)/linker.lds \
 		$(SOFT_BUILD)/startup.o $(SOFT_BUILD)/uart.o $(SOFT_BUILD)/main.o \
 		-o $(SOFT_BUILD)/prom.exe
@@ -85,16 +82,9 @@ $(SOFT_BUILD)/prom.bin: $(SOFT_BUILD)/prom.exe
 	@mkdir -p $(SOFT_BUILD)
 	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary $< $@
 
-$(SOFT_BUILD)/prom.dump: $(SOFT_BUILD)/prom.exe
+$(SOFT_BUILD)/prom.txt: $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin
 	@mkdir -p $(SOFT_BUILD)
-	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objdump -D -M no-aliases,numeric $< > $@
-
-$(SOFT_BUILD)/prom.txt: $(SOFT_BUILD)/prom.bin
-	@mkdir -p $(SOFT_BUILD)
-	@bytes=$$(wc -c < $<); \
-	words=$$((bytes / 4)); \
-	printf "%08x\n" $$words > $@; \
-	xxd -p -c4 $< >> $@
+	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt.py $(CPU_ARCH)
 
 
 RISCV_CFLAGS  = -I$(RISCV_TESTS)/env

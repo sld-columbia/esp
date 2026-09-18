@@ -6,7 +6,12 @@ ifeq ($(UART_PORT),)
 $(error Please define both UART_IP and UART_PORT or neither)
 endif
 
+# Not a real file target: the symlink socat leaves behind outlives the pty it
+# points at, so treating it as up to date makes the next run hand minicom a
+# dead device. Always tear down the stale link and start a fresh socat.
+.PHONY: ttyV0
 ttyV0:
+	@rm -f ttyV0
 	@socat pty,link=ttyV0,waitslave,mode=777 tcp:$(UART_IP):$(UART_PORT) &
 	@sleep 1
 

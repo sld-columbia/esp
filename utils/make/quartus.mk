@@ -14,8 +14,8 @@ QUARTUS_CONSTRAINT_DIR ?= ../../../constraints/$(BOARD)
 QUARTUS_CONSTRAINT_DIR_ABS = $(ESP_ROOT)/constraints/$(BOARD)
 QUARTUS_PROJECT_TCL ?= project.tcl
 QUARTUS_QSYS_TCL ?= qsys_top.tcl
-QUARTUS_FPGA_DIR ?= ../fpga
-QUARTUS_PROGRAM_SCRIPT ?= ../fpga/program_sof.sh
+QUARTUS_FPGA_DIR ?= ../../../rtl/socs/$(BOARD)
+QUARTUS_PROGRAM_SCRIPT ?= $(ESP_ROOT)/utils/scripts/quartus/program_sof.sh
 QUARTUS_HPS_BOOTLOADER ?= ../local/boot/u-boot-spl-dtb.hex
 
 QUARTUS_OUTPUT_DIR ?= output_files
@@ -36,7 +36,7 @@ QUARTUS_QSF_PATH = $(QUARTUS_DIR)/$(QUARTUS_QSF)
 QUARTUS_QSYS_PATH = $(QUARTUS_DIR)/$(QUARTUS_QSYS)
 QUARTUS_PROJECT_TCL_PATH = $(QUARTUS_CONSTRAINT_DIR_ABS)/$(QUARTUS_PROJECT_TCL)
 QUARTUS_QSYS_TCL_PATH = $(QUARTUS_CONSTRAINT_DIR_ABS)/$(QUARTUS_QSYS_TCL)
-QUARTUS_PROGRAM_SCRIPT_PATH = $(QUARTUS_DIR)/$(QUARTUS_PROGRAM_SCRIPT)
+QUARTUS_PROGRAM_SCRIPT_PATH = $(QUARTUS_PROGRAM_SCRIPT)
 QUARTUS_HPS_BOOTLOADER_PATH = $(QUARTUS_DIR)/$(QUARTUS_HPS_BOOTLOADER)
 QUARTUS_SOF_PATH = $(QUARTUS_DIR)/$(QUARTUS_SOF)
 QUARTUS_HPS_SOF_PATH = $(QUARTUS_DIR)/$(QUARTUS_HPS_SOF)
@@ -62,6 +62,14 @@ INTEL_JTAG_SERVER_ADDR = $(if $(findstring :,$(FPGA_HOST)),$(FPGA_HOST),$(FPGA_H
 # which their setup scripts export but do not add to PATH.
 QSYS_GENERATE ?= $(firstword $(shell command -v qsys-generate 2>/dev/null) $(wildcard $(QSYS_ROOTDIR)/qsys-generate))
 QSYS_SCRIPT   ?= $(firstword $(shell command -v qsys-script 2>/dev/null) $(wildcard $(QSYS_ROOTDIR)/qsys-script))
+
+# system-console ships under the Quartus tree but in neither of the bin
+# directories Intel's setup scripts put on PATH, so derive it from quartus_sh.
+QUARTUS_BIN_DIR := $(dir $(shell command -v quartus_sh 2>/dev/null))
+SYSTEM_CONSOLE ?= $(firstword \
+	$(shell command -v system-console 2>/dev/null) \
+	$(wildcard $(QUARTUS_BIN_DIR)../sopc_builder/bin/system-console) \
+	$(wildcard $(QUARTUS_BIN_DIR)../../syscon/bin/system-console))
 
 ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
 
@@ -96,8 +104,8 @@ quartus-check-program-tools:
 	elif ! command -v jtagconfig >/dev/null 2>&1; then \
 		echo $(SPACES)"ERROR: jtagconfig not found in PATH"; \
 		false; \
-	elif ! command -v system-console >/dev/null 2>&1; then \
-		echo $(SPACES)"ERROR: system-console not found in PATH"; \
+	elif test -z "$(SYSTEM_CONSOLE)"; then \
+		echo $(SPACES)"ERROR: system-console not found in PATH, or under the Quartus installation"; \
 		false; \
 	fi
 
@@ -233,6 +241,7 @@ quartus-program quartus-prog-fpga: quartus-check-program-tools
 	@test -r "$(QUARTUS_PROGRAM_SCRIPT_PATH)" || { echo $(SPACES)"ERROR: programming script not found: $(QUARTUS_PROGRAM_SCRIPT_PATH)"; false; }
 	@test -r "$(QUARTUS_HPS_SOF_PATH)" || { echo $(SPACES)"ERROR: HPS SOF not found: $(QUARTUS_HPS_SOF_PATH). Run 'make quartus-syn' first."; false; }
 	@BOARD_CABLE="$(BOARD_CABLE)" \
+		SYSTEM_CONSOLE="$(SYSTEM_CONSOLE)" \
 		BOARD_CABLE_MATCH="$(BOARD_CABLE_MATCH)" \
 		BOARD_DEVICE_INDEX="$(BOARD_DEVICE_INDEX)" \
 		INTEL_ISSP_SERVICE_MATCH="$(INTEL_ISSP_SERVICE_MATCH)" \

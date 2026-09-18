@@ -149,10 +149,13 @@ QUARTUS_AUTO_SRCS ?= $(DESIGN_PATH)/quartus/$(QUARTUS_AUTO_SRCS_NAME)
 QUARTUS_INCDIR_MANIFEST ?= $(RTL_CFG_BUILD)/quartus_incdirs.list
 QUARTUS_RTL_MANIFEST ?= $(RTL_CFG_BUILD)/quartus_rtl_sources.list
 QUARTUS_EXTRA_RTL_SRCS += $(wildcard $(ESP_ROOT)/rtl/sockets/adapters/intel/hps_h2f_axi_to_esp_ahb_master.vhd)
-QUARTUS_EXTRA_RTL_SRCS += $(wildcard $(DESIGN_PATH)/fpga/ghrd_s10_top.v)
+QUARTUS_EXTRA_RTL_SRCS += $(wildcard $(ESP_ROOT)/rtl/socs/$(BOARD)/*.v)
 
 # ESP's RTL caches use the Xilinx-compatible BRAM module interface. Intel
 # targets provide board-family implementations of those modules under tech/.
+# XILINX_FPGA is intentional on an Intel target: the RTL caches read it to
+# select the FPGA memory implementation over the ASIC-style one. See the note
+# in utils/make/modelsim.mk.
 QUARTUS_VERILOG_DEFINES := QUARTUS=1 SYNTHESIS=1 FPGA_TARGET_ALTERA=1 XILINX_FPGA=1
 ifeq ("$(CPU_ARCH)","ibex")
 QUARTUS_VERILOG_DEFINES += WT_DCACHE=1

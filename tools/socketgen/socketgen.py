@@ -18,8 +18,9 @@ import re
 import math
 
 TOOLS_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-if TOOLS_ROOT not in sys.path:
-    sys.path.append(TOOLS_ROOT)
+VORTEX_TOOLS = os.path.join(TOOLS_ROOT, "vortex")
+if VORTEX_TOOLS not in sys.path:
+    sys.path.append(VORTEX_TOOLS)
 
 import gt_vortex_config as gtv
 

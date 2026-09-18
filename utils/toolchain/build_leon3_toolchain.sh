@@ -57,8 +57,11 @@ patch_buildroot_host_fakeroot () {
     # glibc interfaces that are no longer exposed through public headers.
     command ${MAKE_CMD} host-fakeroot-patch || return 0
 
+    # find exits non-zero if output/build is absent. The emptiness test below
+    # already covers "not found", so do not let set -e pre-empt it.
     fakeroot_src=$(find output/build -maxdepth 2 -type f \
-        -path '*/host-fakeroot-*/libfakeroot.c' -print -quit)
+        -path '*/host-fakeroot-*/libfakeroot.c' -print -quit 2>/dev/null) \
+        || fakeroot_src=""
     if [ -z "${fakeroot_src}" ]; then
         # host-fakeroot is not part of this buildroot configuration
         return 0

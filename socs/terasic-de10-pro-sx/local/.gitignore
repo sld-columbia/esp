@@ -1,8 +1,0 @@
-# Build outputs only. Keep this file and boot/.gitignore, ignore everything
-# else. Do not re-include directories with "!*/": that makes git descend into
-# downloaded source trees, whose own .gitignore files then re-include content.
-*
-!.gitignore
-!boot/
-boot/*
-!boot/.gitignore

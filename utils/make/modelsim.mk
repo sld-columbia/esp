@@ -13,18 +13,18 @@ ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 VLOGOPT += +define+XILINX_FPGA
 else ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
 VLOGOPT += +define+FPGA_TARGET_ALTERA
+# Not a copy-paste error. XILINX_FPGA is read only by the RTL caches
+# (esp-caches l2_core.sv and llc_core.sv), where it selects the FPGA memory
+# implementation. Without it the caches fall back to their ASIC-style
+# memories. It gates memory style rather than vendor primitives, so Intel
+# targets need it too.
 VLOGOPT += +define+XILINX_FPGA
 VLOGOPT += +define+NVDLA_FPGA_TARGET
 endif
 VLOGOPT += $(INCDIR_MODELSIM)
 
 VLOGOPT += +define+FPU_FPNEW
-
-VLOGOPT += +define+SYNTHESIS
-
 VLOGOPT += +define+XLEN_64
-
-VLOGOPT += $(GT_VORTEX_MODELSIM_DEFINES)
 
 VSIMOPT += -suppress 3812
 VSIMOPT += -suppress 2697
@@ -44,6 +44,14 @@ SIM_LIBDIR ?= $(abspath $(RTL_CFG_BUILD)/sim_libs)
 ACC_TECH_ROOT := $(ESP_ROOT)/tech/$(TECHLIB)/acc
 ACC_TECH_PRESENT := $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_ROOT)/*)),$(RTL_ACC)))
 THIRDPARTY_LIBS = $(THIRDPARTY_ACC)
+
+# Defines that apply only to a given third-party library, never to ESP's own
+# RTL. SYNTHESIS is Vortex's own switch: it drops the Verilator-specific code
+# so the design elaborates under our simulators. Applying it to the whole
+# compile would also strip simulation-only constructs from ESP RTL, so it is
+# confined to the Vortex library here.
+TP_GT_VORTEX_MODELSIM_DEFS := +define+SYNTHESIS
+TP_GT_VORTEX_MODELSIM_DEFS += $(GT_VORTEX_MODELSIM_DEFINES)
 ACC_LIBS := $(ACC_TECH_PRESENT) $(THIRDPARTY_LIBS)
 ACC_LIB_OPT := $(foreach lib,$(ACC_LIBS),-L $(lib))
 THIRDPARTY_SIM_VHDL_PKGS = $(filter $(THIRDPARTY_PATH)/%,$(SIM_VHDL_PKGS))
@@ -226,6 +234,9 @@ modelsim-thirdparty-$(1): modelsim-libs $(RTL_CFG_BUILD)/check_all_srcs.old $(PK
 	done; \
 	\
 	rm -f $$(TP_$(1)_LIB).rtl.f; \
+	for opt in $$(TP_$(1)_MODELSIM_DEFS); do \
+		echo "$$$$opt" >> $$(TP_$(1)_LIB).rtl.f; \
+	done; \
 	if test -f "$$(TP_$(1)_WRAPPER)"; then \
 		echo "$$(TP_$(1)_WRAPPER)" >> $$(TP_$(1)_LIB).rtl.f; \
 	fi; \

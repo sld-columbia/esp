@@ -3,10 +3,9 @@
 This directory contains ESP board support for the Terasic DE10-Pro SX with an
 Intel/Altera Stratix 10 SX 280 FPGA (`1SX280HU2F50E1VG`).
 
-Quartus Prime Pro 19.4 is the validated FPGA tool version. HPS boot-artifact
-generation is validated with Intel SoC EDS 19.1. Newer tool versions may work,
-but the tracked Tcl, SDC, Verilog, and Platform Designer generation inputs are
-maintained against those versions.
+Quartus Prime Pro 19.4 is the validated FPGA tool version. Newer tool versions
+may work, but the tracked Tcl, SDC, Verilog, and Platform Designer generation
+inputs are maintained against that version.
 
 The port supports Quartus synthesis and programming, remote JTAG programming,
 ESP payload loading through HPS Linux, Ariane bare-metal and Linux payloads,
@@ -23,16 +22,16 @@ Run ESP board targets from this directory:
 cd socs/terasic-de10-pro-sx
 ```
 
-Use a shell configured for Quartus when running Quartus targets. Use the SoC EDS
-19.1 embedded command shell when building HPS boot artifacts.
+Use a shell configured for Quartus when running Quartus targets. The HPS boot
+targets need only the tools listed below on `PATH`; they do not use the Intel
+SoC EDS embedded command shell.
 
 ### 1. Install the Required Tools (First Time per Build Host)
 
 You need:
 
 - Quartus Prime Pro 19.4
-- Intel SoC EDS 19.1 for `make hps`
-- `bison`, `dtc`, `flex`, `git`, `m4`, `make`, and an AArch64 Linux cross compiler in `PATH`
+- `bison`, `dtc`, `flex`, `git`, `m4`, `make`, `patch`, and an AArch64 Linux cross compiler in `PATH`
 - Terasic's stock DE10-Pro SX Linux SD-card image
 - native `gcc` on HPS Linux for the ESP HPS utility binaries
 
@@ -102,7 +101,8 @@ Linux:
 
 ```sh
 ROOT_PARTITION=/path/to/mounted/root-partition
-sudo cp hps/Makefile hps/esp_peek.c hps/esp_load_bootrom_edcl.c \
+sudo cp $ESP_ROOT/tools/hps/Makefile $ESP_ROOT/tools/hps/esp_peek.c \
+  $ESP_ROOT/tools/hps/esp_load_bootrom_edcl.c \
   "$ROOT_PARTITION/home/terasic"/
 sync
 ```
@@ -204,7 +204,7 @@ Quartus project.
 `make hps` rebuilds the generated boot files even when copies already exist,
 and removes stale outputs before invoking the boot-artifact flow. The target
 clones the pinned Altera U-Boot and TF-A repositories under `local/hps-boot/`,
-copies the DE10-Pro SX U-Boot overlay from `hps/boot/`, builds TF-A BL31,
+copies the DE10-Pro SX U-Boot overlay from `utils/scripts/hps/boot/`, builds TF-A BL31,
 builds U-Boot and SPL, and writes the generated files under `local/boot/`.
 
 After `make hps-toolchain`, the HPS boot targets automatically prefer the local
@@ -334,14 +334,13 @@ manually.
 | `top.vhd` | ESP wrapper and HPS FPGA-to-SDRAM connection |
 | `fpga/` | Quartus top-level wrapper, programming scripts, and board-only RTL |
 | `hps/` | HPS-side ESP image loader and register access utility |
-| `hps/boot/` | Board-specific U-Boot overlay used by `make hps` |
-| `hps/devicetree/` | Standalone GPL DTS source for the boot DTB |
 | `local/boot/` | Ignored output directory for generated HPS boot files |
 | `quartus/` | Ignored generated Quartus project output |
 
 ## Hardware Integration Notes
 
-`top.vhd` is the canonical ESP wrapper. `fpga/ghrd_s10_top.v` is the Quartus
+`top.vhd` is the canonical ESP wrapper. `rtl/socs/terasic-de10-pro-sx/ghrd_s10_top.v`
+is the Quartus
 board shell that instantiates ESP, HPS, DDR4A, and the fan controller. The
 generated Quartus project consumes both through generated source assignments.
 Shared Intel bridge RTL remains under `rtl/sockets/adapters/intel` because
@@ -377,7 +376,8 @@ loader.
 The Quartus top level also instantiates the Terasic MAX6650/MAX6651 fan-control
 logic under `$ESP_ROOT/rtl/peripherals/fan`. It is an autonomous I2C master
 and is not exposed on
-the ESP bus. The default target speed is 2200 RPM in `fpga/ghrd_s10_top.v`.
+the ESP bus. The default target speed is 2200 RPM in
+`rtl/socs/terasic-de10-pro-sx/ghrd_s10_top.v`.
 
 ## Known Issue
 

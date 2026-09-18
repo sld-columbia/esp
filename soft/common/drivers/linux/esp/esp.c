@@ -66,16 +66,13 @@ static irqreturn_t esp_irq(int irq, void *dev)
     u32 status, error, done;
 
     if (esp->third_party) {
-        status = ioread32be(esp->iomem + 0x58);
-	    error = 0;
-	    done = !(status & BIT(0));
-        //printk(KERN_INFO "Third_Party\n");
-    }
-    else {
+        status = ioread32be(esp->iomem + THIRD_PARTY_STATUS_REG);
+        error  = 0;
+        done   = !(status & THIRD_PARTY_STATUS_MASK_BUSY);
+    } else {
         status = ioread32be(esp->iomem + STATUS_REG);
-        error = status & STATUS_MASK_ERR;
-        done = status & STATUS_MASK_DONE;
-        //printk(KERN_INFO "Not Third_Party\n");
+        error  = status & STATUS_MASK_ERR;
+        done   = status & STATUS_MASK_DONE;
     }
 
     /* printk(KERN_INFO "IRQ: %08x\n", status); */
