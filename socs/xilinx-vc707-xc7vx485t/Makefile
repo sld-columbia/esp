@@ -7,7 +7,7 @@
 all: help
 
 ### Global design variables ###
-DESIGN_PATH = $(PWD)
+DESIGN_PATH = $(CURDIR)
 ESP_ROOT = $(realpath ../../)
 TECHLIB  = virtex7
 BOARD    = xilinx-vc707-xc7vx485t

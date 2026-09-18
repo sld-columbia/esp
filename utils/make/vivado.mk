@@ -18,7 +18,7 @@ endif
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 
 ACC_TECH_DIR   = $(ESP_ROOT)/tech/$(TECHLIB)/acc
-ACC_TECH_PRESENT = $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_DIR)/*)),$(RTL_ACC)))
+ACC_TECH_PRESENT = $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_DIR)/*)),$(RTL_ACC) $(BAMBUHLS_ACC)))
 THIRDPARTY_LIBS = $(THIRDPARTY_ACC)
 ACC_VHDL_SRCS  = $(filter $(foreach acc,$(ACC_TECH_PRESENT),$(ACC_TECH_DIR)/$(acc)/%),$(VHDL_SRCS))
 ACC_VLOG_SRCS  = $(filter $(foreach acc,$(ACC_TECH_PRESENT),$(ACC_TECH_DIR)/$(acc)/%),$(VLOG_SRCS))
@@ -90,7 +90,7 @@ endif
 		case "$$rtl" in \
 			$(ACC_TECH_DIR)/*) \
 				accname=$$(printf "%s\n" "$$rtl" | awk -F/ '{for(i=1;i<=NF;i++) if($$i=="acc"){print $$(i+1); exit}}'); \
-				case " $(RTL_ACC) " in *" $$accname "*) continue ;; esac ;; \
+				case " $(RTL_ACC) $(BAMBUHLS_ACC) " in *" $$accname "*) continue ;; esac ;; \
 		esac; \
 		echo "read_verilog -sv $$rtl" >> $@; \
 	done;
@@ -98,9 +98,9 @@ endif
 		for accdir in $(ACC_TECH_DIR)/*; do \
 			if test -d "$$accdir"; then \
 				accname=`basename "$$accdir"`; \
-				case " $(RTL_ACC) " in *" $$accname "*) ;; *) continue ;; esac; \
+				case " $(RTL_ACC) $(BAMBUHLS_ACC) " in *" $$accname "*) ;; *) continue ;; esac; \
 				acclib=$$accname; \
-				accsrc="$(ESP_ROOT)/accelerators/rtl/$$accname"; \
+				if test -d "$(ESP_ROOT)/accelerators/bambu_hls/$$accname"; then accsrc="$(ESP_ROOT)/accelerators/bambu_hls/$$accname"; else accsrc="$(ESP_ROOT)/accelerators/rtl/$$accname"; fi; \
 				incroot="$$accsrc/vlog_incdir"; \
 				echo "# Accelerator $$accname (library $$acclib)" >> $@; \
 				vendbn=$$(mktemp); vendbn_u=$$(mktemp); vendcmds=$$(mktemp); \
@@ -130,13 +130,13 @@ endif
 									+incdir+*) \
 										dirs=`printf "%s" "$$p" | sed 's/^+incdir+//; s/+/ /g'`; \
 										for d in $$dirs; do \
-											d="$(ESP_ROOT)/accelerators/rtl/$$accname/vendor/$$d"; \
+											d="$$accsrc/vendor/$$d"; \
 											echo "set_property include_dirs [concat {$$d} [get_property include_dirs [get_filesets sources_1]]] [get_filesets sources_1]" >> $@; \
 											echo "set_property include_dirs [concat {$$d} [get_property include_dirs [get_filesets sim_1]]] [get_filesets sim_1]" >> $@; \
 										done; \
 										continue ;; \
 								esac; \
-								f="$(ESP_ROOT)/accelerators/rtl/$$accname/vendor/$$p"; \
+								f="$$accsrc/vendor/$$p"; \
 								if test -f "$$f"; then \
 									echo "$$(basename "$$f")" >> $$vendbn; \
 									echo "read_verilog -library $$acclib $$svopt $$f" >> $$vendcmds; \
@@ -165,6 +165,9 @@ endif
 				echo "# Wrapper RTL from tech folder" >> $@; \
 				for rtl in `find "$$accdir" -type f \( -name "*.v" -o -name "*.sv" \)`; do \
 					echo "read_verilog -library $$acclib -sv $$rtl" >> $@; \
+				done; \
+				for memf in `find "$$accdir" -type f -name "*.mem"`; do \
+					echo "read_mem $$memf" >> $@; \
 				done; \
 			fi; \
 			done; \
@@ -494,7 +497,7 @@ vivado-syn: vivado-setup
 		rm -rf $(TOP).bit; \
 		ln -s $$bit; \
 	else \
-		echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
+		echo $(SPACES)"ERROR: bitstream not found; synthesis failed"; exit 1; \
 	fi; \
 
 vivado-syn-emu: vivado-setup-emu
