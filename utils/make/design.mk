@@ -104,7 +104,9 @@ TOP_VHDL_RTL_PKGS += $(EXTRA_TOP_VHDL_RTL_PKGS)
 TOP_VHDL_SIM_PKGS +=
 
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/accelerators.vhd
+ifeq ($(CONFIG_CACHE_EN),y)
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/caches.vhd
+endif
 TOP_VHDL_RTL_SRCS += $(wildcard $(DESIGN_PATH)/socketgen/noc_*.vhd)
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/tile_acc.vhd
 ifeq ($(filter $(TECHLIB),$(FPGALIBS)),)
@@ -130,9 +132,11 @@ endif
 # Testbench
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(SIMTOP).vhd
 
+ifeq ($(CONFIG_CACHE_EN),y)
 ifeq ($(TECH_TYPE),asic)
 ifneq ($(TECHLIB),inferred)
 TOP_VLOG_RTL_SRCS += $(DESIGN_PATH)/cache_def_mem_asic.sv
+endif
 endif
 endif
 

@@ -9,19 +9,42 @@ INCDIR += $(DESIGN_PATH)/$(ESP_CFG_BUILD)
 INCDIR += $(THIRDPARTY_INCDIR)
 INCDIR += $(ESP_ROOT)/rtl/caches/esp-caches/common/defs
 
+### Configuration-specific RTL exclusions ###
+CACHE_VHDL_PKG_EXCLUDES =
+CACHE_VHDL_SRC_EXCLUDES =
+CACHE_VLOG_EXCLUDES =
+TECHMAP_VLOG_EXCLUDES =
+
+ifneq ($(CONFIG_CACHE_EN),y)
+CACHE_VHDL_PKG_EXCLUDES += caches/gencaches.vhd
+CACHE_VHDL_SRC_EXCLUDES += caches/l2_wrapper.vhd
+CACHE_VHDL_SRC_EXCLUDES += caches/llc_wrapper.vhd
+CACHE_VHDL_SRC_EXCLUDES += caches/llc_wrapper_axi.vhd
+CACHE_VHDL_SRC_EXCLUDES += caches/l2_acc_wrapper.vhd
+CACHE_VHDL_SRC_EXCLUDES += caches/fifo_custom.vhd
+CACHE_VLOG_EXCLUDES += caches/esp-caches/%
+TECHMAP_VLOG_EXCLUDES += techmap/asic/mem/L2_SRAM_%
+TECHMAP_VLOG_EXCLUDES += techmap/asic/mem/LLC_SRAM_%
+endif
+
+ifneq ($(CPU_ARCH),ariane)
+TECHMAP_VLOG_EXCLUDES += techmap/asic/mem/L1_SRAM_SP.v
+TECHMAP_VLOG_EXCLUDES += techmap/asic/SyncSpRamBeNx64.sv
+endif
+
 ## VHDL Packages
 SIM_VHDL_PKGS += $(SOCKETGEN_VHDL_RTL_PKGS)
-SIM_VHDL_PKGS += $(foreach f, $(shell strings $(FLISTS)/vhdl_pkgs.flist), $(ESP_ROOT)/rtl/$(f))
+SIM_VHDL_PKGS += $(foreach f, $(filter-out $(CACHE_VHDL_PKG_EXCLUDES),$(shell strings $(FLISTS)/vhdl_pkgs.flist)), $(ESP_ROOT)/rtl/$(f))
 SIM_VHDL_PKGS += $(THIRDPARTY_VHDL_PKGS)
 SIM_VHDL_PKGS += $(TOP_VHDL_RTL_PKGS) $(TOP_VHDL_SIM_PKGS)
 
 VHDL_PKGS += $(SOCKETGEN_VHDL_RTL_PKGS)
-VHDL_PKGS += $(foreach f, $(shell strings $(FLISTS)/vhdl_pkgs.flist), $(if $(findstring rtl/sim, $(f)),, $(ESP_ROOT)/rtl/$(f)))
+VHDL_PKGS += $(foreach f, $(filter-out sim/% $(CACHE_VHDL_PKG_EXCLUDES),$(shell strings $(FLISTS)/vhdl_pkgs.flist)), $(ESP_ROOT)/rtl/$(f))
 VHDL_PKGS += $(THIRDPARTY_VHDL_PKGS)
 VHDL_PKGS += $(TOP_VHDL_RTL_PKGS)
 
 ## VHDL Source
-VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/vhdl.flist), $(ESP_ROOT)/rtl/$(f))
+VHDL_SRCS += $(foreach f, $(filter-out $(CACHE_VHDL_SRC_EXCLUDES),$(shell strings $(FLISTS)/vhdl.flist)), $(ESP_ROOT)/rtl/$(f))
 VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/cores_vhdl.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
 
 ifeq ($(TECHLIB), inferred)
@@ -60,15 +83,15 @@ RTL_TECH_FOLDERS = $(shell ls -d $(ESP_ROOT)/tech/$(TECHLIB)/*/)
 
 VLOG_SRCS += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/esp_global_sv.sv
 
-VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/vlog.flist), $(ESP_ROOT)/rtl/$(f))
+VLOG_SRCS += $(foreach f, $(filter-out $(CACHE_VLOG_EXCLUDES),$(shell strings $(FLISTS)/vlog.flist)), $(ESP_ROOT)/rtl/$(f))
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/cores_vlog.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
 
 ifeq ($(TECHLIB), inferred)
-VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+VLOG_SRCS += $(foreach f, $(filter-out $(TECHMAP_VLOG_EXCLUDES),$(shell strings $(FLISTS)/techmap_vlog.flist)), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
 else ifeq ($(TECH_TYPE), asic)
-VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/asic, $(f)), $(ESP_ROOT)/rtl/$(f),))
+VLOG_SRCS += $(foreach f, $(filter-out $(TECHMAP_VLOG_EXCLUDES),$(shell strings $(FLISTS)/techmap_vlog.flist)), $(if $(findstring techmap/asic, $(f)), $(ESP_ROOT)/rtl/$(f),))
 else
-VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+VLOG_SRCS += $(foreach f, $(filter-out $(TECHMAP_VLOG_EXCLUDES),$(shell strings $(FLISTS)/techmap_vlog.flist)), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
 endif
 
 ifeq ($(CONFIG_HAS_DVFS),y)
