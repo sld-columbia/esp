@@ -7,3 +7,9 @@ __pycache__
 _leon3_build
 _riscv_build
 _riscv32imc_build
+
+# Local accelerator validation campaigns and generated SoC work areas.
+/validation/
+/socs/dummy_*/
+/socs/xilinx-vc707-xc7vx485t/fpgas.sh
+/BAMBU_ESP_MANUAL_ACCELERATOR_*.md
