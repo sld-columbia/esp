@@ -75,7 +75,7 @@ architecture behavior of router is
 
   component lookahead_router_wrapper
     generic(
-      FlowControl : std_logic;
+      FlowControl : integer;
       Width       : integer;
       Ports       : std_logic_vector(4 downto 0);
       DEST_SIZE   : integer;
@@ -111,7 +111,7 @@ begin
 
   lookahead_router_wrapper_i: lookahead_router_wrapper
     generic map (
-      FlowControl => to_std_logic(flow_control),
+      FlowControl => flow_control,
       Width       => width,
       Ports       => Ports,
       DEST_SIZE   => DEST_SIZE,

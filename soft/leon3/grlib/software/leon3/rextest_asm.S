@@ -2,19 +2,19 @@
 
         .text
         .global rexfunc_none, rexfunc_nonel, rexfunc_add, rexfunc_sub
-        .global rexfunc_or, rexfunc_xor, rexfunc_andn, rexfunc_orn,
+        .global rexfunc_or, rexfunc_xor, rexfunc_andn, rexfunc_orn
         .global rexfunc_subcc_branch
         .global rexfunc_cmpr_branch, rexfunc_cmpi_branch
         .global rexfunc_addcci_branch, rexfunc_addcc_branch
         .global rexfunc_andcc_branch, rexfunc_orcc_branch
-        .global rexfunc_xorcc_branch, rexfunc_andncc_branch,
+        .global rexfunc_xorcc_branch, rexfunc_andncc_branch
         .global rexfunc_orncc_branch
         .global rexfunc_call, rexfunc_mov, get_g5
-        .global get_g6, rexfunc_sllr, rexfunc_slli, rexfunc_srlr, rexfunc_srli,
+        .global get_g6, rexfunc_sllr, rexfunc_slli, rexfunc_srlr, rexfunc_srli
         .global rexfunc_set32, rexfunc_set21, rexfunc_set21s
         .global rexfunc_one, rexfunc_setbit5
         .global rexfunc_setbit31, rexfunc_clrbit5, rexfunc_clrbit31
-        .global rexfunc_tstbit5, rexfunc_tstbit31, rexfunc_invbit5,
+        .global rexfunc_tstbit5, rexfunc_tstbit31, rexfunc_invbit5
         .global rexfunc_invbit31, rexfunc_masklo17
         .global rexfunc_ld, rexfunc_ldi0, rexfunc_ldo0, rexfunc_ldinc
         .global rexfunc_ldub, rexfunc_lduh, rexfunc_ldd

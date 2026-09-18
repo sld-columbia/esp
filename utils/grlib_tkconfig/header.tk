@@ -44,17 +44,26 @@ set CONSTANT_M 2
 set CONSTANT_N 0
 set CONSTANT_E 4
 
+# Batch configuration sources this file with Tcl rather than Tk.  Keep the
+# top-level widget setup out of that path; procedures containing Tk commands
+# are safe because batch configuration does not call them.
+if {![info exists grlib_tkconfig_headless]} {
+	set grlib_tkconfig_headless 0
+}
+
 #
 # Create a "reference" object to steal colors from.
 #
-button .ref
+if {!$grlib_tkconfig_headless} {
+	button .ref
 
-#
-# On monochrome displays, -disabledforeground is blank by default; that's
-# bad.  Fill it with -foreground instead.
-#
-if { [cget .ref -disabledforeground] == "" } {
-	.ref configure -disabledforeground [cget .ref -foreground]
+	#
+	# On monochrome displays, -disabledforeground is blank by default; that's
+	# bad.  Fill it with -foreground instead.
+	#
+	if { [cget .ref -disabledforeground] == "" } {
+		.ref configure -disabledforeground [cget .ref -foreground]
+	}
 }
 
 
@@ -110,7 +119,9 @@ proc load_configfile { w title func } {
 	wm geometry $w +$winx+$winy
 }
 
-bind all <Alt-q> {maybe_exit .maybe}
+if {!$grlib_tkconfig_headless} {
+	bind all <Alt-q> {maybe_exit .maybe}
+}
 
 proc maybe_exit { w } {
 	catch {destroy $w}
@@ -553,8 +564,10 @@ proc dohelp {w var parent}  {
 	wm maxsize $w [winfo width $w] $sizy
 }
 
-bind all <Alt-s> { catch {exec cp -f .grlib_config .grlib_config.old}; \
-		writeconfig .grlib_config grlib_config.h; wrapup .wrap }
+if {!$grlib_tkconfig_headless} {
+	bind all <Alt-s> { catch {exec cp -f .grlib_config .grlib_config.old}; \
+			writeconfig .grlib_config grlib_config.h; wrapup .wrap }
+}
 
 proc wrapup {w }  {
 	catch {destroy $w}
@@ -635,10 +648,12 @@ proc update_define {first last allow_update} {
 # buttons which we will stick down at the bottom.
 #
 
-frame .f0 
-frame .f0.left
-frame .f0.middle
-frame .f0.right
+if {!$grlib_tkconfig_headless} {
+	frame .f0
+	frame .f0.left
+	frame .f0.middle
+	frame .f0.right
+}
 
 set active_menus [list]
 set processed_top_level 0

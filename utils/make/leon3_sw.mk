@@ -93,13 +93,15 @@ $(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
 		python3 $(ESP_ROOT)/utils/scripts/srec/modify_srec.py $@ $(SIM_DATA_FILES) $(START_ADDRS);\
 	fi
 
-$(SOFT_BUILD)/ram.vhx: $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/vhx.bin
-
-$(SOFT_BUILD)/vhx.bin: $(TEST_PROGRAM)
+$(SOFT_BUILD)/ram.vhx: $(SOFT_BUILD)/systest.bin
 	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt_vhx.py 32 leon3
 
+$(SOFT_BUILD)/vhx.bin: $(SOFT_BUILD)/ram.vhx
+	@touch $@
+
 leon3-soft-clean:
-	$(QUIET_CLEAN)$(RM) $(OFILES) $(SOFT_BUILD)/lib3tests.a $(SOFT_BUILD)/prom.o
+	$(QUIET_CLEAN)$(RM) $(OFILES) $(SOFT_BUILD)/lib3tests.a $(SOFT_BUILD)/prom.o \
+		$(SOFT_BUILD)/ram.vhx $(SOFT_BUILD)/vhx.bin
 
 leon3-soft-distclean: soft-clean
 	$(QUIET_CLEAN)$(RM) $(SOFT_BUILD)/prom.exe $(SOFT_BUILD)/systest.exe $(SOFT_BUILD)/standalone.exe
