@@ -497,7 +497,7 @@ vivado-syn: vivado-setup
 		rm -rf $(TOP).bit; \
 		ln -s $$bit; \
 	else \
-		echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
+		echo $(SPACES)"ERROR: bitstream not found; synthesis failed"; exit 1; \
 	fi; \
 
 vivado-syn-emu: vivado-setup-emu

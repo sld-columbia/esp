@@ -423,6 +423,10 @@ rtl_acc-distclean: $(RTL_ACC-distclean)
 .PHONY: rtl_acc rtl_acc-clean rtl_acc-distclean
 
 ### Bambu HLS ###
+# Preserve the compiler/simulator exit status through the logging pipeline.
+$(BAMBUHLS_ACC-hls) $(BAMBUHLS_ACC-sim): SHELL := /bin/bash
+$(BAMBUHLS_ACC-hls) $(BAMBUHLS_ACC-sim): .SHELLFLAGS := -o pipefail -c
+
 $(BAMBUHLS_ACC-wdir): $(HLS_LOGS)
 	$(QUIET_MKDIR)mkdir -p $(BAMBUHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB)
 	@cd $(BAMBUHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); \
@@ -538,7 +542,7 @@ $(ACC-app-clean):
 	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/$(@:-app-clean=)/linux/app
 
 $(ACC-baremetal): $(BAREMETAL_BIN) soft-build $(ESP_CFG_BUILD)/socmap.vhd
-	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-baremetal=)/baremetal; \
+	@set -e; BUILD_PATH=$(BUILD_DRIVERS)/$(@:-baremetal=)/baremetal; \
         ACC_PATH=$(filter %/$(@:-baremetal=), $(ACC_PATHS)); \
 	if [ `ls -1 $$ACC_PATH/sw/baremetal/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \

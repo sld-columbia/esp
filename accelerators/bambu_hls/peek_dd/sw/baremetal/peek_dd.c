@@ -2,7 +2,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /* Baremetal smoke test for the bambu peek+ding-dong 64-bit RTL accelerator:
- * out[i] = in[i]*in[i], 128 words (fixed). */
+ * out[i] = in[i]*in[i], repeated invocations with distinct batch contents. */
 
 #include <stdio.h>
 #ifndef __riscv
@@ -13,15 +13,17 @@
 #include <esp_probe.h>
 #include <fixed_point.h>
 
-typedef int32_t token_t;
+typedef uint32_t token_t;
 
-static unsigned DMA_WORD_PER_BEAT(unsigned _st) { return (sizeof(void *) / _st); }
+/* Hardware DMA width is independent of the CPU pointer width. */
+static unsigned DMA_WORD_PER_BEAT(unsigned _st) { return (8 / _st); }
 
 #define SLD_PEEK_DD 0x078
 #define DEV_NAME    "sld,peek_dd"
 
-/* <<--params-->>  (the core is fixed at 128 words / 8 batches of 16) */
-const int32_t len = 128;
+/* Odd batch count exercises bank state across repeated invocations. */
+const int32_t len = 272;
+#define POLL_LIMIT 10000000U
 
 static unsigned in_words_adj;
 static unsigned out_words_adj;
@@ -50,7 +52,7 @@ static int validate_buf(token_t *out, token_t *gold)
     for (j = 0; j < len; j++)
         if (gold[j] != out[j]) {
             errors++;
-            if (errors < 8) printf("  [%d] got %d gold %d\n", j, out[j], gold[j]);
+            if (errors < 8) printf("  [%d] got %x gold %x\n", j, out[j], gold[j]);
         }
 
     return errors;
@@ -61,10 +63,10 @@ static void init_buf(token_t *in, token_t *gold)
     int j;
 
     for (j = 0; j < len; j++)
-        in[j] = (token_t)j;
+        in[j] = (0x9e3779b9U * (j + 1)) ^ 0x10203041U;
 
     for (j = 0; j < len; j++)
-        gold[j] = (token_t)(j * j);
+        gold[j] = in[j] * in[j];
 
     /* Sentinel-fill the OUTPUT region: any word the accelerator fails to write
      * then reads back as 0xDEAD (a defined value) instead of X -- so validate
@@ -85,6 +87,8 @@ int main(int argc, char *argv[])
     token_t *mem;
     token_t *gold;
     unsigned errors = 0;
+    unsigned total_errors = 0;
+    unsigned poll;
     unsigned coherence;
 
     if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
@@ -107,7 +111,7 @@ int main(int argc, char *argv[])
     ndev = probe(&espdevs, VENDOR_SLD, SLD_PEEK_DD, DEV_NAME);
     if (ndev == 0) {
         printf("peek_dd not found\n");
-        return 0;
+        return 1;
     }
 
     for (n = 0; n < ndev; n++) {
@@ -118,18 +122,26 @@ int main(int argc, char *argv[])
 
         if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
             printf("  -> scatter-gather DMA is disabled. Abort.\n");
-            return 0;
+            return 1;
         }
         if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
             printf("  -> Not enough TLB entries available. Abort.\n");
-            return 0;
+            return 1;
         }
 
         gold = aligned_malloc(out_size);
         mem  = aligned_malloc(mem_size);
+        if (!gold || !mem) {
+            printf("peek_dd FAIL: allocation\n");
+            return 1;
+        }
         printf("  memory buffer base-address = %p\n", mem);
 
         ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
+        if (!ptable) {
+            printf("peek_dd FAIL: page-table allocation\n");
+            return 1;
+        }
         for (i = 0; i < NCHUNK(mem_size); i++)
             ptable[i] = (unsigned *)&mem[i * (CHUNK_SIZE / sizeof(token_t))];
 
@@ -139,7 +151,7 @@ int main(int argc, char *argv[])
 #ifndef __riscv
         for (coherence = ACC_COH_NONE; coherence <= ACC_COH_RECALL; coherence++) {
 #else
-        {
+        for (unsigned run = 0; run < 3; ++run) {
             coherence = ACC_COH_NONE;
 #endif
             printf("  --------------------\n");
@@ -171,9 +183,14 @@ int main(int argc, char *argv[])
             iowrite32(dev, CMD_REG, CMD_MASK_START);
 
             done = 0;
-            while (!done) {
+            for (poll = 0; !done && poll < POLL_LIMIT; ++poll) {
                 done = ioread32(dev, STATUS_REG);
                 done &= STATUS_MASK_DONE;
+            }
+            if (!done) {
+                printf("peek_dd FAIL: completion timeout\n");
+                /* Retain memory: a timed-out DMA may still be active. */
+                return 1;
             }
             iowrite32(dev, CMD_REG, 0x0);
 
@@ -181,6 +198,7 @@ int main(int argc, char *argv[])
             printf("  validating...\n");
 
             errors = validate_buf(&mem[out_offset], gold);
+            total_errors += errors;
             if (errors) printf("  ... FAIL (%u errors)\n", errors);
             else
                 printf("  ... PASS\n");
@@ -190,5 +208,6 @@ int main(int argc, char *argv[])
         aligned_free(gold);
     }
 
-    return 0;
+    printf("peek_dd %s total_errors=%u\n", total_errors ? "FAIL" : "PASS", total_errors);
+    return total_errors ? 1 : 0;
 }

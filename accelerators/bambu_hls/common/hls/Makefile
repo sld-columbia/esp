@@ -4,6 +4,10 @@
 COMMON_PATH = $(ESP_ROOT)/accelerators/bambu_hls/common
 COMMON_HLS_PATH = $(COMMON_PATH)/hls
 
+# Bambu's installed settings.sh uses Bash arrays.
+SHELL := /bin/bash
+.SHELLFLAGS := -eu -o pipefail -c
+
 include $(COMMON_PATH)/common.mk
 
 # Bambu invocation. Override BAMBU to point at a specific binary; set BAMBU_ENV

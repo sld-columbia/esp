@@ -1,7 +1,7 @@
 // Copyright (c) 2011-2026 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
-// ESP RTL-flow wrapper around the 64-bit peek DMA-master core `top`.
+// ESP wrapper around the 64-bit peek DMA-master core `peek_dd_core`.
 // The core is already a DMA master (emits {index,length} requests, request-precedes-data),
 // so this wrapper is thin: it renames the core's AXIS request/data to the ESP socket,
 // fills size=DWORD/user=0, starts on conf_done, and forwards the core's done_port as acc_done (measured
@@ -38,9 +38,9 @@ module peek_dd_basic_dma64 (
 
     input clk;
     input rst;  // active-low
-    input [31:0] conf_info_len;  // ignored (core is fixed 128 words)
-    input [31:0] conf_info_base_in;  // ignored
-    input [31:0] conf_info_base_out;  // ignored
+    input [31:0] conf_info_len;       // positive multiple of 16 words
+    input [31:0] conf_info_base_in;   // input offset in 64-bit DMA beats
+    input [31:0] conf_info_base_out;  // output offset in 64-bit DMA beats
     input conf_done;
     input dma_read_ctrl_ready;
     output dma_read_ctrl_valid;
