@@ -226,7 +226,7 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
     # removed __xmknod(). We must swap it with the system fakeroot BEFORE the
     # rootfs step. To do this: build fakeroot first, swap if needed, then
     # continue the full build.
-    GLIBC_VER=$(ldd --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+$')
+    GLIBC_VER=$(/usr/bin/ldd --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+$')
     if [ "$(printf '%s\n' "2.33" "$GLIBC_VER" | sort -V | head -1)" = "2.33" ]; then
         # glibc >= 2.33: build fakeroot, then swap before full build
         make host-fakeroot -j ${NTHREADS}
