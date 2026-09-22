@@ -173,6 +173,7 @@ class acc_info:
     id = -1
     idx = -1
     irq = 5
+    tile_id = -1
 
 
 class cache_info:
@@ -381,6 +382,7 @@ class soc_config:
                     acc.irq = acc_irq
                     acc.idx = SLD_APB_PINDEX + acc_id
                     acc.vendor = soc.noc.topology[x][y].vendor
+                    acc.tile_id = t
                     if acc.vendor != "sld":
                         self.nthirdparty += 1
                     self.tiles[t].acc = acc
@@ -467,6 +469,8 @@ def print_global_constants(fp, soc):
              if soc.noc.coh_noc_width.get() > soc.noc.dma_noc_width.get() else soc.noc.dma_noc_width.get()) + ";\n")
     fp.write("  constant MULTICAST_NOC_EN : integer := " +
              str(soc.noc.multicast_en.get()) + ";\n")
+    fp.write("  constant DMA_MULTI_OT_EN : integer := " +
+             str(soc.dma_multi_ot_en.get()) + ";\n")
     if soc.noc.multicast_en.get():
         fp.write("  constant MAX_MCAST_DESTS : integer := " +
                  str(soc.noc.max_mcast_dests.get()) + ";\n")
@@ -2341,6 +2345,8 @@ def print_soc_defines(fp, esp_config, soc):
     if esp_config.nacc > 0:
         fp.write("#define ACCS_PRESENT 1\n")
     fp.write("#define SOC_NACC " + str(esp_config.nacc) + "\n")
+    fp.write("#define SOC_CACHE_EN " + str(soc.cache_en.get()) + "\n")
+    fp.write("#define SOC_COHERENCE " + str(1 if esp_config.coherence else 0) + "\n")
 
     if esp_config.cpu_arch == "leon3":
         fp.write("#define MONITOR_BASE_ADDR 0x80090000\n")
@@ -2741,6 +2747,12 @@ def print_devtree(fp, soc, esp_config):
             ">;\n")
         fp.write("      interrupt-parent = <&PLIC0>;\n")
         fp.write("      interrupts = <" + str(acc.irq + 1) + ">;\n")
+        fp.write("      esp,tile-id = <" + str(acc.tile_id) + ">;\n")
+        if acc.vendor != "sld":
+            if esp_config.coherence:
+                fp.write("      esp,coherence = <2>;\n")
+            else:
+                fp.write("      esp,coherence = <0>;\n")
         fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
         fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
         if acc.vendor != "sld" and esp_config.nmem != 0:

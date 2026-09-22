@@ -636,7 +636,6 @@ c2:    .word 0x3ff00000
        .word 0 
        .word 0x3f800000
 
-	.global       
 	.text         
 	.align 4      
 	.global fpu_chkft

@@ -16,8 +16,6 @@ use work.misc.all;
 use work.net.all;
 -- pragma translate_off
 use work.sim.all;
-library unisim;
-use unisim.all;
 -- pragma translate_on
 use work.sldacc.all;
 use work.nocpackage.all;
