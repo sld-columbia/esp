@@ -498,6 +498,18 @@ class SoC_Config():
         line = fp.readline()
         line = fp.readline()
         item = line.split()
+        # Optional trailing knobs (absent in older configuration files):
+        # multiple outstanding DMA reads at the memory-tile AXI proxy.
+        # Defaults to 0 (previous single-outstanding behaviour) when the line
+        # is missing, so existing .esp_config files are unaffected.
+        # NOTE: the DVFS skip above may already have consumed the first
+        # trailing line into `line`, so scan starting from it rather than from
+        # the next readline.
+        self.dma_multi_ot_en.set(0)
+        while line:
+            if line.find("CONFIG_DMA_MULTI_OT_EN = y") != -1:
+                self.dma_multi_ot_en.set(1)
+            line = fp.readline()
         return 0
 
     def write_config(self, dsu_ip, dsu_eth):
@@ -669,6 +681,13 @@ class SoC_Config():
             fp.write("CONFIG_HAS_DVFS = y\n")
         else:
             fp.write("#CONFIG_HAS_DVFS is not set\n")
+        # Trailing optional knobs. These must stay after every positional
+        # entry: read_config parses the file positionally and scans only the
+        # tail for them.
+        if self.dma_multi_ot_en.get() == 1:
+            fp.write("CONFIG_DMA_MULTI_OT_EN = y\n")
+        else:
+            fp.write("#CONFIG_DMA_MULTI_OT_EN is not set\n")
 
     def check_cfg(self, line, token, end):
         line = line[line.find(token) + len(token):]
@@ -718,6 +737,9 @@ class SoC_Config():
         self.acc_l2_sets = IntVar(master=tk_master)
         self.acc_l2_ways = IntVar(master=tk_master)
         self.cache_line_size = IntVar(master=tk_master)
+        # Multiple outstanding DMA reads at the memory-tile AXI proxy
+        # (0 = previous single-outstanding behaviour, 1 = enabled)
+        self.dma_multi_ot_en = IntVar(master=tk_master)
         # SLM
         self.slm_kbytes = IntVar(master=tk_master)
         # Peripherals

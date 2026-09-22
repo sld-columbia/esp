@@ -469,6 +469,8 @@ def print_global_constants(fp, soc):
              if soc.noc.coh_noc_width.get() > soc.noc.dma_noc_width.get() else soc.noc.dma_noc_width.get()) + ";\n")
     fp.write("  constant MULTICAST_NOC_EN : integer := " +
              str(soc.noc.multicast_en.get()) + ";\n")
+    fp.write("  constant DMA_MULTI_OT_EN : integer := " +
+             str(soc.dma_multi_ot_en.get()) + ";\n")
     if soc.noc.multicast_en.get():
         fp.write("  constant MAX_MCAST_DESTS : integer := " +
                  str(soc.noc.max_mcast_dests.get()) + ";\n")

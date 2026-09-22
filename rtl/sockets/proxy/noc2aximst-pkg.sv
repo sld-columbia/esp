@@ -15,6 +15,31 @@ import esp_global_sv::*;
 parameter integer DMA_NOC_FLIT_SIZE = `PREAMBLE_WIDTH + DMA_NOC_WIDTH;
 parameter integer MAX_NOC_FLIT_SIZE = `PREAMBLE_WIDTH + MAX_NOC_WIDTH;
 
+// DMA-plane NoC header transaction ID field.
+//
+// HAND-MAINTAINED MIRROR of the VHDL definition in rtl/noc/nocpackage.vhd.
+// Nothing checks that the two copies agree: if you change one, change the
+// other. The correspondence is
+//   VHDL PREAMBLE_WIDTH  = 2  <-> `PREAMBLE_WIDTH
+//   VHDL YX_WIDTH             <-> GLOB_YX_WIDTH   (both from the generated
+//                                                  esp_global packages)
+//   VHDL MSG_TYPE_WIDTH  = 5  <-> `MSG_TYPE_WIDTH
+//   VHDL RESERVED_WIDTH  = 8  <-> `RESERVED_WIDTH
+//
+// The field carries a per-axislv2noc context-slot index, not an AXI ID. The
+// memory-side proxy only echoes it back unchanged in the response header; it
+// does not interpret it.
+//
+// The configuration constraint on the anchor (the field must not overlap the
+// next-hop routing bits) is enforced on the VHDL side, where DMA_TRAN_ID_LSB
+// is declared with a constrained subtype so an offending SoC configuration
+// fails at analysis. nocpackage.vhd is analysed in every build, so that guard
+// covers this mirror too.
+parameter integer DMA_TRAN_ID_WIDTH = 4;
+parameter integer DMA_TRAN_ID_MSB   =
+    DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH - `RESERVED_WIDTH - 1;
+parameter integer DMA_TRAN_ID_LSB   = DMA_TRAN_ID_MSB - DMA_TRAN_ID_WIDTH + 1;
+
 //`define RSP_AHB_RD 30
 //`define RSP_DATA 24
 //`define RSP_DATA_DMA

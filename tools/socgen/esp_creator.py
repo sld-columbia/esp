@@ -234,6 +234,17 @@ class SocConfigFrame:
             self.slm_kbytes_choices,
             command=main_frame.update_noc_config)
 
+        # Multiple outstanding DMA reads at the memory-tile AXI proxy.
+        # Off by default: clearing it gives the previous single-outstanding
+        # behaviour in every design.
+        self.dma_multi_ot_label, self.dma_multi_ot_checkbox = \
+            StyledComponents.CheckBoxWithLabel(
+                self.soc_config_frame,
+                self.soc.dma_multi_ot_en,
+                "Multi-outstanding DMA",
+                "normal", 7, 0,
+                command=main_frame.update_noc_config)
+
 
 class PeripheralsConfigFrame:
     def __init__(self, soc, left_panel, main_frame):

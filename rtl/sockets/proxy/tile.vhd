@@ -729,7 +729,8 @@ package tile is
         eth_dma             : integer; 
         narrow_noc          : integer; 
         cacheline           : integer;
-        this_coh_flit_size  : integer); 
+        this_coh_flit_size  : integer;
+        dma_multi_ot        : integer); 
       port (
         ACLK        : in std_ulogic;
         ARESETn     : in std_ulogic;

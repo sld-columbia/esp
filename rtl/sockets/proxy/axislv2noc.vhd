@@ -392,24 +392,144 @@ architecture rtl of axislv2noc is
   signal skip_last           : std_ulogic;
   signal aw_handshake        : std_ulogic;
 
-  -- Optional debug attributes (disabled by default).
-  -- attribute mark_debug : string;
+  -----------------------------------------------------------------------------
+  -- Multi-outstanding support (enabled only when retarget_for_dma = 1).
+  -----------------------------------------------------------------------------
+  -- Architecture decision:
+  -- - The CPU instantiations of this proxy (`tile_cpu.vhd`, retarget_for_dma=0)
+  --   keep the legacy single-FSM behavior bit-identical -- they sit in
+  --   `gen_legacy` below.
+  -- - The AXI-accelerator instantiation (`noc2axi_interface.vhd`,
+  --   retarget_for_dma=1, i.e. every generated AXI-accelerator socket) gets
+  --   the new design: a request FSM
+  --   that issues + retires reads through an outstanding table, and a
+  --   separate response FSM that matches returning DMA flits to slots via
+  --   `get_dma_tran_id` and drives `somi.r.*` with the matched AXI ID.
+  --
+  -- Concurrency policy enforced by the new request FSM:
+  -- 1) Stall a new read if the same AXI ID has an outstanding read in flight
+  --    (AXI same-ID read-ordering rule -- simplest correct option).
+  -- 2) Stall a new read if the outstanding table is full.
+  -- 3) When `coherence = ACC_COH_LLC or ACC_COH_RECALL`, allow at most one
+  --    outstanding read (LLC does not echo DMA_TRAN_ID, so matching falls
+  --    back to "the only in-flight read"). This is the deferred-LLC fallback.
+  -- 4) Writes do NOT enter the outstanding table; the request FSM acks B
+  --    locally just like the legacy `request_data_ack` (writes are
+  --    fire-and-forget on the NoC for DMA).
+  --
+  -- Reordering correctness:
+  -- - Request packets are emitted whole and in program order on `dma_snd`,
+  --   so per-destination NoC ordering preserves RAW/WAR/WAW hazards.
+  -- - Reordering of *responses* across memory tiles is resolved by the
+  --   response FSM via the per-slot DMA_TRAN_ID echoed in the response
+  --   header by `noc2aximst`.
+  -- Sized for an accelerator with a deep miss pipeline; the driving case was
+  -- Vortex, whose per-core icache MSHR fan-out is 16 with comparable per-bank
+  -- dcache MSHRs. End-to-end concurrency is still capped
+  -- at MAX_DMA_OT * num_memory_tiles on the memory side; the extra slots
+  -- here just smooth issue/NoC pipeline latency so the accelerator's AR doesn't
+  -- stall before memory saturates. Must remain <= 2**DMA_TRAN_ID_WIDTH.
+  constant OUTSTANDING_DEPTH : integer := 8;
+  -- Sanity: the local slot index must fit in the wire field width.
+  -- DMA_TRAN_ID_WIDTH = 4 gives 16 contexts; we use 4 here. Add a constant
+  -- check that elaboration fails loudly if either side is misconfigured.
+  -- (VHDL: a function-call-based static check would be cleaner; this
+  -- comment documents the invariant -- ceil(log2(OUTSTANDING_DEPTH)) <=
+  -- DMA_TRAN_ID_WIDTH.)
 
-  -- attribute mark_debug of coherence_req_wrreq : signal is "true";
-  -- attribute mark_debug of coherence_req_data_in : signal is "true";
-  -- attribute mark_debug of coherence_rsp_rcv_rdreq : signal is "true";
-  -- attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
-  -- attribute mark_debug of remote_ahbs_snd_wrreq : signal is "true";
-  -- attribute mark_debug of remote_ahbs_snd_data_in : signal is "true";
-  -- attribute mark_debug of remote_ahbs_rcv_rdreq : signal is "true";
-  -- attribute mark_debug of remote_ahbs_rcv_data_out : signal is "true";
-  -- attribute mark_debug of transaction_reg : signal is "true";
-  -- attribute mark_debug of current_state : signal is "true";
-  -- attribute mark_debug of selected : signal is "true";
-  -- attribute mark_debug of sample_flits : signal is "true";
-  -- attribute mark_debug of sample_and_hold : signal is "true";
-  -- attribute mark_debug of mosi : signal is "true";
-  -- attribute mark_debug of somi : signal is "true";
+  subtype outstanding_idx_t is integer range 0 to OUTSTANDING_DEPTH - 1;
+
+  -- One outstanding-table entry captures the per-read context needed by the
+  -- response FSM to drive somi.r.* correctly when the response arrives.
+  type outstanding_entry_type is record
+    valid    : std_ulogic;
+    id       : std_logic_vector(XID_WIDTH - 1 downto 0);
+    xindex   : integer range 0 to nmst - 1;
+    size     : std_logic_vector(2 downto 0);
+    addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
+    dst_is_mem : std_ulogic;
+  end record outstanding_entry_type;
+
+  constant outstanding_entry_none : outstanding_entry_type := (
+    valid      => '0',
+    id         => (others => '0'),
+    xindex     => 0,
+    size       => (others => '0'),
+    addr       => (others => '0'),
+    dst_is_mem => '0');
+
+  type outstanding_array_type is array (0 to OUTSTANDING_DEPTH - 1) of outstanding_entry_type;
+  signal outstanding_reg : outstanding_array_type;
+
+  -- Request FSM: legacy issue states + a `req_commit` state that pushes a
+  -- newly-issued read into the outstanding table and returns to idle (so
+  -- the FSM doesn't park waiting for the response). Writes never enter
+  -- `req_commit`; they use the existing `request_data_ack`.
+  type req_fsm_type is (
+    req_idle, req_wait_wdata,
+    req_rmw_read_header, req_rmw_read_address, req_rmw_read_length,
+    req_rmw_read_reply_header, req_rmw_read_reply_data,
+    req_rmw_write_header, req_rmw_write_address, req_rmw_write_length, req_rmw_write_data,
+    req_dma_write_header, req_dma_write_address, req_dma_write_length, req_dma_write_data,
+    req_header, req_address, req_length, req_data,
+    req_data_lsb, req_data_msb, req_data_ack,
+    req_commit);
+  signal req_state, req_next : req_fsm_type;
+
+  -- Per-request latched allocation index. `ot_alloc_idx` is a *live*
+  -- combinational function of `outstanding_reg`, so reading it separately in
+  -- `req_header` (tran_id stamp) and `req_commit` (table push) can yield two
+  -- different slots for one read when responses free slots in between -- the
+  -- on-wire DMA_TRAN_ID then disagrees with the slot the context lands in, and
+  -- two reads can even stamp the same ID. Latch the index once when the read
+  -- is sampled (see ot_seq) and reuse it for both, so stamp == slot always.
+  signal req_alloc_idx_reg : outstanding_idx_t;
+
+  -- Response FSM: independent of the request FSM. Drains the DMA receive
+  -- queue, matches the header's DMA_TRAN_ID to an outstanding slot, then
+  -- streams data flits to somi.r.* with somi.r.id from that slot.
+  -- `rsp_drop` is a defensive state for an unmatched response (e.g. stale
+  -- flit during slot reuse) -- it consumes flits to the tail and returns
+  -- to idle. With the same-id guard and slot-free-on-tail, this should
+  -- never fire in practice.
+  type rsp_fsm_type is (rsp_idle, rsp_data, rsp_drop);
+  signal rsp_state, rsp_next : rsp_fsm_type;
+  signal rsp_active_valid_reg : std_ulogic;
+  signal rsp_active_idx_reg   : outstanding_idx_t;
+  signal load_rsp_active      : std_ulogic;
+  signal load_rsp_active_idx  : outstanding_idx_t;
+  signal clear_rsp_active     : std_ulogic;
+
+  -- One-cycle control strobes for the outstanding table sequential block.
+  signal push_outstanding         : std_ulogic;
+  signal push_outstanding_entry   : outstanding_entry_type;
+  signal push_outstanding_idx     : outstanding_idx_t;
+  signal free_outstanding         : std_ulogic;
+  signal free_outstanding_idx     : outstanding_idx_t;
+
+  -- Combinational pre-issue checks (computed in the request FSM process).
+  signal ot_alloc_idx          : outstanding_idx_t;
+  signal ot_alloc_avail        : std_ulogic;
+  signal ot_same_read_id_busy  : std_ulogic;
+  signal ot_any_read_busy      : std_ulogic;
+
+  -- Two intermediates to avoid VHDL "two-process partial-record multi-driver"
+  -- on `somi`. In gen_dma_ot the req FSM drives `req_somi` (aw/ar/w/b) and the
+  -- rsp FSM drives `rsp_somi.r`; a single concurrent merge inside the generate
+  -- combines them into the actual `somi` output port, so there is exactly one
+  -- driver per signal regardless of how many subfields each FSM touches.
+  -- (In gen_legacy these intermediates are unused.)
+  signal req_somi : axi_somi_vector(0 to nmst - 1);
+  signal rsp_somi : axi_somi_vector(0 to nmst - 1);
+
+  -- Same idea for coherence_rsp_rcv_rdreq, which both the request FSM
+  -- (req_rmw_read_reply_* states, when LLC RMW is consuming its sub-read
+  -- response) and the response FSM dequeue from. They are mutually exclusive
+  -- by the LLC-fallback issue guard (LLC mode = single-outstanding), but VHDL
+  -- still forbids two drivers on the same std_ulogic port. A combine
+  -- concurrent assignment inside gen_dma_ot ORs the two strobes.
+  signal req_coh_rsp_rdreq : std_ulogic;
+  signal rsp_coh_rsp_rdreq : std_ulogic;
 
 begin  -- rtl
 
@@ -867,6 +987,15 @@ begin  -- rtl
   -- - Raise one-cycle control strobes consumed by the clocked commit process.
   -- State semantics live in the `axi_fsm` comments above. The per-state comments
   -- below focus on transition behavior and protocol actions inside this process.
+  --
+  -- gen_legacy is the unmodified single-FSM design. It owns `axi_roundtrip`
+  -- and the legacy clocked process (current_state + buffered-write context).
+  -- It is the active code path for `retarget_for_dma = 0` (CPU sockets in
+  -- `tile_cpu.vhd`). For `retarget_for_dma = 1` (the AXI-accelerator socket
+  -- in `noc2axi_interface.vhd`, used by every AXI accelerator), `gen_dma_ot`
+  -- further below
+  -- replaces these processes with a split request/response design.
+  gen_legacy: if retarget_for_dma /= 1 generate
   axi_roundtrip: process (transaction, transaction_reg, current_state, selected, mosi, coherence,
                           coherence_req_full,
                           coherence_rsp_rcv_data_out, coherence_rsp_rcv_empty,
@@ -1687,5 +1816,970 @@ begin  -- rtl
       end if;
     end if;
   end process;
+  end generate gen_legacy;
+
+  -----------------------------------------------------------------------------
+  -- Multi-outstanding generate (retarget_for_dma = 1: the AXI-accelerator
+  -- socket, whatever accelerator is attached to it).
+  -----------------------------------------------------------------------------
+  -- Layout:
+  -- - `req_roundtrip`: request FSM. Mirrors the legacy request states
+  --   (wait_wdata, rmw_*, dma_write_*, request_*) but for READS, after the
+  --   request flits are pushed, it transitions to `req_commit` which pushes
+  --   the per-read context into the outstanding table and returns to
+  --   `req_idle`. Writes keep using `req_data_ack` to drive `somi.b.valid`
+  --   locally (DMA writes are fire-and-forget on the NoC).
+  -- - `rsp_roundtrip`: response FSM. Owns `coherence_rsp_rcv_*` and the
+  --   `somi.r.*` channel. On a header flit, extracts the DMA_TRAN_ID and
+  --   looks up the matching slot; on `PREAMBLE_TAIL`, frees it. Independent
+  --   of `req_roundtrip` so the request FSM can issue new transactions
+  --   while previous reads are still being drained.
+  -- - `ot_seq`: clocked block that updates `req_state`, `rsp_state`,
+  --   `transaction_reg`, the WSTRB/RMW buffering signals (latch_wbeat,
+  --   advance_segment, etc.) reused from the legacy design, AND the
+  --   outstanding-table arrays.
+  --
+  -- Note: the shared combinational helpers (`make_packet`,
+  -- `make_active_packet`, `make_rmw_packet`, `make_dma_write_packet`,
+  -- `rmw_mask_gen`, `rmw_payload_gen`, `seg_info`, `seg_addr`, etc.) live
+  -- outside both generates and feed the request FSM in either mode.
+  gen_dma_ot: if retarget_for_dma = 1 generate
+
+    -- Static check: the local slot index must fit in the on-wire DMA_TRAN_ID
+    -- field. Fires at elaboration if a future code change widens the table
+    -- past the NoC field without bumping DMA_TRAN_ID_WIDTH first.
+    assert OUTSTANDING_DEPTH <= 2**DMA_TRAN_ID_WIDTH
+      report "axislv2noc: OUTSTANDING_DEPTH > 2**DMA_TRAN_ID_WIDTH"
+      severity failure;
+
+    -- Convenience: derive the same-id and table-full guards combinationally
+    -- from the registered outstanding table. `ot_alloc_idx` picks the
+    -- lowest-index free slot.
+    ot_lookups: process (outstanding_reg, transaction)
+      variable alloc_found   : boolean;
+      variable alloc_idx_v   : outstanding_idx_t;
+      variable same_id_v     : std_ulogic;
+      variable any_busy_v    : std_ulogic;
+    begin
+      alloc_found := false;
+      alloc_idx_v := 0;
+      same_id_v   := '0';
+      any_busy_v  := '0';
+      for i in 0 to OUTSTANDING_DEPTH - 1 loop
+        if outstanding_reg(i).valid = '1' then
+          any_busy_v := '1';
+          if transaction.write = '0' and outstanding_reg(i).id = transaction.id then
+            same_id_v := '1';
+          end if;
+        elsif not alloc_found then
+          alloc_found := true;
+          alloc_idx_v := i;
+        end if;
+      end loop;
+      ot_alloc_idx         <= alloc_idx_v;
+      if alloc_found then
+        ot_alloc_avail <= '1';
+      else
+        ot_alloc_avail <= '0';
+      end if;
+      ot_same_read_id_busy <= same_id_v;
+      ot_any_read_busy     <= any_busy_v;
+
+      -- Sim-only invariant: the same-id guard should keep at most one
+      -- outstanding entry per (xindex, axi_id) pair. If this assertion
+      -- ever fires, ordering of same-id responses to AXI is undefined.
+      -- pragma translate_off
+      for i in 0 to OUTSTANDING_DEPTH - 1 loop
+        for j in i + 1 to OUTSTANDING_DEPTH - 1 loop
+          if outstanding_reg(i).valid = '1' and outstanding_reg(j).valid = '1' then
+            assert not (outstanding_reg(i).id     = outstanding_reg(j).id
+                    and outstanding_reg(i).xindex = outstanding_reg(j).xindex)
+              report "axislv2noc: duplicate (xindex, axi_id) in outstanding table"
+              severity failure;
+          end if;
+        end loop;
+      end loop;
+      -- pragma translate_on
+    end process ot_lookups;
+
+    -----------------------------------------------------------------------
+    -- Request FSM
+    -----------------------------------------------------------------------
+    -- Structure: same shape as the legacy `axi_roundtrip`, with:
+    --  - `idle` -> `req_idle` (selection gated by ot_alloc_avail +
+    --    same-id + LLC-single guards).
+    --  - For READS, after request flits are pushed (the legacy went to
+    --    `reply_header`), this FSM goes to `req_commit` which raises
+    --    `push_outstanding` and returns to `req_idle`.
+    --  - For WRITES, identical to legacy: `req_data_ack` mirrors
+    --    `request_data_ack`.
+    --  - When `dst_is_mem = '1'` the `remote_ahbs_*` branches are dead, but
+    --    they are kept for accelerators that do target remote AHB.
+    req_roundtrip: process (transaction, transaction_reg, req_state, selected, mosi, coherence,
+                            coherence_req_full,
+                            remote_ahbs_snd_full,
+                            split_active, segment_active, write_hold_active,
+                            wdata_valid, wdata_reg, wstrb_reg, wlast_reg,
+                            seg_has_data, seg_last_in_beat, seg_mask_next, active_addr, active_size,
+                            active_header, active_header_narrow, active_payload_address,
+                            active_payload_address_narrow, active_payload_length, active_payload_length_narrow,
+                            rmw_read_header_flit, rmw_read_address_flit, rmw_read_length_flit,
+                            rmw_write_header_flit, rmw_write_address_flit, rmw_write_length_flit,
+                            rmw_write_needs_length, rmw_payload_data,
+                            dma_write_header_flit, dma_write_address_flit, dma_write_length_flit,
+                            dma_write_payload_data,
+                            aw_accepted,
+                            coherence_rsp_rcv_data_out, coherence_rsp_rcv_empty,
+                            ot_alloc_avail, ot_alloc_idx, ot_same_read_id_busy, ot_any_read_busy,
+                            req_alloc_idx_reg)
+      variable wdata           : std_logic_vector(AHBDW - 1 downto 0);
+      variable wdata_src       : std_logic_vector(AXIDW - 1 downto 0);
+      variable addr_for_data   : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
+      variable size_for_data   : std_logic_vector(2 downto 0);
+      variable payload_data    : std_logic_vector(this_noc_flit_size - 1 downto 0);
+      variable header_with_id  : std_logic_vector(this_noc_flit_size - 1 downto 0);
+      variable mst_valid       : std_ulogic;
+      variable mst_bready      : std_ulogic;
+      variable slv_ready_v     : std_ulogic;
+      variable last            : std_ulogic;
+      variable issue_ok        : std_ulogic;
+      variable llc_mode        : std_ulogic;
+      variable txn_id_v        : dma_tran_id_type;
+      variable remote_v        : misc_noc_flit_type;
+    begin
+      -- Defaults.
+      req_next <= req_state;
+      sample_flits        <= '0';
+      latch_wbeat         <= '0';
+      advance_segment     <= '0';
+      skip_beat           <= '0';
+      skip_last           <= '0';
+      aw_handshake        <= '0';
+      rmw_read_sample     <= '0';
+      rmw_write_done      <= '0';
+      buffered_write_done <= '0';
+      push_outstanding         <= '0';
+      push_outstanding_entry   <= outstanding_entry_none;
+      push_outstanding_idx     <= req_alloc_idx_reg;
+
+      coherence_req_data_in <= (others => '0');
+      coherence_req_wrreq   <= '0';
+      req_coh_rsp_rdreq     <= '0';
+      -- The response FSM owns rsp_coh_rsp_rdreq and rsp_somi.r.*.
+      -- Tie off remote AHB outputs; this proxy instance does not route
+      -- replies through the remote AHB path in DMA-OT mode.
+      remote_ahbs_snd_data_in <= (others => '0');
+      remote_ahbs_snd_wrreq   <= '0';
+
+      -- Drive req_somi (aw/ar/w/b channels). The architecture-level merge
+      -- combines this with rsp_somi.r into the actual somi output port.
+      -- Initialize all req_somi fields so the merge process never sees
+      -- 'U'/'X' on subfields the request FSM doesn't touch.
+      for i in 0 to nmst - 1 loop
+        req_somi(i).aw.ready <= '0';
+        req_somi(i).ar.ready <= '0';
+        req_somi(i).w.ready  <= '0';
+        req_somi(i).b.id     <= transaction_reg.id;
+        req_somi(i).b.resp   <= RBRESP_OKAY;
+        req_somi(i).b.user   <= (others => '0');
+        req_somi(i).b.valid  <= '0';
+        -- r fields are driven by rsp_roundtrip; initialize req_somi.r so
+        -- this process has a defined value for the full record (defensive,
+        -- the merge ignores req_somi.r anyway).
+        req_somi(i).r.id    <= (others => '0');
+        req_somi(i).r.data  <= (others => '0');
+        req_somi(i).r.resp  <= RBRESP_OKAY;
+        req_somi(i).r.last  <= '0';
+        req_somi(i).r.user  <= (others => '0');
+        req_somi(i).r.valid <= '0';
+      end loop;
+
+      slv_ready_v := '0';
+      mst_bready  := mosi(transaction_reg.xindex).b.ready;
+      if wdata_valid = '1' then
+        mst_valid := '1';
+      else
+        mst_valid := mosi(transaction_reg.xindex).w.valid;
+      end if;
+
+      -- LLC fallback: if coherent DMA, allow at most one outstanding read.
+      if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
+        llc_mode := '1';
+      else
+        llc_mode := '0';
+      end if;
+
+      -- Combined issue guard. In LLC mode we collapse to single-outstanding
+      -- (any in-flight read blocks both new reads AND new writes) because
+      -- the LLC path's RMW (partial coherent write) consumes responses from
+      -- the same coherence_rsp_rcv queue the response FSM watches -- mixing
+      -- the two would risk one side stealing the other's response. In
+      -- non-LLC mode reads block on table-full or same-id; writes only
+      -- block when there is no free slot at all (cheap conservatism).
+      if transaction.write = '1' then
+        if llc_mode = '1' and ot_any_read_busy = '1' then
+          issue_ok := '0';
+        else
+          issue_ok := ot_alloc_avail;
+        end if;
+      else
+        if ot_alloc_avail = '1' and ot_same_read_id_busy = '0'
+          and (llc_mode = '0' or ot_any_read_busy = '0') then
+          issue_ok := '1';
+        else
+          issue_ok := '0';
+        end if;
+      end if;
+
+      -- Build write payload (copied from legacy `axi_roundtrip`).
+      if wdata_valid = '1' then
+        wdata_src     := wdata_reg;
+        addr_for_data := active_addr;
+        size_for_data := active_size;
+      else
+        wdata_src     := mosi(transaction_reg.xindex).w.data;
+        addr_for_data := transaction_reg.addr;
+        size_for_data := transaction_reg.size;
+      end if;
+      if size_for_data = HSIZE_DWORD then
+        wdata := ahbdrivedata(wdata_src);
+      elsif size_for_data = HSIZE_WORD then
+        if AHBDW = 64 then
+          case addr_for_data(2) is
+            when '0'    => wdata := ahbdrivedata(wdata_src(31 downto 0));
+            when others => wdata := ahbdrivedata(wdata_src(ARCH_BITS - 1 downto ARCH_BITS - 32));
+          end case;
+        else
+          wdata := ahbdrivedata(wdata_src);
+        end if;
+      elsif size_for_data = HSIZE_HWORD then
+        if AHBDW = 64 then
+          case addr_for_data(2 downto 1) is
+            when "00"   => wdata := ahbdrivedata(wdata_src(15 downto 0));
+            when "01"   => wdata := ahbdrivedata(wdata_src(31 downto 16));
+            when "10"   => wdata := ahbdrivedata(wdata_src(ARCH_BITS - 17 downto ARCH_BITS - 32));
+            when others => wdata := ahbdrivedata(wdata_src(ARCH_BITS - 1 downto ARCH_BITS - 16));
+          end case;
+        else
+          case addr_for_data(1) is
+            when '0'    => wdata := ahbdrivedata(wdata_src(15 downto 0));
+            when others => wdata := ahbdrivedata(wdata_src(31 downto 16));
+          end case;
+        end if;
+      else  -- HSIZE_BYTE
+        if AHBDW = 64 then
+          case addr_for_data(2 downto 0) is
+            when "000"  => wdata := ahbdrivedata(wdata_src(7 downto 0));
+            when "001"  => wdata := ahbdrivedata(wdata_src(15 downto 8));
+            when "010"  => wdata := ahbdrivedata(wdata_src(23 downto 16));
+            when "011"  => wdata := ahbdrivedata(wdata_src(31 downto 24));
+            when "100"  => wdata := ahbdrivedata(wdata_src(ARCH_BITS - 25 downto ARCH_BITS - 32));
+            when "101"  => wdata := ahbdrivedata(wdata_src(ARCH_BITS - 17 downto ARCH_BITS - 24));
+            when "110"  => wdata := ahbdrivedata(wdata_src(ARCH_BITS -  9 downto ARCH_BITS - 16));
+            when others => wdata := ahbdrivedata(wdata_src(ARCH_BITS -  1 downto ARCH_BITS -  8));
+          end case;
+        else
+          case addr_for_data(1 downto 0) is
+            when "00"   => wdata := ahbdrivedata(wdata_src(7 downto 0));
+            when "01"   => wdata := ahbdrivedata(wdata_src(15 downto 8));
+            when "10"   => wdata := ahbdrivedata(wdata_src(23 downto 16));
+            when others => wdata := ahbdrivedata(wdata_src(31 downto 24));
+          end case;
+        end if;
+      end if;
+
+      -- Pick `last` from the appropriate source (mirrors legacy).
+      if segment_active = '1' then
+        last := '1';
+      elsif wdata_valid = '1' then
+        last := wlast_reg;
+      else
+        last := mosi(transaction_reg.xindex).w.last;
+      end if;
+
+      -- Construct the payload-data flit with the right preamble.
+      payload_data := (others => '0');
+      if last = '1' then
+        payload_data(this_noc_flit_size-1 downto this_noc_flit_size - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+      else
+        payload_data(this_noc_flit_size-1 downto this_noc_flit_size - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+      end if;
+      payload_data(AHBDW - 1 downto 0) := wdata;
+
+      -- Helper for stamping the DMA tran_id into a header flit. Operates on
+      -- the generic `this_noc_flit_size` slice but uses the same bit window
+      -- as `set_dma_tran_id` (anchored just below the reserved field). This
+      -- branch only executes when retarget_for_dma=1 so DMA flit widths
+      -- guarantee the slice is in range.
+      txn_id_v := std_logic_vector(to_unsigned(req_alloc_idx_reg, DMA_TRAN_ID_WIDTH));
+
+      -- Main case: structurally same as legacy. Reads diverge at
+      -- request_length -> req_commit. Writes converge at req_data_ack.
+      case req_state is
+        when req_idle =>
+          -- Sample next transaction when allowed.
+          if selected = '1' and issue_ok = '1' then
+            sample_flits <= '1';
+            if transaction.write = '1' and transaction.dst_is_mem = '1' then
+              req_next <= req_wait_wdata;
+            else
+              req_next <= req_header;
+            end if;
+          end if;
+
+        when req_wait_wdata =>
+          -- Identical staging as legacy `wait_wdata`. We accept exactly one
+          -- W beat and dispatch to the right write path.
+          if write_hold_active = '1' then
+            if aw_accepted = '0' then
+              req_somi(transaction_reg.xindex).aw.ready <= '1';
+              if mosi(transaction_reg.xindex).aw.valid = '1' then
+                aw_handshake <= '1';
+              end if;
+            end if;
+            if wdata_valid = '0' then
+              slv_ready_v := '1';
+              if mosi(transaction_reg.xindex).w.valid = '1' then
+                latch_wbeat <= '1';
+                if mosi(transaction_reg.xindex).w.strb = WSTRB_ALL_ZERO then
+                  skip_beat <= '1';
+                  skip_last <= mosi(transaction_reg.xindex).w.last;
+                  if mosi(transaction_reg.xindex).w.last = '1' then
+                    req_next <= req_data_ack;
+                  else
+                    req_next <= req_wait_wdata;
+                  end if;
+                else
+                  if mosi(transaction_reg.xindex).w.strb /= WSTRB_ALL_ONE then
+                    if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
+                      req_next <= req_rmw_read_header;
+                    else
+                      req_next <= req_header;
+                    end if;
+                  else
+                    req_next <= req_dma_write_header;
+                  end if;
+                end if;
+              end if;
+            end if;
+          else
+            req_next <= req_header;
+          end if;
+
+        -- RMW path (coherent partial-WSTRB) mirrors legacy semantics.
+        -- For LLC mode this sequence keeps the proxy single-outstanding
+        -- because the same-id / any-busy guard blocks new reads while RMW
+        -- consumes coherence_rsp_rcv directly.
+        when req_rmw_read_header =>
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= rmw_read_header_flit;
+            coherence_req_wrreq   <= '1';
+            req_next              <= req_rmw_read_address;
+          end if;
+        when req_rmw_read_address =>
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= rmw_read_address_flit;
+            coherence_req_wrreq   <= '1';
+            req_next              <= req_rmw_read_length;
+          end if;
+        when req_rmw_read_length =>
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= rmw_read_length_flit;
+            coherence_req_wrreq   <= '1';
+            req_next              <= req_rmw_read_reply_header;
+          end if;
+        when req_rmw_read_reply_header =>
+          if coherence_rsp_rcv_empty = '0' then
+            req_coh_rsp_rdreq <= '1';
+            req_next          <= req_rmw_read_reply_data;
+          end if;
+        when req_rmw_read_reply_data =>
+          if coherence_rsp_rcv_empty = '0' then
+            req_coh_rsp_rdreq <= '1';
+            rmw_read_sample   <= '1';
+            if get_preamble(this_noc_flit_size,
+                this_noc_flit_pad & coherence_rsp_rcv_data_out) = PREAMBLE_TAIL then
+              req_next <= req_rmw_write_header;
+            end if;
+          end if;
+        when req_rmw_write_header =>
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= rmw_write_header_flit;
+            coherence_req_wrreq   <= '1';
+            req_next              <= req_rmw_write_address;
+          end if;
+        when req_rmw_write_address =>
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= rmw_write_address_flit;
+            coherence_req_wrreq   <= '1';
+            if rmw_write_needs_length = '1' then
+              req_next <= req_rmw_write_length;
+            else
+              req_next <= req_rmw_write_data;
+            end if;
+          end if;
+        when req_rmw_write_length =>
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= rmw_write_length_flit;
+            coherence_req_wrreq   <= '1';
+            req_next              <= req_rmw_write_data;
+          end if;
+        when req_rmw_write_data =>
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= rmw_payload_data;
+            coherence_req_wrreq   <= '1';
+            rmw_write_done        <= '1';
+            if wlast_reg = '1' then
+              req_next <= req_data_ack;
+            else
+              req_next <= req_wait_wdata;
+            end if;
+          end if;
+
+        -- DMA fast-path write (full WSTRB) mirrors legacy.
+        when req_dma_write_header =>
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= dma_write_header_flit;
+            coherence_req_wrreq   <= '1';
+            req_next              <= req_dma_write_address;
+          end if;
+        when req_dma_write_address =>
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= dma_write_address_flit;
+            coherence_req_wrreq   <= '1';
+            if rmw_write_needs_length = '1' then
+              req_next <= req_dma_write_length;
+            else
+              req_next <= req_dma_write_data;
+            end if;
+          end if;
+        when req_dma_write_length =>
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= dma_write_length_flit;
+            coherence_req_wrreq   <= '1';
+            req_next              <= req_dma_write_data;
+          end if;
+        when req_dma_write_data =>
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= dma_write_payload_data;
+            coherence_req_wrreq   <= '1';
+            buffered_write_done   <= '1';
+            if wlast_reg = '1' then
+              req_next <= req_data_ack;
+            else
+              req_next <= req_wait_wdata;
+            end if;
+          end if;
+
+        when req_header =>
+          -- Stamp the DMA tran_id into the header for reads (so the
+          -- response FSM at this side can match the echoed ID back to a
+          -- slot). For writes we still stamp the field but it's never
+          -- consumed (writes carry no NoC response).
+          header_with_id := active_header;
+          header_with_id(DMA_TRAN_ID_MSB downto DMA_TRAN_ID_LSB) := txn_id_v;
+          if transaction_reg.dst_is_mem = '1' then
+            if coherence_req_full = '0' then
+              coherence_req_data_in <= header_with_id;
+              coherence_req_wrreq   <= '1';
+              req_next              <= req_address;
+              if transaction_reg.write = '1' then
+                if aw_accepted = '0' then
+                  req_somi(transaction_reg.xindex).aw.ready <= '1';
+                  if mosi(transaction_reg.xindex).aw.valid = '1' then
+                    aw_handshake <= '1';
+                  end if;
+                end if;
+              else
+                req_somi(transaction_reg.xindex).ar.ready <= '1';
+              end if;
+            end if;
+          else
+            -- Remote AHB path (unused when dst_is_mem = '1'). Forward to misc NoC.
+            if remote_ahbs_snd_full = '0' then
+              remote_ahbs_snd_data_in <= active_header_narrow;
+              remote_ahbs_snd_wrreq   <= '1';
+              req_next                <= req_address;
+              if transaction_reg.write = '1' then
+                if aw_accepted = '0' then
+                  req_somi(transaction_reg.xindex).aw.ready <= '1';
+                  if mosi(transaction_reg.xindex).aw.valid = '1' then
+                    aw_handshake <= '1';
+                  end if;
+                end if;
+              else
+                req_somi(transaction_reg.xindex).ar.ready <= '1';
+              end if;
+            end if;
+          end if;
+
+        when req_address =>
+          if transaction_reg.dst_is_mem = '1' then
+            if coherence_req_full = '0' then
+              coherence_req_data_in <= active_payload_address;
+              coherence_req_wrreq   <= '1';
+              if transaction_reg.write = '1' and transaction_reg.msg_type /= DMA_FROM_DEV then
+                req_next <= req_data;
+              else
+                req_next <= req_length;
+              end if;
+            end if;
+          else
+            if remote_ahbs_snd_full = '0' then
+              remote_ahbs_snd_data_in <= active_payload_address_narrow;
+              remote_ahbs_snd_wrreq   <= '1';
+              if transaction_reg.write = '1' then
+                if active_size = HSIZE_DWORD then
+                  req_next <= req_data_lsb;
+                else
+                  req_next <= req_data;
+                end if;
+              else
+                req_next <= req_length;
+              end if;
+            end if;
+          end if;
+
+        when req_length =>
+          if transaction_reg.dst_is_mem = '1' then
+            if coherence_req_full = '0' then
+              coherence_req_data_in <= active_payload_length;
+              coherence_req_wrreq   <= '1';
+              if transaction_reg.write = '1' then
+                req_next <= req_data;
+              else
+                -- READ: request fully emitted -> push to outstanding table
+                -- via req_commit, then return to idle.
+                req_next <= req_commit;
+              end if;
+            end if;
+          else
+            if remote_ahbs_snd_full = '0' then
+              remote_ahbs_snd_data_in <= active_payload_length_narrow;
+              remote_ahbs_snd_wrreq   <= '1';
+              req_next <= req_commit;
+            end if;
+          end if;
+
+        when req_data =>
+          if transaction_reg.dst_is_mem = '1' then
+            if coherence_req_full = '0' and mst_valid = '1' then
+              if segment_active = '1' then
+                if seg_has_data = '1' then
+                  coherence_req_data_in <= payload_data;
+                  coherence_req_wrreq   <= '1';
+                  advance_segment       <= '1';
+                  if seg_last_in_beat = '1' then
+                    if wlast_reg = '1' then
+                      req_next <= req_data_ack;
+                    else
+                      req_next <= req_wait_wdata;
+                    end if;
+                  else
+                    req_next <= req_header;
+                  end if;
+                end if;
+              else
+                coherence_req_data_in <= payload_data;
+                coherence_req_wrreq   <= '1';
+                if wdata_valid = '1' then
+                  buffered_write_done <= '1';
+                else
+                  slv_ready_v := '1';
+                end if;
+                if last = '1' then
+                  req_next <= req_data_ack;
+                end if;
+              end if;
+            end if;
+          else
+            if remote_ahbs_snd_full = '0' and mst_valid = '1' then
+              if last = '1' then
+                req_next <= req_data_ack;
+              end if;
+              slv_ready_v := '1';
+              remote_v := (others => '0');
+              remote_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+              remote_v(31 downto 0) := wdata(31 downto 0);
+              remote_ahbs_snd_data_in <= remote_v;
+              remote_ahbs_snd_wrreq <= '1';
+            end if;
+          end if;
+
+        when req_data_lsb =>
+          if remote_ahbs_snd_full = '0' and mst_valid = '1' then
+            remote_v := (others => '0');
+            remote_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+            remote_v(31 downto 0) := wdata(31 downto 0);
+            remote_ahbs_snd_data_in <= remote_v;
+            remote_ahbs_snd_wrreq <= '1';
+            req_next <= req_data_msb;
+          end if;
+
+        when req_data_msb =>
+          if remote_ahbs_snd_full = '0' then
+            slv_ready_v := '1';
+            remote_v := (others => '0');
+            if last = '1' then
+              remote_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+            else
+              remote_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+            end if;
+            remote_v(31 downto 0) := wdata(ARCH_BITS - 1 downto ARCH_BITS - 32);
+            remote_ahbs_snd_data_in <= remote_v;
+            remote_ahbs_snd_wrreq <= '1';
+            if last = '1' then
+              req_next <= req_data_ack;
+            else
+              req_next <= req_data_lsb;
+            end if;
+          end if;
+
+        when req_data_ack =>
+          -- WRITE complete: drive AXI B locally and return to idle/next.
+          req_somi(transaction_reg.xindex).b.valid <= '1';
+          if transaction_reg.lock = '1' then
+            req_somi(transaction_reg.xindex).b.resp <= RBRESP_EXOKAY;
+          end if;
+          if mst_bready = '1' then
+            if selected = '1' and issue_ok = '1' then
+              sample_flits <= '1';
+              if transaction.write = '1' and transaction.dst_is_mem = '1' then
+                req_next <= req_wait_wdata;
+              else
+                req_next <= req_header;
+              end if;
+            else
+              req_next <= req_idle;
+            end if;
+          end if;
+
+        when req_commit =>
+          -- READ complete (issue side): record context for the response FSM.
+          -- Sim-only: pushing must target a free slot. ot_alloc_idx tracks
+          -- the lowest-index free slot, so the entry must be invalid here.
+          -- pragma translate_off
+          assert outstanding_reg(req_alloc_idx_reg).valid = '0'
+            report "axislv2noc: req_commit pushing to an already-valid slot"
+            severity failure;
+          -- pragma translate_on
+          push_outstanding       <= '1';
+          push_outstanding_idx   <= req_alloc_idx_reg;
+          push_outstanding_entry <= (
+            valid      => '1',
+            id         => transaction_reg.id,
+            xindex     => transaction_reg.xindex,
+            size       => transaction_reg.size,
+            addr       => transaction_reg.addr,
+            dst_is_mem => transaction_reg.dst_is_mem);
+          -- Return to idle so the next transaction is re-sampled there, on a
+          -- cycle where this push has already updated `outstanding_reg`.
+          -- Re-sampling directly here would latch `req_alloc_idx_reg` from a
+          -- stale `ot_alloc_idx` (this push not yet visible), letting the next
+          -- read alias the slot just allocated. Costs one issue cycle per
+          -- back-to-back read; memory round-trip latency dominates and up to
+          -- OUTSTANDING_DEPTH reads still pipeline, so throughput is unaffected.
+          req_next <= req_idle;
+
+        when others =>
+          req_next <= req_idle;
+      end case;
+
+      req_somi(transaction_reg.xindex).w.ready <= slv_ready_v;
+    end process req_roundtrip;
+
+    -----------------------------------------------------------------------
+    -- Response FSM
+    -----------------------------------------------------------------------
+    -- Owns coherence_rsp_rcv_rdreq, somi.r.*, and the active-slot register.
+    -- On a fresh header flit, extracts get_dma_tran_id and either matches a
+    -- slot (rsp_data) or drops the response (rsp_drop, defensive).
+    rsp_roundtrip: process (rsp_state, coherence_rsp_rcv_data_out, coherence_rsp_rcv_empty,
+                            outstanding_reg, rsp_active_valid_reg, rsp_active_idx_reg, mosi)
+      variable rsp_id_v         : dma_tran_id_type;
+      variable rsp_id_int       : integer range 0 to (2**DMA_TRAN_ID_WIDTH) - 1;
+      variable match_v          : std_ulogic;
+      variable match_idx_v      : outstanding_idx_t;
+      variable rsp_preamble_v   : noc_preamble_type;
+      variable mst_ready_v      : std_ulogic;
+      variable any_outstanding_v : std_ulogic;
+    begin
+      rsp_next               <= rsp_state;
+      load_rsp_active        <= '0';
+      load_rsp_active_idx    <= rsp_active_idx_reg;
+      clear_rsp_active       <= '0';
+      free_outstanding       <= '0';
+      free_outstanding_idx   <= rsp_active_idx_reg;
+      rsp_coh_rsp_rdreq      <= '0';
+
+      -- Default rsp_somi. Drive r.* based on the active slot when valid, so
+      -- the AXI master sees the correct r.id even mid-burst. Also initialize
+      -- the aw/ar/w/b fields (which the merge process discards) so this
+      -- process has a defined value across the full record.
+      for i in 0 to nmst - 1 loop
+        rsp_somi(i).r.id    <= outstanding_reg(rsp_active_idx_reg).id;
+        rsp_somi(i).r.resp  <= RBRESP_OKAY;
+        rsp_somi(i).r.user  <= (others => '0');
+        rsp_somi(i).r.last  <= '0';
+        rsp_somi(i).r.valid <= '0';
+        rsp_somi(i).r.data  <= coherence_rsp_rcv_data_out(AHBDW - 1 downto 0);
+        rsp_somi(i).aw.ready <= '0';
+        rsp_somi(i).ar.ready <= '0';
+        rsp_somi(i).w.ready  <= '0';
+        rsp_somi(i).b.id     <= (others => '0');
+        rsp_somi(i).b.resp   <= RBRESP_OKAY;
+        rsp_somi(i).b.user   <= (others => '0');
+        rsp_somi(i).b.valid  <= '0';
+      end loop;
+
+      mst_ready_v := mosi(outstanding_reg(rsp_active_idx_reg).xindex).r.ready;
+      rsp_preamble_v := get_preamble(this_noc_flit_size,
+                                     this_noc_flit_pad & coherence_rsp_rcv_data_out);
+
+      -- Defensive guard: only drain the coherence_rsp_rcv queue when we
+      -- actually have an outstanding read to match against. This prevents
+      -- the response FSM from stealing the RMW sub-read response that the
+      -- legacy/req-side RMW path consumes directly. Combined with the LLC
+      -- issue guard above (LLC mode = single-outstanding) this guarantees
+      -- rsp/RMW never contend.
+      any_outstanding_v := '0';
+      for i in 0 to OUTSTANDING_DEPTH - 1 loop
+        if outstanding_reg(i).valid = '1' then
+          any_outstanding_v := '1';
+        end if;
+      end loop;
+
+      if any_outstanding_v = '1' then
+      case rsp_state is
+        when rsp_idle =>
+          -- Look for an incoming header on the DMA response queue. Match
+          -- by DMA_TRAN_ID against the outstanding table.
+          if coherence_rsp_rcv_empty = '0' then
+            rsp_id_v := get_dma_tran_id(
+              dma_noc_flit_type(coherence_rsp_rcv_data_out(DMA_NOC_FLIT_SIZE - 1 downto 0)));
+            rsp_id_int := to_integer(unsigned(rsp_id_v));
+            match_v := '0';
+            match_idx_v := 0;
+            if rsp_id_int < OUTSTANDING_DEPTH then
+              if outstanding_reg(rsp_id_int).valid = '1'
+                then
+                match_v := '1';
+                match_idx_v := rsp_id_int;
+              end if;
+            end if;
+            -- LLC fallback: if no match by ID and exactly one slot is
+            -- outstanding, take that one (LLC strips the tran_id).
+            if match_v = '0' then
+              for i in 0 to OUTSTANDING_DEPTH - 1 loop
+                if outstanding_reg(i).valid = '1' then
+                  if match_v = '0' then
+                    match_v := '1';
+                    match_idx_v := i;
+                  else
+                    match_v := '0';      -- ambiguous -> drop
+                    exit;
+                  end if;
+                end if;
+              end loop;
+            end if;
+            rsp_coh_rsp_rdreq <= '1';      -- consume the header
+            if match_v = '1' then
+              -- Sim-only: the matched slot must be live (not freed) when
+              -- we route to rsp_data. Catches the
+              -- stale-flit / slot-reuse race if it ever happens.
+              -- pragma translate_off
+              assert outstanding_reg(match_idx_v).valid = '1'
+                report "axislv2noc: matched response to an invalid slot"
+                severity failure;
+              -- pragma translate_on
+              load_rsp_active     <= '1';
+              load_rsp_active_idx <= match_idx_v;
+              rsp_next            <= rsp_data;
+            else
+              rsp_next <= rsp_drop;
+            end if;
+          end if;
+
+        when rsp_data =>
+          -- Stream body/tail flits to AXI R channel using the active slot.
+          if coherence_rsp_rcv_empty = '0' then
+            for i in 0 to nmst - 1 loop
+              if i = outstanding_reg(rsp_active_idx_reg).xindex then
+                rsp_somi(i).r.valid <= '1';
+                if rsp_preamble_v = PREAMBLE_TAIL then
+                  rsp_somi(i).r.last <= '1';
+                end if;
+              end if;
+            end loop;
+            if mst_ready_v = '1' then
+              rsp_coh_rsp_rdreq <= '1';
+              if rsp_preamble_v = PREAMBLE_TAIL then
+                free_outstanding     <= '1';
+                free_outstanding_idx <= rsp_active_idx_reg;
+                clear_rsp_active     <= '1';
+                rsp_next             <= rsp_idle;
+              end if;
+            end if;
+          end if;
+
+        when rsp_drop =>
+          -- Defensive: consume the unmatched packet to its tail and idle.
+          if coherence_rsp_rcv_empty = '0' then
+            rsp_coh_rsp_rdreq <= '1';
+            if rsp_preamble_v = PREAMBLE_TAIL then
+              rsp_next <= rsp_idle;
+            end if;
+          end if;
+
+        when others =>
+          rsp_next <= rsp_idle;
+      end case;
+      end if;  -- any_outstanding_v
+    end process rsp_roundtrip;
+
+    -----------------------------------------------------------------------
+    -- OT sequential block: state + WSTRB buffering + outstanding table.
+    -----------------------------------------------------------------------
+    -- Reuses the same control strobes as the legacy clocked process
+    -- (latch_wbeat, advance_segment, etc.) so the existing combinational
+    -- WSTRB/RMW/DMA-write helpers operate unchanged. Adds outstanding-table
+    -- push/done/free and the response-active-slot register.
+    ot_seq: process (clk, rst)
+    begin
+      if rst = '0' then
+        req_state            <= req_idle;
+        req_alloc_idx_reg    <= 0;
+        rsp_state            <= rsp_idle;
+        transaction_reg      <= transaction_none;
+        rsp_active_valid_reg <= '0';
+        rsp_active_idx_reg   <= 0;
+        aw_accepted          <= '0';
+        wdata_valid          <= '0';
+        wdata_reg            <= (others => '0');
+        wstrb_reg            <= (others => '0');
+        wlast_reg            <= '0';
+        beat_index_reg       <= 0;
+        beat_addr_reg        <= (others => '0');
+        seg_mask_reg         <= (others => '0');
+        rmw_read_data_reg    <= (others => '0');
+        remote_ahbs_rcv_data_out_hold <= (others => '0');
+        for i in 0 to OUTSTANDING_DEPTH - 1 loop
+          outstanding_reg(i) <= outstanding_entry_none;
+        end loop;
+      elsif clk'event and clk = '1' then
+        req_state <= req_next;
+        rsp_state <= rsp_next;
+
+        if sample_flits = '1' then
+          transaction_reg <= transaction;
+          -- Latch the allocation index for this request exactly once, here at
+          -- sample time, and reuse it for both the req_header stamp and the
+          -- req_commit push so the two can never disagree. Safe because the
+          -- request FSM is the only allocator and handles one request at a
+          -- time, and responses only ever *free* slots -- so the chosen free
+          -- slot stays free until this request's req_commit fills it.
+          req_alloc_idx_reg <= ot_alloc_idx;
+          aw_accepted     <= '0';
+          wdata_valid     <= '0';
+          wlast_reg       <= '0';
+          beat_index_reg  <= 0;
+          seg_mask_reg    <= (others => '0');
+        end if;
+        if rmw_read_sample = '1' then
+          rmw_read_data_reg <= coherence_rsp_rcv_data_out(AHBDW - 1 downto 0);
+        end if;
+        if aw_handshake = '1' then
+          aw_accepted <= '1';
+        end if;
+        if latch_wbeat = '1' then
+          wdata_reg     <= mosi(transaction_reg.xindex).w.data;
+          wstrb_reg     <= mosi(transaction_reg.xindex).w.strb;
+          wlast_reg     <= mosi(transaction_reg.xindex).w.last;
+          wdata_valid   <= '1';
+          beat_addr_reg <= std_logic_vector(unsigned(transaction_reg.addr) +
+                                            to_unsigned(beat_index_reg * (2 ** to_integer(unsigned(transaction_reg.size))), GLOB_PHYS_ADDR_BITS));
+          if (coherence /= ACC_COH_LLC and coherence /= ACC_COH_RECALL and
+              mosi(transaction_reg.xindex).w.strb /= WSTRB_ALL_ONE) then
+            seg_mask_reg <= mosi(transaction_reg.xindex).w.strb;
+          else
+            seg_mask_reg <= (others => '1');
+          end if;
+        end if;
+        if skip_beat = '1' then
+          wdata_valid  <= '0';
+          seg_mask_reg <= (others => '0');
+          if skip_last = '0' then
+            beat_index_reg <= beat_index_reg + 1;
+          end if;
+        elsif advance_segment = '1' then
+          seg_mask_reg <= seg_mask_next;
+          if seg_last_in_beat = '1' then
+            wdata_valid <= '0';
+            if wlast_reg = '0' then
+              beat_index_reg <= beat_index_reg + 1;
+            end if;
+          end if;
+        elsif rmw_write_done = '1' then
+          wdata_valid  <= '0';
+          seg_mask_reg <= (others => '0');
+          if wlast_reg = '0' then
+            beat_index_reg <= beat_index_reg + 1;
+          end if;
+        elsif buffered_write_done = '1' then
+          wdata_valid  <= '0';
+          seg_mask_reg <= (others => '0');
+          if wlast_reg = '0' then
+            beat_index_reg <= beat_index_reg + 1;
+          end if;
+        end if;
+
+        -- Outstanding-table maintenance.
+        if push_outstanding = '1' then
+          outstanding_reg(push_outstanding_idx) <= push_outstanding_entry;
+        end if;
+        if free_outstanding = '1' then
+          outstanding_reg(free_outstanding_idx) <= outstanding_entry_none;
+        end if;
+
+        -- Response-active-slot register.
+        if load_rsp_active = '1' then
+          rsp_active_idx_reg   <= load_rsp_active_idx;
+          rsp_active_valid_reg <= '1';
+        elsif clear_rsp_active = '1' then
+          rsp_active_valid_reg <= '0';
+        end if;
+      end if;
+    end process ot_seq;
+
+    -- Merge req_somi (aw/ar/w/b) and rsp_somi.r into the actual `somi`
+    -- output port. Single driver per signal -- the second assignment
+    -- inside the same process overrides .r last-wins.
+    merge_somi: process (req_somi, rsp_somi)
+    begin
+      for i in 0 to nmst - 1 loop
+        somi(i)   <= req_somi(i);
+        somi(i).r <= rsp_somi(i).r;
+      end loop;
+    end process merge_somi;
+
+    -- Combine the two queue-dequeue strobes. They are mutex by the LLC
+    -- single-outstanding fallback (RMW only runs when no reads are in
+    -- flight, so rsp_coh_rsp_rdreq is '0' while req_coh_rsp_rdreq pulses,
+    -- and vice versa). OR is the right combine.
+    coherence_rsp_rcv_rdreq <= req_coh_rsp_rdreq or rsp_coh_rsp_rdreq;
+
+    -- Remote-AHB receive path is unused in DMA-OT mode (the AXI-accelerator
+    -- socket ties off remote_ahbs_rcv_data_out='0'/empty='1'). Drive the rdreq
+    -- to a known value so the port has exactly one driver.
+    remote_ahbs_rcv_rdreq <= '0';
+
+    -- Tie off legacy-only signals that gen_legacy would have driven.
+    -- (current_state belongs to the legacy axi_fsm; in gen_dma_ot the
+    -- request FSM uses req_state instead.)
+    current_state <= idle;
+    next_state    <= idle;
+    sample_and_hold <= '0';
+
+  end generate gen_dma_ot;
 
 end rtl;
