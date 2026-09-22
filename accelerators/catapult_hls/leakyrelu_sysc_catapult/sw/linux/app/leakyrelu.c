@@ -3,9 +3,6 @@
 #include "libesp.h"
 #include "cfg.h"
 
-static unsigned batch;
-static unsigned row;
-static unsigned vec_len;
 static unsigned in_a_len;
 static unsigned in_b_len;
 static unsigned out_len;
@@ -25,11 +22,11 @@ static int validate_buffer(token_t *out, token_t *gold)
 	int k;
 	unsigned errors = 0;
 
-	for (i=0; i<batch; i++){
-		for (j=0; j<row; j++){
-			for (k=0; k<vec_len; k++){
-				if (gold[(row*vec_len)*i + vec_len*j + k] != out[(row*vec_len)*i + vec_len*j + k])
-				errors++;
+	for (i=0; i<leaky_batch; i++){
+		for (j=0; j<leaky_row; j++){
+			for (k=0; k<leaky_vec_len; k++){
+				if (gold[(leaky_row*leaky_vec_len)*i + leaky_vec_len*j + k] != out[(leaky_row*leaky_vec_len)*i + leaky_vec_len*j + k])
+					errors++;
 			}
 		}
 	}
@@ -44,38 +41,38 @@ static void init_buffer(token_t *in, token_t * gold)
 	int i;
 	int j;
 	int k;
-	for (i=0; i<batch; i++){
-		for (j=0; j<row; j++){
-			for (k=0; k<vec_len; k++){
+	for (i=0; i<leaky_batch; i++){
+		for (j=0; j<leaky_row; j++){
+			for (k=0; k<leaky_vec_len; k++){
 				float data = ((i * 8 + j - k) % 32) + 0.25;
 				token_t data_fxd = float_to_fixed32(data, 16);
-				in[(row*vec_len)*i + vec_len*j + k] = data_fxd;
+				in[(leaky_row*leaky_vec_len)*i + leaky_vec_len*j + k] = data_fxd;
 			}
 		}
 	}
-	for (i=0; i<batch; i++){
-		for (j=0; j<row; j++){
-			for (k=0; k<vec_len; k++){
+	for (i=0; i<leaky_batch; i++){
+		for (j=0; j<leaky_row; j++){
+			for (k=0; k<leaky_vec_len; k++){
 				float data = ((i * 8 + j + k) % 32) + 0.15;
 				token_t data_fxd = float_to_fixed32(data, 16);
-				in[in_a_len + (row*vec_len)*i + vec_len*j + k] = data_fxd;
+				in[in_a_len + (leaky_row*leaky_vec_len)*i + leaky_vec_len*j + k] = data_fxd;
 			}
 		}
 	}
 
 	float out_gold;
-	for (i=0; i<batch; i++){
-		for (j=0; j<row; j++){
-			for (k=0; k<vec_len; k++){
-				float data_a = fixed32_to_float(in[(row*vec_len)*i + vec_len*j + k], 16);
-				float data_b = fixed32_to_float(in[in_a_len + (row*vec_len)*i + vec_len*j + k], 16);
+	for (i=0; i<leaky_batch; i++){
+		for (j=0; j<leaky_row; j++){
+			for (k=0; k<leaky_vec_len; k++){
+				float data_a = fixed32_to_float(in[(leaky_row*leaky_vec_len)*i + leaky_vec_len*j + k], 16);
+				float data_b = fixed32_to_float(in[in_a_len + (leaky_row*leaky_vec_len)*i + leaky_vec_len*j + k], 16);
 				
-				out_gold = data_a*data_b;
+				out_gold = data_a + data_b;
 
 				if (out_gold < 0){
 					out_gold *= 0.5;
 				}
-				gold[(row*vec_len)*i + vec_len*j + k]= float_to_fixed32(out_gold, 16);
+				gold[(leaky_row*leaky_vec_len)*i + leaky_vec_len*j + k]= float_to_fixed32(out_gold, 16);
 			}
 		}
 	}
@@ -86,13 +83,13 @@ static void init_buffer(token_t *in, token_t * gold)
 static void init_parameters()
 {
 	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
-		in_a_len        = batch*(row*vec_len);
-		in_b_len        = batch*(row*vec_len);
-		out_len         = batch*(row*vec_len);
+		in_a_len        = leaky_buffer_words;
+		in_b_len        = leaky_buffer_words;
+		out_len         = leaky_buffer_words;
 	} else {
-		in_a_len        = round_up(batch*(row*vec_len), DMA_WORD_PER_BEAT(sizeof(token_t)));
-		in_b_len        = round_up(batch*(row*vec_len), DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_len         = round_up(batch*(row*vec_len), DMA_WORD_PER_BEAT(sizeof(token_t)));
+		in_a_len        = round_up(leaky_buffer_words, DMA_WORD_PER_BEAT(sizeof(token_t)));
+		in_b_len        = round_up(leaky_buffer_words, DMA_WORD_PER_BEAT(sizeof(token_t)));
+		out_len         = round_up(leaky_buffer_words, DMA_WORD_PER_BEAT(sizeof(token_t)));
 	}
 
 	in_a_size = in_a_len * sizeof(token_t);
@@ -123,8 +120,8 @@ int main(int argc, char **argv)
 
 	printf("\n====== %s ======\n\n", cfg_000[0].devname);
 	/* <<--print-params-->> */
-	printf("  .batch = %d\n", batch);
-	printf("  .row = %d\n", row);
+	printf("  .batch = %d\n", leaky_batch);
+	printf("  .row = %d\n", leaky_row);
 	printf("  .addrA = %d\n", in_a_offset);
 	printf("  .addrB = %d\n", in_b_offset);
 	printf("  .addrO = %d\n", out_offset);

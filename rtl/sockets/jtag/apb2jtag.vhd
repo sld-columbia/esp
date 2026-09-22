@@ -16,8 +16,6 @@ use work.ariane_esp_pkg.all;
 use work.misc.all;
 -- pragma translate_off
 use work.sim.all;
-library unisim;
-use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
 use work.sldacc.all;

@@ -15,6 +15,8 @@ GENUS_EXCLUDE_VHDL += $(DESIGN_PATH)/fpga_proxy_top.vhd
 
 ### Genus targets ###
 GENUS_SVLOGOPT +=
+GENUS_VLOGOPT += $(GENUS_SVLOGOPT)
+GENUS_VLOGOPT += $(GT_VORTEX_GENUS_DEFINES)
 GENUS_VLOG = read_hdl -language sv $(GENUS_VLOGOPT)
 GENUS_VHDL = read_hdl -language vhdl
 

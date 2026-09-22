@@ -1,0 +1,17 @@
+stdio-common/errlist.o.d and stdio-common/errlist.os.d are not generated
+alongside stdio-common/errlist-compat.h.  Depending on that header makes
+GNU Make 4.4+ continuously remake and reload generated Makefiles.
+
+Backport of glibc commit 3d443b8d6a5e19edb5392d772685a58c5fb2310b
+(BZ #31330) for the glibc 2.29 snapshot used by ESP.
+
+diff --git a/sysdeps/gnu/Makefile b/sysdeps/gnu/Makefile
+index a03d40e4ca..515b8bb86e 100644
+--- a/sysdeps/gnu/Makefile
++++ b/sysdeps/gnu/Makefile
+@@ -57,4 +57,3 @@ generated += errlist-compat.c errlist-compat.h
+ # This will force the generation above to happy if need be.
+-$(foreach o,$(object-suffixes) $(object-suffixes:=.d),\
+-	  $(objpfx)errlist$o): $(objpfx)errlist-compat.h
++$(foreach o,$(object-suffixes),$(objpfx)errlist$o): $(objpfx)errlist-compat.h
+ endif

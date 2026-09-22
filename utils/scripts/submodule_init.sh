@@ -24,6 +24,7 @@ INSTALL_STRATUS_INC=0
 INSTALL_MATCHLIB=0
 INSTALL_CHISEL=0
 INSTALL_NVDLA=0
+INSTALL_VORTEX=0
 INSTALL_SPANDEX=0
 INSTALL_BASEJUMP=0
 INSTALL_ZYNQ=0
@@ -59,6 +60,10 @@ fi
 
 if [ $(noyes "*** QUESTION : Do you want to install NVDLA?") == "y" ]; then
     INSTALL_NVDLA=1
+fi
+
+if [ $(noyes "*** QUESTION : Do you want to install Vortex?") == "y" ]; then
+    INSTALL_VORTEX=1
 fi
 
 if [ $(noyes "*** QUESTION : Do you want to install Spandex caches?") == "y" ]; then
@@ -116,6 +121,10 @@ fi
 
 if [ ${INSTALL_NVDLA} == 1 ]; then
     git submodule update --init --recursive accelerators/third-party/NV_NVDLA
+fi
+
+if [ ${INSTALL_VORTEX} == 1 ]; then
+    git submodule update --init --recursive accelerators/third-party/GT_VORTEX/vortex
 fi
 
 if [ ${INSTALL_SPANDEX} == 1 ]; then

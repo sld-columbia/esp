@@ -11,9 +11,16 @@ NCCOMOPT += -nocopyright
 
 NCLOGOPT += -nocopyright
 NCLOGOPT += -linedebug
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
+NCLOGOPT += -DEFINE XILINX_FPGA
+else ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
+NCLOGOPT += -DEFINE FPGA_TARGET_ALTERA
+# See the note in utils/make/modelsim.mk: XILINX_FPGA selects the FPGA cache
+# memories, so an Intel target needs it too. Without it the caches silently
+# fall back to their ASIC-style implementation.
 NCLOGOPT += -DEFINE XILINX_FPGA
 endif
+NCLOGOPT += $(GT_VORTEX_XCELIUM_DEFINES)
 NCLOGOPT += $(INCDIR_INCISIVE)
 
 NCELABOPT += -nowarn DLCPT
@@ -42,12 +49,21 @@ $(ESP_ROOT)/.cache/incisive/xilinx_lib:
 		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib cds.lib; exit 1; \
 	fi;
 
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 incisive/cds.lib: $(ESP_ROOT)/.cache/incisive/xilinx_lib
 	$(QUIET_MAKE)mkdir -p incisive
 	@cp $(ESP_ROOT)/.cache/incisive/cds.lib $@
 
 incisive/hdl.var: incisive/cds.lib
 	@cp $(ESP_ROOT)/.cache/incisive/hdl.var $@
+else
+incisive/cds.lib:
+	$(QUIET_MAKE)mkdir -p incisive
+	@touch $@
+
+incisive/hdl.var: incisive/cds.lib
+	@touch $@
+endif
 
 incisive/ncready: incisive/hdl.var $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p incisive

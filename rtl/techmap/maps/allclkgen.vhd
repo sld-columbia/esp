@@ -73,6 +73,52 @@ component clkgen_virtexu is
     cgo   : out clkgen_out_type);
 end component clkgen_virtexu;
 
+component clkgen_altera_mf
+  generic (
+    clk_mul   : integer := 1;
+    clk_div   : integer := 1;
+    sdramen   : integer := 0;
+    sdinvclk  : integer := 0;
+    pcien     : integer := 0;
+    pcidll    : integer := 0;
+    pcisysclk : integer := 0;
+    freq      : integer := 25000;
+    clk2xen   : integer := 0);
+  port (
+    clkin    : in  std_logic;
+    pciclkin : in  std_logic;
+    clk      : out std_logic;
+    clkn     : out std_logic;
+    clk2x    : out std_logic;
+    sdclk    : out std_logic;
+    pciclk   : out std_logic;
+    cgi      : in  clkgen_in_type;
+    cgo      : out clkgen_out_type);
+end component clkgen_altera_mf;
+
+component clkgen_stratix10
+  generic (
+    clk_mul   : integer := 1;
+    clk_div   : integer := 1;
+    sdramen   : integer := 0;
+    sdinvclk  : integer := 0;
+    pcien     : integer := 0;
+    pcidll    : integer := 0;
+    pcisysclk : integer := 0;
+    freq      : integer := 25000;
+    clk2xen   : integer := 0);
+  port (
+    clkin    : in  std_logic;
+    pciclkin : in  std_logic;
+    clk      : out std_logic;
+    clkn     : out std_logic;
+    clk2x    : out std_logic;
+    sdclk    : out std_logic;
+    pciclk   : out std_logic;
+    cgi      : in  clkgen_in_type;
+    cgo      : out clkgen_out_type);
+end component clkgen_stratix10;
+
 
 component clkand_unisim
   port(

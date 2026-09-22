@@ -12,8 +12,6 @@ use work.gencomp.all;
 use work.misc.all;
 -- pragma translate_off
 use work.sim.all;
-library unisim;
-use unisim.all;
 -- pragma translate_on
 use work.nocpackage.all;
 
