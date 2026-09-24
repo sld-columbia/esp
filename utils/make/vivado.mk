@@ -238,6 +238,8 @@ vivado/setup.tcl: vivado $(BOARD_FILES)
 	@echo "set_property include_dirs {$(INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
 ifeq ("$(CPU_ARCH)","ibex")
 	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx} [get_filesets {sim_1 sources_1}]" >> $@
+else ifeq ("$(CPU_ARCH)","cva6")
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 ESP_CVA6=1} [get_filesets {sim_1 sources_1}]" >> $@
 else
 	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
 endif

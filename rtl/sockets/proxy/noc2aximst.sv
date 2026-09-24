@@ -144,7 +144,10 @@ module noc2aximst #(
     localparam DMA_WRITE_DATA_COH = 5'b10100;
     localparam DMA_WRITE_DATA_ETH = 5'b10101;
 
+    localparam int unsigned DMA_AXI_SIZE = (ARCH_BITS == 32 || eth_dma == 1) ? XSIZE_WORD : XSIZE_DWORD;
+
     (* mark_debug = "true" *) reg_type cs, ns;
+    logic [31:0] eth_dma_rdata32;
 
     always_comb begin
         ns = cs;
@@ -370,14 +373,8 @@ module noc2aximst #(
                 if (dma_rcv_empty == 1'b0) begin
                     dma_rcv_rdreq = 1'b1;
                     ns.ar_prot    = cs.ax_prot;
-
-                    if (ARCH_BITS == 32) begin
-                        ns.ar_size = XSIZE_WORD;
-                        ns.aw_size = XSIZE_WORD;
-                    end else begin
-                        ns.ar_size = XSIZE_DWORD;
-                        ns.aw_size = XSIZE_DWORD;
-                    end
+                    ns.ar_size = DMA_AXI_SIZE;
+                    ns.aw_size = DMA_AXI_SIZE;
 
                     if (cs.msg == DMA_TO_DEV || cs.msg == REQ_DMA_READ) begin
                         next_state = DMA_RECEIVE_READ_LENGTH;
@@ -429,7 +426,9 @@ module noc2aximst #(
                 if (dma_rcv_empty == 1'b0) begin
                     dma_rcv_rdreq = 1'b1;
                     ns.count      = dma_rcv_data_out[31:0] - 1;
-                    if (ns.count > 255) begin
+                    if (eth_dma == 1) begin
+                        ns.ar_len = 0;
+                    end else if (ns.count > 255) begin
                         ns.ar_len = 255;
                         ns.count  = ns.count - 256;
                     end else begin
@@ -466,9 +465,15 @@ module noc2aximst #(
             DMA_SEND_DATA: begin
                 if (dma_snd_full == 1'b0) begin
                     if (R_VALID == 1'b1) begin
-                        ns.dma_noc_data[ARCH_BITS*cs.word_cnt+:ARCH_BITS] =
-                            fix_endian(R_DATA, little_end);
-                        ns.word_cnt = cs.word_cnt + 1;
+                        if (eth_dma == 1) begin
+                            ns.dma_noc_data = '0;
+                            ns.dma_noc_data[31:0] = eth_dma_rdata32;
+                            ns.word_cnt = 0;
+                        end else begin
+                            ns.dma_noc_data[ARCH_BITS*cs.word_cnt+:ARCH_BITS] =
+                                fix_endian(R_DATA, little_end);
+                            ns.word_cnt = cs.word_cnt + 1;
+                        end
 
                         if (R_LAST == 1'b0) begin
                             if ((ns.word_cnt == DMA_NOC_WIDTH / ARCH_BITS) || (eth_dma == 1)) begin
@@ -484,14 +489,19 @@ module noc2aximst #(
                                 next_state      = RECEIVE_HEADER;
                             end else begin
                                 dma_snd_data_in = {PREAMBLE_BODY, ns.dma_noc_data};
-                                if (cs.count > 255) begin
+                                if (eth_dma == 1) begin
+                                    ns.ar_len  = 0;
+                                    ns.count   = cs.count - 1;
+                                    ns.ar_addr = cs.ar_addr + 4;
+                                end else if (cs.count > 255) begin
                                     ns.ar_len = 255;
                                     ns.count  = cs.count - 256;
+                                    ns.ar_addr = cs.ar_addr + ((cs.ar_len + 1) << cs.ar_size);
                                 end else begin
                                     ns.ar_len = cs.count;
                                     ns.count  = 0;
+                                    ns.ar_addr = cs.ar_addr + ((cs.ar_len + 1) << cs.ar_size);
                                 end
-                                ns.ar_addr    = cs.ar_addr + ((cs.ar_len + 1) << cs.ar_size);
                                 ns.burst_flag = 1;  // Give the new address for the new burst
                                 ns.ar_valid   = 1'b1;
                                 next_state    = DMA_READ_REQUEST;
@@ -505,7 +515,11 @@ module noc2aximst #(
                 if (dma_rcv_empty == 1'b0) begin
                     dma_rcv_rdreq = 1'b1;
                     ns.count      = dma_rcv_data_out[31:0] - 1;
-                    if (ns.count > 255) begin
+                    if (eth_dma == 1) begin
+                        ns.aw_len   = 0;
+                        ns.word_rem = 0;
+                        ns.count    = 0;
+                    end else if (ns.count > 255) begin
                         ns.aw_len   = 255;
                         ns.word_rem = 255;
                         ns.count    = ns.count - 256;
@@ -712,9 +726,16 @@ module noc2aximst #(
 
         dma_live_flit_swapped = '0;
         dma_pref_flit_swapped = '0;
+        eth_dma_rdata32       = '0;
 
         dma_payload_live      = dma_rcv_data_out[DMA_NOC_WIDTH-1 : 0];
         dma_payload_pref      = cs.dma_flit[DMA_NOC_WIDTH-1 : 0];
+
+        if (ARCH_BITS == 64) begin
+            eth_dma_rdata32 = (cs.ar_addr[2] == 1'b0) ? R_DATA[63:32] : R_DATA[31:0];
+        end else begin
+            eth_dma_rdata32 = R_DATA[31:0];
+        end
 
         if (little_end == 0) begin
             dma_live_flit_swapped = dma_payload_live[ARCH_BITS*cs.word_cnt+:ARCH_BITS];
@@ -847,8 +868,8 @@ module noc2aximst #(
     logic [    `MSG_TYPE_WIDTH-1 : 0] input_msg_type;
     logic [    `MSG_TYPE_WIDTH-1 : 0] msg_type;
     logic [ this_coh_flit_size-1 : 0] header_v;
-    logic [                    2 : 0] origin_y;
-    logic [                    2 : 0] origin_x;
+    logic [GLOB_PHYS_ADDR_BITS-1 : 0] origin_y;
+    logic [GLOB_PHYS_ADDR_BITS-1 : 0] origin_x;
     logic [`NEXT_ROUTING_WIDTH-1 : 0] go_right;
     logic [`NEXT_ROUTING_WIDTH-1 : 0] go_left;
 
@@ -859,8 +880,8 @@ module noc2aximst #(
         if (input_msg_type == AHB_RD) msg_type = RSP_AHB_RD;
         else msg_type = RSP_DATA;
 
-        origin_y = pad_coherence_req_data_out[  this_coh_flit_size - `PREAMBLE_WIDTH - GLOB_YX_WIDTH + 2 :   this_coh_flit_size - `PREAMBLE_WIDTH - GLOB_YX_WIDTH];
-        origin_x = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH + 2 : this_coh_flit_size - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH];
+        origin_y = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - 1 : this_coh_flit_size - `PREAMBLE_WIDTH - GLOB_YX_WIDTH];
+        origin_x = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - GLOB_YX_WIDTH - 1 : this_coh_flit_size - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH];
         header_v = 0;
         header_v[this_coh_flit_size-1 : this_coh_flit_size-`PREAMBLE_WIDTH] = PREAMBLE_HEADER;
         header_v[this_coh_flit_size - `PREAMBLE_WIDTH - 1 : this_coh_flit_size - `PREAMBLE_WIDTH - GLOB_YX_WIDTH] = local_y;
@@ -890,8 +911,8 @@ module noc2aximst #(
     logic [    `MSG_TYPE_WIDTH-1 : 0] input_msg_type_dma;
     logic [    `MSG_TYPE_WIDTH-1 : 0] msg_type_dma;
     logic [  DMA_NOC_FLIT_SIZE-1 : 0] header_v_dma;
-    logic [                    2 : 0] origin_y_dma;
-    logic [                    2 : 0] origin_x_dma;
+    logic [      GLOB_YX_WIDTH-1 : 0] origin_y_dma;
+    logic [      GLOB_YX_WIDTH-1 : 0] origin_x_dma;
     logic [`NEXT_ROUTING_WIDTH-1 : 0] go_right_dma;
     logic [`NEXT_ROUTING_WIDTH-1 : 0] go_left_dma;
 
@@ -904,8 +925,8 @@ module noc2aximst #(
         else msg_type_dma = DMA_TO_DEV;
 
         //reserved_resp_dma = 0;
-        origin_y_dma = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - GLOB_YX_WIDTH + 2:DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - GLOB_YX_WIDTH];
-        origin_x_dma = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH + 2:DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH];
+        origin_y_dma = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 1:DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - GLOB_YX_WIDTH];
+        origin_x_dma = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - GLOB_YX_WIDTH - 1 : DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 2*GLOB_YX_WIDTH];
         header_v_dma = 0;
         header_v_dma[DMA_NOC_FLIT_SIZE-1 : DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH] = PREAMBLE_HEADER;
         header_v_dma[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 1 : DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - GLOB_YX_WIDTH] = local_y;

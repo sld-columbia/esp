@@ -71,6 +71,12 @@ CROSS_COMPILE_ELF = riscv64-unknown-elf-
 CROSS_COMPILE_LINUX = riscv64-unknown-linux-gnu-
 endif
 
+ifeq ("$(CPU_ARCH)", "cva6")
+ARCH=riscv
+CROSS_COMPILE_ELF = riscv64-unknown-elf-
+CROSS_COMPILE_LINUX = riscv64-unknown-linux-gnu-
+endif
+
 ifeq ("$(CPU_ARCH)", "ibex")
 ARCH=riscv
 CROSS_COMPILE_ELF = riscv32-unknown-elf-

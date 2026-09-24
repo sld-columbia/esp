@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2026 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
-ifeq ("$(CPU_ARCH)", "ariane")
+ifneq ($(filter cva6 ariane,$(CPU_ARCH)),)
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
 ARCH ?= riscv
 else # ifeq ("$(CPU_ARCH)", "leon3")
