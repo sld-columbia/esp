@@ -37,8 +37,11 @@ export BAMBU_ENV=/path/to/unified_ac_channels/install/settings.sh
 make -C socs/xilinx-vc707-xc7vx485t sqr_bambu-hls
 make -C socs/xilinx-vc707-xc7vx485t sqr_bambu-sim
 bash accelerators/bambu_hls/sqr_bambu/hw/tb/run_dma_test.sh
-make -C socs/xilinx-vc707-xc7vx485t esp-defconfig \
-  ESP_DEFCONFIG="$PWD/socs/defconfig/esp_xilinx-vc707-sqr_bambu_defconfig"
+# Configure the SoC to include a SQR_BAMBU accelerator tile: run the
+# configurator and place SQR_BAMBU (basic_dma64) in a tile, or add the line
+#   TILE_1_0 = 2 acc SQR_BAMBU basic_dma64 0 0 sld
+# to socs/xilinx-vc707-xc7vx485t/socgen/esp/.esp_config directly.
+make -C socs/xilinx-vc707-xc7vx485t esp-xconfig
 make -C socs/xilinx-vc707-xc7vx485t socketgen sqr_bambu-baremetal
 make -C socs/xilinx-vc707-xc7vx485t sim \
   TEST_PROGRAM="$PWD/socs/xilinx-vc707-xc7vx485t/soft-build/ariane/baremetal/sqr_bambu.exe"
