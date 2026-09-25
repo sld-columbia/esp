@@ -8,7 +8,7 @@ CFLAGS += -D$(MODE)
 
 ifeq ("$(MODE)", "LINUX")
 INCDIR += -I$(DESIGN_PATH)/socgen/esp
-ifneq ($(filter cva6 ariane,$(CPU_ARCH)),)
+ifeq ("$(CPU_ARCH)", "ariane")
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
 else # ("$(CPU_ARCH)", "leon3")
 CROSS_COMPILE ?= sparc-linux-
@@ -39,7 +39,7 @@ CFLAGS += -fno-builtin-printf
 CFLAGS += -nostdlib
 CFLAGS += -nostartfiles
 
-ifneq ($(filter cva6 ariane,$(CPU_ARCH)),)
+ifeq ("$(CPU_ARCH)", "ariane")
 CROSS_COMPILE ?= riscv64-unknown-elf-
 else # ("$(CPU_ARCH)", "ibex")
 CROSS_COMPILE ?= riscv32-unknown-elf-

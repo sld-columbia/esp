@@ -57,14 +57,12 @@ NACC_MAX = NAPBS - NCPU_MAX - NMEM_MAX - NTILE_MAX - 8
 RST_ADDR = dict()
 RST_ADDR["leon3"] = 0x0
 RST_ADDR["ariane"] = 0x10000
-RST_ADDR["cva6"] = 0x10000
 RST_ADDR["ibex"] = 0x80
 
 # Default start address for device tree
 RODATA_ADDR = dict()
 RODATA_ADDR["leon3"] = 0x0
 RODATA_ADDR["ariane"] = 0x10400
-RODATA_ADDR["cva6"] = 0x10400
 RODATA_ADDR["ibex"] = 0x500
 
 # Boot ROM slave index (With Leon3 this exists in simulation only for now)
@@ -77,7 +75,6 @@ AHB2APB_HINDEX = 1
 AHB2APB_HADDR = dict()
 AHB2APB_HADDR["leon3"] = 0x800
 AHB2APB_HADDR["ariane"] = 0x600
-AHB2APB_HADDR["cva6"] = 0x600
 AHB2APB_HADDR["ibex"] = 0x600
 
 # RISC-V CPU Local Interruptor index
@@ -93,7 +90,6 @@ SLM_HINDEX = 20
 DDR_HADDR = dict()
 DDR_HADDR["leon3"] = 0x400
 DDR_HADDR["ariane"] = 0x800
-DDR_HADDR["cva6"] = 0x800
 DDR_HADDR["ibex"] = 0x800
 
 # SLM base address
@@ -326,7 +322,7 @@ class soc_config:
         # Accelerator interrupt dynamically to each accelerator tile because
         # RISC-V PLIC does not work properly with shared lines
         acc_irq = 3
-        if self.cpu_arch in ("ariane", "cva6", "ibex"):
+        if self.cpu_arch == "ariane" or self.cpu_arch == "ibex":
             acc_irq = 5
 
         for x in range(soc.noc.rows):
@@ -390,7 +386,7 @@ class soc_config:
                     self.tiles[t].acc = acc
                     self.accelerators.append(acc)
                     acc_id = acc_id + 1
-                    if self.cpu_arch in ("ariane", "cva6", "ibex"):
+                    if self.cpu_arch == "ariane" or self.cpu_arch == "ibex":
                         acc_irq = acc_irq + 1
                         # Skip interrupt lines reserved to Ethernet
                         if acc_irq == 11:
@@ -495,7 +491,7 @@ def print_global_constants(fp, soc):
 
     #
     fp.write("  ------ CPU\n")
-    fp.write("  type cpu_arch_type is (leon3, ariane, cva6, ibex);\n")
+    fp.write("  type cpu_arch_type is (leon3, ariane, ibex);\n")
     fp.write(
         "  constant GLOB_CPU_ARCH : cpu_arch_type := " +
         soc.CPU_ARCH.get() +
@@ -504,7 +500,7 @@ def print_global_constants(fp, soc):
         "  constant CPU_STR : string := \"" +
         soc.CPU_ARCH.get() +
         "\";\n")
-    if soc.CPU_ARCH.get() in ("ariane", "cva6"):
+    if soc.CPU_ARCH.get() == "ariane":
         fp.write("  constant GLOB_CPU_AXI : integer range 0 to 1 := 1;\n")
     else:
         fp.write("  constant GLOB_CPU_AXI : integer range 0 to 1 := 0;\n")
@@ -512,7 +508,7 @@ def print_global_constants(fp, soc):
         fp.write("  constant GLOB_CPU_RISCV : integer range 0 to 1 := 0;\n")
     else:
         fp.write("  constant GLOB_CPU_RISCV : integer range 0 to 1 := 1;\n")
-    if soc.CPU_ARCH.get() in ("ariane", "cva6"):
+    if soc.CPU_ARCH.get() == "ariane":
         fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 1;\n")
     else:
         fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 0;\n")
@@ -557,12 +553,6 @@ def print_global_constantsSV(fp, soc):
       fp.write("  localparam integer GLOB_YX_WIDTH = 3;\n")
     else:
       fp.write("  localparam integer GLOB_YX_WIDTH = 4;\n")
-
-    # CPU architecture enum for SystemVerilog
-    fp.write("\n  // CPU architecture type\n")
-    fp.write("  typedef enum {leon3, ariane, cva6, ibex} cpu_arch_type;\n")
-    fp.write("  localparam cpu_arch_type GLOB_CPU_ARCH = " + soc.CPU_ARCH.get() + ";\n")
-    fp.write("  localparam string CPU_STR = \"" + soc.CPU_ARCH.get() + "\";\n")
 
 def print_constants(fp, soc, esp_config):
 
@@ -1171,7 +1161,7 @@ def print_mapping(fp, soc, esp_config):
     fp.write("  constant fixed_ahbso_hconfig : ahb_slv_config_vector := (\n")
     fp.write("    " + str(AHBROM_HINDEX) + " => ahbrom_hconfig,\n")
     fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
-    if esp_config.cpu_arch in ("ariane", "cva6", "ibex"):
+    if esp_config.cpu_arch == "ariane" or esp_config.cpu_arch == "ibex":
         fp.write("    " + str(RISCV_CLINT_HINDEX) + " => clint_hconfig,\n")
     for i in range(0, esp_config.nmem):
         fp.write("    " + str(DDR_HINDEX[i]) +
@@ -1196,7 +1186,7 @@ def print_mapping(fp, soc, esp_config):
         "  constant cpu_tile_fixed_ahbso_hconfig : ahb_slv_config_vector := (\n")
     fp.write("    " + str(AHBROM_HINDEX) + " => ahbrom_hconfig,\n")
     fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
-    if esp_config.cpu_arch in ("ariane", "cva6", "ibex"):
+    if esp_config.cpu_arch == "ariane" or esp_config.cpu_arch == "ibex":
         fp.write("    " + str(RISCV_CLINT_HINDEX) + " => clint_hconfig,\n")
     if esp_config.nmem != 0:
         fp.write("    " + str(DDR_HINDEX[0]) + " => cpu_tile_mig7_hconfig,\n")
@@ -1224,7 +1214,7 @@ def print_mapping(fp, soc, esp_config):
         fp.write("  0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_IRQMP, 0, 3, 0),\n")
         fp.write("  1 => apb_iobar(16#002#, 16#fff#),\n")
         fp.write("  2 => (others => '0'));\n\n")
-    elif esp_config.cpu_arch in ("ariane", "cva6", "ibex"):
+    elif esp_config.cpu_arch == "ariane" or esp_config.cpu_arch == "ibex":
         fp.write("  0 => ahb_device_reg ( VENDOR_SIFIVE, SIFIVE_PLIC0, 0, 3, 0),\n")
         fp.write("  1 => apb_iobar(16#000#, 16#000#),\n")
         fp.write("  2 => apb_iobar(16#0C0#, 16#FC0#));\n\n")
@@ -2447,7 +2437,7 @@ def print_devtree(fp, soc, esp_config):
     fp.write("/ {\n")
     fp.write("  #address-cells = <2>;\n")
     fp.write("  #size-cells = <2>;\n")
-    if esp_config.cpu_arch in ("ariane", "cva6"):
+    if esp_config.cpu_arch == "ariane":
         fp.write("  compatible = \"eth,ariane-bare-dev\";\n")
         fp.write("  model = \"eth,ariane-bare\";\n")
     elif esp_config.cpu_arch == "ibex":
@@ -2469,7 +2459,7 @@ def print_devtree(fp, soc, esp_config):
         fp.write("      device_type = \"cpu\";\n")
         fp.write("      reg = <" + str(i) + ">;\n")
         fp.write("      status = \"okay\";\n")
-        if esp_config.cpu_arch in ("ariane", "cva6"):
+        if esp_config.cpu_arch == "ariane":
             fp.write("      compatible = \"eth, ariane\", \"riscv\";\n")
             fp.write("      riscv,isa = \"rv64imafdc\";\n")
             fp.write("      mmu-type = \"riscv,sv39\";\n")
@@ -2479,7 +2469,6 @@ def print_devtree(fp, soc, esp_config):
             fp.write("      riscv,isa = \"rv32imc\";\n")
         fp.write("      // HLIC - hart local interrupt controller\n")
         fp.write("      CPU" + str(i) + "_intc: interrupt-controller {\n")
-        fp.write("        #address-cells = <0>;\n")
         fp.write("        #interrupt-cells = <1>;\n")
         fp.write("        interrupt-controller;\n")
         fp.write("        compatible = \"riscv,cpu-intc\";\n")
@@ -2569,7 +2558,7 @@ def print_devtree(fp, soc, esp_config):
     fp.write("  L26: soc {\n")
     fp.write("    #address-cells = <2>;\n")
     fp.write("    #size-cells = <2>;\n")
-    if esp_config.cpu_arch in ("ariane", "cva6"):
+    if esp_config.cpu_arch == "ariane":
         fp.write("    compatible = \"eth,ariane-bare-soc\", \"simple-bus\";\n")
     elif esp_config.cpu_arch == "ibex":
         fp.write("    compatible = \"lowrisc,lowrisc-soc\", \"simple-bus\";\n")
@@ -2768,7 +2757,7 @@ def print_cache_config(fp, soc, esp_config):
     addr_bits = 32
     byte_bits = 2
     word_bits = int(math.log2(soc.cache_line_size.get() / soc.ARCH_BITS))
-    if soc.CPU_ARCH.get() in ("ariane", "cva6"):
+    if soc.CPU_ARCH.get() == "ariane":
         addr_bits = 32
         byte_bits = 3
         word_bits = int(math.log2(soc.cache_line_size.get() / soc.ARCH_BITS))
@@ -3588,7 +3577,7 @@ def print_load_script(fp, soc, esp_config):
     line_size = int(0x10)
 
     end = start + ddr_size
-    if soc.CPU_ARCH.get() in ("ariane", "cva6", "ibex"):
+    if soc.CPU_ARCH.get() == "ariane" or soc.CPU_ARCH.get() == "ibex":
         sp = int(0xa0200000) - line_size
         if esp_config.nthirdparty > 0:
             end = int(0xb0000000)
@@ -3752,7 +3741,7 @@ def create_socmap(esp_config, soc):
     print("Created soc locations into 'soc_locs.h'")
 
     # Device tree
-    if esp_config.cpu_arch in ("ariane", "cva6", "ibex"):
+    if esp_config.cpu_arch == "ariane" or esp_config.cpu_arch == "ibex":
 
         fp = open('riscv.dts', 'w')
 

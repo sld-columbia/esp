@@ -27,7 +27,7 @@ LDFLAGS_RISCV = $(COMMON)/syscalls.c
 LDFLAGS_RISCV += $(RISCV_TESTS)/benchmarks/common/crt.S
 LDFLAGS_RISCV += -T $(RISCV_TESTS)/benchmarks/common/test.ld
 OBJCPFLAGS :=
-ifneq ($(filter cva6 ariane,$(CPU_ARCH)),)
+ifeq ("$(CPU_ARCH)", "ariane")
 CFLAGS += -nostdlib
 CROSS_COMPILE ?= riscv64-unknown-elf-
 else # ("$(CPU_ARCH)", "ibex")

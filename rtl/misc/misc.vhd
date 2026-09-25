@@ -131,8 +131,6 @@ package body misc is
   begin
     if arch = leon3 then
       addr := X"800";
-    elsif arch = cva6 then
-      addr := X"600";
     else
       addr := X"600";
     end if;
