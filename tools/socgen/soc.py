@@ -161,7 +161,7 @@ class SoC_Config():
         line = fp.readline()
         item = line.split()
         self.CPU_ARCH.set(item[2])
-        if item[2] == "ariane":
+        if item[2] in ("ariane", "cva6"):
             self.ARCH_BITS = 64
         else:
             self.ARCH_BITS = 32

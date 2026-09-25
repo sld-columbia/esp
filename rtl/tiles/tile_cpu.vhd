@@ -17,6 +17,7 @@ use work.devices.all;
 use work.gencomp.all;
 use work.leon3.all;
 use work.ariane_esp_pkg.all;
+use work.cva6_esp_pkg.all;
 use work.ibex_esp_pkg.all;
 use work.misc.all;
 -- pragma translate_off
@@ -229,6 +230,9 @@ architecture rtl of tile_cpu is
 
   signal ariane_drami : axi_mosi_type;
   signal ariane_dramo : axi_somi_type;
+
+  signal cva6_drami : axi_mosi_type;
+  signal cva6_dramo : axi_somi_type;
 
   signal cache_drami : axi_mosi_type;
   signal cache_dramo : axi_somi_type;
@@ -459,7 +463,7 @@ begin
   process(tile_clk, rst)
   begin  -- process
     if rst = '1' then
-      assert (GLOB_CPU_ARCH = leon3 or GLOB_CPU_ARCH = ariane or GLOB_CPU_ARCH = ibex) report "Processor core architecture not supported!" severity failure;
+      assert (GLOB_CPU_ARCH = leon3 or GLOB_CPU_ARCH = ariane or GLOB_CPU_ARCH = cva6 or GLOB_CPU_ARCH = ibex) report "Processor core architecture not supported!" severity failure;
     end if;
   end process;
   --pragma translate_on
@@ -716,6 +720,67 @@ begin
 
   end generate ariane_cpu_gen;
 
+  -- CVA6
+  cva6_cpu_gen: if GLOB_CPU_ARCH = cva6 generate
+    cva6_axi_wrap_1: cva6_axi_wrap
+      generic map (
+        NMST             => 2,
+        NSLV             => 6,
+        ROMBase          => X"0000_0000_0001_0000",
+        ROMLength        => X"0000_0000_0001_0000",
+        APBBase          => X"0000_0000" & conv_std_logic_vector(CFG_APBADDR, 12) & X"0_0000",
+        APBLength        => X"0000_0000_1000_0000",
+        CLINTBase        => X"0000_0000_0200_0000",
+        CLINTLength      => X"0000_0000_000C_0000",
+        SLMBase          => X"0000_0000_0400_0000",
+        SLMLength        => X"0000_0000_0400_0000",
+        SLMDDRBase       => X"0000_0000_C000_0000",
+        SLMDDRLength     => X"0000_0000_4000_0000",
+        DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
+        DRAMLength       => X"0000_0000_4000_0000",
+        DRAMCachedLength => conv_std_logic_vector(ariane_cacheable_len, 64))
+      port map (
+        clk         => tile_clk,
+        rstn        => cpurstn,
+        HART_ID     => this_cpu_id_lv,
+        irq         => irq,
+        timer_irq   => timer_irq,
+        ipi         => ipi,
+        romi        => mosi(0),
+        romo        => somi(0),
+        drami       => cva6_drami,
+        dramo       => cva6_dramo,
+        clinti      => mosi(2),
+        clinto      => somi(2),
+        slmi        => mosi(3),
+        slmo        => somi(3),
+        slmddri     => mosi(4),
+        slmddro     => somi(4),
+        ace_req     => ace_req,
+        ace_resp    => ace_resp,
+        apbi        => apbi,
+        apbo        => apbo,
+        apb_req     => apb_req,
+        apb_ack     => apb_ack,
+        fence_l2    => fence_l2,
+        flush_l1    => flush_l1,
+        flush_done  => dflush
+      );
+
+    -- exit() writes to this address right before completing the program
+    -- Next instruction is a jump to current PC.
+    cpuerr <= '1' when cva6_drami.aw.addr = X"80001000" and cva6_drami.aw.valid = '1' else '0';
+
+    -- RISC-V PLIC/CLINT outputs
+    irq       <= irqi.irl(1 downto 0);
+    timer_irq <= irqi.irl(2);
+    ipi       <= irqi.irl(3);
+
+    -- IRQ claim/ack occurs via memory-mapped registers
+    irqo <= irq_out_none;
+
+  end generate cva6_cpu_gen;
+
   -----------------------------------------------------------------------------
   -- Services
   -----------------------------------------------------------------------------
@@ -909,6 +974,130 @@ begin
 
   end generate leon3_cpu_tile_services_gen;
 
+  cva6_cpu_tile_services_gen: if GLOB_CPU_ARCH = cva6 generate
+
+    cva6_with_cache_coherence: if CFG_L2_ENABLE /= 0 generate
+      cache_drami <= cva6_drami;
+      cva6_dramo <= cache_dramo;
+
+      mosi(1) <= axi_mosi_none;
+
+      cache_ahbsi <= ahbs_in_none;
+
+      axislv2noc_1: axislv2noc
+        generic map (
+          tech                  => CFG_FABTECH,
+          nmst                  => 3,
+          retarget_for_dma      => 0,
+          mem_axi_port          => 1,
+          mem_num               => CFG_NMEM_TILE,
+          mem_info              => tile_mem_list,
+          this_noc_flit_size    => COH_NOC_FLIT_SIZE,
+          slv_y                 => tile_y(io_tile_id),
+          slv_x                 => tile_x(io_tile_id))
+        port map (
+          rst                        => rst,
+          clk                        => tile_clk,
+          local_y                    => this_local_y,
+          local_x                    => this_local_x,
+          mosi                       => mosi(0 to 2),
+          somi                       => somi(0 to 2),
+          coherence_req_wrreq        => open,
+          coherence_req_data_in      => open,
+          coherence_req_full         => '0',
+          coherence_rsp_rcv_rdreq    => open,
+          coherence_rsp_rcv_data_out => (others => '0'),
+          coherence_rsp_rcv_empty    => '1',
+          remote_ahbs_snd_wrreq      => remote_ahbs_snd_wrreq,
+          remote_ahbs_snd_data_in    => remote_ahbs_snd_data_in,
+          remote_ahbs_snd_full       => remote_ahbs_snd_full,
+          remote_ahbs_rcv_rdreq      => remote_ahbs_rcv_rdreq,
+          remote_ahbs_rcv_data_out   => remote_ahbs_rcv_data_out,
+          remote_ahbs_rcv_empty      => remote_ahbs_rcv_empty,
+          coherence                  => 0);
+
+    end generate cva6_with_cache_coherence;
+
+    cva6_no_cache_coherence : if CFG_L2_ENABLE = 0 generate
+      cache_drami <= axi_mosi_none;
+      ace_req     <= ace_req_none;
+
+      mosi(1) <= cva6_drami;
+      cva6_dramo <= somi(1);
+
+      coherence_rsp_snd_data_in <= (others => '0');
+      coherence_rsp_snd_wrreq   <= '0';
+      coherence_fwd_rdreq       <= '0';
+      mon_cache_int             <= monitor_cache_none;
+
+      axislv2noc_1: axislv2noc
+        generic map (
+          tech                  => CFG_FABTECH,
+          nmst                  => 3,
+          retarget_for_dma      => 0,
+          mem_axi_port          => 1,
+          mem_num               => CFG_NMEM_TILE,
+          mem_info              => tile_mem_list,
+          this_noc_flit_size    => COH_NOC_FLIT_SIZE,
+          slv_y                 => tile_y(io_tile_id),
+          slv_x                 => tile_x(io_tile_id))
+        port map (
+          rst                        => cleanrstn,
+          clk                        => tile_clk,
+          local_y                    => this_local_y,
+          local_x                    => this_local_x,
+          mosi                       => mosi(0 to 2),
+          somi                       => somi(0 to 2),
+          coherence_req_wrreq        => coherence_req_wrreq,
+          coherence_req_data_in      => coherence_req_data_in,
+          coherence_req_full         => coherence_req_full,
+          coherence_rsp_rcv_rdreq    => coherence_rsp_rcv_rdreq,
+          coherence_rsp_rcv_data_out => coherence_rsp_rcv_data_out,
+          coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
+          remote_ahbs_snd_wrreq      => remote_ahbs_snd_wrreq,
+          remote_ahbs_snd_data_in    => remote_ahbs_snd_data_in,
+          remote_ahbs_snd_full       => remote_ahbs_snd_full,
+          remote_ahbs_rcv_rdreq      => remote_ahbs_rcv_rdreq,
+          remote_ahbs_rcv_data_out   => remote_ahbs_rcv_data_out,
+          remote_ahbs_rcv_empty      => remote_ahbs_rcv_empty,
+          coherence                  => 0);
+
+    end generate cva6_no_cache_coherence;
+
+    -- Remote uncached slaves: shared-local memory; using DMA planes
+    axislv2noc_3: axislv2noc
+      generic map (
+        tech                => CFG_FABTECH,
+        nmst                => 2,
+        retarget_for_dma    => 0,
+        mem_axi_port        => -1,
+        mem_num             => CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
+        mem_info            => tile_slm_list,
+        this_noc_flit_size  => DMA_NOC_FLIT_SIZE,
+        slv_y               => tile_y(io_tile_id),
+        slv_x               => tile_x(io_tile_id))
+      port map (
+        rst                        => cleanrstn,
+        clk                        => tile_clk,
+        local_y                    => this_local_y,
+        local_x                    => this_local_x,
+        mosi                       => mosi(3 to 4),
+        somi                       => somi(3 to 4),
+        coherence_req_wrreq        => dma_snd_wrreq,
+        coherence_req_data_in      => dma_snd_data_in_cpu,
+        coherence_req_full         => dma_snd_full,
+        coherence_rsp_rcv_rdreq    => dma_rcv_rdreq,
+        coherence_rsp_rcv_data_out => dma_rcv_data_out,
+        coherence_rsp_rcv_empty    => dma_rcv_empty,
+        remote_ahbs_snd_wrreq      => open,
+        remote_ahbs_snd_data_in    => open,
+        remote_ahbs_snd_full       => '0',
+        remote_ahbs_rcv_rdreq      => open,
+        remote_ahbs_rcv_data_out   => (others => '0'),
+        remote_ahbs_rcv_empty      => '1',
+        coherence                  => 0);
+
+  end generate cva6_cpu_tile_services_gen;
 
   ariane_cpu_tile_services_gen: if GLOB_CPU_ARCH = ariane generate
 

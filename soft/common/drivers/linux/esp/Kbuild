@@ -1,3 +1,7 @@
+KBUILD_EXTRA_SYMBOLS += \
+	$(M)/../esp_cache/Module.symvers \
+	$(M)/../contig_alloc/Module.symvers
+	
 EXTRA_CFLAGS += \
 	     -I$(DRIVERS)/include -I$(DRIVERS)/../common/include -I$(DESIGN_PATH)/socgen/esp
 obj-m := esp.o

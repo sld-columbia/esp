@@ -1,0 +1,23 @@
+diff --git a/l2/rtl/l2_fsm.sv b/l2/rtl/l2_fsm.sv
+index 0104577..84169c0 100644
+--- a/l2/rtl/l2_fsm.sv
++++ b/l2/rtl/l2_fsm.sv
+@@ -853,7 +853,7 @@ module l2_fsm(
+                         l2_inval_valid_int = 1'b1;
+                     end
+ 
+-                    if (reqs[reqs_i] != `SIA) begin
++                    if (reqs[reqs_i].state != `SIA) begin
+                         if (l2_fwd_in.coh_msg == `FWD_INV) begin
+                             if (l2_rsp_out_ready_int && l2_inval_ready_int && inval_cnt == `NUM_INVALS - 1) begin
+                                 wr_req_state = 1'b1;
+@@ -1161,8 +1161,8 @@ module l2_fsm(
+                 wr_data_state = `MODIFIED;
+                 clr_ongoing_atomic = 1'b1;
+ 
+-                l2_bresp_valid_int = 1'b1;
+                 if (l2_cpu_req.cpu_msg == `WRITE_ATOMIC) begin
++                    l2_bresp_valid_int = 1'b1;
+                     l2_bresp_o = `BRESP_EXOKAY;
+                 end
+             end
