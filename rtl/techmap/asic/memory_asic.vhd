@@ -1100,6 +1100,104 @@ architecture behav of asic_syncram_be is
       );
   end component slm_sram_be_20abits_64dbits;
 
+  component slm_sram_be_14abits_32dbits is
+    port (
+      CLK  : in std_ulogic;
+      CE0  : in std_ulogic;
+      A0   : in std_logic_vector(13 downto 0);
+      D0   : in std_logic_vector(31 downto 0);
+      WE0  : in std_ulogic;
+      WEM0 : in std_logic_vector(31 downto 0);
+      CE1  : in std_ulogic;
+      A1   : in std_logic_vector(13 downto 0);
+      Q1   : out std_logic_vector(31 downto 0)
+      );
+  end component slm_sram_be_14abits_32dbits;
+
+  component slm_sram_be_15abits_32dbits is
+    port (
+      CLK  : in std_ulogic;
+      CE0  : in std_ulogic;
+      A0   : in std_logic_vector(14 downto 0);
+      D0   : in std_logic_vector(31 downto 0);
+      WE0  : in std_ulogic;
+      WEM0 : in std_logic_vector(31 downto 0);
+      CE1  : in std_ulogic;
+      A1   : in std_logic_vector(14 downto 0);
+      Q1   : out std_logic_vector(31 downto 0)
+      );
+  end component slm_sram_be_15abits_32dbits;
+
+  component slm_sram_be_16abits_32dbits is
+    port (
+      CLK  : in std_ulogic;
+      CE0  : in std_ulogic;
+      A0   : in std_logic_vector(15 downto 0);
+      D0   : in std_logic_vector(31 downto 0);
+      WE0  : in std_ulogic;
+      WEM0 : in std_logic_vector(31 downto 0);
+      CE1  : in std_ulogic;
+      A1   : in std_logic_vector(15 downto 0);
+      Q1   : out std_logic_vector(31 downto 0)
+      );
+  end component slm_sram_be_16abits_32dbits;
+
+  component slm_sram_be_17abits_32dbits is
+    port (
+      CLK  : in std_ulogic;
+      CE0  : in std_ulogic;
+      A0   : in std_logic_vector(16 downto 0);
+      D0   : in std_logic_vector(31 downto 0);
+      WE0  : in std_ulogic;
+      WEM0 : in std_logic_vector(31 downto 0);
+      CE1  : in std_ulogic;
+      A1   : in std_logic_vector(16 downto 0);
+      Q1   : out std_logic_vector(31 downto 0)
+      );
+  end component slm_sram_be_17abits_32dbits;
+
+  component slm_sram_be_18abits_32dbits is
+    port (
+      CLK  : in std_ulogic;
+      CE0  : in std_ulogic;
+      A0   : in std_logic_vector(17 downto 0);
+      D0   : in std_logic_vector(31 downto 0);
+      WE0  : in std_ulogic;
+      WEM0 : in std_logic_vector(31 downto 0);
+      CE1  : in std_ulogic;
+      A1   : in std_logic_vector(17 downto 0);
+      Q1   : out std_logic_vector(31 downto 0)
+      );
+  end component slm_sram_be_18abits_32dbits;
+
+  component slm_sram_be_19abits_32dbits is
+    port (
+      CLK  : in std_ulogic;
+      CE0  : in std_ulogic;
+      A0   : in std_logic_vector(18 downto 0);
+      D0   : in std_logic_vector(31 downto 0);
+      WE0  : in std_ulogic;
+      WEM0 : in std_logic_vector(31 downto 0);
+      CE1  : in std_ulogic;
+      A1   : in std_logic_vector(18 downto 0);
+      Q1   : out std_logic_vector(31 downto 0)
+      );
+  end component slm_sram_be_19abits_32dbits;
+
+  component slm_sram_be_20abits_32dbits is
+    port (
+      CLK  : in std_ulogic;
+      CE0  : in std_ulogic;
+      A0   : in std_logic_vector(19 downto 0);
+      D0   : in std_logic_vector(31 downto 0);
+      WE0  : in std_ulogic;
+      WEM0 : in std_logic_vector(31 downto 0);
+      CE1  : in std_ulogic;
+      A1   : in std_logic_vector(19 downto 0);
+      Q1   : out std_logic_vector(31 downto 0)
+      );
+  end component slm_sram_be_20abits_32dbits;
+
 signal gnd : std_ulogic;
 signal do, di : std_logic_vector(dbits+8 downto 0);
 signal xa : std_logic_vector(19 downto 0);
@@ -1128,7 +1226,7 @@ begin
   xrden <= xenable when write  = zeroen else '0';
   xwren <= xenable when write /= zeroen else '0';
 
-  a13 : if abits = 13 generate
+  a13d64 : if abits = 13 and dbits = 64 generate
     r0 : slm_sram_be_13abits_64dbits
       port map (
         CLK  => clk,
@@ -1143,7 +1241,7 @@ begin
     do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
-  a14 : if abits = 14 generate
+  a14d64 : if abits = 14 and dbits = 64 generate
     r0 : slm_sram_be_14abits_64dbits
       port map (
         CLK  => clk,
@@ -1158,7 +1256,7 @@ begin
     do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
-  a15 : if abits = 15 generate
+  a15d64 : if abits = 15 and dbits = 64 generate
     r0 : slm_sram_be_15abits_64dbits
       port map (
         CLK  => clk,
@@ -1173,7 +1271,7 @@ begin
     do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
-  a16 : if abits = 16 generate
+  a16d64 : if abits = 16 and dbits = 64 generate
     r0 : slm_sram_be_16abits_64dbits
       port map (
         CLK  => clk,
@@ -1188,7 +1286,7 @@ begin
     do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
-  a17 : if abits = 17 generate
+  a17d64 : if abits = 17 and dbits = 64 generate
     r0 : slm_sram_be_17abits_64dbits
       port map (
         CLK  => clk,
@@ -1203,7 +1301,7 @@ begin
     do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
-  a18 : if abits = 18 generate
+  a18d64 : if abits = 18 and dbits = 64 generate
     r0 : slm_sram_be_18abits_64dbits
       port map (
         CLK  => clk,
@@ -1218,7 +1316,7 @@ begin
     do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
-  a19 : if abits = 19 generate
+  a19d64 : if abits = 19 and dbits = 64 generate
     r0 : slm_sram_be_19abits_64dbits
       port map (
         CLK  => clk,
@@ -1233,7 +1331,7 @@ begin
     do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
-  a20 : if abits = 20 generate
+  a20d64 : if abits = 20 and dbits = 64 generate
     r0 : slm_sram_be_20abits_64dbits
       port map (
         CLK  => clk,
@@ -1248,12 +1346,119 @@ begin
     do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
+  a14d32 : if abits = 14 and dbits = 32 generate
+    r0 : slm_sram_be_14abits_32dbits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(13 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(13 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a15d32 : if abits = 15 and dbits = 32 generate
+    r0 : slm_sram_be_15abits_32dbits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(14 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(14 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a16d32 : if abits = 16 and dbits = 32 generate
+    r0 : slm_sram_be_16abits_32dbits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(15 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(15 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a17d32 : if abits = 17 and dbits = 32 generate
+    r0 : slm_sram_be_17abits_32dbits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(16 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(16 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a18d32 : if abits = 18 and dbits = 32 generate
+    r0 : slm_sram_be_18abits_32dbits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(17 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(17 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a19d32 : if abits = 19 and dbits = 32 generate
+    r0 : slm_sram_be_19abits_32dbits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(18 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(18 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a20d32 : if abits = 20 and dbits = 32 generate
+    r0 : slm_sram_be_20abits_32dbits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(19 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(19 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
   -- pragma translate_off
-  a_to_high : if abits < 13 or abits > 20 or dbits /= 64 generate
+  unsupported_geometry : if not
+    ((dbits = 32 and abits >= 14 and abits <= 20) or
+     (dbits = 64 and abits >= 13 and abits <= 20)) generate
     x : process
     begin
       assert false
-        report  "Data width must be 64 and address width must be between 13 and 20 asic_syncram_be"
+        report  "Unsupported address/data width combination for asic_syncram_be"
         severity failure;
       wait;
     end process;

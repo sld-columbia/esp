@@ -754,9 +754,21 @@ def print_constants(fp, soc, esp_config):
 
 
 def print_slm(fp, soc, esp_config):
-    abits = int(math.log(esp_config.slm_kbytes, 2) + 8 - soc.ARCH_BITS / 64)
-    fp.write('slm_sram_be_%dabits_64dbits ' %
-             abits + str(2**abits) + ' 64' + ' 1w:0r 0w:1r')
+    dbits = soc.ARCH_BITS
+    if dbits not in (32, 64):
+        raise ValueError("SLM supports only 32-bit and 64-bit architectures")
+
+    total_bits = esp_config.slm_kbytes * 1024 * 8
+    if total_bits % dbits != 0:
+        raise ValueError("SLM capacity must contain an integer number of architecture words")
+
+    words = total_bits // dbits
+    if words <= 0 or (words & (words - 1)) != 0:
+        raise ValueError("SLM word depth must be a positive power of two")
+
+    abits = words.bit_length() - 1
+    fp.write('slm_sram_be_%dabits_%ddbits %d %d 1w:0r 0w:1r' %
+             (abits, dbits, words, dbits))
 
 
 def print_mapping(fp, soc, esp_config):
