@@ -38,7 +38,7 @@ include $(ESP_ROOT)/utils/make/design.mk
 
 
 ### NoC flit-width (not including head and tail bits)
-ifneq ($(filter ariane cva6, $(CPU_ARCH)),)
+ifneq ($(findstring ariane, $(CPU_ARCH)),)
 ARCH_BITS = 64
 else
 ARCH_BITS = 32
@@ -79,11 +79,6 @@ ifeq ("$(CPU_ARCH)", "ariane")
 include $(ESP_ROOT)/utils/make/ariane.mk
 endif
 
-ifeq ("$(CPU_ARCH)", "cva6")
-### CVA6 Software targets ###
-include $(ESP_ROOT)/utils/make/cva6.mk
-endif
-
 ifeq ("$(CPU_ARCH)", "ibex")
 ### Ibex Software targets ###
 include $(ESP_ROOT)/utils/make/ibex.mk
@@ -92,14 +87,12 @@ endif
 ### Other architectures not integrated ###
 ifneq ("$(CPU_ARCH)", "leon3")
 ifneq ("$(CPU_ARCH)", "ariane")
-ifneq ("$(CPU_ARCH)", "cva6")
 ifneq ("$(CPU_ARCH)", "ibex")
 
 ifneq ("$(CPU_ARCH)", "")
 $(error Unsupported target processor: $(CPU_ARCH))
 endif
 
-endif
 endif
 endif
 endif

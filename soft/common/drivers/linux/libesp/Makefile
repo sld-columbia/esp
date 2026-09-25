@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 INCDIR = -I../include -I../../common/include -I$(DESIGN_PATH)/socgen/esp
 
-ifneq ($(filter cva6 ariane,$(CPU_ARCH)),)
+ifeq ("$(CPU_ARCH)", "ariane")
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
 ARCH ?= riscv
 else # ("$(CPU_ARCH)", "leon3")
