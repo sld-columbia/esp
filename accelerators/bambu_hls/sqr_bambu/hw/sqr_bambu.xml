@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="sqr_bambu" desc="Bambu dataflow square DMA" data_size="4" device_id="07a" hls_tool="bambu">
+    <param name="len" desc="number of 32-bit words (positive multiple of 16)" />
+    <param name="base_in" desc="input base offset in DMA beats" />
+    <param name="base_out" desc="output base offset in DMA beats" />
+  </accelerator>
+</sld>

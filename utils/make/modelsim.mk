@@ -30,7 +30,7 @@ VSIMOPT += $(SIMTOP) $(EXTRA_SIMTOP)
 SIM_LIBDIR ?= $(abspath $(RTL_CFG_BUILD)/sim_libs)
 
 ACC_TECH_ROOT := $(ESP_ROOT)/tech/$(TECHLIB)/acc
-ACC_TECH_PRESENT := $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_ROOT)/*)),$(RTL_ACC)))
+ACC_TECH_PRESENT := $(filter-out common,$(filter $(notdir $(wildcard $(ACC_TECH_ROOT)/*)),$(RTL_ACC) $(BAMBUHLS_ACC)))
 THIRDPARTY_LIBS = $(THIRDPARTY_ACC)
 ACC_LIBS := $(ACC_TECH_PRESENT) $(THIRDPARTY_LIBS)
 ACC_LIB_OPT := $(foreach lib,$(ACC_LIBS),-L $(lib))
@@ -57,7 +57,7 @@ VSIMOPT += -L work $(ACC_LIB_OPT)
 define DEFINE_MODELSIM_ACC
 ACC_$(1)_NAME := $(1)
 ACC_$(1)_LIB := $(1)
-ACC_$(1)_SRC_BASE := $(ESP_ROOT)/accelerators/rtl/$(1)
+ACC_$(1)_SRC_BASE := $(if $(wildcard $(ESP_ROOT)/accelerators/bambu_hls/$(1)),$(ESP_ROOT)/accelerators/bambu_hls/$(1),$(ESP_ROOT)/accelerators/rtl/$(1))
 ACC_$(1)_TECH_DIR := $(ACC_TECH_ROOT)/$(1)
 ACC_$(1)_VENDOR_PKG_DIR := $$(ACC_$(1)_SRC_BASE)/vlog_incdir
 ACC_$(1)_FILELIST_SV = $$(ACC_$(1)_SRC_BASE)/$(1).sverilog
@@ -148,6 +148,9 @@ modelsim-accel-$(1): modelsim-libs $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIS
 	if test -s $$(ACC_$(1)_LIB).rtl.f; then \
 		echo $(SPACES)"vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(ACC_$(1)_LIB) -f $$(ACC_$(1)_LIB).rtl.f"; \
 		vlog -sv -quiet $(filter-out +incdir+%,$(VLOGOPT)) -work $$(ACC_$(1)_LIB) -f $$(ACC_$(1)_LIB).rtl.f || exit 1; \
+	fi; \
+	if test -d "$$(ACC_$(1)_TECH_DIR)"; then \
+		find -L "$$(ACC_$(1)_TECH_DIR)" -type f -name "*.mem" -exec cp -f {} . \; ; \
 	fi
 endef
 $(foreach acc,$(ACC_TECH_PRESENT),$(eval $(call MODELSIM_ACC_LIB_RULE,$(acc))))
