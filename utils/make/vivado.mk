@@ -1,6 +1,10 @@
 # Copyright (c) 2011-2026 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
+# Extra Verilog defines injected at build time (space-separated, no leading space needed)
+# Example: make vivado-syn VIVADO_VFLAGS=LLC_LINE_USE_URAM
+VIVADO_VFLAGS ?=
+
 ### Constaints ###
 ifneq ("$(OVR_TECHLIB)","")
 XDC_SUFFIX = -fpga-proxy
@@ -237,11 +241,9 @@ vivado/setup.tcl: vivado $(BOARD_FILES)
 	@echo "set_property target_language verilog [current_project]" >> $@
 	@echo "set_property include_dirs {$(INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
 ifeq ("$(CPU_ARCH)","ibex")
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx} [get_filesets {sim_1 sources_1}]" >> $@
-else ifeq ("$(CPU_ARCH)","cva6")
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 ESP_CVA6=1} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx$(if $(VIVADO_VFLAGS), $(VIVADO_VFLAGS))} [get_filesets {sim_1 sources_1}]" >> $@
 else
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1$(if $(VIVADO_VFLAGS), $(VIVADO_VFLAGS))} [get_filesets {sim_1 sources_1}]" >> $@
 endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
@@ -331,9 +333,9 @@ vivado/setup_emu.tcl: vivado $(BOARD_FILES)
 	@echo "set_property target_language verilog [current_project]" >> $@
 	@echo "set_property include_dirs {$(INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
 ifeq ("$(CPU_ARCH)","ibex")
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx$(if $(VIVADO_VFLAGS), $(VIVADO_VFLAGS))} [get_filesets {sim_1 sources_1}]" >> $@
 else
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1$(if $(VIVADO_VFLAGS), $(VIVADO_VFLAGS))} [get_filesets {sim_1 sources_1}]" >> $@
 endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
