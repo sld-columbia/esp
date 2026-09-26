@@ -341,6 +341,7 @@ static long esp_p2p_init(struct esp_device *esp, struct esp_access *access)
 {
     int i = 0;
 
+    iowrite32be(0, esp->iomem + MCAST_REG);
     esp_p2p_reset(esp);
 
     for (i = 0; i < access->p2p_nsrcs; i++)
@@ -363,6 +364,12 @@ static long esp_p2p_init(struct esp_device *esp, struct esp_access *access)
 static long esp_yx_table_init(struct esp_device *esp, struct esp_access *access)
 {
     int i = 0;
+    unsigned int offset;
+
+    iowrite32be(ioread32be(esp->iomem + YX_REG) & ((1U << (2 * YX_WIDTH)) - 1),
+                esp->iomem + YX_REG);
+    for (offset = 4; offset <= 4 * (ARRAY_SIZE(access->acc_yx_table) / 4); offset += 4)
+        iowrite32be(0, esp->iomem + YX_REG + offset);
 
     for (i = 1; i <= access->ndev_yx_table; i++) {
         if (!esp_set_src(esp, access->acc_yx_table[i - 1], i, 1)) return -ENODEV;
