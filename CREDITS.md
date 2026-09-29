@@ -49,5 +49,6 @@ contribution. Current affiliation may be different.
  - Francesco Poluzzi (EPFL)
  - Michael Lippe (Columbia University)
  - Michael Greico (Columbia University)
-
+ - Vasileios Panousopoulos (Apple)
+ - Choka Thenappan (ARM)
 ### [Contacts](https://esp.cs.columbia.edu/contact/)
