@@ -15,9 +15,9 @@ repository, including co-authors of portions of code from the first commit.
  - Gabriele Tombesi
  - Pei-Huan Tsai
  - Je Yang
- - Joseph Zuckerman
  - William Baisi
  - Eugenio Muscinelli
+ - Michael Lippe
 
 ### Former Team Members
 
@@ -28,6 +28,7 @@ repository, including co-authors of portions of code from the first commit.
  - Michele Petracca
  - Luca Piccolboni
  - Christian Pilato
+ - Joseph Zuckerman
 
 ### Collaborators
 
@@ -47,8 +48,10 @@ contribution. Current affiliation may be different.
  - Manish Shankar (Columbia University)
  - Marian Abuhazi (Columbia University)
  - Francesco Poluzzi (EPFL)
- - Michael Lippe (Columbia University)
  - Michael Greico (Columbia University)
  - Vasileios Panousopoulos (Apple)
  - Choka Thenappan (ARM)
+ - Andrés Otero (Universidad Politécnica de Madrid)
+ - Iñigo Diez de Ulzurrun Aquerreta (Universidad Politécnica de Madrid)
+
 ### [Contacts](https://esp.cs.columbia.edu/contact/)

@@ -34,7 +34,6 @@ apply_patch() {
 }
 
 # Apply patches (relative to repo root)
-apply_patch "patches/cva6.patch" "rtl/cores/cva6/cva6"
-apply_patch "patches/esp-fpga.patch" "soft/cva6/opensbi"
-apply_patch "patches/esp-caches.patch" "rtl/caches/esp-caches"
+apply_patch "utils/patches/cva6.patch" "rtl/cores/cva6/cva6"
+apply_patch "utils/patches/esp-fpga.patch" "soft/cva6/opensbi"
 echo "All patches applied (if they existed)."

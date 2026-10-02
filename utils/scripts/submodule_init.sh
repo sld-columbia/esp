@@ -101,6 +101,7 @@ if [ ${INSTALL_CVA6} == 1 ]; then
     git submodule update --init --recursive soft/cva6/opensbi
     git submodule update --init --recursive soft/ariane/riscv-pk
     git submodule update --init --recursive soft/ariane/riscv-tests
+    ./utils/scripts/apply_patches.sh
 fi
 
 if [ ${INSTALL_IBEX} == 1 ]; then
