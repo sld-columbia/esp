@@ -5,6 +5,25 @@
 # Example: make vivado-syn VIVADO_VFLAGS=LLC_LINE_USE_URAM
 VIVADO_VFLAGS ?=
 
+# Verilog defines for the Vivado project, mirroring QUARTUS_VERILOG_DEFINES in
+# rtl.mk. Both the normal and the chip-emu project read this one list so the
+# two cannot drift apart. Vortex's VX_platform.vh defines its IGNORE_*,
+# UNUSED_* and TRACING_* macros only under SYNTHESIS or VERILATOR, so a
+# project that omits SYNTHESIS does not elaborate a Vortex tile at all; the
+# chip-emu project used to omit it. VIVADO selects Vortex's Xilinx
+# ram_style/keep attributes and is the counterpart of QUARTUS on the Intel
+# path; nothing outside Vortex reads it.
+VIVADO_VERILOG_DEFINES := XILINX_FPGA=1 WT_DCACHE=1 VIVADO=1
+ifeq ("$(CPU_ARCH)","ibex")
+VIVADO_VERILOG_DEFINES += PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx
+else ifeq ("$(CPU_ARCH)","cva6")
+VIVADO_VERILOG_DEFINES += ESP_CVA6=1
+else
+VIVADO_VERILOG_DEFINES += FPU_FPNEW=1 SYNTHESIS=1 XLEN_64=1
+endif
+VIVADO_VERILOG_DEFINES += $(GT_VORTEX_VIVADO_DEFINES)
+VIVADO_VERILOG_DEFINES += $(VIVADO_VFLAGS)
+
 ### Constaints ###
 ifneq ("$(OVR_TECHLIB)","")
 XDC_SUFFIX = -fpga-proxy
@@ -314,13 +333,7 @@ vivado/setup.tcl: vivado $(RTL_CFG_BUILD) $(BOARD_FILES)
 		printf '%s ' "$$dir" >> $@; \
 	done < "$(VIVADO_INCDIR_MANIFEST)"; \
 	printf '%s\n' '} [get_filesets {sim_1 sources_1}]' >> $@
-ifeq ("$(CPU_ARCH)","ibex")
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx $(GT_VORTEX_VIVADO_DEFINES)$(if $(VIVADO_VFLAGS), $(VIVADO_VFLAGS))} [get_filesets {sim_1 sources_1}]" >> $@
-else ifeq ("$(CPU_ARCH)","cva6")
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 ESP_CVA6=1 $(GT_VORTEX_VIVADO_DEFINES)$(if $(VIVADO_VFLAGS), $(VIVADO_VFLAGS))} [get_filesets {sim_1 sources_1}]" >> $@
-else
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 FPU_FPNEW=1 SYNTHESIS=1 XLEN_64=1 $(GT_VORTEX_VIVADO_DEFINES)$(if $(VIVADO_VFLAGS), $(VIVADO_VFLAGS))} [get_filesets {sim_1 sources_1}]" >> $@
-endif
+	@echo "set_property verilog_define {$(strip $(VIVADO_VERILOG_DEFINES))} [get_filesets {sim_1 sources_1}]" >> $@
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
 	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
@@ -441,11 +454,7 @@ vivado/setup_emu.tcl: vivado $(RTL_CFG_BUILD) $(BOARD_FILES)
 		printf '%s ' "$$dir" >> $@; \
 	done < "$(VIVADO_EMU_INCDIR_MANIFEST)"; \
 	printf '%s\n' '} [get_filesets {sim_1 sources_1}]' >> $@
-ifeq ("$(CPU_ARCH)","ibex")
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx $(GT_VORTEX_VIVADO_DEFINES)$(if $(VIVADO_VFLAGS), $(VIVADO_VFLAGS))} [get_filesets {sim_1 sources_1}]" >> $@
-else
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 $(GT_VORTEX_VIVADO_DEFINES)$(if $(VIVADO_VFLAGS), $(VIVADO_VFLAGS))} [get_filesets {sim_1 sources_1}]" >> $@
-endif
+	@echo "set_property verilog_define {$(strip $(VIVADO_VERILOG_DEFINES))} [get_filesets {sim_1 sources_1}]" >> $@
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
 	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
