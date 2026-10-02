@@ -929,7 +929,7 @@ class NoCConfigFrame:
            (tot_full_coherent <= NFULL_COHERENT_MAX) and \
            (tot_llc_coherent <= NLLC_COHERENT_MAX) and \
            (not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3))) and \
-           (self.soc.cache_spandex.get() == 0 or self.soc.CPU_ARCH.get() == "ariane" or self.soc.cache_en.get() == 0) and \
+           (self.soc.cache_spandex.get() == 0 or self.soc.CPU_ARCH.get() in ("ariane", "cva6") or self.soc.cache_en.get() == 0) and \
            (tot_cpu == 1 or self.soc.cache_en.get()) and \
            (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1) and \
            (self.soc.cache_en.get() != 1 or self.soc.cache_line_size.get() >= self.noc.coh_noc_width.get()) and \
@@ -961,7 +961,7 @@ class NoCConfigFrame:
             if (self.soc.clk_str.get() == 2 and self.soc.TECH_TYPE == "asic"):
                 string += "INFO: Clock strategy: 1 DCO inside the IO tile for the full chip. \n"
             if self.noc.dma_noc_width.get() != self.soc.ARCH_BITS:
-                string += "INFO: to enable accelerator private caches, DMA NoC width must match CPU architecture size (64 bits for Ariane, 32 for Leon3 and Ibex)\n"
+                string += "INFO: to enable accelerator private caches, DMA NoC width must match CPU architecture size (64 bits for Ariane/CVA6, 32 for Leon3 and Ibex)\n"
             self.gen_soc_config.configure(state="normal")
         else:
             if (self.noc.cols > 16 or self.noc.rows > 16):
@@ -1013,8 +1013,8 @@ class NoCConfigFrame:
                 string += "ERROR: Maximum number of supported LLC-coherent devices is " + \
                     str(NLLC_COHERENT_MAX) + ".\n"
             if (self.soc.cache_spandex.get() != 0 and self.soc.CPU_ARCH.get()
-                    != "ariane" and self.soc.cache_en.get() == 1):
-                string += "ERROR: Spandex currently supports only RISC-V Ariane processor core.\n"
+                    not in ("ariane", "cva6") and self.soc.cache_en.get() == 1):
+                string += "ERROR: Spandex currently supports only RISC-V Ariane/CVA6 processor core.\n"
             if (self.soc.cache_en.get() == 1 and self.soc.cache_line_size.get()
                     < self.noc.coh_noc_width.get()):
                 string += "ERROR: Cache line size must be greater than or equal to coherence NoC bitwidth.\n"

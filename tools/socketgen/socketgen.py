@@ -36,7 +36,7 @@ def print_usage():
     print("")
     print("      <arch_bits>        : Bit-width for the DMA channel (32, 64)")
     print("")
-    print("      <cpu_arch>         : Target processor (ariane, ibex, leon3)")
+    print("      <cpu_arch>         : Target processor (ariane, cva6, ibex, leon3)")
     print("")
     print("      <cache_line_size>  : Cache line size in bits (128, 256, 512, 1024)")
     print("")
@@ -1789,7 +1789,7 @@ def gen_tech_dep(
             for acc in accelerator_list:
                 for impl in acc.hlscfg:
                     f.write("\n")
-                    if acc.hls_tool == 'stratus_hls' or acc.hls_tool == 'rtl':
+                    if acc.hls_tool in ('stratus_hls', 'rtl', 'bambu'):
                         f.write(
                             "  component " +
                             acc.name +
@@ -2161,7 +2161,7 @@ def gen_tech_indep_impl(
                     f.write("use ieee.std_logic_1164.all;\n")
                     f.write("use work.sld_devices.all;\n")
                     f.write("use work.allacc.all;\n")
-                    if acc.hls_tool == 'rtl':
+                    if acc.hls_tool in ('rtl', 'bambu'):
                         f.write("library " + acc.name + ";\n")
                     f.write("\n")
                     f.write("entity " + acc.name + "_rtl is\n\n")
@@ -2206,7 +2206,7 @@ def gen_tech_indep_impl(
                                 "\n")
                             write_acc_port_map(
                                 f, acc, noc_width, impl.datatype, "rst", False, False, False, False)
-                        elif acc.hls_tool == 'rtl':
+                        elif acc.hls_tool in ('rtl', 'bambu'):
                             f.write(
                                 "    " +
                                 acc.name +
@@ -2953,6 +2953,7 @@ for acc in accelerators:
                 'vivado_hls',
                 'catapult_hls_cxx',
                 'catapult_hls_sysc',
+                'bambu',
                     'rtl'):
                 print("    ERROR: Wrong HLS tool for " + acc)
                 print(" " + accd.hls_tool)

@@ -157,12 +157,10 @@ module noc2aximst #(
     localparam DMA_WRITE_DATA_COH = 5'b10100;
     localparam DMA_WRITE_DATA_ETH = 5'b10101;
 
-    reg_type cs, ns;
+    localparam int unsigned DMA_AXI_SIZE = (ARCH_BITS == 32 || eth_dma == 1) ? XSIZE_WORD : XSIZE_DWORD;
 
-    function automatic logic [2:0] target_dma_axi_size();
-        if (ARCH_BITS == 32) return XSIZE_WORD;
-        return XSIZE_DWORD;
-    endfunction
+    (* mark_debug = "true" *) reg_type cs, ns;
+    logic [31:0] eth_dma_rdata32;
 
     // Decode `nocpackage` DMA size encoding:
     // 00=byte, 01=halfword, 10=word, 11=dword.
@@ -225,7 +223,7 @@ module noc2aximst #(
 
             RECEIVE_HEADER: begin
                 ns.dma_size_valid = 1'b0;
-                ns.dma_size = target_dma_axi_size();
+                ns.dma_size = DMA_AXI_SIZE;
                 if (coherence_req_empty == 1'b0) begin
                     coherence_req_rdreq = 1'b1;
                     ns.msg      = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - 1 : this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH];
@@ -436,8 +434,8 @@ module noc2aximst #(
                 if (dma_rcv_empty == 1'b0) begin
                     dma_rcv_rdreq = 1'b1;
                     ns.ar_prot    = cs.ax_prot;
-                    ns.ar_size    = target_dma_axi_size();
-                    ns.aw_size    = target_dma_axi_size();
+                    ns.ar_size = DMA_AXI_SIZE;
+                    ns.aw_size = DMA_AXI_SIZE;
 
                     if (cs.msg == DMA_TO_DEV || cs.msg == REQ_DMA_READ) begin
                         next_state = DMA_RECEIVE_READ_LENGTH;
@@ -482,7 +480,9 @@ module noc2aximst #(
                 if (dma_rcv_empty == 1'b0) begin
                     dma_rcv_rdreq = 1'b1;
                     ns.count      = dma_rcv_data_out[31:0] - 1;
-                    if (ns.count > 255) begin
+                    if (eth_dma == 1) begin
+                        ns.ar_len = 0;
+                    end else if (ns.count > 255) begin
                         ns.ar_len = 255;
                         ns.count  = ns.count - 256;
                     end else begin
@@ -519,9 +519,15 @@ module noc2aximst #(
             DMA_SEND_DATA: begin
                 if (dma_snd_full == 1'b0) begin
                     if (R_VALID == 1'b1) begin
-                        ns.dma_noc_data[ARCH_BITS*cs.word_cnt+:ARCH_BITS] =
-                            fix_endian(R_DATA, little_end);
-                        ns.word_cnt = cs.word_cnt + 1;
+                        if (eth_dma == 1) begin
+                            ns.dma_noc_data = '0;
+                            ns.dma_noc_data[31:0] = eth_dma_rdata32;
+                            ns.word_cnt = 0;
+                        end else begin
+                            ns.dma_noc_data[ARCH_BITS*cs.word_cnt+:ARCH_BITS] =
+                                fix_endian(R_DATA, little_end);
+                            ns.word_cnt = cs.word_cnt + 1;
+                        end
 
                         if (R_LAST == 1'b0) begin
                             if ((ns.word_cnt == DMA_NOC_WIDTH / ARCH_BITS) || (eth_dma == 1)) begin
@@ -537,14 +543,19 @@ module noc2aximst #(
                                 next_state      = RECEIVE_HEADER;
                             end else begin
                                 dma_snd_data_in = {PREAMBLE_BODY, ns.dma_noc_data};
-                                if (cs.count > 255) begin
+                                if (eth_dma == 1) begin
+                                    ns.ar_len  = 0;
+                                    ns.count   = cs.count - 1;
+                                    ns.ar_addr = cs.ar_addr + 4;
+                                end else if (cs.count > 255) begin
                                     ns.ar_len = 255;
                                     ns.count  = cs.count - 256;
+                                    ns.ar_addr = cs.ar_addr + ((cs.ar_len + 1) << cs.ar_size);
                                 end else begin
                                     ns.ar_len = cs.count;
                                     ns.count  = 0;
+                                    ns.ar_addr = cs.ar_addr + ((cs.ar_len + 1) << cs.ar_size);
                                 end
-                                ns.ar_addr    = cs.ar_addr + ((cs.ar_len + 1) << cs.ar_size);
                                 ns.burst_flag = 1;  // Give the new address for the new burst
                                 ns.ar_valid   = 1'b1;
                                 next_state    = DMA_READ_REQUEST;
@@ -558,7 +569,11 @@ module noc2aximst #(
                 if (dma_rcv_empty == 1'b0) begin
                     dma_rcv_rdreq = 1'b1;
                     ns.count      = dma_rcv_data_out[31:0] - 1;
-                    if (ns.count > 255) begin
+                    if (eth_dma == 1) begin
+                        ns.aw_len   = 0;
+                        ns.word_rem = 0;
+                        ns.count    = 0;
+                    end else if (ns.count > 255) begin
                         ns.aw_len   = 255;
                         ns.word_rem = 255;
                         ns.count    = ns.count - 256;
@@ -765,9 +780,16 @@ module noc2aximst #(
 
         dma_live_flit_swapped = '0;
         dma_pref_flit_swapped = '0;
+        eth_dma_rdata32       = '0;
 
         dma_payload_live      = dma_rcv_data_out[DMA_NOC_WIDTH-1 : 0];
         dma_payload_pref      = cs.dma_flit[DMA_NOC_WIDTH-1 : 0];
+
+        if (ARCH_BITS == 64) begin
+            eth_dma_rdata32 = (cs.ar_addr[2] == 1'b0) ? R_DATA[63:32] : R_DATA[31:0];
+        end else begin
+            eth_dma_rdata32 = R_DATA[31:0];
+        end
 
         if (little_end == 0) begin
             dma_live_flit_swapped = dma_payload_live[ARCH_BITS*cs.word_cnt+:ARCH_BITS];
@@ -886,7 +908,7 @@ module noc2aximst #(
             cs.word_rem      <= 0;
             cs.hsize_msb     <= 0;
             cs.dma_size_valid <= 1'b0;
-            cs.dma_size      <= target_dma_axi_size();
+            cs.dma_size      <= DMA_AXI_SIZE;
         end else begin
             current_state <= next_state;
             cs            <= ns;

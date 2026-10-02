@@ -92,8 +92,12 @@ initial begin
 		$display("axi_ram_sim: loading %s", INIT_FILE);
 		$readmemh(INIT_FILE, mem);
 	end
-	else if (STRB_WIDTH == 8)
-		$readmemh("../soft-build/ariane/ram.vhx", mem);
+	else if (STRB_WIDTH == 8) begin
+        if (GLOB_CPU_ARCH == cva6)
+        $readmemh("../soft-build/cva6/ram.vhx", mem);
+        else
+        $readmemh("../soft-build/ariane/ram.vhx", mem);
+    end
 	else if (STRB_WIDTH == 4 && GLOB_CPU_RISCV == 0)
 		$readmemh("../soft-build/leon3/ram.vhx", mem);
 	else

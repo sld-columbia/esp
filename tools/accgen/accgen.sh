@@ -85,7 +85,7 @@ echo ""
 read -p "  * Enter accelerator name ${def}[${NAME_DEFAULT}]${normal}: " NAME
 NAME=${NAME:-$NAME_DEFAULT}
 
-read -p "  * Select design flow (${bold}S${normal}tratus HLS, ${bold}V${normal}ivado HLS, ${bold}h${normal}ls4ml, ${bold}C${normal}atapult HLS, ${bold}R${normal}TL) ${def}[S]${normal}: " FLOW_SELECT
+read -p "  * Select design flow (${bold}S${normal}tratus HLS, ${bold}V${normal}ivado HLS, ${bold}h${normal}ls4ml, ${bold}C${normal}atapult HLS, ${bold}R${normal}TL, ${bold}B${normal}ambu HLS) ${def}[S]${normal}: " FLOW_SELECT
 FLOW_SELECT=${FLOW_SELECT:-S}
 case $FLOW_SELECT in
     [Ss]* ) FLOW="stratus_hls" FLOWSUFFIX="stratus";;
@@ -93,6 +93,7 @@ case $FLOW_SELECT in
     [Hh]* ) FLOW="hls4ml" FLOWSUFFIX="hls4ml";;
     [Cc]* ) FLOW="catapult_hls" FLOWLANG="sysc" FLOWSUFFIX="catapult";;
     [Rr]* ) FLOW="rtl" FLOWSUFFIX="rtl";;
+    [Bb]* ) FLOW="bambu_hls" FLOWSUFFIX="bambu";;
     * ) FLOW="stratus_hls" FLOWSUFFIX="stratus";;
 esac
 
@@ -127,6 +128,9 @@ if  test -e ${ESP_ROOT}/accelerators/catapult_hls/$NAMEFULL; then
     die "accelerator ${NAMEFULL} already defined"
 fi
 if  test -e ${ESP_ROOT}/accelerators/rtl/$NAMEFULL; then
+    die "accelerator ${NAMEFULL} already defined"
+fi
+if  test -e ${ESP_ROOT}/accelerators/bambu_hls/$NAMEFULL; then
     die "accelerator ${NAMEFULL} already defined"
 fi
 
@@ -204,6 +208,10 @@ while (true); do
 	* ) read -p "      Please enter a valid bit-width (8, 16, 32, 64) ${def}[32]${normal}: " data_width; data_width=${data_width:-32};;
     esac
 done
+if [[ "$FLOW" == "bambu_hls" && "$data_width" != "32" ]]; then
+    warn "the bambu flow currently supports 32-bit elements over 64-bit DMA only; forcing bit-width to 32"
+    data_width=32; hsize="SIZE_WORD"
+fi
 dma_adj=$(( 8 / (data_width/8) ))
 
 if [ $FLOW == "hls4ml" ]; then
@@ -258,6 +266,10 @@ done
 if [ $FLOW != "hls4ml" ]; then
     read -p "    - Enter an integer chunking factor (use 1 if you want PLM size equal to data size) ${def}[1]${normal}: " chunking_factor
     chunking_factor=${chunking_factor:-1}
+    if [[ "$FLOW" == "bambu_hls" && "$chunking_factor" != "1" ]]; then
+	warn "the bambu flow does not implement chunking; forcing chunking factor to 1"
+	chunking_factor=1
+    fi
 
     in_word=$(( (data_in_size_max+chunking_factor-1)/chunking_factor ))
     out_word=$(( (data_out_size_max+chunking_factor-1)/chunking_factor ))
@@ -282,6 +294,11 @@ while true; do
 	warn "invalid expression \"${batching_factor_expr}\""
     fi
 done
+
+if [[ "$FLOW" == "bambu_hls" && "$batching_factor_max" != "1" ]]; then
+    warn "the bambu flow does not implement batching; forcing batching factor to 1"
+    batching_factor_expr=1; batching_factor_max=1
+fi
 
 if [[ $data_in_size_max == $data_out_size_max && $FLOW != "hls4ml" ]]; then
     IN_PLACE=$(yes_no "    - Is output stored in place?")
@@ -341,6 +358,9 @@ elif [ "$FLOW" == "hls4ml" ]; then
 
 elif [ "$FLOW" == "rtl" ]; then
     dirs="src hls"
+
+elif [ "$FLOW" == "bambu_hls" ]; then
+    dirs="src hls tb"
 fi
 
 ## initialize all design folders
@@ -395,6 +415,9 @@ for d in $dirs; do
     if [[ "$FLOW" == "rtl" && "$d" == "hls" ]]; then
 	ln -s ../../../common/hls/Makefile
     fi
+    if [[ "$FLOW" == "bambu_hls" && "$d" == "hls" ]]; then
+	ln -s ../../../common/hls/Makefile
+    fi
 done
 
 
@@ -422,7 +445,9 @@ if [ "$FLOW" == "hls4ml" ]; then
     cp -r $HLS4ML_PRJ_PATH $ACC_DIR/hw/hls4ml
 fi
 
-if [ "$FLOW" != "catapult_hls" ]; then
+if [ "$FLOW" == "bambu_hls" ]; then
+    XML_NAME=$LOWERFULL
+elif [ "$FLOW" != "catapult_hls" ]; then
     XML_NAME=$LOWER
 else
     XML_NAME="$LOWER"
@@ -430,7 +455,9 @@ else
     XML_NAME+="$FLOWLANG"
 fi
 
-if [ "$FLOW" != "catapult_hls" ]; then
+if [ "$FLOW" == "bambu_hls" ]; then
+    FLOW_NAME="bambu"
+elif [ "$FLOW" != "catapult_hls" ]; then
     FLOW_NAME="${FLOW}"
 else
     FLOW_NAME="${FLOW}_${FLOWLANG}"
@@ -479,6 +506,31 @@ if [ "$FLOW" == "rtl" ]; then
 	sed -i "/\/\* <<--params-def-->> \*\//a ${indent}input [31:0]  conf_info_${key};" ${LOWERFULL}_basic_dma32/${LOWERFULL}_basic_dma32.v
 	sed -i "/\/\* <<--params-def-->> \*\//a ${indent}input [31:0]  conf_info_${key};" ${LOWERFULL}_basic_dma64/${LOWERFULL}_basic_dma64.v
     done
+fi
+if [ "$FLOW" == "bambu_hls" ]; then
+    cd $ACC_DIR/hw/src
+    sep=","
+    for key in ${!values[@]}; do
+	# wrapper: register port declaration and connection to the bambu core
+	sed -i "/\/\* <<--params-list-->> \*\//a conf_info_${key}${sep}" ${LOWERFULL}_basic_dma64/${LOWERFULL}_basic_dma64.v
+	sed -i "/\/\* <<--params-def-->> \*\//a ${indent}input [31:0]  conf_info_${key};" ${LOWERFULL}_basic_dma64/${LOWERFULL}_basic_dma64.v
+	sed -i "/\/\* <<--core-conf-map-->> \*\//a \ \ \ \ \ \ \ \ .${key}(conf_info_${key})," ${LOWERFULL}_basic_dma64/${LOWERFULL}_basic_dma64.v
+	# kernel + testbench: one scalar argument per register (bambu emits an
+	# input port per argument, so wrapper/kernel stay consistent)
+	sed -i "s|/\* <<--params-args-->> \*/|, unsigned ${key} /* <<--params-args-->> */|" ${LOWERFULL}.cpp
+	sed -i "s|/\* <<--params-args-->> \*/|, unsigned ${key} /* <<--params-args-->> */|" ../tb/${LOWERFULL}_tb.cpp
+	sed -i "s|/\* <<--params-call-->> \*/|, ${key} /* <<--params-call-->> */|" ../tb/${LOWERFULL}_tb.cpp
+	sed -i "/\/\* <<--params-decls-->> \*\//a \ \ \ const unsigned ${key} = ${values[$key]};" ../tb/${LOWERFULL}_tb.cpp
+    done
+    # runtime geometry: batch count from the first register; output base from
+    # the in-place answer
+    bambu_first=$(first_key)
+    sed -i "s/acc_full_first_param/${bambu_first}/g" ${LOWERFULL}.cpp ../tb/${LOWERFULL}_tb.cpp
+    if [ "$IN_PLACE" == "y" ]; then
+	sed -i "s|ACC_FULL_OUT_BASE|0|g" ${LOWERFULL}.cpp ../tb/${LOWERFULL}_tb.cpp
+    else
+	sed -i "s|ACC_FULL_OUT_BASE|(${bambu_first} / 2)|g" ${LOWERFULL}.cpp ../tb/${LOWERFULL}_tb.cpp
+    fi
 fi
 indent="\ \ \ \ \ \ \ \ "
 
