@@ -26,6 +26,17 @@ external communication with an ESP SoC.
   machine. _ESPLink_ communicates with the debug unit on the ESP SoC
   via Ethernet.
 
+* **Vortex config** (`vortex`) generates and validates the
+  configuration of the third-party Vortex GPGPU accelerator. It is
+  invoked by _SoCGen_ and _SocketGen_ rather than run directly.
+
+* **HPS utilities** (`hps`) are host tools that run on the hard
+  processor system of an Intel SoC FPGA under Linux, rather than on
+  the host workstation. They load ESP software payloads into the
+  bootrom and DRAM over the HPS-to-FPGA bridge, and read back single
+  words for debugging. Build them on the board; see
+  `socs/terasic-de10-pro-sx/README.md`.
+
 * **ESPMon** is a tool for monitoring the hardware performance
   counters of an ESP SoC from a host machine. _ESPMon_ communicates
   with the monitor unit on the ESP SoC via Ethernet. It can be used

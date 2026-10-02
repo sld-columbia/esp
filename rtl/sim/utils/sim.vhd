@@ -628,6 +628,7 @@ package sim is
     ADDR_WIDTH  : integer := 32;
     STRB_WIDTH  : integer := 8;
     ID_WIDTH    : integer := 8;
+    INIT_FILE   : string := "";
     PIPELINE_OUTPUT : integer := 0
   );
   port (

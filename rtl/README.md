@@ -37,4 +37,8 @@ This directory is organized as follows:
 * `techmap` contains technology specific components for the supported
   FPGA and ASIC targets.
 
+* `socs` contains board-specific top-level RTL that is not part of the
+  generic ESP design, such as the Quartus board shell for the Terasic
+  DE10-Pro SX. The corresponding build workspace lives in `socs/<board>`.
+
 * `sim` contains simulation-only models and components.

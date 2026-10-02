@@ -36,6 +36,7 @@ CFLAGS += -L$(BUILD_DRIVERS)/libesp -L$(BUILD_DRIVERS)/utils/linux -L$(BUILD_DRI
 LDFLAGS += -lm -lrt -lpthread -lesp -ltest -lcontig -lutils -lmonitors
 
 CC := $(CROSS_COMPILE)gcc
+CXX := $(CROSS_COMPILE)g++
 LD := $(CROSS_COMPILE)$(LD)
 
 all: $(EXTRA_OBJS) $(OBJS) $(EXES) $(EXE) $(BINS) $(BIN)

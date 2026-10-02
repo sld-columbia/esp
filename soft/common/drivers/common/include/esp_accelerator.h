@@ -77,6 +77,13 @@ enum accelerator_coherence {
 
     /* bank(13)       : Point-to-point configuration */
     #define MCAST_REG               0x34
+
+    /* bank(22)       : Status of a third-party accelerator (e.g. GT_VORTEX).
+     *                  These accelerators do not implement ESP's STATUS_REG;
+     *                  they expose their own register, with bit 0 asserted
+     *                  while the accelerator is busy. */
+    #define THIRD_PARTY_STATUS_REG       0x58
+    #define THIRD_PARTY_STATUS_MASK_BUSY BIT(0)
     #define MCAST_MASK_NDESTS       0x1F
     #define MCAST_SHIFT_NDESTS      0
     #define MCAST_MASK_PACKET       0x1

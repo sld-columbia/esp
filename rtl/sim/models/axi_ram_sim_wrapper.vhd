@@ -9,11 +9,9 @@ use work.gencomp.all;
 use work.leon3.all;
 use work.misc.all;
 use work.net.all;
-library unisim;
 -- pragma translate_off
 use work.sim.all;
 -- pragma translate_on
-use unisim.VCOMPONENTS.all;
 use work.monitor_pkg.all;
 use work.sldacc.all;
 use work.tile.all;
@@ -33,6 +31,7 @@ entity axi_ram_sim is
     ADDR_WIDTH 	: integer := 32;
     STRB_WIDTH 	: integer := 8;
     ID_WIDTH	: integer := 8;
+    INIT_FILE   : string := "";
     PIPELINE_OUTPUT : integer := 0 
   );
   port (
@@ -52,6 +51,7 @@ end;
       ADDR_WIDTH      : integer := 32;
       STRB_WIDTH      : integer := 4;
       ID_WIDTH        : integer := 8;
+      INIT_FILE       : string := "";
       PIPELINE_OUTPUT     : integer := 0
     );
     port(
@@ -100,6 +100,28 @@ end;
     );
   end component axi_ram_sim_model;
 
+  function cpu_ram_init_file return string is
+  begin
+    if GLOB_CPU_ARCH = ariane then
+      return "../soft-build/ariane/ram.vhx";
+    elsif GLOB_CPU_ARCH = ibex then
+      return "../soft-build/ibex/ram.vhx";
+    else
+      return "../soft-build/leon3/ram.vhx";
+    end if;
+  end function cpu_ram_init_file;
+
+  function select_ram_init_file(file_name : string) return string is
+  begin
+    if file_name'length /= 0 then
+      return file_name;
+    else
+      return cpu_ram_init_file;
+    end if;
+  end function select_ram_init_file;
+
+  constant RAM_INIT_FILE : string := select_ram_init_file(INIT_FILE);
+
   begin
 
     ddr_axi_so.b.user(9 downto 0) <= (others => '0');
@@ -114,6 +136,7 @@ end;
         ADDR_WIDTH      => ADDR_WIDTH,
         STRB_WIDTH      => STRB_WIDTH,
         ID_WIDTH        => ID_WIDTH,
+        INIT_FILE       => RAM_INIT_FILE,
         PIPELINE_OUTPUT => PIPELINE_OUTPUT
         )
       port map(

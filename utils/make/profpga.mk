@@ -100,6 +100,6 @@ INCDIR += $(PROFPGA)/hdl/mmi64
 INCDIR += $(PROFPGA)/hdl/profpga_user
 INCDIR += $(PROFPGA)/hdl/pd_muxdemux2
 
-VHDL_PROFPGA    = $(shell strings $(FLISTS)/profpga_vhdl.flist)
-VERILOG_PROFPGA = $(shell strings $(FLISTS)/profpga_vlog.flist)
+VHDL_PROFPGA    = $(call safe_strings,$(FLISTS)/profpga_vhdl.flist)
+VERILOG_PROFPGA = $(call safe_strings,$(FLISTS)/profpga_vlog.flist)
 endif

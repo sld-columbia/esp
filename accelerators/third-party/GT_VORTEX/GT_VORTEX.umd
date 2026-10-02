@@ -1,0 +1,5 @@
+build/install/runtime/lib/libvortex.so
+build/install/runtime/lib/libvortex-esp.so
+build/tests/regression/basic/kernel.vxbin
+build/tests/regression/basic/kernel.elf
+build/tests/regression/basic/basic

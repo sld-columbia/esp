@@ -11,9 +11,16 @@ XMCOMOPT += -nocopyright
 
 XMLOGOPT += -nocopyright
 XMLOGOPT += -linedebug
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
+XMLOGOPT += -DEFINE XILINX_FPGA
+else ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
+XMLOGOPT += -DEFINE FPGA_TARGET_ALTERA
+# See the note in utils/make/modelsim.mk: XILINX_FPGA selects the FPGA cache
+# memories, so an Intel target needs it too. Without it the caches silently
+# fall back to their ASIC-style implementation.
 XMLOGOPT += -DEFINE XILINX_FPGA
 endif
+XMLOGOPT += $(GT_VORTEX_XCELIUM_DEFINES)
 XMLOGOPT += $(INCDIR_XCELIUM)
 
 XMELABOPT += -nowarn DLCPT
@@ -43,12 +50,21 @@ $(ESP_ROOT)/.cache/xcelium/xilinx_lib:
 		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib cds.lib; exit 1; \
 	fi;
 
+ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 xcelium/cds.lib: $(ESP_ROOT)/.cache/xcelium/xilinx_lib
 	$(QUIET_MAKE)mkdir -p xcelium
 	@cp $(ESP_ROOT)/.cache/xcelium/cds.lib $@
 
 xcelium/hdl.var: xcelium/cds.lib
 	@cp $(ESP_ROOT)/.cache/xcelium/hdl.var $@
+else
+xcelium/cds.lib:
+	$(QUIET_MAKE)mkdir -p xcelium
+	@touch $@
+
+xcelium/hdl.var: xcelium/cds.lib
+	@touch $@
+endif
 
 
 ### Compile simulation source files ###

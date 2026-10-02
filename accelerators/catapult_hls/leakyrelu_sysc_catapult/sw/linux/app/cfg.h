@@ -9,18 +9,21 @@
 typedef int32_t token_t;
 
 /* <<--params-->> */
-const int32_t leaky_row = 2;
-const int32_t leaky_batch = 4;
-
+enum {
+	leaky_vec_len = 16,
+	leaky_row = 2,
+	leaky_batch = 4,
+	leaky_buffer_words = leaky_row * leaky_batch * leaky_vec_len,
+};
 
 struct leakyrelu_sysc_catapult_access leakyrelu_cfg_000[] = {
 	{
 		/* <<--descriptor-->> */
 		.batch	= leaky_batch,
 		.row	= leaky_row,
-		.addrA	= leaky_row * leaky_batch * 16 * 0,
-		.addrB	= leaky_row * leaky_batch * 16 * 1,
-		.addrO	= leaky_row * leaky_batch * 16 * 2,
+		.addrA	= 0,
+		.addrB	= leaky_buffer_words,
+		.addrO	= leaky_buffer_words * 2,
 		.src_offset = 0,
 		.dst_offset = 0,
 		.esp.coherence = ACC_COH_NONE,

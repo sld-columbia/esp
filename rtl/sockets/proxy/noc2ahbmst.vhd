@@ -218,8 +218,12 @@ architecture rtl of noc2ahbmst is
 
   signal serdes_current, serdes_next : serdes_fsm;
   signal sample_req, sample_rsp : std_ulogic;
+  -- Hold one extra 64-bit response beat while the SerDes emits the upper half.
+  signal load_rsp_buf, sample_rsp_buf, clear_rsp_buf : std_ulogic;
   signal req_reg : std_logic_vector(this_coh_flit_size - 1 downto 0);
   signal rsp_reg : std_logic_vector(this_coh_flit_size - 1 downto 0);
+  signal rsp_buf_reg : std_logic_vector(this_coh_flit_size - 1 downto 0);
+  signal rsp_buf_valid : std_ulogic;
 
   --attribute mark_debug : string;
   --attribute mark_debug of dma_rcv_data_out : signal is "true";
@@ -999,6 +1003,7 @@ begin  -- rtl
   serdes_gen: if narrow_noc /= 0 and ARCH_BITS /= 32 generate
 
     serdes_beh: process (serdes_current, r, ahbmi, rsp_reg, req_reg,
+                         rsp_buf_reg, rsp_buf_valid,
                          narrow_coherence_req_rdreq,
                          coherence_req_data_out,
                          coherence_req_empty,
@@ -1011,6 +1016,9 @@ begin  -- rtl
       serdes_next <= serdes_current;
       sample_rsp <= '0';
       sample_req <= '0';
+      load_rsp_buf <= '0';
+      sample_rsp_buf <= '0';
+      clear_rsp_buf <= '0';
 
       -- passthru by default
       coherence_req_rdreq           <= narrow_coherence_req_rdreq;
@@ -1023,7 +1031,23 @@ begin  -- rtl
       case serdes_current is
 
         when passthru =>
-          if r.state = send_data and r.hsize = HSIZE_DWORD and ahbmi.hready = '1' and coherence_rsp_snd_full = '0'then
+          if rsp_buf_valid = '1' and coherence_rsp_snd_full = '0' then
+            coherence_rsp_snd_wrreq <= '1';
+            wide_noc_data(this_coh_flit_size - 1 downto this_coh_flit_size - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+            for i in 1 to this_coh_flit_size / 32 loop
+              wide_noc_data(32 * i - 1 downto 32 * (i - 1)) :=
+                rsp_buf_reg(31 downto 0);
+            end loop;
+            coherence_rsp_snd_data_in <= wide_noc_data;
+            load_rsp_buf <= '1';
+            if r.state = send_data and r.hsize = HSIZE_DWORD and ahbmi.hready = '1' and
+              narrow_coherence_rsp_snd_wrreq = '1' then
+              sample_rsp_buf <= '1';
+            else
+              clear_rsp_buf <= '1';
+            end if;
+            serdes_next <= rsp_msb;
+          elsif r.state = send_data and r.hsize = HSIZE_DWORD and ahbmi.hready = '1' and coherence_rsp_snd_full = '0' then
             sample_rsp <= '1';
             coherence_rsp_snd_wrreq <= '1';
             wide_noc_data(this_coh_flit_size - 1 downto this_coh_flit_size - PREAMBLE_WIDTH) := PREAMBLE_BODY;
@@ -1043,7 +1067,11 @@ begin  -- rtl
           end if;
 
         when rsp_msb =>
-          narrow_coherence_rsp_snd_full <= '1';
+          if rsp_buf_valid = '1' then
+            narrow_coherence_rsp_snd_full <= '1';
+          else
+            narrow_coherence_rsp_snd_full <= coherence_rsp_snd_full;
+          end if;
           wide_noc_data(this_coh_flit_size - 1 downto this_coh_flit_size - PREAMBLE_WIDTH) :=
             rsp_reg(this_coh_flit_size - 1 downto this_coh_flit_size - PREAMBLE_WIDTH);
           for i in 1 to this_coh_flit_size / 32 loop
@@ -1053,6 +1081,10 @@ begin  -- rtl
           coherence_rsp_snd_data_in <= wide_noc_data;
           if coherence_rsp_snd_full = '0' then
             coherence_rsp_snd_wrreq <= '1';
+            if rsp_buf_valid = '0' and r.state = send_data and r.hsize = HSIZE_DWORD and
+              ahbmi.hready = '1' and narrow_coherence_rsp_snd_wrreq = '1' then
+              sample_rsp_buf <= '1';
+            end if;
             serdes_next <= passthru;
           else
             coherence_rsp_snd_wrreq <= '0';
@@ -1080,11 +1112,21 @@ begin  -- rtl
       if rst = '0' then                   -- asynchronous reset (active low)
         serdes_current <= passthru;
         rsp_reg <= (others => '0');
+        rsp_buf_reg <= (others => '0');
+        rsp_buf_valid <= '0';
         req_reg <= (others => '0');
       elsif clk'event and clk = '1' then  -- rising clock edge
         serdes_current <= serdes_next;
         if sample_rsp = '1' then
           rsp_reg <= narrow_coherence_rsp_snd_data_in;
+        elsif load_rsp_buf = '1' then
+          rsp_reg <= rsp_buf_reg;
+        end if;
+        if sample_rsp_buf = '1' then
+          rsp_buf_reg <= narrow_coherence_rsp_snd_data_in;
+          rsp_buf_valid <= '1';
+        elsif clear_rsp_buf = '1' then
+          rsp_buf_valid <= '0';
         end if;
         if sample_req = '1' then
           req_reg <= coherence_req_data_out;

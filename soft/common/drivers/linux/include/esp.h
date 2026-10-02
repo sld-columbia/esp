@@ -87,6 +87,7 @@ struct esp_device {
     unsigned int ddr_node;
     unsigned int in_place;
     unsigned int reuse_factor;
+    bool third_party;
 };
 
 struct esp_status {

@@ -63,3 +63,7 @@
 [submodule "soft/cva6/opensbi"]
 	path = soft/cva6/opensbi
 	url = https://github.com/riscv-software-src/opensbi.git
+[submodule "accelerators/third-party/GT_VORTEX/vortex"]
+	path = accelerators/third-party/GT_VORTEX/vortex
+	url = https://github.com/sld-columbia/vortex.git
+	branch = esp-development

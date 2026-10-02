@@ -54,3 +54,12 @@ The structure of the accelerator folders for the HLS-based flows
 
   * `linux/`: Linux test application and Linux device driver for the
     accelerator
+
+# Third-party Accelerator
+
+Please note that currently, there are several limitations with the kinds of accelerators supported by the third-party accelerator socket and workflow:
+* Accelerators must use AXI for memory access and APB for device control and configuration
+* AXI width must be 64-bit and APB width must be 32-bit
+* AXI `awsize` is not supported
+* AXI outstanding transactions are not supported
+* The third-party accelerator socket does not provide a TLB, third-party accelerators directly address physical memory

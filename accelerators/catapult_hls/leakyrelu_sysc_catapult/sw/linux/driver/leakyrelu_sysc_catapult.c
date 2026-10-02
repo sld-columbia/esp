@@ -114,7 +114,7 @@ static struct esp_driver leakyrelu_driver = {
 	},
 	.xfer_input_ok	= leakyrelu_xfer_input_ok,
 	.prep_xfer	= leakyrelu_prep_xfer,
-	.ioctl_cm	= leakyrelu_SYSC_CATAPULT_IOC_ACCESS,
+	.ioctl_cm	= LEAKYRELU_SYSC_CATAPULT_IOC_ACCESS,
 	.arg_size	= sizeof(struct leakyrelu_sysc_catapult_access),
 };
 
