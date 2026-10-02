@@ -398,6 +398,11 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
         goto out;
     }
 
+    if (access->ndev_yx_table > ARRAY_SIZE(access->acc_yx_table)) {
+        rc = -EINVAL;
+        goto out;
+    }
+
     if (!esp_xfer_input_ok(esp, contig)) {
         rc = -EINVAL;
         goto out;
