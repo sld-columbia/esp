@@ -86,16 +86,21 @@ static struct contig_desc *contig_alloc_descriptor(unsigned int n_chunks)
     desc = kmalloc(sizeof(*desc), GFP_KERNEL);
     if (unlikely(desc == NULL)) return ERR_PTR(-ENOMEM);
 
-    desc->arr = kmalloc_array(n_chunks, sizeof(unsigned long), GFP_KERNEL);
+    desc->arr = kmalloc_array(n_chunks, sizeof(*desc->arr), GFP_KERNEL);
     if (unlikely(desc->arr == NULL)) goto err_arr;
 
 #ifndef __riscv
     desc->arr_dma_addr =
-        dma_map_single(NULL, desc->arr, n_chunks * sizeof(dma_addr_t), DMA_TO_DEVICE);
+        dma_map_single(NULL, desc->arr, n_chunks * sizeof(*desc->arr), DMA_TO_DEVICE);
 #else
     desc->arr_dma_addr = virt_to_phys(desc->arr);
 #endif
     if (unlikely(dma_mapping_error(NULL, desc->arr_dma_addr))) goto err_dma;
+
+#ifndef __riscv
+    dma_sync_single_for_cpu(NULL, desc->arr_dma_addr, n_chunks * sizeof(*desc->arr),
+                            DMA_TO_DEVICE);
+#endif
 
     desc->n = n_chunks;
     INIT_LIST_HEAD(&desc->alloc_list);
@@ -111,7 +116,7 @@ err_arr:
 static void contig_free_descriptor(struct contig_desc *desc)
 {
 #ifndef __riscv
-    dma_unmap_single(NULL, desc->arr_dma_addr, desc->n * sizeof(dma_addr_t), DMA_TO_DEVICE);
+    dma_unmap_single(NULL, desc->arr_dma_addr, desc->n * sizeof(*desc->arr), DMA_TO_DEVICE);
 #endif
     kfree(desc->arr);
     kfree(desc);
@@ -297,6 +302,11 @@ static struct contig_desc *__contig_alloc_chunks(const struct contig_alloc_param
         contig_free_descriptor(desc);
         return ERR_PTR(rc);
     }
+
+#ifndef __riscv
+    dma_sync_single_for_device(NULL, desc->arr_dma_addr, desc->n * sizeof(*desc->arr),
+                               DMA_TO_DEVICE);
+#endif
 
     list_add(&desc->desc_node, &desc_list);
     return desc;
