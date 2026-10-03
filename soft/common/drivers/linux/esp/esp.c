@@ -373,7 +373,7 @@ static long esp_yx_table_init(struct esp_device *esp, struct esp_access *access)
 
 static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 {
-    struct contig_desc *contig;
+    struct contig_desc *contig = NULL;
     struct esp_access *access;
     void *arg;
     int rc = 0;
@@ -459,6 +459,7 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
     mutex_unlock(&esp->lock);
 
 out:
+    if (contig) contig_desc_put(contig);
     kfree(arg);
     return rc;
 }
