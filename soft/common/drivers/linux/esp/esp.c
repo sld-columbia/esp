@@ -292,6 +292,7 @@ static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *
     iowrite32be(ioread32be(_dev->iomem + P2P_REG) |                    \
                     ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)), \
                 _dev->iomem + P2P_REG)
+#define esp_mcast_reset(_dev) iowrite32be(0, _dev->iomem + MCAST_REG)
 #define esp_p2p_set_mcast_ndests(_dev, _n)                                  \
     iowrite32be(ioread32be(_dev->iomem + MCAST_REG) |                       \
                     ((MCAST_MASK_NDESTS & (_n - 1)) << MCAST_SHIFT_NDESTS), \
@@ -341,6 +342,7 @@ static long esp_p2p_init(struct esp_device *esp, struct esp_access *access)
 {
     int i = 0;
 
+    esp_mcast_reset(esp);
     esp_p2p_reset(esp);
 
     for (i = 0; i < access->p2p_nsrcs; i++)
@@ -360,10 +362,23 @@ static long esp_p2p_init(struct esp_device *esp, struct esp_access *access)
     return 0;
 }
 
+static void esp_yx_table_reset(struct esp_device *esp)
+{
+    unsigned int offset;
+    unsigned int ntable = ARRAY_SIZE(((struct esp_access *)0)->acc_yx_table);
+
+    iowrite32be(ioread32be(esp->iomem + YX_REG) & ((1U << (2 * YX_WIDTH)) - 1),
+                esp->iomem + YX_REG);
+    for (offset = 4; offset <= 4 * (ntable / 4); offset += 4)
+        iowrite32be(0, esp->iomem + YX_REG + offset);
+}
+
 static long esp_yx_table_init(struct esp_device *esp, struct esp_access *access)
 {
     int i = 0;
 
+    esp_yx_table_reset(esp);
+    
     for (i = 1; i <= access->ndev_yx_table; i++) {
         if (!esp_set_src(esp, access->acc_yx_table[i - 1], i, 1)) return -ENODEV;
     }

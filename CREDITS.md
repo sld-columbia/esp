@@ -53,5 +53,6 @@ contribution. Current affiliation may be different.
  - Choka Thenappan (ARM)
  - Andrés Otero (Universidad Politécnica de Madrid)
  - Iñigo Diez de Ulzurrun Aquerreta (Universidad Politécnica de Madrid)
+ - Flavien Solt (National University of Singapore)
 
 ### [Contacts](https://esp.cs.columbia.edu/contact/)
