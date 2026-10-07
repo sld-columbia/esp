@@ -14,29 +14,8 @@
 
 #ifdef __riscv
 
-/*
- * Some bare-metal flows link bootrom startup.S (which defines "_dtb"), while
- * others use riscv-tests crt.S + test.ld and receive the bootrom DTB pointer
- * through "__esp_boot_dtb". Fall back to the generated DTB address when neither
- * path provides a valid FDT.
- */
-extern unsigned char _dtb[] __attribute__((weak));
-uintptr_t dtb = (uintptr_t)_dtb;
-extern uintptr_t __esp_boot_dtb __attribute__((weak));
+uintptr_t dtb = DTB_ADDRESS;
 
-static uintptr_t esp_probe_dtb(void)
-{
-    uintptr_t boot_dtb = 0;
-
-    if (&__esp_boot_dtb) boot_dtb = __esp_boot_dtb;
-
-    if (boot_dtb >= BOOTROM_BASE_ADDR && boot_dtb < DRAM_BASE_ADDR && fdt_size(boot_dtb) != 0)
-        dtb = boot_dtb;
-    else if (dtb == 0 || fdt_size(dtb) == 0)
-        dtb = DTB_ADDRESS;
-
-    return dtb;
-}
     /*
      * The RISC-V bare-metal toolchain does not have support for malloc
      * on unthethered systems. This simple hack is used to enable RTL
@@ -265,9 +244,6 @@ static void esp_done(const struct fdt_scan_node *node, void *extra)
     }
 }
 
-static struct esp_device probe_dev_pool[8][NACC_MAX];
-static unsigned probe_dev_pool_next;
-
 int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const char *name)
 {
     struct fdt_cb cb;
@@ -275,7 +251,7 @@ int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const ch
     probe_target_name = name;
 
     // Initialize first entry of the device structure (may not be discovered!)
-    (*espdevs) = probe_dev_pool[probe_dev_pool_next++ % 8];
+    (*espdevs) = (struct esp_device *)aligned_malloc(NACC_MAX * sizeof(struct esp_device));
     if (!(*espdevs)) {
         printf("Error: cannot allocate esp_device list\n");
         exit(EXIT_FAILURE);
@@ -294,7 +270,7 @@ int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const ch
     cb.done  = esp_done;
     cb.extra = espdevs;
 
-    fdt_scan(esp_probe_dtb(), &cb);
+    fdt_scan(dtb, &cb);
 
     return ndev;
 }
