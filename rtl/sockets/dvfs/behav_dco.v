@@ -41,13 +41,44 @@ module behav_dco (
 
 
     reg  [255:0] clk_int;
+    reg  [  6:0] divider_count;
+    reg          divided_clk;
     wire [  7:0] LDO_IN;
+    wire [  7:0] LDO_IN_with_U_forced_to_0;
+    wire         enabled;
+    wire         oscillator_clk;
+    wire         selected_clk;
 
     assign LDO_IN[7:6] = FREQ_SEL;
     assign LDO_IN[5:0] = CC_SEL;
-    wire LDO_IN_with_U_forced_to_0 = (LDO_IN === 8'bXXXXXXXX || LDO_IN === 8'bZZZZZZZZ) ? 8'b00000000 : LDO_IN;
-    assign CLK     = clk_int[unsigned'(LDO_IN_with_U_forced_to_0)];
-    assign CLK_DIV = 1'b0;
+    assign LDO_IN_with_U_forced_to_0 =
+        (^LDO_IN === 1'bx) ? 8'b00000000 : LDO_IN;
+    assign enabled        = (RSTN === 1'b1) && (EN === 1'b1);
+    assign oscillator_clk = clk_int[unsigned'(LDO_IN_with_U_forced_to_0)];
+    assign selected_clk   = (CLK_SEL === 1'b1) ? EXT_CLK : oscillator_clk;
+    assign CLK            = enabled ? selected_clk : 1'b0;
+    assign CLK_DIV        = enabled ? divided_clk : 1'b0;
+
+    always @(posedge selected_clk or negedge RSTN or negedge EN) begin
+        if (!RSTN || !EN)
+            divider_count <= 7'b0;
+        else
+            divider_count <= divider_count + 1'b1;
+    end
+
+    always @* begin
+        case (DIV_SEL)
+            3'd0: divided_clk = selected_clk;
+            3'd1: divided_clk = divider_count[0];
+            3'd2: divided_clk = divider_count[1];
+            3'd3: divided_clk = divider_count[2];
+            3'd4: divided_clk = divider_count[3];
+            3'd5: divided_clk = divider_count[4];
+            3'd6: divided_clk = divider_count[5];
+            3'd7: divided_clk = divider_count[6];
+            default: divided_clk = 1'b0;
+        endcase
+    end
 
     localparam TIME_PERIOD = 10;
     localparam TIME_PERIOD_HALF = TIME_PERIOD / 2;
@@ -319,12 +350,90 @@ module behav_dco (
             localparam TIME_PERIODI = 8.0 * DELAYS[i] / 2.0;
             initial begin
                 clk_int[i] = 0;
-                forever #TIME_PERIODI clk_int[i] = (~clk_int[i]) && EN;
+                forever #TIME_PERIODI clk_int[i] = (~clk_int[i]) && enabled;
             end
         end
     endgenerate
 
 
 endmodule
+
+// ASIC RTL simulations use these compatibility wrappers when the structural
+// DCO or its timing data is unavailable.  Synthesis never defines this macro.
+`ifdef ASIC_DCO_BEHAV_FALLBACK
+module DCO_ASIC (
+    input  wire       EN,
+    input  wire [5:0] CC_SEL,
+    input  wire [5:0] FC_SEL,
+    input  wire       EXT_CLK,
+    input  wire       CLK_SEL,
+    input  wire [2:0] DIV_SEL,
+    input  wire [1:0] FREQ_SEL,
+    output wire       CLK,
+    output wire       CLK_DIV,
+    input  wire       RSTN
+);
+    behav_dco dco_i (
+        .EN(EN),
+        .CC_SEL(CC_SEL),
+        .FC_SEL(FC_SEL),
+        .EXT_CLK(EXT_CLK),
+        .CLK_SEL(CLK_SEL),
+        .DIV_SEL(DIV_SEL),
+        .FREQ_SEL(FREQ_SEL),
+        .CLK(CLK),
+        .CLK_DIV(CLK_DIV),
+        .RSTN(RSTN)
+    );
+endmodule
+
+module DCO_LPDDR (
+    input  wire       EN,
+    input  wire [5:0] CC_SEL,
+    input  wire [5:0] FC_SEL,
+    input  wire       EXT_CLK,
+    input  wire       CLK_SEL,
+    input  wire [2:0] DIV_SEL,
+    input  wire [1:0] FREQ_SEL,
+    output wire       CLK,
+    output wire       CLK_DIV2,
+    output wire       CLK_DIV2_90,
+    output wire       CLK_DIV,
+    input  wire       RSTN
+);
+    reg clk_div2_r;
+    reg clk_div2_90_r;
+
+    behav_dco dco_i (
+        .EN(EN),
+        .CC_SEL(CC_SEL),
+        .FC_SEL(FC_SEL),
+        .EXT_CLK(EXT_CLK),
+        .CLK_SEL(CLK_SEL),
+        .DIV_SEL(DIV_SEL),
+        .FREQ_SEL(FREQ_SEL),
+        .CLK(CLK),
+        .CLK_DIV(CLK_DIV),
+        .RSTN(RSTN)
+    );
+
+    always @(posedge CLK or negedge RSTN or negedge EN) begin
+        if (!RSTN || !EN)
+            clk_div2_r <= 1'b0;
+        else
+            clk_div2_r <= ~clk_div2_r;
+    end
+
+    always @(negedge CLK or negedge RSTN or negedge EN) begin
+        if (!RSTN || !EN)
+            clk_div2_90_r <= 1'b0;
+        else
+            clk_div2_90_r <= ~clk_div2_90_r;
+    end
+
+    assign CLK_DIV2    = clk_div2_r;
+    assign CLK_DIV2_90 = clk_div2_90_r;
+endmodule
+`endif
 
 //`default_nettype wire
