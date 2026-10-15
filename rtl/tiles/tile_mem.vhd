@@ -703,9 +703,10 @@ begin
   begin
     if this_has_ddr = 1 then
       mon_ddr.word_transfer <= '0';
-      if ddr_axi_si_temp.w.valid = '1' and ddr_axi_so.w.ready = '1' then
-        mon_ddr.word_transfer <= '1';
-      end if;
+      if (ddr_axi_si_temp.w.valid = '1' and ddr_axi_so.w.ready = '1') or
+         (ddr_axi_so.r.valid = '1' and ddr_axi_si_temp.r.ready = '1') then
+           mon_ddr.word_transfer <= '1';
+      end if;  
     else
       -- TODO: connect to FPGA link activity
       mon_ddr.word_transfer <= '0';
