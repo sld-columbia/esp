@@ -34,7 +34,7 @@ use work.genacc.all;
 use work.nocpackage.all;
 use work.cachepackage.all;
 
-entity axislv2noc is
+entity tp_axislv2noc is
   generic (
     tech                : integer;
     nmst                : integer;
@@ -70,9 +70,9 @@ entity axislv2noc is
     remote_ahbs_rcv_empty      : in  std_ulogic;
     -- Coherence
     coherence                  : in integer range 0 to 3);
-end axislv2noc;
+end tp_axislv2noc;
 
-architecture rtl of axislv2noc is
+architecture rtl of tp_axislv2noc is
 
   type axi_fsm is (idle, wait_wdata,
                    rmw_read_header, rmw_read_address, rmw_read_length,
@@ -978,7 +978,7 @@ begin  -- rtl
     -- pragma translate_off
     if transaction_reg.write = '1' and transaction_reg.dst_is_mem = '0' and mosi(transaction_reg.xindex).w.valid = '1' then
       assert mosi(transaction_reg.xindex).w.strb = WSTRB_ALL_ONE
-        report "axislv2noc: partial WSTRB not supported for remote AHB writes"
+        report "tp_axislv2noc: partial WSTRB not supported for remote AHB writes"
         severity warning;
     end if;
     -- pragma translate_on

@@ -31,7 +31,7 @@ use work.tile.all;
 use work.coretypes.all;
 use work.grlib_config.all;
 use work.socmap.all;
--- use work.ariane_esp_pkg.all;
+use work.riscv_interrupt_pkg.all;
 use work.ibex_esp_pkg.all;
 
 entity tile_io is
@@ -723,7 +723,7 @@ begin
       end process riscv_irqinfo_proc;
     end generate;
 
-    riscv_plic0 : entity work.riscv_plic_apb_wrap
+    riscv_plic0 : riscv_plic_apb_wrap
       generic map (
         pindex    => 2,
         pconfig   => irqmp_pconfig,
@@ -740,7 +740,7 @@ begin
         pslverr     => plic_pslverr);
 
     riscv_clint_gen: if GLOB_CPU_ARCH /= ibex generate
-      riscv_clint_ahb_wrap_1: entity work.riscv_clint_ahb_wrap
+      riscv_clint_ahb_wrap_1: riscv_clint_ahb_wrap
         generic map (
           hindex  => clint_hindex,
           hconfig => clint_hconfig,

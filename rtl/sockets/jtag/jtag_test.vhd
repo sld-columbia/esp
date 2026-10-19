@@ -12,7 +12,6 @@ use work.sld_devices.all;
 use work.devices.all;
 use work.gencomp.all;
 use work.leon3.all;
-use work.ariane_esp_pkg.all;
 use work.misc.all;
 -- pragma translate_off
 use work.sim.all;

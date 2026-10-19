@@ -619,11 +619,6 @@ class VortexConfigFrame:
         self.title_label = StyledComponents.Header(
             self.vortex_frame, "Vortex Configuration", 0, 0)
 
-        self.note_label = ctk.CTkLabel(
-            self.vortex_frame,
-            text="Single cluster / AXI bank integration",
-            font=("Arial", 10))
-        self.note_label.grid(row=1, column=0, columnspan=2, sticky="w", padx=20, pady=(0, 10))
 
         self.cores_label = ctk.CTkLabel(
             self.vortex_frame,
@@ -696,13 +691,7 @@ class VortexConfigFrame:
             values=self._as_strings(self.soc.gt_vortex_warp_choices()))
         self.threads_dd.configure(
             values=self._as_strings(self.soc.gt_vortex_compatible_thread_choices()))
-        self.note_label.configure(
-            text=(
-                "Single cluster / AXI bank integration"
-                " | L3 still acts as a single-cluster LLC"
-                f" | AXI TID width {self.soc.gt_vortex_tid_width()}/"
-                f"{self.soc.GT_VORTEX_MAX_TID_WIDTH}"
-            ))
+
 
 
 class EspCreator:

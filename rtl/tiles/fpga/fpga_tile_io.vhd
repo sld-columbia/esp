@@ -30,7 +30,6 @@ use work.tile.all;
 use work.coretypes.all;
 use work.grlib_config.all;
 use work.socmap.all;
-use work.ariane_esp_pkg.all;
 use work.tiles_pkg.all;
 
 entity fpga_tile_io is
