@@ -180,7 +180,7 @@ begin
 
   -- <<axi_unused>>
 
-  axi2noc_1: axislv2noc
+  axi2noc_1: tp_axislv2noc
     generic map (
       tech                  => tech,
       nmst                  => 1,
