@@ -103,14 +103,6 @@ module noc2aximst #(
     logic sample_header;
 
     // This version complements the WSTRB-aware `axislv2noc` implementation.
-    // When `axislv2noc` splits a non-coherent DMA beat into subword packets, it
-    // encodes the effective write size in DMA-header reserved bits [6:4].
-    // Decode that override here so `AW_SIZE`/`W_STRB` preserve the original
-    // byte-lane intent when the request is replayed on the AXI side.
-    // Delay impact in this block:
-    // - No new FSM states are added for the DMA size-override path.
-    // - Decode is combinational and reuses the existing AW/W request flow.
-    // - Extra latency comes indirectly from `axislv2noc` emitting more packets.
     localparam int DMA_HDR_SIZE_LSB       = 4;
     localparam int DMA_HDR_SIZE_MSB       = 5;
     localparam int DMA_HDR_SIZE_VALID_BIT = 6;
