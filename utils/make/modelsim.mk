@@ -11,14 +11,10 @@ VLOGOPT += -suppress 2583
 VLOGOPT += -suppress 2892
 ifneq ($(filter $(TECHLIB),$(XIL_FPGALIBS)),)
 VLOGOPT += +define+XILINX_FPGA
+VLOGOPT += +define+FPGA_CACHE_MEM
 else ifneq ($(filter $(TECHLIB),$(INTEL_FPGALIBS)),)
 VLOGOPT += +define+FPGA_TARGET_ALTERA
-# Not a copy-paste error. XILINX_FPGA is read only by the RTL caches
-# (esp-caches l2_core.sv and llc_core.sv), where it selects the FPGA memory
-# implementation. Without it the caches fall back to their ASIC-style
-# memories. It gates memory style rather than vendor primitives, so Intel
-# targets need it too.
-VLOGOPT += +define+XILINX_FPGA
+VLOGOPT += +define+FPGA_CACHE_MEM
 VLOGOPT += +define+NVDLA_FPGA_TARGET
 endif
 VLOGOPT += $(INCDIR_MODELSIM)

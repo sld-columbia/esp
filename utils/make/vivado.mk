@@ -5,15 +5,7 @@
 # Example: make vivado-syn VIVADO_VFLAGS=LLC_LINE_USE_URAM
 VIVADO_VFLAGS ?=
 
-# Verilog defines for the Vivado project, mirroring QUARTUS_VERILOG_DEFINES in
-# rtl.mk. Both the normal and the chip-emu project read this one list so the
-# two cannot drift apart. Vortex's VX_platform.vh defines its IGNORE_*,
-# UNUSED_* and TRACING_* macros only under SYNTHESIS or VERILATOR, so a
-# project that omits SYNTHESIS does not elaborate a Vortex tile at all; the
-# chip-emu project used to omit it. VIVADO selects Vortex's Xilinx
-# ram_style/keep attributes and is the counterpart of QUARTUS on the Intel
-# path; nothing outside Vortex reads it.
-VIVADO_VERILOG_DEFINES := XILINX_FPGA=1 WT_DCACHE=1 VIVADO=1
+VIVADO_VERILOG_DEFINES := XILINX_FPGA=1 FPGA_CACHE_MEM=1 WT_DCACHE=1 VIVADO=1
 ifeq ("$(CPU_ARCH)","ibex")
 VIVADO_VERILOG_DEFINES += PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx
 else ifeq ("$(CPU_ARCH)","cva6")
