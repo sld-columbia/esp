@@ -326,7 +326,9 @@ vivado/setup.tcl: vivado $(RTL_CFG_BUILD) $(BOARD_FILES)
 	done < "$(VIVADO_INCDIR_MANIFEST)"; \
 	printf '%s\n' '} [get_filesets {sim_1 sources_1}]' >> $@
 	@echo "set_property verilog_define {$(strip $(VIVADO_VERILOG_DEFINES))} [get_filesets {sim_1 sources_1}]" >> $@
+ifeq ("$(CPU_ARCH)","cva6")
 	@echo "set TARGET_CFG \$$env(TARGET_CFG)" >> $@
+endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
 	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
@@ -448,7 +450,9 @@ vivado/setup_emu.tcl: vivado $(RTL_CFG_BUILD) $(BOARD_FILES)
 	done < "$(VIVADO_EMU_INCDIR_MANIFEST)"; \
 	printf '%s\n' '} [get_filesets {sim_1 sources_1}]' >> $@
 	@echo "set_property verilog_define {$(strip $(VIVADO_VERILOG_DEFINES))} [get_filesets {sim_1 sources_1}]" >> $@
+ifeq ("$(CPU_ARCH)","cva6")
 	@echo "set TARGET_CFG \$$env(TARGET_CFG)" >> $@
+endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
 	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
