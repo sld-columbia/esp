@@ -20,8 +20,6 @@ use work.misc.all;
 use work.net.all;
 -- pragma translate_off
 use work.sim.all;
-library unisim;
-use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
 use work.esp_noc_csr_pkg.all;
@@ -32,7 +30,6 @@ use work.tile.all;
 use work.coretypes.all;
 use work.grlib_config.all;
 use work.socmap.all;
-use work.ariane_esp_pkg.all;
 use work.tiles_pkg.all;
 
 entity fpga_tile_io is

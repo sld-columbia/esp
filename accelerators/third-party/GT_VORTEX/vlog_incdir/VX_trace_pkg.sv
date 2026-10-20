@@ -1,0 +1,1 @@
+../vortex/hw/rtl/core/VX_trace_pkg.sv

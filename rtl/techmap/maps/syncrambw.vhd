@@ -96,6 +96,11 @@ begin
         port map (clk, address, datain, dataoutx, xenable, xwrite);
     end generate;
 
+    altera_tech : if tech = stratix10 or tech = altera generate
+      x0 : altera_syncram_be generic map (abits, dbits)
+        port map (clk, address, datain, dataoutx, xenable, xwrite);
+    end generate;
+
     asic_tech : if tech = asic and large_banks /= 0 generate
       x0 : asic_syncram_be generic map (abits, dbits)
         port map (clk, address, datain, dataoutx, xenable, xwrite);

@@ -13,8 +13,6 @@ use work.allclkgen.all;
 
 --pragma translate off
 use std.textio.all;
-library unisim;
-use unisim.vcomponents.all;
 --pragma translate_on
 
 library profpga;

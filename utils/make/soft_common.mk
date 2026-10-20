@@ -76,6 +76,13 @@ sysroot-distclean: sysroot-clean
 
 ### Linux ###
 
+ifeq ($(strip $(M4)),)
+M4 := $(shell command -v m4 2>/dev/null)
+endif
+ifneq ($(strip $(M4)),)
+export M4
+endif
+
 $(SOFT_BUILD)/linux-build:
 	$(QUIET_MKDIR)mkdir -p $@
 

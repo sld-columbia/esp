@@ -1,6 +1,6 @@
 	.text
 	.align 64
-	.global _line0, , _line1, _line2, _line3
+	.global _line0, _line1, _line2, _line3
 	.global line0, line1, line2, line3
 
 _line0:

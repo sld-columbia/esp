@@ -26,10 +26,6 @@ use ieee.std_logic_1164.all;
 
 use work.misc.all;
 use work.stdlib.all;
--- pragma translate_off
-library unisim;
-use unisim.BUFG;
--- pragma translate_on
 use work.gencomp.all;
 use work.svga_pkg.all;
 
@@ -64,13 +60,6 @@ entity svga2tfp410 is
 end svga2tfp410;
 
 architecture rtl of svga2tfp410 is
-
-  component BUFG
-    port (
-      O : out std_logic;
-      I : in std_logic
-      );
-  end component;
 
   signal red, green, blue : std_logic_vector(7 downto 0);
 
@@ -156,9 +145,8 @@ begin  -- rtl
     end if;
   end process;
 
-  bufg0 : BUFG
-    port map (
-      I => clk40,
-      O => vgaclk);
+  -- A plain clock route is enough here; the old BUFG binding pulled Intel
+  -- simulation into a Xilinx-only library dependency.
+  vgaclk <= clk40;
 
 end rtl;

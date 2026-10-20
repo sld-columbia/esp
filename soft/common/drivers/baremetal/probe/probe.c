@@ -15,6 +15,7 @@
 #ifdef __riscv
 
 uintptr_t dtb = DTB_ADDRESS;
+
     /*
      * The RISC-V bare-metal toolchain does not have support for malloc
      * on unthethered systems. This simple hack is used to enable RTL
@@ -235,8 +236,8 @@ static void esp_done(const struct fdt_scan_node *node, void *extra)
         ndev++;
 
         // Initialize new entry (may not be discovered!)
-        (*espdevs)[ndev].vendor = (*espdevs)[ndev].vendor;
-        (*espdevs)[ndev].id     = (*espdevs)[ndev].id;
+        (*espdevs)[ndev].vendor = (*espdevs)[0].vendor;
+        (*espdevs)[ndev].id     = (*espdevs)[0].id;
         (*espdevs)[ndev].number = ndev;
         (*espdevs)[ndev].compat = 0;
         strcpy((*espdevs)[ndev].name, name);

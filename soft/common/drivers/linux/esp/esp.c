@@ -65,9 +65,15 @@ static irqreturn_t esp_irq(int irq, void *dev)
     struct esp_device *esp = dev_get_drvdata(dev);
     u32 status, error, done;
 
-    status = ioread32be(esp->iomem + STATUS_REG);
-    error  = status & STATUS_MASK_ERR;
-    done   = status & STATUS_MASK_DONE;
+    if (esp->third_party) {
+        status = ioread32be(esp->iomem + THIRD_PARTY_STATUS_REG);
+        error  = 0;
+        done   = !(status & THIRD_PARTY_STATUS_MASK_BUSY);
+    } else {
+        status = ioread32be(esp->iomem + STATUS_REG);
+        error  = status & STATUS_MASK_ERR;
+        done   = status & STATUS_MASK_DONE;
+    }
 
     /* printk(KERN_INFO "IRQ: %08x\n", status); */
 
