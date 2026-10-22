@@ -15,6 +15,39 @@ import esp_global_sv::*;
 parameter integer DMA_NOC_FLIT_SIZE = `PREAMBLE_WIDTH + DMA_NOC_WIDTH;
 parameter integer MAX_NOC_FLIT_SIZE = `PREAMBLE_WIDTH + MAX_NOC_WIDTH;
 
+// DMA-plane NoC header transaction ID field.
+//
+// HAND-MAINTAINED MIRROR of the VHDL definition in rtl/noc/nocpackage.vhd.
+// Nothing checks that the two copies agree: if you change one, change the
+// other. The correspondence is
+//   VHDL PREAMBLE_WIDTH  = 2  <-> `PREAMBLE_WIDTH
+//   VHDL YX_WIDTH             <-> GLOB_YX_WIDTH   (both from the generated
+//                                                  esp_global packages)
+//   VHDL MSG_TYPE_WIDTH  = 5  <-> `MSG_TYPE_WIDTH
+//   VHDL RESERVED_WIDTH  = 8  <-> `RESERVED_WIDTH
+//   VHDL NEXT_ROUTING_WIDTH = 5 <-> `NEXT_ROUTING_WIDTH
+//
+// The field carries a per-tp_axislv2noc context-slot index, not an AXI ID.
+// The memory-side proxy only echoes it back unchanged in the response header;
+// it does not interpret it.
+//
+// The width follows the header's unused window, up to 4 bits: 4 when
+// DMA_NOC_WIDTH >= 64, 2 when DMA_NOC_WIDTH = 32 (see nocpackage.vhd for why
+// 2 bits are enough there). The configuration constraint (at least one free
+// bit, and the field must not overlap the next-hop routing bits or, with
+// multicast enabled, the destination-valid bits right above them) is enforced
+// on the VHDL side through constrained subtypes, so an offending SoC
+// configuration fails to elaborate. nocpackage.vhd is part of every build, so
+// that guard covers this mirror too.
+parameter integer DMA_TRAN_ID_MAX_WIDTH = 4;
+parameter integer DMA_HDR_UNUSED_WIDTH  =
+    DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH - `RESERVED_WIDTH - `NEXT_ROUTING_WIDTH;
+parameter integer DMA_TRAN_ID_WIDTH =
+    (DMA_HDR_UNUSED_WIDTH < DMA_TRAN_ID_MAX_WIDTH) ? DMA_HDR_UNUSED_WIDTH : DMA_TRAN_ID_MAX_WIDTH;
+parameter integer DMA_TRAN_ID_MSB   =
+    DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH - `RESERVED_WIDTH - 1;
+parameter integer DMA_TRAN_ID_LSB   = DMA_TRAN_ID_MSB - DMA_TRAN_ID_WIDTH + 1;
+
 //`define RSP_AHB_RD 30
 //`define RSP_DATA 24
 //`define RSP_DATA_DMA
