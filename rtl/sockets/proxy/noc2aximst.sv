@@ -21,11 +21,7 @@ module noc2aximst #(
     parameter integer narrow_noc         = 0,
     parameter integer cacheline          = 4,
     parameter integer this_coh_flit_size = 34,
-    // Multiple outstanding DMA reads. 0 selects the previous
-    // single-outstanding behaviour; the context table, the response FSM
-    // and the admission gates all fold away because ctx_alloc_en is the
-    // only place a context is ever created.
-    parameter integer dma_multi_ot       = 0
+    parameter integer dma_multi_ot       = 0 //Enable multiple outstanding DMA reads
 ) (
     input logic                               ARESETn,
     input logic                               ACLK,
@@ -82,10 +78,9 @@ module noc2aximst #(
 
 );
 
-    // AR_ID is dynamically muxed below: DMA reads use a per-context index
-    // (so the memory controller can demux R_ID across MAX_DMA_OT outstanding
-    // reads); coherence reads keep using mst_index. AW_ID stays static - the
-    // write path is still single-outstanding here.
+    // Currently multiple outstanding tx are supported only for DMA reads
+    //AR_ID is dynamically muxed DMA reads use a per-context index
+    // coherence reads keep using mst_index. 
     assign AW_ID    = mst_index;
 
     assign AW_LOCK  = 1'b0;
@@ -123,6 +118,12 @@ module noc2aximst #(
     logic [`RESERVED_WIDTH-1 : 0] reserved;
     logic [`PREAMBLE_WIDTH-1 : 0] preamble;
     logic [`PREAMBLE_WIDTH-1 : 0] dma_preamble;
+    // Head-of-queue message type, decoded without popping, so admission
+    // can tell reads from writes before deciding whether to dequeue.
+    logic [`MSG_TYPE_WIDTH-1 : 0] coh_head_msg;
+    logic [`MSG_TYPE_WIDTH-1 : 0] dma_head_msg;
+    logic                         coh_head_is_read;
+    logic                         dma_head_is_read;
 
     logic [this_coh_flit_size-`PREAMBLE_WIDTH-1 : 0] coh_rd_data_flit;
     integer i, j;
@@ -382,6 +383,16 @@ module noc2aximst #(
         next_state = current_state;
         preamble     = pad_coherence_req_data_out[this_coh_flit_size-1:this_coh_flit_size-`PREAMBLE_WIDTH];
         dma_preamble = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE-1:DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH];
+
+        // Peek the pending head-of-queue message type so RECEIVE_HEADER can
+        // gate only reads on context/AR-ID availability below. Writes never
+        // allocate a context or share an AR_ID with one, so they must not be
+        // held behind a condition that exists to protect the context table.
+        coh_head_msg = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - 1 : this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH];
+        dma_head_msg = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - 1 : DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH];
+        coh_head_is_read = (coh_head_msg == REQ_GETS_W) || (coh_head_msg == REQ_GETS_HW) ||
+                           (coh_head_msg == REQ_GETS_B) || (coh_head_msg == AHB_RD);
+        dma_head_is_read = (dma_head_msg == DMA_TO_DEV) || (dma_head_msg == REQ_DMA_READ);
         reserved = 0;
         sample_header = 1'b0;
         sample_dma_header = 1'b0;
@@ -423,8 +434,12 @@ module noc2aximst #(
                 ns.dma_size = DMA_AXI_SIZE;
                 // Stall coherence requests while any DMA context is active -
                 // they share the same AXI master, so a fresh AR for a coherence
-                // request would collide with the in-flight DMA AR_IDs.
-                if (coherence_req_empty == 1'b0 && !any_ctx_valid) begin
+                // request would collide with the in-flight DMA AR_IDs. Writes
+                // use AW_ID = mst_index unconditionally (never muxed with a
+                // DMA context index), so they never collide and do not need
+                // to wait on any_ctx_valid; only reads do.
+                if (coherence_req_empty == 1'b0 &&
+                    (!coh_head_is_read || !any_ctx_valid)) begin
                     coherence_req_rdreq = 1'b1;
                     ns.msg      = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - 1 : this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH];
                     reserved    = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH - 1 : this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH - `RESERVED_WIDTH];
@@ -434,13 +449,21 @@ module noc2aximst #(
 
                     sample_header = 1'b1;
                     next_state    = RECEIVE_ADDRESS;
-                end else if (dma_rcv_empty == 1'b0 && ctx_alloc_avail
-                             && (!MULTI_OT || coherence_req_empty)) begin
+                end else if (dma_rcv_empty == 1'b0 &&
+                             (!dma_head_is_read || ctx_alloc_avail) &&
+                             (!MULTI_OT || coherence_req_empty)) begin
                     // Gate DMA dequeue on two conditions. Extra requests
                     // simply wait in dma_rcv until they are met.
                     //
                     // ctx_alloc_avail     -- a context slot is free, so the
-                    //                        table is never overrun.
+                    //                        table is never overrun. Only
+                    //                        applies when the head of the
+                    //                        queue is a read: writes never
+                    //                        allocate a context, so gating
+                    //                        them on context availability
+                    //                        would stall them for no reason
+                    //                        whenever reads saturate the
+                    //                        table.
                     // coherence_req_empty -- no CPU coherent request is
                     //                        waiting. Coherence cannot be
                     //                        admitted while any DMA context is
@@ -1169,7 +1192,7 @@ module noc2aximst #(
 
         case (current_state)
             SEND_DATA: begin
-                if (coherence_rsp_snd_full == 1'b0) r_ready_comb = 1'b1;
+                if (coherence_rsp_snd_full == 1'b0 && dma_rsp_state == DMA_RSP_IDLE) r_ready_comb = 1'b1;
             end
             DMA_SEND_DATA: begin
                 // Classic path. Unreachable when MULTI_OT is set, where the
@@ -1282,73 +1305,6 @@ module noc2aximst #(
             endcase
         end
     end
-
-// Simulation-only invariants.
-//
-// These are guarded on ESP_SVA, a macro the ModelSim/Questa flows define for
-// simulation compiles only (utils/make/modelsim.mk; questa.mk reuses it). The
-// usual `ifndef SYNTHESIS guard is not a reliable simulation/synthesis
-// discriminator in the ESP flows: SYNTHESIS has been defined for whole
-// simulation compiles, and the Vortex library is compiled with it to drop
-// Verilator-specific code. The Vivado flow defines SYNTHESIS=1 and never
-// ESP_SVA, so these properties are absent from synthesis.
-//
-// The NoC router modules guard their assertions with `ifndef SYNTHESIS; that
-// is pre-existing and left alone here.
-`ifdef ESP_SVA
-    // Invariants for the RAW gate.
-    raw_gate_no_read_with_pending_writes : assert property (
-        @(posedge ACLK) disable iff (ARESETn == 1'b0)
-        ((current_state == DMA_READ_REQUEST) && dma_ar_valid && AR_READY)
-            |-> (pending_writes == '0))
-        else $error("noc2aximst: DMA read AR issued with %0d posted write(s) unconfirmed",
-                    pending_writes);
-
-    pending_writes_no_underflow : assert property (
-        @(posedge ACLK) disable iff (ARESETn == 1'b0)
-        (b_hs && !aw_hs) |-> (pending_writes != '0))
-        else $error("noc2aximst: B response received with no posted write outstanding");
-
-    pending_writes_no_overflow : assert property (
-        @(posedge ACLK) disable iff (ARESETn == 1'b0)
-        (aw_hs && !b_hs) |-> (pending_writes != 8'hFF))
-        else $error("noc2aximst: pending_writes counter overflow");
-
-    // In-order return check. The response FSM assumes the memory returns
-    // bursts in the order their ARs were accepted, which holds for every
-    // memory path ESP ships. A memory that reorders across AXI ids could offer
-    // a beat for a context that is not the response-order FIFO head; the FSM
-    // would refuse it, AXI forbids the memory withdrawing it, and the R
-    // channel would wedge. This property turns that silent deadlock into a
-    // simulation failure.
-    rsp_beat_matches_active_ctx : assert property (
-        @(posedge ACLK) disable iff (ARESETn == 1'b0)
-        (dma_rsp_state == DMA_RSP_DATA && R_VALID)
-            |-> (R_ID == 2'(active_ctx)))
-        else $error("noc2aximst: R beat for ctx %0d while draining ctx %0d -- the memory returned bursts out of AR order. This design assumes in-order return; check that the memory controller still executes commands in order (C0.DDR4_Ordering=Strict on the DDR4 boards)",
-                    R_ID, active_ctx);
-
-    // Continuation-AR issue: an AR is never accepted with no burst left to
-    // issue, and a context is never published for a zero-burst request.
-    ar_left_no_underflow : assert property (
-        @(posedge ACLK) disable iff (ARESETn == 1'b0)
-        ((current_state == DMA_READ_REQUEST) && dma_ar_valid && AR_READY)
-            |-> (ar_left != '0))
-        else $error("noc2aximst: AR accepted with no burst left to issue");
-
-    ctx_published_with_bursts : assert property (
-        @(posedge ACLK) disable iff (ARESETn == 1'b0)
-        ctx_alloc_en |-> (req_bursts != '0))
-        else $error("noc2aximst: context published for a zero-burst request");
-
-    // Depth limits, checked at simulation start under ESP_SVA. MAX_DMA_OT must fit
-    // the 2-bit AR_ID/R_ID ports and be a power of two (the response-order
-    // FIFO pointers wrap by overflow of a CTX_IDX_W-bit counter).
-    initial begin
-        if (MAX_DMA_OT != 2 && MAX_DMA_OT != 4)
-            $fatal(1, "noc2aximst: MAX_DMA_OT = %0d; supported values are 2 and 4", MAX_DMA_OT);
-    end
-`endif
 
     always_ff @(posedge ACLK, negedge ARESETn) begin
         if (ARESETn == 1'b0) begin

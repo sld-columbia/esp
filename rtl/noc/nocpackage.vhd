@@ -86,43 +86,22 @@ package nocpackage is
   constant DMA_HDR_SIZE_MSB        : natural := 5;
   constant DMA_HDR_SIZE_VALID_BIT  : natural := 6;
 
-  -- DMA-plane NoC header transaction ID field.
-  -- Carries a small per-tp_axislv2noc context-slot index so the accelerator-side
-  -- response FSM can match returning packets to outstanding transactions when
-  -- more than one is in flight. The ID is a local context index, NOT the AXI
-  -- ID; the full AXI ID stays in the accelerator-side outstanding table at
-  -- that slot. The memory-side proxies echo the field back unchanged in the
-  -- response header.
-  --
-  -- The field is anchored immediately below the reserved field, i.e. at the
-  -- top of the header's unused window, and must stay clear of the next-hop
-  -- routing bits that create_header writes into the low NEXT_ROUTING_WIDTH
-  -- bits of the header. The window shrinks as YX_WIDTH grows and as
-  -- DMA_NOC_WIDTH shrinks, so the field takes the bits the window has, up to
-  -- DMA_TRAN_ID_MAX_WIDTH:
-  -- - DMA_NOC_WIDTH >= 64: the window has 30 bits or more, the field is 4 bits
-  --   wide (up to 16 ids; tp_axislv2noc uses 8).
-  -- - DMA_NOC_WIDTH = 32 (YX_WIDTH = 3): the window is bits [6:5], the field is
-  --   2 bits wide, so tp_axislv2noc keeps at most 4 reads in flight. That costs
-  --   little: each memory tile serves at most 4 reads at once anyway
-  --   (MAX_DMA_OT in noc2aximst.sv, bounded by its 2-bit AR_ID).
-  -- The width bounds OUTSTANDING_DEPTH in tp_axislv2noc. A configuration with
-  -- no room at all (DMA_NOC_WIDTH = 32 with YX_WIDTH = 4) is rejected by the
-  -- constrained subtypes below when the design is elaborated, instead of
-  -- mis-encoding the header. So is a 32-bit DMA NoC with multicast enabled
-  -- (which the GUI already forbids): create_header_mcast keeps the destination
-  -- valid bits directly above the routing bits, where the field would sit.
-  -- (relu is max(0, v) from stdlib; VHDL-93 has no integer min.)
+  -- DMA-plane transaction ID, anchored just below the reserved field. Width
+  -- shrinks to fit whatever room is left after DMA_MCAST_WINDOW_WIDTH (the
+  -- real multicast dest/valid-bit footprint); no room fails elaboration.
   constant DMA_TRAN_ID_MAX_WIDTH : natural := 4;
-  constant DMA_HDR_UNUSED_WIDTH  : integer :=
-    DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH - NEXT_ROUTING_WIDTH;
+  constant DMA_MCAST_WINDOW_WIDTH : natural :=
+    MULTICAST_NOC_EN * (MAX_MCAST_DESTS + 2*YX_WIDTH*(MAX_MCAST_DESTS - 1));
+  constant DMA_HDR_UNUSED_WIDTH : integer :=
+    DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH
+    - NEXT_ROUTING_WIDTH - DMA_MCAST_WINDOW_WIDTH;
   subtype dma_tran_id_width_type is integer range 1 to DMA_TRAN_ID_MAX_WIDTH;
   constant DMA_TRAN_ID_WIDTH : dma_tran_id_width_type :=
     DMA_TRAN_ID_MAX_WIDTH - relu(DMA_TRAN_ID_MAX_WIDTH - DMA_HDR_UNUSED_WIDTH);
   constant DMA_TRAN_ID_MSB   : natural :=
     DMA_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH - 1;
   subtype dma_tran_id_lsb_type is
-    integer range NEXT_ROUTING_WIDTH + MULTICAST_NOC_EN * MAX_MCAST_DESTS to DMA_NOC_FLIT_SIZE - 1;
+    integer range NEXT_ROUTING_WIDTH + DMA_MCAST_WINDOW_WIDTH to DMA_NOC_FLIT_SIZE - 1;
   constant DMA_TRAN_ID_LSB   : dma_tran_id_lsb_type :=
     DMA_TRAN_ID_MSB - DMA_TRAN_ID_WIDTH + 1;
   subtype dma_tran_id_type is std_logic_vector(DMA_TRAN_ID_WIDTH-1 downto 0);
