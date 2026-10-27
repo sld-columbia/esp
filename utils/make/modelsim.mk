@@ -20,7 +20,6 @@ endif
 VLOGOPT += $(INCDIR_MODELSIM)
 
 VLOGOPT += +define+FPU_FPNEW
-
 VLOGOPT += +define+XLEN_64
 
 VSIMOPT += -suppress 3812

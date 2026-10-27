@@ -2,15 +2,9 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 -------------------------------------------------------------------------------
--- This proxy replaces AHB slaves that are hosted in remote tiles and forwards
--- AHB requests from masters to the NoC. Responses from the NoC are returned to
--- the bus master as if the remote device was connected to the local bus.
---
--- This is intended to serve requests from the Leon3 processor, the Ethernet
--- DMA engine and the JTAG or Ethernet debug interfaces. Since these master can
--- only issue requests for up to 32-bits words, ths proxy does not handle
--- larger word sizes.
--------------------------------------------------------------------------------
+-- Forwards AXI requests from local bus masters to the NoC and returns NoC
+-- responses to the AXI master, as if the remote device were local. Intended
+-- for masters limited to <=32-bit word accesses (Leon3, Ethernet DMA, debug).
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -142,15 +136,10 @@ architecture rtl of tp_axislv2noc is
   constant AXI_STRB_LSB_BITS  : integer := ncpu_log(AXI_STRB_WIDTH);
 
   type int_array is array (natural range <>) of integer;
-  -- WSTRB segmentation sizes. This list assumes up to a 64-bit AXI data bus.
-  -- The order is intentional: the splitter is greedy and always tries the
-  -- largest naturally aligned chunk first. That means one mask can produce a
-  -- mix of segment sizes, but each segment is maximal for its starting lane.
-  -- Example on an 8-byte beat:
-  -- - WSTRB = 11110000 -> one 4-byte segment at offset 4.
-  -- - WSTRB = 00111100 -> one 2-byte segment at offset 2, then one 2-byte
-  --   segment at offset 4 (cannot emit one 4-byte segment at offset 2 because
-  --   it is not 4-byte aligned).
+  -- WSTRB segmentation sizes (up to a 64-bit AXI bus). The splitter is greedy,
+  -- always taking the largest naturally aligned chunk first, so one mask can
+  -- produce a mix of segment sizes (e.g. WSTRB=00111100 -> two 2-byte
+  -- segments, since a 4-byte segment at offset 2 wouldn't be aligned).
   constant WSTRB_SIZES : int_array(0 to 3) := (8, 4, 2, 1);
   constant WSTRB_ALL_ZERO : std_logic_vector(AXI_STRB_WIDTH - 1 downto 0) := (others => '0');
   constant WSTRB_ALL_ONE  : std_logic_vector(AXI_STRB_WIDTH - 1 downto 0) := (others => '1');
@@ -205,11 +194,9 @@ architecture rtl of tp_axislv2noc is
     return aligned;
   end function align_addr_to_strb;
 
-  -- Extract the next contiguous, naturally aligned WSTRB segment from a mask.
-  -- Algorithm:
-  -- 1) Find the first set bit (LSB) in the mask.
-  -- 2) Try the largest supported size (8/4/2/1 bytes) that is aligned and fully set.
-  -- 3) Return the segment offset/size and clear those bits in `mask_next`.
+  -- Extract the next contiguous, naturally aligned WSTRB segment: find the
+  -- first set bit (LSB), take the largest aligned/fully-set size (8/4/2/1
+  -- bytes), then clear those bits in `mask_next`.
   function next_wstrb_segment (mask : std_logic_vector(AXI_STRB_WIDTH - 1 downto 0)) return wstrb_seg_type is
     variable seg       : wstrb_seg_type;
     variable lsb       : integer := 0;
@@ -333,45 +320,26 @@ architecture rtl of tp_axislv2noc is
 
   -----------------------------------------------------------------------------
   -- Multi-outstanding support.
-  -----------------------------------------------------------------------------
-  -- This proxy is the AXI-accelerator socket (`noc2axi_interface.vhd`, every
-  -- generated third-party accelerator socket). It uses a request FSM that
-  -- issues + retires reads through an outstanding table, and a separate
-  -- response FSM that matches returning DMA flits to slots via
-  -- `get_dma_tran_id` and drives `somi.r.*` with the matched AXI ID. The CPU
-  -- sockets use axislv2noc.vhd, which keeps a single-FSM design.
-  --
-  -- Concurrency policy enforced by the new request FSM:
-  -- 1) Stall a new read if the same AXI ID has an outstanding read in flight
-  --    (AXI same-ID read-ordering rule -- simplest correct option).
-  -- 2) Stall a new read if the outstanding table is full.
-  -- 3) When `coherence = ACC_COH_LLC or ACC_COH_RECALL`, allow at most one
-  --    outstanding read (LLC does not echo DMA_TRAN_ID, so matching falls
-  --    back to "the only in-flight read"). This is the deferred-LLC fallback.
-  -- 4) Writes do NOT enter the outstanding table; the request FSM acks B
-  --    locally just like the legacy `request_data_ack` (writes are
-  --    fire-and-forget on the NoC for DMA).
-  --
-  -- Reordering correctness:
-  -- - Request packets are emitted whole and in program order on `dma_snd`,
-  --   so each memory tile receives them in program order. Ordering below the
-  --   memory-tile proxy is handled by noc2aximst (see its pending_writes
-  --   note).
-  -- - Reordering of *responses* across memory tiles is resolved by the
-  --   response FSM via the per-slot DMA_TRAN_ID echoed in the response
-  --   header by `noc2aximst`.
-  -- Sized for an accelerator with a deep miss pipeline; the driving case was
-  -- Vortex, whose per-core icache MSHR fan-out is 16 with comparable per-bank
-  -- dcache MSHRs. End-to-end concurrency is still capped
-  -- at MAX_DMA_OT * num_memory_tiles on the memory side; the extra slots
-  -- here just smooth issue/NoC pipeline latency so the accelerator's AR doesn't
-  -- stall before memory saturates. The slot index travels in the DMA header
-  -- as DMA_TRAN_ID, so the depth must stay <= 2**DMA_TRAN_ID_WIDTH:
-  --   OUTSTANDING_DEPTH = min(OUTSTANDING_DEPTH_MAX, 2**DMA_TRAN_ID_WIDTH)
-  -- That is 8 when DMA_NOC_WIDTH >= 64 (4-bit id) and 4 on a 32-bit DMA NoC
-  -- (2-bit id, see nocpackage.vhd), where each memory tile serves at most 4
-  -- reads at once anyway. The static check at the start of the
-  -- multi-outstanding design below asserts the bound.
+
+  -- AXI-accelerator socket: a request FSM issues reads/writes and pushes
+  -- each read into an outstanding table; a separate response FSM matches
+  -- returning DMA flits to a slot via get_dma_tran_id and drives somi.r.*.
+  -- CPU sockets (axislv2noc.vhd) keep the old single-FSM design.
+
+  -- Admission: stall a new read if its AXI ID is already outstanding (AXI
+  -- same-ID ordering) or the table is full; under ACC_COH_LLC/RECALL, allow
+  -- only one outstanding read at a time (LLC doesn't echo DMA_TRAN_ID).
+  -- Writes never enter the table; the request FSM acks B locally.
+
+  -- Requests are emitted whole and in program order on dma_snd, so ordering
+  -- below the memory-tile proxy is noc2aximst's job (its pending_writes
+  -- note). Response reordering across memory tiles is resolved here via the
+  -- per-slot DMA_TRAN_ID noc2aximst echoes back.
+
+  -- Sized for a deep miss pipeline (Vortex's 16-entry MSHR fan-out), though
+  -- end-to-end concurrency is really capped at MAX_DMA_OT*num_memory_tiles
+  -- on the memory side. Depth = min(OUTSTANDING_DEPTH_MAX, 2**DMA_TRAN_ID_WIDTH),
+  -- asserted below so it never exceeds the on-wire id field.
   constant OUTSTANDING_DEPTH_MAX : integer := 8;
   constant OUTSTANDING_DEPTH : integer :=
     OUTSTANDING_DEPTH_MAX - relu(OUTSTANDING_DEPTH_MAX - 2**DMA_TRAN_ID_WIDTH);
@@ -415,22 +383,16 @@ architecture rtl of tp_axislv2noc is
     req_commit);
   signal req_state, req_next : req_fsm_type;
 
-  -- Per-request latched allocation index. `ot_alloc_idx` is a *live*
-  -- combinational function of `outstanding_reg`, so reading it separately in
-  -- `req_header` (tran_id stamp) and `req_commit` (table push) can yield two
-  -- different slots for one read when responses free slots in between -- the
-  -- on-wire DMA_TRAN_ID then disagrees with the slot the context lands in, and
-  -- two reads can even stamp the same ID. Latch the index once when the read
-  -- is sampled (see ot_seq) and reuse it for both, so stamp == slot always.
+  -- Latched once per read (see ot_seq), not read live from ot_alloc_idx:
+  -- reading it separately in req_header (stamp) and req_commit (push) could
+  -- yield two different slots if a response frees one in between, so the
+  -- on-wire DMA_TRAN_ID could disagree with the slot, or two reads collide.
   signal req_alloc_idx_reg : outstanding_idx_t;
 
-  -- Response FSM: independent of the request FSM. Drains the DMA receive
-  -- queue, matches the header's DMA_TRAN_ID to an outstanding slot, then
-  -- streams data flits to somi.r.* with somi.r.id from that slot.
-  -- `rsp_drop` is a defensive state for an unmatched response (e.g. stale
-  -- flit during slot reuse) -- it consumes flits to the tail and returns
-  -- to idle. With the same-id guard and slot-free-on-tail, this should
-  -- never fire in practice.
+  -- Independent of the request FSM: drains dma_rcv, matches the header's
+  -- DMA_TRAN_ID to a slot, streams data to somi.r.* with that slot's id.
+  -- rsp_drop defensively consumes an unmatched response to its tail; with
+  -- the same-id guard and slot-free-on-tail this should never fire.
   type rsp_fsm_type is (rsp_idle, rsp_data, rsp_drop);
   signal rsp_state, rsp_next : rsp_fsm_type;
   signal rsp_active_valid_reg : std_ulogic;
@@ -452,20 +414,16 @@ architecture rtl of tp_axislv2noc is
   signal ot_same_read_id_busy  : std_ulogic;
   signal ot_any_read_busy      : std_ulogic;
 
-  -- Two intermediates to avoid VHDL "two-process partial-record multi-driver"
-  -- on `somi`. The req FSM drives `req_somi` (aw/ar/w/b) and the rsp FSM
-  -- drives `rsp_somi.r`; a single merge process combines them into the actual
-  -- `somi` output port, so there is exactly one driver per signal regardless
-  -- of how many subfields each FSM touches.
+  -- Two intermediates avoid a VHDL multi-driver on somi: the req FSM drives
+  -- req_somi (aw/ar/w/b), the rsp FSM drives rsp_somi.r, and a merge process
+  -- combines them into the real somi port (one driver per signal).
   signal req_somi : axi_somi_vector(0 to nmst - 1);
   signal rsp_somi : axi_somi_vector(0 to nmst - 1);
 
-  -- Same idea for coherence_rsp_rcv_rdreq, which both the request FSM
-  -- (req_rmw_read_reply_* states, when LLC RMW is consuming its sub-read
-  -- response) and the response FSM dequeue from. They are mutually exclusive
-  -- by the LLC-fallback issue guard (LLC mode = single-outstanding), but VHDL
-  -- still forbids two drivers on the same std_ulogic port. A combine
-  -- concurrent assignment ORs the two strobes.
+  -- Same idea for coherence_rsp_rcv_rdreq: both req_rmw_read_reply_* (LLC
+  -- RMW consuming its sub-read) and the response FSM dequeue from it. They
+  -- are mutually exclusive via the LLC single-outstanding guard; a combine
+  -- assignment ORs the two strobes since VHDL forbids two drivers.
   signal req_coh_rsp_rdreq : std_ulogic;
   signal rsp_coh_rsp_rdreq : std_ulogic;
 
@@ -561,15 +519,10 @@ begin  -- rtl
         if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
           tran.msg_type := REQ_DMA_WRITE;
         else
-          tran.msg_type := DMA_FROM_DEV;   -- This request is non coherent, but
-                                           -- noc2ahbmst must skip
-                                           -- receive_wrlength, which only exists
-                                           -- for DMA_FROM_DEV from accelerators.
-                                           -- We use this workaround because
-                                           -- systems without DDR controller are
-                                           -- using a FPGA-to-memory link on
-                                           -- which we do not send the tail bit
-                                           -- to save some I/O pads.
+          tran.msg_type := DMA_FROM_DEV;   -- Non-coherent, but noc2ahbmst must
+                                           -- skip receive_wrlength (DMA_FROM_DEV-
+                                           -- only state): FPGA-to-memory links
+                                           -- skip the tail bit to save I/O pins.
         end if;
       else -- Processor core request
         if tran.dst_is_mem = '1' then
@@ -640,28 +593,10 @@ begin  -- rtl
     transaction <= tran;
   end process make_packet;
 
-  -- WSTRB handling summary by transaction class:
-  -- (State names below are those of the former single-outstanding FSM; the
-  -- request FSM further down has the same states with a req_ prefix, reads end
-  -- in req_commit and their data returns through rsp_roundtrip.)
-  -- - Reads (any destination): Use the baseline read states unchanged.
-  -- - Remote AHB writes (`dst_is_mem='0'`): No WSTRB splitting or RMW support;
-  --   path is `request_header -> request_address -> request_data[_lsb/_msb]
-  --   -> request_data_ack`.
-  -- - Non-DMA memory writes (`retarget_for_dma=0`): Always split by WSTRB;
-  --   `wait_wdata -> request_header/address/data` (loop per segment)
-  --   -> `request_data_ack`.
-  -- - Non-coherent DMA memory writes (`retarget_for_dma=1`, non-LLC):
-  --   - Full WSTRB: `wait_wdata -> dma_write_header/address/[length]/data`
-  --     -> `request_data_ack`.
-  --   - Partial WSTRB: `wait_wdata -> request_header/address/[length]/data`
-  --     (loop per segment) -> `request_data_ack`, with per-segment size encoded
-  --     in DMA header reserved bits.
-  -- - Coherent DMA memory writes (`retarget_for_dma=1`, LLC/RECALL):
-  --   - Full WSTRB: `wait_wdata -> dma_write_header/address/data`
-  --     -> `request_data_ack`.
-  --   - Partial WSTRB: `wait_wdata -> rmw_read_* -> rmw_write_*`
-  --     -> `request_data_ack`.
+  -- WSTRB handling by transaction class (legacy state names; the req FSM
+  -- below mirrors them with a req_ prefix): reads unchanged; remote-AHB
+  -- writes skip splitting/RMW; non-DMA writes always split by WSTRB; DMA
+  -- writes split only on partial WSTRB (RMW instead, if coherent/LLC).
   split_active <= '1' when (retarget_for_dma = 0 and transaction_reg.write = '1' and transaction_reg.dst_is_mem = '1') else '0';
   dma_split_active <= '1' when (retarget_for_dma = 1 and transaction_reg.write = '1' and transaction_reg.dst_is_mem = '1'
                                 and wdata_valid = '1' and wstrb_reg /= WSTRB_ALL_ONE
@@ -892,32 +827,19 @@ begin  -- rtl
 
   -----------------------------------------------------------------------------
   -- Multi-outstanding design
-  -----------------------------------------------------------------------------
+
   -- "Legacy" below refers to the single-outstanding `axi_roundtrip` FSM that
-  -- this design replaces; axislv2noc.vhd still carries a version of it for the
-  -- CPU sockets.
-  --
-  -- Layout:
-  -- - `req_roundtrip`: request FSM. Mirrors the legacy request states
-  --   (wait_wdata, rmw_*, dma_write_*, request_*) but for READS, after the
-  --   request flits are pushed, it transitions to `req_commit` which pushes
-  --   the per-read context into the outstanding table and returns to
-  --   `req_idle`. Writes keep using `req_data_ack` to drive `somi.b.valid`
-  --   locally (DMA writes are fire-and-forget on the NoC).
-  -- - `rsp_roundtrip`: response FSM. Owns `coherence_rsp_rcv_*` and the
-  --   `somi.r.*` channel. On a header flit, extracts the DMA_TRAN_ID and
-  --   looks up the matching slot; on `PREAMBLE_TAIL`, frees it. Independent
-  --   of `req_roundtrip` so the request FSM can issue new transactions
-  --   while previous reads are still being drained.
-  -- - `ot_seq`: clocked block that updates `req_state`, `rsp_state`,
-  --   `transaction_reg`, the WSTRB/RMW buffering signals (latch_wbeat,
-  --   advance_segment, etc.) reused from the legacy design, AND the
-  --   outstanding-table arrays.
-  --
-  -- Note: the combinational helpers (`make_packet`, `make_active_packet`,
-  -- `make_rmw_packet`, `make_dma_write_packet`, `rmw_mask_gen`,
-  -- `rmw_payload_gen`, `seg_info`, `seg_addr`, etc.) above feed the request
-  -- FSM.
+  -- this design replaces; axislv2noc.vhd still carries a version of it for
+  -- the CPU sockets.
+
+  -- req_roundtrip (request FSM) mirrors the legacy issue states, but reads
+  -- end at req_commit (push the outstanding-table entry, return to req_idle)
+  -- instead of parking for the response.
+
+  -- rsp_roundtrip (response FSM) independently owns coherence_rsp_rcv_*/
+  -- somi.r.*, matching DMA_TRAN_ID to a slot and freeing it on
+  -- PREAMBLE_TAIL, so new requests can issue while old reads still drain.
+  -- ot_seq is the shared clocked block for both FSMs plus the table.
 
   -- Static check: the local slot index must fit in the on-wire DMA_TRAN_ID
   -- field. Fires at elaboration if OUTSTANDING_DEPTH is ever set past what
@@ -979,17 +901,11 @@ begin  -- rtl
   -----------------------------------------------------------------------
   -- Request FSM
   -----------------------------------------------------------------------
-  -- Structure: same shape as the legacy `axi_roundtrip`, with:
-  --  - `idle` -> `req_idle` (selection gated by ot_alloc_avail +
-  --    same-id + LLC-single guards).
-  --  - For READS, after request flits are pushed (the legacy went to
-  --    `reply_header`), this FSM goes to `req_commit` which raises
-  --    `push_outstanding` and returns to `req_idle`.
-  --  - For WRITES, identical to legacy: `req_data_ack` mirrors
-  --    `request_data_ack`.
-  --  - When `dst_is_mem = '1'` the `remote_ahbs_*` branches are dead. The
-  --    socket template only generates memory-mapped DMA traffic; remote-AHB
-  --    reads have no response path in this design.
+
+  -- Same shape as legacy axi_roundtrip: idle->req_idle gated by
+  -- ot_alloc_avail/same-id/LLC-single guards; reads end at req_commit
+  -- (push_outstanding) instead of the old reply_header; writes unchanged.
+  -- remote_ahbs_* is dead when dst_is_mem='1' (the only generated case).
   req_roundtrip: process (transaction, transaction_reg, req_state, selected, mosi, coherence,
                           coherence_req_full,
                           remote_ahbs_snd_full,
@@ -1084,13 +1000,10 @@ begin  -- rtl
       llc_mode := '0';
     end if;
 
-    -- Combined issue guard. In LLC mode we collapse to single-outstanding
-    -- (any in-flight read blocks both new reads AND new writes) because
-    -- the LLC path's RMW (partial coherent write) consumes responses from
-    -- the same coherence_rsp_rcv queue the response FSM watches -- mixing
-    -- the two would risk one side stealing the other's response. In
-    -- non-LLC mode reads block on table-full or same-id; writes only
-    -- block when there is no free slot at all (cheap conservatism).
+    -- Combined issue guard: in LLC mode any in-flight read blocks BOTH new
+    -- reads and writes, since RMW consumes the same coherence_rsp_rcv queue
+    -- the response FSM watches. Non-LLC reads block on table-full/same-id;
+    -- writes only block when no slot is free at all (cheap conservatism).
     if transaction.write = '1' then
       if llc_mode = '1' and ot_any_read_busy = '1' then
         issue_ok := '0';
@@ -1181,11 +1094,10 @@ begin  -- rtl
     end if;
     payload_data(AHBDW - 1 downto 0) := wdata;
 
-    -- Helper for stamping the DMA tran_id into a header flit. Operates on
-    -- the generic `this_noc_flit_size` slice but uses the same bit window
-    -- as `set_dma_tran_id` (anchored just below the reserved field). The
-    -- socket template instantiates this proxy with this_noc_flit_size =
-    -- DMA_NOC_FLIT_SIZE, so the slice is in range.
+    -- Stamp DMA tran_id using the same bit window as set_dma_tran_id
+    -- (anchored below the reserved field). Valid because the socket
+    -- template always instantiates this proxy with this_noc_flit_size =
+    -- DMA_NOC_FLIT_SIZE.
     txn_id_v := std_logic_vector(to_unsigned(req_alloc_idx_reg, DMA_TRAN_ID_WIDTH));
 
     -- Main case: structurally same as legacy. Reads diverge at
@@ -1547,13 +1459,10 @@ begin  -- rtl
           size       => transaction_reg.size,
           addr       => transaction_reg.addr,
           dst_is_mem => transaction_reg.dst_is_mem);
-        -- Return to idle so the next transaction is re-sampled there, on a
-        -- cycle where this push has already updated `outstanding_reg`.
-        -- Re-sampling directly here would latch `req_alloc_idx_reg` from a
-        -- stale `ot_alloc_idx` (this push not yet visible), letting the next
-        -- read alias the slot just allocated. Costs one issue cycle per
-        -- back-to-back read; memory round-trip latency dominates and up to
-        -- OUTSTANDING_DEPTH reads still pipeline, so throughput is unaffected.
+        -- Returns to idle rather than re-sampling here, so the next read
+        -- sees outstanding_reg already updated; sampling now would latch a
+        -- stale ot_alloc_idx and alias this slot. One cycle of overhead;
+        -- latency dominates, so throughput is unaffected.
         req_next <= req_idle;
 
       when others =>
@@ -1566,9 +1475,10 @@ begin  -- rtl
   -----------------------------------------------------------------------
   -- Response FSM
   -----------------------------------------------------------------------
+
   -- Owns coherence_rsp_rcv_rdreq, somi.r.*, and the active-slot register.
-  -- On a fresh header flit, extracts get_dma_tran_id and either matches a
-  -- slot (rsp_data) or drops the response (rsp_drop, defensive).
+  -- On a header flit, extracts get_dma_tran_id and either matches a slot
+  -- (rsp_data) or drops the response (rsp_drop, defensive).
   rsp_roundtrip: process (rsp_state, coherence_rsp_rcv_data_out, coherence_rsp_rcv_empty,
                           outstanding_reg, rsp_active_valid_reg, rsp_active_idx_reg, mosi)
     variable rsp_id_v         : dma_tran_id_type;
@@ -1611,12 +1521,10 @@ begin  -- rtl
     rsp_preamble_v := get_preamble(this_noc_flit_size,
                                    this_noc_flit_pad & coherence_rsp_rcv_data_out);
 
-    -- Defensive guard: only drain the coherence_rsp_rcv queue when we
-    -- actually have an outstanding read to match against. This prevents
-    -- the response FSM from stealing the RMW sub-read response that the
-    -- legacy/req-side RMW path consumes directly. Combined with the LLC
-    -- issue guard above (LLC mode = single-outstanding) this guarantees
-    -- rsp/RMW never contend.
+    -- Only drain coherence_rsp_rcv when a read is actually outstanding, so
+    -- this FSM never steals the RMW sub-read response the req-side RMW path
+    -- consumes directly. Combined with the LLC single-outstanding guard,
+    -- this guarantees rsp and RMW never contend for the same queue.
     any_outstanding_v := '0';
     for i in 0 to OUTSTANDING_DEPTH - 1 loop
       if outstanding_reg(i).valid = '1' then
@@ -1715,10 +1623,10 @@ begin  -- rtl
   -----------------------------------------------------------------------
   -- OT sequential block: state + WSTRB buffering + outstanding table.
   -----------------------------------------------------------------------
-  -- Reuses the same control strobes as the legacy clocked process
-  -- (latch_wbeat, advance_segment, etc.) so the existing combinational
-  -- WSTRB/RMW/DMA-write helpers operate unchanged. Adds outstanding-table
-  -- push/done/free and the response-active-slot register.
+
+  -- Reuses the legacy clocked process's control strobes (latch_wbeat,
+  -- advance_segment, etc.) so the WSTRB/RMW/DMA-write helpers are unchanged;
+  -- adds outstanding-table push/free and the response-active-slot register.
   ot_seq: process (clk, rst)
   begin
     if rst = '0' then
@@ -1746,12 +1654,10 @@ begin  -- rtl
 
       if sample_flits = '1' then
         transaction_reg <= transaction;
-        -- Latch the allocation index for this request exactly once, here at
-        -- sample time, and reuse it for both the req_header stamp and the
-        -- req_commit push so the two can never disagree. Safe because the
-        -- request FSM is the only allocator and handles one request at a
-        -- time, and responses only ever *free* slots -- so the chosen free
-        -- slot stays free until this request's req_commit fills it.
+        -- Latch the allocation index once, here at sample time, and reuse
+        -- it for both the req_header stamp and the req_commit push so the
+        -- two can never disagree. Safe since the request FSM is the sole
+        -- allocator, one request at a time, and responses only free slots.
         req_alloc_idx_reg <= ot_alloc_idx;
         aw_accepted     <= '0';
         wdata_valid     <= '0';
