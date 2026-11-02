@@ -100,9 +100,6 @@ DDR_HADDR["ibex"] = 0x800
 SLM_HADDR = 0x040
 SLMDDR_HADDR = 0xC00
 
-# Main memory size (12 MSBs)
-DDR_SIZE = 0x400
-
 # Frame-buffer index
 FB_HINDEX = 3
 
@@ -525,9 +522,21 @@ def print_global_constants(fp, soc):
     else:
         fp.write("  constant GLOB_YX_WIDTH : integer range 0 to 4 := 4;\n\n")
     if soc.CPU_ARCH.get() == "leon3":
-        fp.write("  constant DRAM_BASE : std_logic_vector(31 downto 0) := x\"4000_0000\";\n")
+        dram_base = 0x4000_0000
     else:
-        fp.write("  constant DRAM_BASE : std_logic_vector(31 downto 0) := x\"8000_0000\";\n")
+        dram_base = 0x8000_0000
+    fp.write("  constant DRAM_BASE : std_logic_vector(31 downto 0) := x\"" +
+              format(dram_base, '08x') + "\";\n")
+    phys_addr_space = 1 << 32
+    dram_length = min(soc.dram_size_mb.get() * 0x100000, phys_addr_space - dram_base)
+    fp.write("  constant DRAM_LENGTH : std_logic_vector(31 downto 0) := x\"" +
+              format(dram_length, '08x') + "\";\n")
+    slmddr_base = dram_base + dram_length
+    slmddr_length = max(0, min(0x4000_0000, phys_addr_space - slmddr_base))
+    fp.write("  constant SLMDDR_BASE : std_logic_vector(31 downto 0) := x\"" +
+              format(slmddr_base & 0xffffffff, '08x') + "\";\n")
+    fp.write("  constant SLMDDR_LENGTH : std_logic_vector(31 downto 0) := x\"" +
+              format(slmddr_length, '08x') + "\";\n")
 
 def print_global_constantsSV(fp, soc):
 
@@ -1079,16 +1088,17 @@ def print_mapping(fp, soc, esp_config):
     #
     fp.write("  ----  Memory controllers\n")
     offset = DDR_HADDR[esp_config.cpu_arch]
+    ddr_size = soc.dram_size_mb.get()
     if esp_config.nmem > 0:
         # workaround for using 7 mem tiles with profpga-xcvu19p
         if esp_config.nmem > 4:
-            size = int(DDR_SIZE / 8)
+            size = int(ddr_size / 8)
         else:
-            size = int(DDR_SIZE / esp_config.nmem)
+            size = int(ddr_size / esp_config.nmem)
     else:
-        size = DDR_SIZE
+        size = ddr_size
     mask = 0xfff & ~(size - 1)
-    full_mask = 0xfff & ~(DDR_SIZE - 1)
+    full_mask = 0xfff & ~(ddr_size - 1)
 
     #
     fp.write(
@@ -2496,11 +2506,12 @@ def print_devtree(fp, soc, esp_config):
              format(DDR_HADDR[esp_config.cpu_arch], '03x') +
              "00000 {\n")
     fp.write("    device_type = \"memory\";\n")
-    # TODO: increase memory address space.
     if esp_config.nmem != 0:
         fp.write("    reg = <0x0 0x" +
                  format(DDR_HADDR[esp_config.cpu_arch], '03x') +
-                 "00000 0x0 0x20000000>;\n")
+                 "00000 0x0 0x" +
+                 format(soc.dram_size_mb.get() * 0x100000, '08x') +
+                 ">;\n")
     else:
         # Use SLM as main memory
         fp.write("    reg = <0x0 0x" +
@@ -3590,7 +3601,7 @@ def print_load_script(fp, soc, esp_config):
     fp.write("cd /opt/drivers-esp\n")
     fp.write("insmod contig_alloc.ko ")
     nmem = esp_config.nmem
-    ddr_size = int(str(DDR_SIZE)) * int(0x100000)
+    ddr_size = soc.dram_size_mb.get() * int(0x100000)
     if nmem > 0:
         size = int(ddr_size / nmem)
     sizes = []

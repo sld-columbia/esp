@@ -245,6 +245,19 @@ class SocConfigFrame:
                 "normal", 7, 0,
                 command=main_frame.update_noc_config)
 
+        # DRAM Size
+        self.dram_size_choices = [
+            "512", "1024", "2048", "4096", "8192"]
+        self.dram_size_label = StyledComponents.KeyLabel(
+            self.soc_config_frame, "DDR Size (MB)", 8, 0)
+        self.dram_size_value_frame = ctk.CTkFrame(self.soc_config_frame)
+        self.dram_size_value_frame.grid(row=8, column=1, pady=(5, 20), padx=15)
+        self.dram_size_value_menu = StyledComponents.OptionMenu(
+            self.dram_size_value_frame,
+            self.soc.dram_size_mb,
+            self.dram_size_choices,
+            command=main_frame.update_noc_config)
+
 
 class PeripheralsConfigFrame:
     def __init__(self, soc, left_panel, main_frame):

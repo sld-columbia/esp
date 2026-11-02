@@ -420,7 +420,7 @@ begin
       ROMBase 		=> X"0000_0000",
       ROMLength 	=> X"0000_1000",
       DRAMBase 		=> DRAM_BASE,
-      DRAMLength 	=> X"4000_0000"
+      DRAMLength 	=> DRAM_LENGTH
     )
     port map (
       clk 		    => tile_clk,

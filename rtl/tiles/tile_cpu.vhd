@@ -294,7 +294,7 @@ architecture rtl of tile_cpu is
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask_cpu;
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask_cpu;
 
-  constant ariane_cacheable_len : integer := (1 + CFG_L2_ENABLE) * 16#20000000#;
+  constant ariane_cacheable_len : integer := (to_integer(unsigned(DRAM_LENGTH)) / 2) * (1 + CFG_L2_ENABLE);
 
   function set_ariane_slmddr_len
     return std_logic_vector is
@@ -302,7 +302,7 @@ architecture rtl of tile_cpu is
     if CFG_NSLMDDR_TILE = 0 then
       return X"0000_0000_0000_0000";
     else
-      return X"0000_0000_4000_0000";
+      return X"0000_0000" & SLMDDR_LENGTH;
     end if;
   end function;
 
@@ -693,11 +693,11 @@ begin
         CLINTLength      => X"0000_0000_000C_0000",
         SLMBase          => X"0000_0000_0400_0000",
         SLMLength        => X"0000_0000_0400_0000",  -- Reserving up to 64MB; devtree can set less
-        SLMDDRBase       => X"0000_0000_C000_0000",
+        SLMDDRBase       => X"0000_0000" & SLMDDR_BASE,
         SLMDDRLength     => ariane_slmddr_len,  -- Reserving up to 1GB; disabled when no SLMDDR tile exists
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
-        DRAMLength       => X"0000_0000_4000_0000",
-        DRAMCachedLength => conv_std_logic_vector(ariane_cacheable_len, 64))  -- TODO: length set automatically to match devtree
+        DRAMLength       => X"0000_0000" & DRAM_LENGTH,
+        DRAMCachedLength => conv_std_logic_vector(ariane_cacheable_len, 64))  
       port map (
         clk         => tile_clk,
         rstn        => cpurstn,
@@ -754,10 +754,10 @@ begin
         CLINTLength      => X"0000_0000_000C_0000",
         SLMBase          => X"0000_0000_0400_0000",
         SLMLength        => X"0000_0000_0400_0000",
-        SLMDDRBase       => X"0000_0000_C000_0000",
-        SLMDDRLength     => X"0000_0000_4000_0000",
+        SLMDDRBase       => X"0000_0000" & SLMDDR_BASE,
+        SLMDDRLength     => ariane_slmddr_len,
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
-        DRAMLength       => X"0000_0000_4000_0000",
+        DRAMLength       => X"0000_0000" & DRAM_LENGTH,
         DRAMCachedLength => conv_std_logic_vector(ariane_cacheable_len, 64))
       port map (
         clk         => tile_clk,

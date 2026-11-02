@@ -381,6 +381,9 @@ class SoC_Config():
         line = fp.readline()
         item = line.split()
         self.slm_kbytes.set(int(item[2]))
+        line = fp.readline()
+        item = line.split()
+        self.dram_size_mb.set(int(item[2]))
         # JTAG (test)
         line = fp.readline()
         if line.find("CONFIG_JTAG_EN = y") != -1:
@@ -562,6 +565,7 @@ class SoC_Config():
         fp.write("CONFIG_CACHE_LINE_SIZE = " +
                  str(self.cache_line_size.get()) + "\n")
         fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n")
+        fp.write("CONFIG_DRAM_SIZE_MB = " + str(self.dram_size_mb.get()) + "\n")
         if self.jtag_en.get() == 1:
             fp.write("CONFIG_JTAG_EN = y\n")
         else:
@@ -742,6 +746,7 @@ class SoC_Config():
         self.dma_multi_ot_en = IntVar(master=tk_master)
         # SLM
         self.slm_kbytes = IntVar(master=tk_master)
+        self.dram_size_mb = IntVar(master=tk_master, value=1024)
         # Peripherals
         self.jtag_en = IntVar(master=tk_master)
         self.eth_en = IntVar(master=tk_master)
