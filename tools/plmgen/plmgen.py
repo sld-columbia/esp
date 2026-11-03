@@ -1647,7 +1647,7 @@ class memory():
 
 
 ### Input parsing ###
-def parse_sram(s):
+def parse_sram(s, tech):
     item = s.split()
     words = int(item[0])
     width = int(item[1])
@@ -1657,6 +1657,10 @@ def parse_sram(s):
     ports = int(item[4])
     if ports < 1 or ports > 2:
         warn("Skipping SRAM type " + name + " with unsopported number of ports")
+        return None
+    if len(item) > 5 and tech not in item[5].split(","):
+        print("  INFO: Skipping SRAM type " + name +
+              " (not available on " + tech + ")")
         return None
     return sram(name, words, width, area, ports)
 
@@ -1720,6 +1724,7 @@ def read_techfile(tech_path, sram_list):
     global mem_delay
     global mem_setup
     global single_port
+    tech = os.path.basename(os.path.dirname(os.path.normpath(tech_path)))
     try:
         fd = open(tech_path + "/lib.txt", 'r')
     except IOError as e:
@@ -1736,7 +1741,7 @@ def read_techfile(tech_path, sram_list):
             single_port = True
         if re.match(r'#\.*', line, re.M | re.I):
             continue
-        ram = parse_sram(line)
+        ram = parse_sram(line, tech)
         if ram is None:
             continue
         sram_list.append(ram)

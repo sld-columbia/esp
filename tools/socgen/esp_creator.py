@@ -247,7 +247,7 @@ class SocConfigFrame:
 
         # DRAM Size
         self.dram_size_choices = [
-            "512", "1024", "2048", "4096", "8192"]
+            "1024", "2048"]
         self.dram_size_label = StyledComponents.KeyLabel(
             self.soc_config_frame, "DDR Size (MB)", 8, 0)
         self.dram_size_value_frame = ctk.CTkFrame(self.soc_config_frame)

@@ -170,7 +170,7 @@ _fsrxx:
 1:
 	! Initialize APBUART before jumping to the payload.
 	set UART1_BASE, %g1
-	set UART1_SCALER_38400, %g2
+	set UART1_SCALER, %g2
 	st  %g2, [%g1+0x0c]
 	set 0x3, %g2
 	st  %g2, [%g1+0x08]

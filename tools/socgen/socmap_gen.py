@@ -5,6 +5,7 @@
 
 from collections import defaultdict
 import math
+import sys
 from thirdparty import *
 
 # Maximum number of AHB and APB slaves can also be increased, but Leon3 utility
@@ -528,7 +529,15 @@ def print_global_constants(fp, soc):
     fp.write("  constant DRAM_BASE : std_logic_vector(31 downto 0) := x\"" +
               format(dram_base, '08x') + "\";\n")
     phys_addr_space = 1 << 32
-    dram_length = min(soc.dram_size_mb.get() * 0x100000, phys_addr_space - dram_base)
+    dram_length = soc.dram_size_mb.get() * 0x100000
+    max_dram_length = phys_addr_space - dram_base
+    if dram_length > max_dram_length:
+        print("ERROR: CONFIG_DRAM_SIZE_MB = " + str(soc.dram_size_mb.get()) +
+              " MB exceeds the maximum addressable DRAM size of " +
+              str(max_dram_length // 0x100000) + " MB for CPU_ARCH = " +
+              soc.CPU_ARCH.get() + " (DRAM_BASE = 0x" + format(dram_base, '08x') +
+              ", 32-bit physical address space ceiling).")
+        sys.exit(1)
     fp.write("  constant DRAM_LENGTH : std_logic_vector(31 downto 0) := x\"" +
               format(dram_length, '08x') + "\";\n")
     slmddr_base = dram_base + dram_length
