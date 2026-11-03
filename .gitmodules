@@ -60,7 +60,7 @@
 	branch = esp
 [submodule "soft/cva6/linux"]
 	path = soft/cva6/linux
-	url = https://github.com/m-d-upm/esp-linux.git
+	url = https://github.com/sld-columbia/linux-cva6.git
 [submodule "soft/cva6/opensbi"]
 	path = soft/cva6/opensbi
 	url = https://github.com/sld-columbia/opensbi.git
