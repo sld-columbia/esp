@@ -11,6 +11,9 @@ Each folder corresponds to a design flow:
 * `catapult_hls`: accelerator design in C/C++ with Mentor Catapult HLS
   ([guide](https://www.esp.cs.columbia.edu/docs/mentor_cpp_acc/)).
 
+* `catapult_hls`: accelerator design in SystemC Mentor Catapult HLS
+  ([guide](https://www.esp.cs.columbia.edu/docs/mentor_systemc_acc/)).
+
 * `chisel`: accelerator design in Chisel.
 
 * `hls4ml`: accelerator design in Keras/Pytorch/ONNX with
@@ -26,6 +29,9 @@ Each folder corresponds to a design flow:
 
 * `vivado_hls`: accelerator design in C/C++ with Xilinx Vivado HLS
   ([guide](https://www.esp.cs.columbia.edu/docs/cpp_acc/)).
+
+* `Bambu_hls`: accelerator design in C/C++ with Bambu HLS
+  ([guide]( coming soon/)).
 
 The structure of the accelerator folders for the HLS-based flows
 (e.g. `stratus_hls/fft_stratus`) are as follows:

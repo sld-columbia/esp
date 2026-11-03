@@ -155,7 +155,7 @@ make
 From a full repo checkout on the HPS, run:
 
 ```sh
-cd socs/terasic-de10-pro-sx/hps
+cd tools/hps
 make
 ```
 
