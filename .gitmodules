@@ -56,7 +56,8 @@
 	url = https://gitlab.com/libeigen/eigen.git
 [submodule "rtl/cores/cva6/cva6"]
 	path = rtl/cores/cva6/cva6
-	url = https://github.com/openhwgroup/cva6.git
+	url = git@github.com:sld-columbia/cva6.git
+	branch = esp
 [submodule "soft/cva6/linux"]
 	path = soft/cva6/linux
 	url = https://github.com/m-d-upm/esp-linux.git
