@@ -163,15 +163,18 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
     if [ $ovwrt == "y" ]; then
 	cmd="rm -rf ${dst} ${TARGET_DIR}/mklinuximg"
 	runsudo $TARGET_DIR "$cmd"
-	rm -rf ${src}
-	if test ! -e $tar; then
-	    wget ${SRC_MIRROR}/$tar
-	fi
-	tar xf $tar
-	cmd="mv ${src} ${TARGET_DIR}"
-	runsudo $TARGET_DIR "$cmd"
-	cmd="ln -s ${dst} ${TARGET_DIR}/mklinuximg"
-	runsudo $TARGET_DIR "$cmd"
+    rm -rf ${src}
+    if test ! -e $tar; then
+        wget ${SRC_MIRROR}/$tar
+    fi
+    tar xf $tar
+    sed -i 's/#define AMBA_APB_SLAVES 128/#define AMBA_APB_SLAVES 512/' ${src}/include/ambapp.h
+    if ! grep -q "define AMBA_APB_SLAVES 512" ${src}/include/ambapp.h; then
+        echo "ERROR: AMBA_APB_SLAVES patch did not apply to ${src}/include/ambapp.h"
+        exit 1
+    fi
+    cmd="mv ${src} ${TARGET_DIR}"
+    runsudo $TARGET_DIR "$cmd"	
     fi
 fi
 cd $TMP
