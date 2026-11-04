@@ -294,7 +294,17 @@ architecture rtl of tile_cpu is
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask_cpu;
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask_cpu;
 
-  constant ariane_cacheable_len : integer := (to_integer(unsigned(DRAM_LENGTH)) / 2) * (1 + CFG_L2_ENABLE);
+    function set_ariane_cacheable_len
+      return std_logic_vector is
+    begin
+      if CFG_L2_ENABLE /= 0 then
+        return X"0000_0000" & DRAM_LENGTH;
+      else
+        return X"0000_0000" & '0' & DRAM_LENGTH(31 downto 1);
+      end if;
+    end;
+
+  constant ariane_cacheable_len : std_logic_vector(63 downto 0) := set_ariane_cacheable_len;
 
   function set_ariane_slmddr_len
     return std_logic_vector is
@@ -697,7 +707,7 @@ begin
         SLMDDRLength     => ariane_slmddr_len,  -- Reserving up to 1GB; disabled when no SLMDDR tile exists
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
         DRAMLength       => X"0000_0000" & DRAM_LENGTH,
-        DRAMCachedLength => conv_std_logic_vector(ariane_cacheable_len, 64))  
+        DRAMCachedLength => ariane_cacheable_len)  
       port map (
         clk         => tile_clk,
         rstn        => cpurstn,
@@ -758,7 +768,7 @@ begin
         SLMDDRLength     => ariane_slmddr_len,
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
         DRAMLength       => X"0000_0000" & DRAM_LENGTH,
-        DRAMCachedLength => conv_std_logic_vector(ariane_cacheable_len, 64))
+        DRAMCachedLength => ariane_cacheable_len)
       port map (
         clk         => tile_clk,
         rstn        => cpurstn,
