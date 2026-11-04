@@ -11,3 +11,13 @@
 #endif
 #define RAMSTART  0x40000000
 #define RAMSIZE   0x00100000
+
+#ifndef STACK_TOP
+#define STACK_TOP (RAMSTART + RAMSIZE - 32)
+#endif
+
+#define GPTIMER_BASE 0x80000300
+#ifndef TIMER_RELOAD
+#define TIMER_RELOAD 49
+#endif
+

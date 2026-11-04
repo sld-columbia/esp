@@ -36,9 +36,11 @@ soft-distclean: leon3-soft-distclean
 # APBUART scaler for 38400 baud, rounded to nearest: freq / (38400 * 8) - 1
 UART_SCALER = $(shell echo $$(( ($(BASE_FREQ_MHZ) * 1000000 + 153600) / 307200 - 1 )))
 
+TIMER_RELOAD = $(shell echo $$(( $(BASE_FREQ_MHZ) - 1 )))
+
 $(SOFT_BUILD)/prom.o: $(BOOTROM_PATH)/prom.S $(BOOTROM_PATH)/prom.h
 	@mkdir -p $(SOFT_BUILD)
-	$(QUIET_AS) $(CROSS_COMPILE_ELF)gcc -c -I$(BOOTROM_PATH) -DUART1_SCALER=$(UART_SCALER) $< -o $@
+	$(QUIET_AS) $(CROSS_COMPILE_ELF)gcc -c -I$(BOOTROM_PATH) -DUART1_SCALER=$(UART_SCALER) -DTIMER_RELOAD=$(TIMER_RELOAD) -DSTACK_TOP=$(LEON3_STACK) $< -o $@
 
 $(SOFT_BUILD)/prom.exe: $(SOFT_BUILD)/prom.o $(UTILS_GRLIB)/mkprom2/linkprom
 	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc \

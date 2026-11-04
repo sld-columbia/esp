@@ -176,6 +176,11 @@ _fsrxx:
 	st  %g2, [%g1+0x08]
 	st  %g0, [%g1+0x04]
 
+	set GPTIMER_BASE, %g1
+	set TIMER_RELOAD, %g2
+	st  %g2, [%g1]
+	st  %g2, [%g1+0x04]
+
 	! %g3 = cpu index
 	set STACKSIZE, %g2
         mov %g0, %g1
@@ -187,7 +192,7 @@ _fsrxx:
 	sub %g3, 1, %g3
 
 
-3:	set RAMSTART+ RAMSIZE-32, %fp
+3:	set STACK_TOP, %fp
 	sub %fp, %g1, %fp
 	sub %fp, 96, %sp
 
