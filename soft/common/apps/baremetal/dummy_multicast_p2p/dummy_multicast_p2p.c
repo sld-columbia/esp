@@ -25,6 +25,8 @@ typedef u64 token_t;
 
 #define TOKENS_REG 0x40
 #define BATCH_REG  0x44
+#define SOURCE_REG 0x48
+#define NDESTS_REG 0x4C
 
 // User defined registers
 #define TOKENS 64
@@ -137,6 +139,8 @@ int main(int argc, char *argv[])
         // Accelerator-specific registers
         iowrite32(&devs[i], TOKENS_REG, TOKENS);
         iowrite32(&devs[i], BATCH_REG, BATCH);
+		iowrite32(&devs[i], SOURCE_REG, 0);
+		iowrite32(&devs[i], NDESTS_REG, 0);
     }
 
     // Flush for non-coherent DMA

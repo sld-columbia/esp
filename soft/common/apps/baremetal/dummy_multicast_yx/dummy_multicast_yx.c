@@ -58,21 +58,6 @@ static void init_buf(token_t *mem)
             mem[i + j * TOKENS] = (mask | (token_t)i);
 }
 
-void p2p_setup(struct esp_device *dev, int p2p_store, int mcast_ndests, int p2p_load,
-               struct esp_device *p2p_src)
-{
-    esp_p2p_reset(dev);
-    if (p2p_store) {
-        esp_p2p_enable_dst(dev);
-        esp_p2p_set_mcast_ndests(dev, mcast_ndests);
-    }
-    if (p2p_load) {
-        esp_p2p_enable_src(dev);
-        esp_p2p_set_y(dev, 0, esp_get_y(p2p_src));
-        esp_p2p_set_x(dev, 0, esp_get_x(p2p_src));
-    }
-}
-
 #define MCAST_SRC 1
 int main(int argc, char *argv[])
 {
@@ -138,6 +123,10 @@ int main(int argc, char *argv[])
         // Accelerator-specific registers
         iowrite32(&devs[i], TOKENS_REG, TOKENS);
         iowrite32(&devs[i], BATCH_REG, BATCH);
+		
+		//reset the p2p and mcast tables
+		esp_p2p_reset(&devs[i]);
+        esp_mcast_reset(&devs[i]);
 
         if (i == MCAST_SRC) {
             iowrite32(&devs[i], SOURCE_REG, 0);
