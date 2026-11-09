@@ -326,47 +326,25 @@ module crossbar_wrap
       NoAddrRules:        unsigned'(NSLV)
     };
 
-    if (AXI_ADDR_WIDTH == 32) begin : gen_xbar_32
-      axi_pkg::xbar_rule_32_t [NSLV-1:0] addr_map;
-      assign addr_map = '{
-        '{ idx: DRAM, start_addr: DRAMBase, end_addr: DRAMBase + DRAMLength },
-        '{ idx: ROM,  start_addr: ROMBase,  end_addr: ROMBase + ROMLength    }
-      };
-      axi_xbar_intf #(
-        .AXI_USER_WIDTH ( AXI_USER_WIDTH           ),
-        .Cfg            ( AXI_XBAR_CFG             ),
-        .rule_t         ( axi_pkg::xbar_rule_32_t  )
-      ) i_axi_xbar (
-        .clk_i                 ( clk      ),
-        .rst_ni                ( rstn     ),
-        .test_i                ( 1'b0     ),
-        .slv_ports             ( slave    ),
-        .mst_ports             ( master   ),
-        .addr_map_i            ( addr_map ),
-        .en_default_mst_port_i ( '0       ),
-        .default_mst_port_i    ( '0       )
-      );
-    end else begin : gen_xbar_64
-      axi_pkg::xbar_rule_64_t [NSLV-1:0] addr_map;
-      assign addr_map = '{
-        '{ idx: DRAM, start_addr: DRAMBase, end_addr: DRAMBase + DRAMLength },
-        '{ idx: ROM,  start_addr: ROMBase,  end_addr: ROMBase + ROMLength    }
-      };
-      axi_xbar_intf #(
-        .AXI_USER_WIDTH ( AXI_USER_WIDTH           ),
-        .Cfg            ( AXI_XBAR_CFG             ),
-        .rule_t         ( axi_pkg::xbar_rule_64_t  )
-      ) i_axi_xbar (
-        .clk_i                 ( clk      ),
-        .rst_ni                ( rstn     ),
-        .test_i                ( 1'b0     ),
-        .slv_ports             ( slave    ),
-        .mst_ports             ( master   ),
-        .addr_map_i            ( addr_map ),
-        .en_default_mst_port_i ( '0       ),
-        .default_mst_port_i    ( '0       )
-      );
-    end
+    axi_pkg::xbar_rule_64_t [NSLV-1:0] addr_map;
+    assign addr_map = '{
+      '{ idx: DRAM, start_addr: 64'(DRAMBase), end_addr: 64'(DRAMBase) + 64'(DRAMLength) },
+      '{ idx: ROM,  start_addr: 64'(ROMBase),  end_addr: 64'(ROMBase)  + 64'(ROMLength)  }
+    };
+    axi_xbar_intf #(
+      .AXI_USER_WIDTH ( AXI_USER_WIDTH           ),
+      .Cfg            ( AXI_XBAR_CFG             ),
+      .rule_t         ( axi_pkg::xbar_rule_64_t  )
+    ) i_axi_xbar (
+      .clk_i                 ( clk      ),
+      .rst_ni                ( rstn     ),
+      .test_i                ( 1'b0     ),
+      .slv_ports             ( slave    ),
+      .mst_ports             ( master   ),
+      .addr_map_i            ( addr_map ),
+      .en_default_mst_port_i ( '0       ),
+      .default_mst_port_i    ( '0       )
+    );
 
 `else
     axi_node_wrap_with_slices
