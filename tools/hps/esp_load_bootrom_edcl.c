@@ -123,6 +123,15 @@ static const struct cpu_profile cpu_profiles[] = {
         .binary_word_order = BIN_WORD_BIG_ENDIAN,
     },
     {
+        .name = "cva6",
+        .description = "RV64 CVA6, same ESP memory map as ariane",
+        .bootrom_base = HPS_ESP_AHB_BASE + ESP_ARIANE_BOOTROM_BASE,
+        .dram_base = HPS_ESP_AHB_BASE + ESP_RISCV_DRAM_BASE,
+        .reset_addr = HPS_ESP_AHB_BASE + ESP_RISCV_RESET_ADDR,
+        .wake_addr = HPS_ESP_AHB_BASE + ESP_RISCV_WAKE_ADDR,
+        .binary_word_order = BIN_WORD_BIG_ENDIAN,
+    },
+    {
         .name = "ibex",
         .description = "RV32 Ibex, first fetch at ESP 0x00000080, payload at ESP 0x80000000",
         .bootrom_base = HPS_ESP_AHB_BASE + ESP_IBEX_BOOTROM_BASE,
