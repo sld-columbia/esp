@@ -13,7 +13,7 @@ prototype on FPGA. It provides a flexible tile-based architecture
 built on a multi-plane network-on-chip.
 
 In addition to the architecture, ESP provides users with templates and
-scripts to create new accelerators from SystemC, Chisel, and C/C++.
+scripts to create new accelerators from SystemC, Chisel, C/C++, and hand-written RTL.
 The ESP design methodology eases the process of integrating processors
 and accelerators into an SoC by offering platform services, such as
 DMA, distributed interrupt, and run-time coherence selection, that
@@ -23,17 +23,18 @@ accelerator designer.
 Currently, ESP supports the integration of the
 [LEON3](https://www.gaisler.com/index.php/downloads/leongrlib) processor from
 GRLIB, the [Ariane](https://github.com/pulp-platform/ariane) core from the PULP
-Platform, and the [Ibex](https://github.com/lowRISC/ibex) core from lowRISC.
-LEON3 implements the SPARC V8 32-bit ISA, Ariane implements the RISC-V
+Platform, the [CVA6](https://github.com/openhwfoundation/cva6) core from openHW Foundation,
+and the [Ibex](https://github.com/lowRISC/ibex) core from lowRISC.
+LEON3 implements the SPARC V8 32-bit ISA, Ariane and CVA6 implement the RISC-V
 64-bit ISA, and Ibex implements the RISC-V 32-bit ISA.
 
-In addition to processor cores, ESP embeds accelerator design examples
-created with Stratus HLS in SystemC, Vivado HLS in C/C++ and Chisel.
+In addition to processor cores, ESP embeds accelerator design examples created with Stratus HLS and
+Catapult HLS in SystemC, Vivado HLS and Bambu in C/C++, Chisel, and hand-written RTL.
 
-Furthermore, ESP can serve as a platform to integrate third-party IP
-blocks. For example, ESP integrates the NVIDIA Deep Learning
-Accelerator [NVDLA](http://nvdla.org/), which can be placed on any ESP
-accelerator tile.
+Furthermore, ESP can serve as a platform to integrate third-party IP blocks, which can be placed on
+any ESP accelerator tile. Examples shipped with ESP include the NVIDIA Deep Learning Accelerator NVDLA
+(http://nvdla.org/) and Vortex (https://vortex.cc.gatech.edu/), the open-source RISC-V GPGPU from
+Georgia Tech.
 
 ## Publications
 
