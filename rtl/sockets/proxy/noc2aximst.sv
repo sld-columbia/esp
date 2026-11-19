@@ -433,7 +433,7 @@ module noc2aximst #(
                     ns.ar_valid         = 1'b1;
                     if (ns.count > 255) begin
                         ns.ar_len = 255;
-                        ns.count  = ns.count - 256;
+                        ns.count  = ns.count - 255;
                     end else begin
                         ns.ar_len = ns.count;
                         ns.count  = 0;
@@ -480,15 +480,16 @@ module noc2aximst #(
                                 next_state                = RECEIVE_HEADER;
                             end else begin  // If another burst is needed
                                 coherence_rsp_snd_data_in = {PREAMBLE_BODY, coh_rd_data_flit};
-                                if (cs.count > 255) begin
+                                if (cs.count > 256) begin
                                     ns.ar_len = 255;
                                     ns.count  = cs.count - 256;
                                 end else begin
-                                    ns.ar_len = cs.count;
+                                    ns.ar_len = cs.count - 1;
                                     ns.count  = 0;
                                 end
                                 ns.ar_addr    = cs.ar_addr + ((cs.ar_len + 1) << cs.ar_size);
                                 ns.burst_flag = 1;
+                                ns.ar_valid   = 1'b1;
                                 next_state    = READ_REQUEST;
                             end
                         end else coherence_rsp_snd_data_in = {PREAMBLE_BODY, coh_rd_data_flit};
@@ -602,7 +603,7 @@ module noc2aximst #(
                         ns.ar_len = 0;
                     end else if (ns.count > 255) begin
                         ns.ar_len = 255;
-                        ns.count  = ns.count - 256;
+                        ns.count  = ns.count - 255;
                     end else begin
                         ns.ar_len = ns.count;
                         ns.count  = 0;
@@ -712,12 +713,12 @@ module noc2aximst #(
                                     ns.ar_len  = 0;
                                     ns.count   = cs.count - 1;
                                     ns.ar_addr = cs.ar_addr + 4;
-                                end else if (cs.count > 255) begin
+                                end else if (cs.count > 256) begin
                                     ns.ar_len = 255;
                                     ns.count  = cs.count - 256;
                                     ns.ar_addr = cs.ar_addr + ((cs.ar_len + 1) << cs.ar_size);
                                 end else begin
-                                    ns.ar_len = cs.count;
+                                    ns.ar_len = cs.count - 1;
                                     ns.count  = 0;
                                     ns.ar_addr = cs.ar_addr + ((cs.ar_len + 1) << cs.ar_size);
                                 end
@@ -741,7 +742,7 @@ module noc2aximst #(
                     end else if (ns.count > 255) begin
                         ns.aw_len   = 255;
                         ns.word_rem = 255;
-                        ns.count    = ns.count - 256;
+                        ns.count    = ns.count - 255;
 
                     end else begin
                         ns.aw_len   = ns.count;
@@ -792,13 +793,13 @@ module noc2aximst #(
                                 ns.aw_valid = 1'b1;
                                 next_state  = DMA_WRITE_REQUEST;
                                 // Start next burst logic
-                                if (cs.count > 255) begin
+                                if (cs.count > 256) begin
                                     ns.aw_len   = 255;
                                     ns.word_rem = 255;
                                     ns.count    = cs.count - 256;
                                 end else begin
-                                    ns.aw_len   = cs.count;
-                                    ns.word_rem = cs.count;
+                                    ns.aw_len   = cs.count - 1;
+                                    ns.word_rem = cs.count - 1;
                                     ns.count    = 0;
                                 end
                                 ns.aw_addr = cs.aw_addr + ((cs.aw_len + 1) << cs.aw_size);
@@ -845,13 +846,13 @@ module noc2aximst #(
                                 ns.aw_valid = 1'b1;
                                 next_state  = DMA_WRITE_REQUEST;
                                 // Start next burst logic
-                                if (cs.count > 255) begin
+                                if (cs.count > 256) begin
                                     ns.aw_len   = 255;
                                     ns.word_rem = 255;
                                     ns.count    = cs.count - 256;
                                 end else begin
-                                    ns.aw_len   = cs.count;
-                                    ns.word_rem = cs.count;
+                                    ns.aw_len   = cs.count - 1;
+                                    ns.word_rem = cs.count - 1;
                                     ns.count    = 0;
                                 end
                                 ns.aw_addr = cs.aw_addr + ((cs.aw_len + 1) << cs.aw_size);

@@ -68,9 +68,6 @@ questa/modelsim.ini: $(ESP_ROOT)/.cache/questa/xilinx_lib
 	$(QUIET_MAKE)mkdir -p questa
 	@cp $(ESP_ROOT)/.cache/questa/modelsim.ini $@
 
-$(SIM_LIBDIR):
-	$(QUIET_MKDIR)mkdir -p $@
-
 questa-libs: questa/modelsim.ini $(SIM_LIBDIR)
 	@cd questa; \
 	for lib in $(ACC_LIBS); do \
