@@ -1201,13 +1201,9 @@ def print_mapping(fp, soc, esp_config):
                  " => mig7_hconfig(" + str(i) + "),\n")
     for i in range(0, esp_config.nslm):
         index = SLM_HINDEX + i
-        if index >= 12:
-            index = index + 1
         fp.write("    " + str(index) + " => slm_hconfig(" + str(i) + "),\n")
     for i in range(0, esp_config.nslmddr):
         index = SLM_HINDEX + esp_config.nslm + i
-        if index >= 12:
-            index = index + 1
         fp.write("    " + str(index) + " => slmddr_hconfig(" + str(i) + "),\n")
     fp.write("    " + str(FB_HINDEX) + " => fb_hconfig,\n")
     fp.write("    others => hconfig_none);\n\n")
@@ -2298,8 +2294,6 @@ def print_tiles(fp, esp_config):
         fp.write("    " + str(DDR_HINDEX[j]) + " => '1',\n")
     for j in range(0, esp_config.nslm + esp_config.nslmddr):
         index = SLM_HINDEX + j
-        if index >= 12:
-            index = index + 1
         fp.write("    " + str(index) + " => '1',\n")
     fp.write("    others => '0');\n\n")
 
@@ -2315,8 +2309,6 @@ def print_tiles(fp, esp_config):
         "  constant slm_ahb_mask : std_logic_vector(0 to NAHBSLV - 1) := (\n")
     for j in range(0, esp_config.nslm + esp_config.nslmddr):
         index = SLM_HINDEX + j
-        if index >= 12:
-            index = index + 1
         fp.write("    " + str(index) + " => '1',\n")
     fp.write("    others => '0');\n\n")
 
